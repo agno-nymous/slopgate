@@ -45,3 +45,5 @@ The rewrite touches more than the diff, so it goes into `followup`.
 
   With the spec's floor of 0.75 and the query prefix, a copy that renames its parameters is missed by vector search (exact copies are still caught by the hash). Open decision for the user: lower `DUPLICATE_SCORE` (unrelated pairs score at most 0.16 here; Nemotron Super still judges every candidate), or drop the prefix for code-to-code queries.
 - 34 offline tests pass; 16 code mutations each fail at least one test (15 by the delegate, plus the changed-function exclusion added in review). Live: 5 passed.
+- 2026-10-03: The user lowered `DUPLICATE_SCORE` from 0.75 to 0.6 after the score table above (spec updated to match). Nemotron Super still judges every candidate, so the floor only limits cost.
+- 2026-10-03: Live check after the change: the restructured copy scores 0.79 with the helper's parameter name and 0.62 with a renamed parameter (both found now; the second was missed at 0.75). The 0.62 margin is narrow; ticket 10's benchmark should measure recall at this floor.

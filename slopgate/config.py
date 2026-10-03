@@ -2,7 +2,7 @@ BASE_URL = "https://api.tokenfactory.nebius.com/v1/"
 
 COMPLEXITY = 6
 NESTING = 2
-DUPLICATE_SCORE = 0.75
+DUPLICATE_SCORE = 0.6
 FLAG = 0.8
 
 LIGHTNING = "nvidia/Nemotron-3_5-Lightning"

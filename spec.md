@@ -109,7 +109,7 @@ The `--dry-run` JSON has three parts: `suggestions` (GitHub review comment paylo
 - **Embedder.** CodeRankEmbed (`nomic-ai/CodeRankEmbed`, 137M parameters, MIT license) on the local CPU. Queries get the required prefix `Represent this query for searching relevant code: `. Vectors are L2-normalized.
 - **LLM client.** One function sends a prompt to a Token Factory model and returns text, with an optional JSON mode. Temperature 0. Every LLM call goes through it, so tests replace it with a fake.
 - **Triage.** A free static pass first: complexity at least 6, nesting more than 2, or a `vulture` dead-code hit. Then Nemotron Lightning names one slop kind or "none". The kinds are `nesting`, `redundant_check`, `swallowed_error`, `wrapper`, `lookup_table`, `filler_comment`, `dead`, and `duplicate`. Bad JSON or an unknown kind counts as "none".
-- **Duplicate search.** For each new module-level function: an exact structure-hash match needs no model call. Otherwise, vector search over an index built at the base ref, with a score floor of 0.75 and the top 5 results. Nemotron Super then decides whether the candidate does the same job and states any behavior difference. The function itself and other changed functions are excluded.
+- **Duplicate search.** For each new module-level function: an exact structure-hash match needs no model call. Otherwise, vector search over an index built at the base ref, with a score floor of 0.6 and the top 5 results. Nemotron Super then decides whether the candidate does the same job and states any behavior difference. The function itself and other changed functions are excluded.
 - **Proof.** For each candidate:
   1. Nemotron Super writes characterization tests. Each test file imports its target through exactly one import line.
   2. The tests run twice on the original code. Both runs must pass with identical output, and branch coverage of the target function must be complete.
@@ -145,7 +145,7 @@ Check these IDs against the Token Factory model list in the first ticket.
 
 - Python 3.12. MIT license.
 - Token Factory base URL `https://api.tokenfactory.nebius.com/v1/`, key in `NEBIUS_API_KEY`.
-- Thresholds: complexity 6, nesting 2, duplicate score 0.75, flag 0.8. All four are in one config module.
+- Thresholds: complexity 6, nesting 2, duplicate score 0.6, flag 0.8. All four are in one config module.
 - Duplicate and wrapper handling apply only to module-level functions. Methods get in-place rewrites only.
 - Credit budget: about $50 of Token Factory credit in total.
 

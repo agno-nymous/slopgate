@@ -7,7 +7,7 @@ from test_review import FLAT, IS_NESTING, NESTED, SIMPLE, TESTS, models, review
 
 from slopgate import embed
 from slopgate.cli import main
-from slopgate.config import SUPER
+from slopgate.config import DUPLICATE_SCORE, SUPER
 
 SLUGIFY = '''\
 def slugify(title):
@@ -231,8 +231,11 @@ def test_words():
 
 
 @pytest.mark.live
-def test_restructured_copy_is_found_by_real_vector_search(make_repo, fake_llm, capsys):
-    repo = make_repo({"app/__init__.py": "", "app/text.py": PLAIN_SLUGIFY}, {"app/posts.py": RESTRUCTURED})
+@pytest.mark.parametrize("parameter", ["title", "heading"])
+def test_restructured_copy_is_found_by_real_vector_search(make_repo, fake_llm, capsys, parameter):
+    repo = make_repo(
+        {"app/__init__.py": "", "app/text.py": PLAIN_SLUGIFY}, {"app/posts.py": RESTRUCTURED.replace("title", parameter)}
+    )
     fake_llm.replies += [
         json.dumps({"same_job": True, "difference": "returns an empty string for None where the helper raises"}),
         RESTRUCTURED_TESTS,
@@ -243,7 +246,7 @@ def test_restructured_copy_is_found_by_real_vector_search(make_repo, fake_llm, c
     [followup] = result["followup"]
     print(followup["reason"])
     score = float(followup["reason"].split("(score ")[1].split(")")[0])
-    assert score >= 0.75
+    assert score >= DUPLICATE_SCORE
     assert followup["files"] == {"app/posts.py": ""}
     assert models(fake_llm) == [SUPER, SUPER]
 
