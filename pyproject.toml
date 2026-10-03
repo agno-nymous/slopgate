@@ -3,7 +3,13 @@ name = "slopgate"
 version = "0.1.0"
 requires-python = ">=3.12"
 license = "MIT"
-dependencies = ["openai", "radon", "coverage", "pytest"]
+dependencies = [
+    "openai",
+    "radon",
+    "coverage",
+    "pytest",
+    "contree-sdk>=0.3.6",
+]
 
 [project.scripts]
 slopgate = "slopgate.cli:main"

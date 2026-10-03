@@ -1,10 +1,10 @@
 import re
-import sys
 import textwrap
 
-from slopgate import diff, llm, sandbox
+from slopgate import diff, llm
 from slopgate.config import COMPLEXITY, NESTING, SUPER
 from slopgate.functions import complexity, nesting
+from slopgate.sandbox import InstallError, commands, tail
 
 TESTS_PROMPT = """Write characterization tests for the Python function below. They must record what the code does now, bugs included.
 
@@ -33,11 +33,7 @@ def strip_fence(text: str) -> str:
     return m[1] if m else text
 
 
-def tail(output: str) -> str:
-    return "\n".join(output.strip().splitlines()[-20:])
-
-
-def review(repo, base, head) -> dict:
+def review(repo, base, head, sandbox) -> dict:
     result = {"suggestions": [], "followup": [], "rejected": []}
     flagged = [
         (function, added)
@@ -46,7 +42,13 @@ def review(repo, base, head) -> dict:
     ]
     if not flagged:
         return result
-    checkpoint = sandbox.checkpoint(repo, head)
+    setup, test = commands(repo, head)
+    try:
+        checkpoint = sandbox.prepare(repo, head, setup)
+    except InstallError as error:
+        result["rejected"].append({"reason": f"could not build test environment\n{error}"})
+        return result
+    # ponytail: one trial at a time (well under the cap of 8); a thread pool of 8 when review time matters
     for n, (function, added) in enumerate(flagged):
         module = function.path.removesuffix(".py").replace("/", ".")
         tests = strip_fence(
@@ -62,7 +64,7 @@ def review(repo, base, head) -> dict:
             )
         )
         test_path = f"tests/test_slopgate_{n}.py"
-        cmd = [sys.executable, "-m", "coverage", "run", "--branch", "-m", "pytest", "-q", test_path]
+        cmd = f"python -m coverage run --branch -m pytest -q {test_path}"
         rejected = {"function": function.qualname, "path": function.path}
 
         code, output = sandbox.run(checkpoint, {test_path: tests}, cmd)
@@ -75,11 +77,15 @@ def review(repo, base, head) -> dict:
         rewrite = strip_fence(llm.complete(SUPER, REWRITE_PROMPT.format(source=dedented)))
         rewrite = textwrap.indent(rewrite.strip("\n") + "\n", indent)
 
-        lines = (checkpoint / function.path).read_text().splitlines(keepends=True)
+        lines = diff.git(repo, "show", f"{head}:{function.path}").splitlines(keepends=True)
         spliced = "".join(lines[: function.start - 1]) + rewrite + "".join(lines[function.end :])
         code, output = sandbox.run(checkpoint, {test_path: tests, function.path: spliced}, cmd)
         if code:
             result["rejected"].append({**rejected, "reason": f"rewrite fails characterization tests: {tail(output)}"})
+            continue
+        repo_code, repo_output = sandbox.run(checkpoint, {function.path: spliced}, test)
+        if repo_code not in (0, 5):
+            result["rejected"].append({**rejected, "reason": f"rewrite fails repo tests: {tail(repo_output)}"})
             continue
 
         start, end = function.start, function.end

@@ -63,9 +63,12 @@ def test_active_owner_can_edit_open_item():
     assert {call}(True, True, False, False) is True
 '''
 
+VIEW = NESTED.replace("can_edit", "can_view")
+FLAT_VIEW = FLAT.replace("can_edit", "can_view")
 
-def review(capsys, repo):
-    assert main(["review", "--repo", repo, "--base", "HEAD~1", "--head", "HEAD", "--dry-run"]) is None
+
+def review(capsys, repo, sandbox="local"):
+    assert main(["review", "--repo", repo, "--base", "HEAD~1", "--head", "HEAD", "--dry-run", "--sandbox", sandbox]) is None
     out, err = capsys.readouterr()
     assert err == ""
     return json.loads(out)
@@ -162,4 +165,86 @@ def test_non_python_change_prints_empty_result_without_llm(make_repo, fake_llm, 
     repo = make_repo({"app/perms.py": NESTED, "README.md": "# Demo\n"}, {"README.md": "# Demo\n\nSome *text*.\n"})
 
     assert review(capsys, repo) == {"suggestions": [], "followup": [], "rejected": []}
+    assert fake_llm.calls == []
+
+
+def two_nested_functions(make_repo, slopgate_toml):
+    return make_repo(
+        {"app/__init__.py": ""},
+        {"app/perms.py": NESTED + "\n\n" + VIEW, ".slopgate.toml": "[sandbox]\n" + slopgate_toml},
+    )
+
+
+def test_repo_installs_once_per_review(make_repo, fake_llm, capsys, tmp_path_factory):
+    installs = tmp_path_factory.mktemp("log") / "installs"
+    repo = two_nested_functions(make_repo, f"setup = 'echo x >> {installs}'\n")
+    fake_llm.replies += [
+        TESTS.format(name="can_edit", call="can_edit"),
+        FLAT,
+        TESTS.format(name="can_view", call="can_view"),
+        FLAT_VIEW,
+    ]
+
+    result = review(capsys, repo)
+
+    assert len(result["suggestions"]) == 2
+    assert installs.read_text().splitlines() == ["x"]
+
+
+def test_broken_trial_does_not_affect_the_next(make_repo, fake_llm, capsys):
+    repo = two_nested_functions(make_repo, "")
+    fake_llm.replies += [
+        TESTS.format(name="can_edit", call="can_edit"),
+        "def can_edit(:\n    return\n",
+        TESTS.format(name="can_view", call="can_view"),
+        FLAT_VIEW,
+    ]
+
+    result = review(capsys, repo)
+
+    [rejected] = result["rejected"]
+    assert rejected["function"] == "can_edit"
+    assert rejected["reason"].startswith("rewrite fails characterization tests")
+    [suggestion] = result["suggestions"]
+    assert suggested_code(suggestion["body"]) == FLAT_VIEW
+
+
+def test_failing_test_override_rejects_rewrite(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED, ".slopgate.toml": "[sandbox]\ntest = 'exit 1'\n"})
+    fake_llm.replies += [TESTS.format(name="can_edit", call="can_edit"), FLAT]
+
+    result = review(capsys, repo)
+
+    assert result["suggestions"] == [] and result["followup"] == []
+    [rejected] = result["rejected"]
+    assert (rejected["function"], rejected["path"]) == ("can_edit", "app/perms.py")
+    assert rejected["reason"].startswith("rewrite fails repo tests")
+
+
+def test_passing_test_override_replaces_red_repo_suite(make_repo, fake_llm, capsys):
+    repo = make_repo(
+        {"app/__init__.py": "", "tests/test_suite.py": "def test_suite_is_red():\n    assert False\n"},
+        {"app/perms.py": NESTED, ".slopgate.toml": "[sandbox]\ntest = 'true'\n"},
+    )
+    fake_llm.replies += [TESTS.format(name="can_edit", call="can_edit"), FLAT]
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == []
+    [suggestion] = result["suggestions"]
+    assert suggested_code(suggestion["body"]) == FLAT
+
+
+def test_install_failure_is_one_notice_with_last_20_lines(make_repo, fake_llm, capsys):
+    setup = "echo boom; for i in $(seq 1 30); do echo line$i; done; exit 1"
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED, ".slopgate.toml": f"[sandbox]\nsetup = '{setup}'\n"})
+
+    result = review(capsys, repo)
+
+    tail = "\n".join(f"line{i}" for i in range(11, 31))
+    assert result == {
+        "suggestions": [],
+        "followup": [],
+        "rejected": [{"reason": f"could not build test environment\n{tail}"}],
+    }
     assert fake_llm.calls == []
