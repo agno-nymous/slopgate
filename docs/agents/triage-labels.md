@@ -13,3 +13,13 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
 
 Edit the right-hand column to match whatever vocabulary you actually use.
+
+## Progress states
+
+Besides the triage labels, a ticket's `Status:` line can hold these progress states:
+
+| Status             | Meaning                                                                                                   |
+| ------------------ | --------------------------------------------------------------------------------------------------------- |
+| `in-progress`      | An agent is working on it                                                                                 |
+| `needs-live-check` | Offline work is done and verified with fakes; only boxes that need an external service (blocked on access) stay open. It does NOT count as done for the frontier |
+| `done`             | Every acceptance box is checked                                                                           |
