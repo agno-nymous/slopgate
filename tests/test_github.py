@@ -21,6 +21,8 @@ with open(os.environ["GH_LOG"], "a") as log:
     log.write(json.dumps({{"args": args, "stdin": sys.stdin.read() if "-" in args else None}}) + "\\n")
 if args[:2] == ["pr", "list"]:
     print(os.environ.get("GH_EXISTING_PR", ""))
+elif args[:2] == ["pr", "create"] and os.environ.get("GH_CREATE_ERROR"):
+    sys.exit(os.environ["GH_CREATE_ERROR"])
 elif args[:2] == ["pr", "create"]:
     print("{PR_URL}")
 '''
@@ -216,3 +218,35 @@ def test_followups_that_edit_the_same_file_open_only_the_first(github, fake_llm,
     assert "def fee_for" in branch_file(origin, "app/billing.py")
     body = calls()[-1]["args"][-1]
     assert f"1 follow-up change in {PR_URL} (1 skipped: it edits a file that an earlier follow-up edits)" in body
+
+
+def test_followup_pull_request_failure_still_posts_the_review(github, fake_llm, capsys, monkeypatch):
+    make, calls = github
+    repo, origin = make(WRAPPER_BASE, {"app/billing.py": COMPUTE_TAX + TAX_FOR + INVOICE_TOTAL, "app/perms.py": NESTED})
+    monkeypatch.setenv("GH_CREATE_ERROR", "GitHub Actions is not permitted to create or approve pull requests")
+    fake_llm.replies += [IS_NESTING, INVOICE_TESTS, TESTS.format(name="can_edit", call="can_edit"), FLAT, SUMMARY]
+
+    post(repo)
+
+    assert capsys.readouterr().err == ""
+    review = json.loads(calls()[-1]["stdin"])
+    assert len(review["comments"]) == 1
+    assert (
+        "1 follow-up change not opened as a pull request (gh pr create failed: GitHub Actions is not permitted to create or approve pull requests); "
+        "the changes are on https://github.com/acme/shop/compare/feature...slopgate/feature" in review["body"]
+    )
+    assert branch_file(origin, "app/billing.py")
+
+
+def test_followup_push_failure_still_posts_the_review(github, fake_llm, capsys):
+    make, calls = github
+    repo, _ = make(WRAPPER_BASE, WRAPPER_HEAD)
+    subprocess.run(["git", "remote", "set-url", "origin", "/nonexistent/origin.git"], cwd=repo, check=True)
+    fake_llm.replies += [INVOICE_TESTS, SUMMARY]
+
+    post(repo)
+
+    [commented] = calls()
+    assert commented["args"][:2] == ["pr", "comment"]
+    assert "1 follow-up change not pushed (git push --force failed: " in commented["args"][-1]
+    assert "compare" not in commented["args"][-1]
