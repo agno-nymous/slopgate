@@ -1,0 +1,16 @@
+name: Slopgate
+on: pull_request
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  slopgate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: ./
+        with:
+          nebius-api-key: ${{ secrets.NEBIUS_API_KEY }}
+          nebius-project-id: ${{ secrets.NEBIUS_PROJECT_ID }}

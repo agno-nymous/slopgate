@@ -1,0 +1,4 @@
+[sandbox]
+# The tests create temporary git repos, and python:3.12-slim has no git.
+# The CPU index keeps torch (via sentence-transformers) off the multi-GB CUDA build.
+setup = "apt-get update -qq && apt-get install -y -qq --no-install-recommends git && pip install --extra-index-url https://download.pytorch.org/whl/cpu -e ."
