@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Test and coverage output
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.json
+htmlcov/
+.ruff_cache/
+.mypy_cache/
+
+# Slopgate function index (rebuilt per repo)
+.slopgate/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Claude Code: share settings.json, keep personal overrides local
+.claude/settings.local.json
+
+# OS and editors
+.DS_Store
+.idea/
+.vscode/
