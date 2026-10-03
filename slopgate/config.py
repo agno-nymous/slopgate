@@ -8,3 +8,6 @@ FLAG = 0.8
 LIGHTNING = "nvidia/Nemotron-3_5-Lightning"
 SUPER = "nvidia/nemotron-3-super-120b-a12b"
 ULTRA = "nvidia/Nemotron-3-Ultra-550b-a55b"
+
+# USD per million tokens (input, output)
+PRICES = {LIGHTNING: (0.06, 0.24), SUPER: (0.30, 0.90), ULTRA: (1.0, 3.0)}

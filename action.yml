@@ -1,0 +1,36 @@
+name: Slopgate
+description: Proven slop fixes for Python pull requests, as GitHub suggested changes, using NVIDIA Nemotron on Nebius Token Factory.
+inputs:
+  nebius-api-key:
+    description: Nebius Token Factory API key.
+    required: true
+  nebius-project-id:
+    description: Nebius project ID for Token Factory Sandboxes.
+    required: true
+  github-token:
+    description: Token that posts the review and pushes the follow-up branch.
+    default: ${{ github.token }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - uses: actions/cache@v4
+      with:
+        path: ~/.cache/huggingface
+        key: slopgate-coderankembed-v1
+    - name: Install Slopgate
+      shell: bash
+      continue-on-error: true
+      run: pip install --quiet --extra-index-url https://download.pytorch.org/whl/cpu "$GITHUB_ACTION_PATH"
+    - name: Review the pull request
+      shell: bash
+      continue-on-error: true
+      env:
+        NEBIUS_API_KEY: ${{ inputs.nebius-api-key }}
+        NEBIUS_PROJECT_ID: ${{ inputs.nebius-project-id }}
+        GH_TOKEN: ${{ inputs.github-token }}
+        BASE: ${{ github.event.pull_request.base.sha }}
+        HEAD: ${{ github.event.pull_request.head.sha }}
+      run: slopgate review --base "$BASE" --head "$HEAD"

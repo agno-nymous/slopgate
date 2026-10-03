@@ -13,12 +13,19 @@ The ticket ends with a public demo repo that shows a real review on a real pull 
 
 **Blocked by:** 02, 03
 
-**Status:** ready-for-agent
+**Status:** needs-live-check
 
-- [ ] The action takes the Nebius API key as an input and uses the workflow's GitHub token; the README states that checkout needs full history.
-- [ ] A rewrite is posted inline only if it edits one file and every replaced line is in the diff's added lines; all others go to the follow-up pull request.
-- [ ] No follow-up pull request is opened when `followup` is empty.
-- [ ] The review has one summary comment written by Ultra, which lists accepted and rejected counts.
-- [ ] A sandbox install failure posts one notice comment, and the job still succeeds.
+- [x] The action takes the Nebius API key as an input and uses the workflow's GitHub token; the README states that checkout needs full history.
+- [x] A rewrite is posted inline only if it edits one file and every replaced line is in the diff's added lines; all others go to the follow-up pull request.
+- [x] No follow-up pull request is opened when `followup` is empty.
+- [x] The review has one summary comment written by Ultra, which lists accepted and rejected counts.
+- [x] A sandbox install failure posts one notice comment, and the job still succeeds.
 - [ ] On the public demo repo, a pull request that adds slop gets at least 2 suggestions, and applying one keeps CI green.
-- [ ] The token cost of the review appears in the summary comment.
+- [x] The token cost of the review appears in the summary comment.
+
+## Comments
+
+- 2026-10-03: Built. `slopgate review` without `--dry-run` reads the event file at `GITHUB_EVENT_PATH` and posts through `gh` (`slopgate/github.py`, `publish`). Suggestions go in one review with event `COMMENT`; with no suggestions the summary is a plain pull request comment; a result with nothing in it posts nothing. Follow-ups are committed with git plumbing onto the head commit (no working tree change) and force-pushed to `slopgate/<head branch>`, which Slopgate owns; an open pull request on that branch is reused, otherwise one is created against the author's branch. Fork pull requests get no follow-up branch. Two follow-ups that edit the same file cannot both apply (each holds whole files proven alone), so only the first is kept and the summary says so. The Ultra summary is followed by fixed lines: accepted and rejected counts, the token cost from `llm.usage` priced with `PRICES` in `slopgate/config.py`, and the rejected reasons in a collapsed list. If the Ultra call fails, the results are still posted without the summary sentence. An install failure posts one notice comment and makes no Ultra call.
+- `action.yml` is a composite action: Python 3.12, a cache for `~/.cache/huggingface` (CodeRankEmbed), pip install of the action path with CPU-only torch, then the review. Both steps use `continue-on-error`, and the CLI always exits 0.
+- 9 seam tests in `tests/test_github.py` use a fake `gh` on `PATH` that logs its arguments and a local bare repo as `origin`. 12 mutations (event `REQUEST_CHANGES`, post when empty, fork pushes, duplicate pull request, push without force, wrong base, no install notice, summary failure fatal, overlapping follow-ups merged, no rejected list, swapped prices, wrong parent commit) each fail one test.
+- Left: the public demo repo and a real run on GitHub. The real token cost line and the CodeRankEmbed cache are checked only there.

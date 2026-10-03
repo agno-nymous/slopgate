@@ -4,6 +4,8 @@ from openai import OpenAI
 
 from slopgate.config import BASE_URL
 
+usage: list[tuple[str, int, int]] = []
+
 
 def complete(model: str, prompt: str, json: bool = False) -> str:
     client = OpenAI(base_url=BASE_URL, api_key=os.environ["NEBIUS_API_KEY"])
@@ -13,4 +15,5 @@ def complete(model: str, prompt: str, json: bool = False) -> str:
         temperature=0,
         **({"response_format": {"type": "json_object"}} if json else {}),
     )
+    usage.append((model, reply.usage.prompt_tokens, reply.usage.completion_tokens))
     return reply.choices[0].message.content

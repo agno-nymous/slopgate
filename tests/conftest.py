@@ -39,9 +39,11 @@ def fake_llm(monkeypatch):
 
     def complete(model, prompt, json=False):
         fake.calls.append((model, prompt))
+        llm.usage.append((model, 1000, 100))
         return fake.replies.pop(0)
 
     monkeypatch.setattr(llm, "complete", complete)
+    monkeypatch.setattr(llm, "usage", [])
     return fake
 
 
