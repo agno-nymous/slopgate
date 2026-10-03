@@ -525,6 +525,8 @@ def test_tests_that_differ_across_two_runs_are_rejected(make_repo, fake_llm, cap
 
     result = review(capsys, repo)
 
+    assert models(fake_llm) == [LIGHTNING, SUPER]
+
     assert result["suggestions"] == []
     assert result["rejected"] == [
         {
@@ -551,3 +553,34 @@ def test_tests_prompt_without_repo_callees_has_no_context_section(make_repo, fak
     tests_prompt = fake_llm.calls[1][1]
     assert tests_prompt.rstrip().endswith(NESTED.rstrip())
     assert "Code it calls" not in tests_prompt
+
+
+WRONG_TESTS = TESTS.format(name="can_edit", call="can_edit").replace(
+    "assert can_edit(True, True, False, True) is False", "assert can_edit(True, True, False, True) is True"
+)
+
+
+def test_tests_that_fail_on_original_get_one_retry_with_the_failure(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    fake_llm.replies += [IS_NESTING, WRONG_TESTS, TESTS.format(name="can_edit", call="can_edit"), FLAT]
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == []
+    [suggestion] = result["suggestions"]
+    assert "5 characterization tests passed" in suggestion["body"]
+    assert models(fake_llm) == [LIGHTNING, SUPER, SUPER, SUPER]
+    retry_prompt = fake_llm.calls[2][1]
+    assert WRONG_TESTS in retry_prompt
+    assert "assert False is True" in retry_prompt
+
+
+def test_tests_that_fail_on_original_twice_are_rejected(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    fake_llm.replies += [IS_NESTING, WRONG_TESTS, WRONG_TESTS]
+
+    result = review(capsys, repo)
+
+    [rejected] = result["rejected"]
+    assert rejected["reason"].startswith("characterization tests fail on original")
+    assert models(fake_llm) == [LIGHTNING, SUPER, SUPER]

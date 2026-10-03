@@ -49,6 +49,17 @@ File: {path}
 
 {source}"""
 
+TESTS_RETRY = """
+
+Your earlier test file failed on the unchanged code above, so some expected values are wrong. Reply with the corrected file: keep the inputs where you can, and change each expected value to what the code actually returns or raises.
+
+Earlier test file:
+
+{tests}
+Failure:
+
+{failure}"""
+
 CALLEES = """
 
 Code it calls (context only; test the function above, through its behavior):
@@ -436,15 +447,21 @@ def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> t
         path=function.path,
         source=function.source,
     )
-    tests = strip_fence(llm.complete(SUPER, prompt + (CALLEES.format(code=context) if context else "")))
-    code, output = sandbox.run(
-        checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o -"
-    )
-    second, _ = sandbox.run(checkpoint, {test_path: tests}, f"PYTHONHASHSEED=2 {cmd}")
-    if bool(code) != bool(second):
-        return None, "nondeterministic: characterization tests differ across two runs"
-    if code:
-        return None, f"characterization tests fail on original: {tail(output)}"
+    request = prompt + (CALLEES.format(code=context) if context else "")
+    tests = strip_fence(llm.complete(SUPER, request))
+    for retry in (False, True):
+        code, output = sandbox.run(
+            checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o -"
+        )
+        second, _ = sandbox.run(checkpoint, {test_path: tests}, f"PYTHONHASHSEED=2 {cmd}")
+        if bool(code) != bool(second):
+            return None, "nondeterministic: characterization tests differ across two runs"
+        if not code:
+            break
+        if retry:
+            return None, f"characterization tests fail on original: {tail(output)}"
+        failure = "\n".join(output.strip().splitlines()[-60:])
+        tests = strip_fence(llm.complete(SUPER, request + TESTS_RETRY.format(tests=tests, failure=failure)))
     report = json.loads(output.split(COVERAGE)[1])["files"][function.path]
     missed = sum(function.start <= line <= function.end for line, _ in report["missing_branches"])
     if missed:
