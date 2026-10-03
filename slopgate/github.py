@@ -1,7 +1,9 @@
 import json
 import os
+import re
 import subprocess
 import tempfile
+from time import sleep
 
 from slopgate import llm
 from slopgate.config import PRICES, ULTRA
@@ -21,7 +23,18 @@ def run(*args, stdin=None, **options) -> str:
 
 
 def gh(*args, stdin=None) -> str:
-    return run("gh", *args, stdin=stdin)
+    for attempt in range(3):
+        try:
+            return run("gh", *args, stdin=stdin)
+        except RuntimeError as error:
+            if attempt == 2 or not re.search(r"HTTP 5\d\d", str(error)):
+                raise
+            sleep(10 * (attempt + 1))
+
+
+def duration(seconds: float) -> str:
+    minutes, rest = divmod(round(seconds), 60)
+    return f"{minutes} min {rest} s" if minutes else f"{rest} s"
 
 
 def plural(n: int, word: str) -> str:
@@ -60,7 +73,7 @@ def open_followup(repo, followups, pr, target, files) -> str:
     return f"in {url}"
 
 
-def summary(result, followup_line) -> str:
+def summary(result, followup_line, seconds) -> str:
     try:
         text = llm.complete(ULTRA, SUMMARY_PROMPT.format(results=json.dumps(result, indent=1)[:20000])).strip() + "\n\n"
     except Exception:
@@ -68,7 +81,7 @@ def summary(result, followup_line) -> str:
     rejected = result["rejected"]
     lines = [
         f"Accepted: {plural(len(result['suggestions']), 'inline suggestion')}, {followup_line}. Rejected: {len(rejected)}.",
-        cost(),
+        f"{cost()} Time: {duration(seconds)}.",
     ]
     if rejected:
         reasons = "\n".join(f"- `{r['function']}` in {r['path']}: {r['reason']}" for r in rejected)
@@ -76,7 +89,7 @@ def summary(result, followup_line) -> str:
     return text + "\n\n".join(lines)
 
 
-def publish(repo, result, event) -> None:
+def publish(repo, result, event, seconds) -> None:
     if not any(result.values()):
         return
     pr, target = event["pull_request"], event["repository"]["full_name"]
@@ -106,7 +119,7 @@ def publish(repo, result, event) -> None:
         followup_line = f"{plural(len(kept), 'follow-up change')} {where}"
         if len(kept) < len(followups):
             followup_line += f" ({len(followups) - len(kept)} skipped: it edits a file that an earlier follow-up edits)"
-    body = summary(result, followup_line)
+    body = summary(result, followup_line, seconds)
     if result["suggestions"]:
         review = {"commit_id": pr["head"]["sha"], "event": "COMMENT", "body": body, "comments": result["suggestions"]}
         gh("api", "--method", "POST", f"repos/{target}/pulls/{number}/reviews", "--input", "-", stdin=json.dumps(review))

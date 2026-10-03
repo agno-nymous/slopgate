@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import sys
+import time
 
 from slopgate import github, index
 from slopgate.review import review
@@ -28,11 +29,12 @@ def main(argv=None):
         return
 
     result = {"suggestions": [], "followup": [], "rejected": []}
+    started = time.monotonic()
     try:
         result = review(args.repo, args.base, args.head, {"local": Local, "contree": Contree}[args.sandbox]())
         if not args.dry_run:
             with open(os.environ["GITHUB_EVENT_PATH"]) as event:
-                github.publish(args.repo, result, json.load(event))
+                github.publish(args.repo, result, json.load(event), time.monotonic() - started)
     except Exception as error:
         print(f"slopgate: {error!r}", file=sys.stderr)
     print(json.dumps(result, indent=2))

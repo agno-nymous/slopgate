@@ -1,4 +1,5 @@
 import json
+import re
 import subprocess
 import sys
 import textwrap
@@ -8,6 +9,7 @@ from test_review import FLAT, IS_NESTING, NESTED, TESTS
 from test_wrappers import COMPUTE_TAX, INVOICE_TESTS, INVOICE_TOTAL, TAX_FOR
 
 from slopgate.cli import main
+from slopgate.github import duration
 from slopgate.config import ULTRA
 
 SUMMARY = "One function got flatter."
@@ -19,6 +21,11 @@ import json, os, sys
 args = sys.argv[1:]
 with open(os.environ["GH_LOG"], "a") as log:
     log.write(json.dumps({{"args": args, "stdin": sys.stdin.read() if "-" in args else None}}) + "\\n")
+outages = os.environ.get("GH_OUTAGES")
+left = int(open(outages).read()) if outages else 0
+if left:
+    open(outages, "w").write(str(left - 1))
+    sys.exit("HTTP 503: No server is currently available to service your request.")
 if args[:2] == ["pr", "list"]:
     print(os.environ.get("GH_EXISTING_PR", ""))
 elif args[:2] == ["pr", "create"] and os.environ.get("GH_CREATE_ERROR"):
@@ -86,7 +93,7 @@ def test_inline_suggestions_are_posted_as_one_comment_review(github, fake_llm, c
     assert review["body"].startswith(SUMMARY)
     assert "Accepted: 1 inline suggestion, 0 follow-up changes. Rejected: 0." in review["body"]
     # fake usage is 1000 prompt + 100 completion tokens per call: Lightning, Super, Super, Ultra
-    assert "Token cost: $0.0022 (4,400 tokens)." in review["body"]
+    assert re.search(r"Token cost: \$0\.0022 \(4,400 tokens\)\. Time: \d+ s\.", review["body"])
     assert fake_llm.calls[-1][0] == ULTRA
 
 
@@ -229,6 +236,7 @@ def test_followup_pull_request_failure_still_posts_the_review(github, fake_llm, 
     post(repo)
 
     assert capsys.readouterr().err == ""
+    assert [c["args"][:2] for c in calls()].count(["pr", "create"]) == 1
     review = json.loads(calls()[-1]["stdin"])
     assert len(review["comments"]) == 1
     assert (
@@ -250,3 +258,48 @@ def test_followup_push_failure_still_posts_the_review(github, fake_llm, capsys):
     assert commented["args"][:2] == ["pr", "comment"]
     assert "1 follow-up change not pushed (git push --force failed: " in commented["args"][-1]
     assert "compare" not in commented["args"][-1]
+
+
+@pytest.fixture
+def outages(tmp_path, monkeypatch):
+    def set_count(n):
+        counter = tmp_path / "outages"
+        counter.write_text(str(n))
+        monkeypatch.setenv("GH_OUTAGES", str(counter))
+
+    sleeps = []
+    monkeypatch.setattr("slopgate.github.sleep", sleeps.append)
+    return set_count, sleeps
+
+
+def test_github_server_errors_are_retried(github, fake_llm, capsys, outages):
+    make, calls = github
+    set_count, sleeps = outages
+    repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    set_count(2)
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), FLAT, SUMMARY]
+
+    post(repo)
+
+    assert capsys.readouterr().err == ""
+    assert len(calls()) == 3
+    assert json.loads(calls()[-1]["stdin"])["event"] == "COMMENT"
+    assert len(sleeps) == 2
+
+
+def test_github_server_errors_give_up_after_three_tries(github, fake_llm, capsys, outages):
+    make, calls = github
+    set_count, _ = outages
+    repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    set_count(3)
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), FLAT, SUMMARY]
+
+    post(repo)
+
+    assert "HTTP 503" in capsys.readouterr().err
+    assert len(calls()) == 3
+
+
+@pytest.mark.parametrize(("seconds", "text"), [(42.4, "42 s"), (103.2, "1 min 43 s"), (3600, "60 min 0 s")])
+def test_review_time_reads_in_minutes_and_seconds(seconds, text):
+    assert duration(seconds) == text
