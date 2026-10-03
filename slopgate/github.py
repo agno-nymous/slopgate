@@ -13,8 +13,15 @@ Results:
 {results}"""
 
 
+def run(*args, stdin=None, **options) -> str:
+    done = subprocess.run(args, input=stdin, capture_output=True, text=True, **options)
+    if done.returncode:
+        raise RuntimeError(f"{' '.join(args[:3])} failed: {done.stderr.strip()}")
+    return done.stdout.strip()
+
+
 def gh(*args, stdin=None) -> str:
-    return subprocess.run(["gh", *args], input=stdin, capture_output=True, text=True, check=True).stdout.strip()
+    return run("gh", *args, stdin=stdin)
 
 
 def plural(n: int, word: str) -> str:
@@ -34,7 +41,7 @@ def open_followup(repo, followups, pr, target, files) -> str:
         env = {**os.environ, **author, "GIT_COMMITTER_NAME": "slopgate", "GIT_COMMITTER_EMAIL": author["GIT_AUTHOR_EMAIL"], "GIT_INDEX_FILE": f"{tmp}/index"}
 
         def git(*args, stdin=None):
-            return subprocess.run(["git", *args], cwd=repo, env=env, input=stdin, capture_output=True, text=True, check=True).stdout.strip()
+            return run("git", *args, stdin=stdin, cwd=repo, env=env)
 
         git("read-tree", pr["head"]["sha"])
         for path, text in files.items():
@@ -42,12 +49,15 @@ def open_followup(repo, followups, pr, target, files) -> str:
         commit = git("commit-tree", git("write-tree"), "-p", pr["head"]["sha"], "-m", "refactor: apply Slopgate follow-up changes")
         # the branch belongs to Slopgate; each review replaces it with a commit on the current head
         git("push", "--force", "origin", f"{commit}:refs/heads/{branch}")
-    existing = gh("pr", "list", "--repo", target, "--head", branch, "--state", "open", "--json", "url", "--jq", ".[0].url")
-    if existing:
-        return existing
     body = "\n\n".join(f"**{f['kind']}**: {f['reason']}" for f in followups)
-    return gh("pr", "create", "--repo", target, "--base", pr["head"]["ref"], "--head", branch,
-              "--title", f"Slopgate follow-up for #{pr['number']}", "--body", body)
+    try:
+        url = gh("pr", "list", "--repo", target, "--head", branch, "--state", "open", "--json", "url", "--jq", ".[0].url") or gh(
+            "pr", "create", "--repo", target, "--base", pr["head"]["ref"], "--head", branch,
+            "--title", f"Slopgate follow-up for #{pr['number']}", "--body", body,
+        )
+    except RuntimeError as error:
+        return f"not opened as a pull request ({error}); the changes are on https://github.com/{target}/compare/{pr['head']['ref']}...{branch}"
+    return f"in {url}"
 
 
 def summary(result, followup_line) -> str:
@@ -89,7 +99,11 @@ def publish(repo, result, event) -> None:
             if not files.keys() & followup["files"].keys():
                 kept.append(followup)
                 files |= followup["files"]
-        followup_line = f"{plural(len(kept), 'follow-up change')} in {open_followup(repo, kept, pr, target, files)}"
+        try:
+            where = open_followup(repo, kept, pr, target, files)
+        except RuntimeError as error:
+            where = f"not pushed ({error})"
+        followup_line = f"{plural(len(kept), 'follow-up change')} {where}"
         if len(kept) < len(followups):
             followup_line += f" ({len(followups) - len(kept)} skipped: it edits a file that an earlier follow-up edits)"
     body = summary(result, followup_line)

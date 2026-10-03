@@ -28,6 +28,8 @@ jobs:
 
 Checkout needs full history (`fetch-depth: 0`), because Slopgate compares the pull request head with its base.
 
+To let Slopgate open follow-up pull requests, turn on **Settings > Actions > General > Workflow permissions > Allow GitHub Actions to create and approve pull requests**. Without it, the review is still posted, and the summary links to the pushed `slopgate/<head branch>` branch instead.
+
 ## What a pull request gets
 
 - One review with event `COMMENT`. Each rewrite that edits only lines the pull request added is a suggested change, with the slop kind, complexity and nesting before and after, and the number of characterization tests that passed.
