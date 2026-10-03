@@ -669,14 +669,52 @@ def test_recorded_exceptions_check_type_and_message(make_repo, fake_llm, capsys,
     assert len(result["rejected"]) == (not accepted)
 
 
-def test_recorder_that_ends_without_results_is_rejected(make_repo, fake_llm, capsys):
+BARE_NAME_INPUTS = json.dumps({"inputs": ["True, True, False, _"]})
+
+
+def test_inputs_that_do_not_evaluate_get_one_retry_with_the_error(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, json.dumps({"inputs": ["1,,"]})]
+    fake_llm.replies += [IS_NESTING, BARE_NAME_INPUTS, EDIT_INPUTS, FLAT]
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == []
+    [suggestion] = result["suggestions"]
+    assert "5 characterization tests passed" in suggestion["body"]
+    assert models(fake_llm) == [LIGHTNING, SUPER, SUPER, SUPER]
+    retry_prompt = fake_llm.calls[2][1]
+    assert retry_prompt.startswith(fake_llm.calls[1][1])
+    assert BARE_NAME_INPUTS in retry_prompt
+    assert "NameError: name '_' is not defined" in retry_prompt
+
+
+def test_recorder_that_ends_without_results_twice_is_rejected(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    fake_llm.replies += [IS_NESTING, json.dumps({"inputs": ["1,,"]}), BARE_NAME_INPUTS]
 
     [rejected] = review(capsys, repo)["rejected"]
 
     assert rejected["reason"].startswith("could not record calls")
-    assert models(fake_llm) == [LIGHTNING, SUPER]
+    assert "NameError" in rejected["reason"]
+    assert models(fake_llm) == [LIGHTNING, SUPER, SUPER]
+
+
+@pytest.mark.parametrize(
+    ("first", "second", "reason"),
+    [
+        (BARE_NAME_INPUTS, WRONG_TESTS, "characterization tests fail on original"),
+        (WRONG_TESTS, BARE_NAME_INPUTS, "could not record calls"),
+    ],
+    ids=["inputs-then-tests", "tests-then-inputs"],
+)
+def test_one_retry_covers_either_failure(make_repo, fake_llm, capsys, first, second, reason):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    fake_llm.replies += [IS_NESTING, first, second]
+
+    [rejected] = review(capsys, repo)["rejected"]
+
+    assert rejected["reason"].startswith(reason)
+    assert models(fake_llm) == [LIGHTNING, SUPER, SUPER]
 
 
 ADD_TAG = """\
