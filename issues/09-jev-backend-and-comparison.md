@@ -13,3 +13,7 @@ This ticket is the lowest priority. Skip it if time runs short. Nemotron stays t
 - [ ] A missing Jev API key falls back to Nemotron with a single warning, and the hook still exits 0.
 - [ ] The comparison script prints a table of median latency, cost per 1,000 decisions, and accuracy for both backends on at least 50 labeled pairs.
 - [ ] The comparison results are saved in a file that the README can link to.
+
+## Comments
+
+- Jev facts from the planning handoff (do not re-research): TypeSafe AI. `POST https://api.typesafe.ai/v1/systemone`, model `jev-latest`. Returns typed decisions with calibrated probabilities. Latency 70 to 500 ms. Cost $0.042 per 1M input tokens. API only. Payload shapes: https://github.com/FrancoisChastel/jev-code

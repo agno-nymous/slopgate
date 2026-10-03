@@ -17,3 +17,8 @@ Start with a short spike: confirm which ConTree SDK call starts a new run from a
 - [ ] `.slopgate.toml` with `[sandbox]` keys `setup` and `test` overrides the detected commands.
 - [ ] A repo whose install fails produces one `rejected`-style notice that starts with "could not build test environment" and holds the last 20 output lines, and the process exits 0.
 - [ ] Without `.slopgate.toml`, both `pyproject.toml` and `requirements.txt` repos are detected correctly.
+
+## Comments
+
+- ConTree facts from the planning handoff (do not re-research): install with `pip install contree-sdk` (Python 3.10 to 3.13). Async client: `Contree(ContreeAsyncClient(key, base_url="https://api.tokenfactory.nebius.com/sandboxes"))`; sync: `ContreeSync`. Calls: `await contree.images.use("python:3.12-slim")`, then `await image.run(shell=..., files=[UploadFileSpec(source=..., path=...)])` returns `stdout`, `stderr`, `exit_code`. `image.session()` creates a new image state after each command. Unconfirmed: how to start a new run from a saved session state (the spike). 7,000+ SWE-bench images are preloaded. At most 50 operations run at the same time; Slopgate uses 8. Runs are reported free in beta (unconfirmed).
+- Ticket 01 left a local sandbox in `slopgate/sandbox.py` with `checkpoint(repo, ref) -> Path` and `run(checkpoint, files, cmd) -> (exit_code, output)`. The real sandbox should keep that shape.

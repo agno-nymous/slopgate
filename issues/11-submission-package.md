@@ -18,3 +18,7 @@
 - [ ] The feedback section lists concrete problems and suggestions met during the build, including any SDK gaps found in ticket 02.
 - [ ] The video script covers: the problem, a live gate review on the demo repo, the live flag catching a duplicate, the benchmark numbers, and how Token Factory and Nemotron are used. It fits in 3 minutes.
 - [ ] The Devpost text names the Coding and Agentic Engineering track and links the public repo and the demo repo.
+
+## Comments
+
+- Facts from the planning handoff: model prices per 1M tokens (input / output): Lightning $0.06 / $0.24, Super $0.30 / $0.90, Ultra $1.00 / $3.00. `Nemotron-3-Nano-Omni` left the pay-per-call catalog on 2026-08-31. Credits: $25 with code `NEBIUS-DEVPOST-GLOBAL26`, plus $25 from the Builders Program (dev.nebius.com/builders); keep total spend under about $50. Submission needs: public repo with the MIT license visible, README with setup and Nebius/NVIDIA usage, a working demo URL, a video of at most 3 minutes, and feedback on the tools.

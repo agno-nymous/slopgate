@@ -1,0 +1,17 @@
+[project]
+name = "slopgate"
+version = "0.1.0"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = ["openai", "radon", "coverage", "pytest"]
+
+[project.scripts]
+slopgate = "slopgate.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+addopts = "-m 'not live'"
+markers = ["live: calls real Nebius Token Factory"]
