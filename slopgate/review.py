@@ -26,6 +26,8 @@ DEAD = {"unreachable_code", "variable"}
 NONDETERMINISTIC = {"random", "secrets", "uuid", "time", "datetime"}
 DEFS = (ast.FunctionDef, ast.AsyncFunctionDef)
 COVERAGE = "--slopgate-coverage--"
+RECORDED = "--slopgate-recorded--"
+RECORDER_PATH = "slopgate_record.py"
 
 CLASSIFY_PROMPT = """Name the slop kind that fits the Python function below best.
 
@@ -39,6 +41,7 @@ Reply with JSON only, in the form {{"kind": "<kind>"}}.
 
 TESTS_PROMPT = """Write characterization tests for the Python function below. They must record what the code does now, bugs included.
 
+{inputs_form}
 Rules:
 - Reply with one pytest file and nothing else.
 - Import the target with exactly this one import line, and no other import of the module under test: from {module} import {name}
@@ -48,6 +51,50 @@ Rules:
 File: {path}
 
 {source}"""
+
+INPUTS_FORM = """
+If calls with plain-value arguments (literals and builtins only) cover every branch, reply instead with JSON only, in the form {{"inputs": ["<arguments>", ...]}}. Each item is the text between the parentheses of one call to `{name}`, for example "[10], 50" or "price=10, percent=50". Do not predict results: each call runs on the code, and its return value or exception and the state of its arguments afterward are recorded.
+"""
+
+CAPTURE = """
+
+def capture(*args, **kwargs):
+    return list(args), kwargs
+"""
+
+RECORDER = """import json
+
+from {module} import {name}
+""" + CAPTURE + """
+
+results = []
+for inputs in {inputs!r}:
+    args, kwargs = eval("capture(" + inputs + ")")
+    try:
+        outcome = ["returns", repr({name}(*args, **kwargs))]
+    except Exception as error:
+        outcome = ["raises", type(error).__name__ + ": " + str(error)]
+    results.append([*outcome, repr((args, kwargs))])
+print({marker!r} + json.dumps(results))
+"""
+
+RETURNS_TEST = """
+
+def test_call_{n}():
+    args, kwargs = capture({inputs})
+    assert repr({name}(*args, **kwargs)) == {value!r}
+    assert repr((args, kwargs)) == {state!r}
+"""
+
+RAISES_TEST = """
+
+def test_call_{n}():
+    args, kwargs = capture({inputs})
+    with pytest.raises(Exception) as error:
+        {name}(*args, **kwargs)
+    assert type(error.value).__name__ + ": " + str(error.value) == {value!r}
+    assert repr((args, kwargs)) == {state!r}
+"""
 
 TESTS_RETRY = """
 
@@ -436,6 +483,28 @@ def called_code(repo, head, function, depth=2) -> str:
     return "\n\n".join(f"# {f.path}\n{textwrap.dedent(f.source)}" for f in found)
 
 
+def record(sandbox, checkpoint, function, inputs) -> tuple[str | None, str | None]:
+    module, name = module_of(function.path), function.qualname
+    script = RECORDER.format(module=module, name=name, inputs=inputs, marker=RECORDED)
+    _, output = sandbox.run(checkpoint, {RECORDER_PATH: script}, f"PYTHONHASHSEED=1 python {RECORDER_PATH}")
+    if RECORDED not in output:
+        return None, f"could not record calls: {tail(output)}"
+    outcomes = json.loads(output.split(RECORDED)[-1])
+    tests = f"import pytest\n\nfrom {module} import {name}\n" + CAPTURE
+    for n, (text, (outcome, value, state)) in enumerate(zip(inputs, outcomes)):
+        template = RETURNS_TEST if outcome == "returns" else RAISES_TEST
+        tests += template.format(n=n, name=name, inputs=text, value=value, state=state)
+    return tests, None
+
+
+def proposed_inputs(reply: str) -> list[str] | None:
+    try:
+        inputs = json.loads(reply)["inputs"]
+    except (ValueError, TypeError, KeyError):
+        return None
+    return [str(text) for text in inputs] if isinstance(inputs, list) else None
+
+
 def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> tuple[str | None, str | None]:
     name = nondeterministic(textwrap.dedent(function.source))
     if name:
@@ -446,9 +515,19 @@ def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> t
         qualname=function.qualname,
         path=function.path,
         source=function.source,
+        # the recorder sees only the arguments, so a method's effect on its object would go unchecked
+        inputs_form="" if "." in function.qualname else INPUTS_FORM.format(name=function.qualname),
     )
     request = prompt + (CALLEES.format(code=context) if context else "")
-    tests = strip_fence(llm.complete(SUPER, request))
+
+    def tests_from(reply):
+        reply = strip_fence(reply)
+        inputs = proposed_inputs(reply)
+        return record(sandbox, checkpoint, function, inputs) if inputs is not None else (reply, None)
+
+    tests, failure = tests_from(llm.complete(SUPER, request))
+    if failure:
+        return None, failure
     for retry in (False, True):
         code, output = sandbox.run(
             checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o -"
@@ -461,7 +540,9 @@ def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> t
         if retry:
             return None, f"characterization tests fail on original: {tail(output)}"
         failure = "\n".join(output.strip().splitlines()[-60:])
-        tests = strip_fence(llm.complete(SUPER, request + TESTS_RETRY.format(tests=tests, failure=failure)))
+        tests, failure = tests_from(llm.complete(SUPER, request + TESTS_RETRY.format(tests=tests, failure=failure)))
+        if failure:
+            return None, failure
     report = json.loads(output.split(COVERAGE)[1])["files"][function.path]
     missed = sum(function.start <= line <= function.end for line, _ in report["missing_branches"])
     if missed:

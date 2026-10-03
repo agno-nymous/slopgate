@@ -584,3 +584,168 @@ def test_tests_that_fail_on_original_twice_are_rejected(make_repo, fake_llm, cap
     [rejected] = result["rejected"]
     assert rejected["reason"].startswith("characterization tests fail on original")
     assert models(fake_llm) == [LIGHTNING, SUPER, SUPER]
+
+
+EDIT_INPUTS = json.dumps(
+    {
+        "inputs": [
+            "False, True, False, False",
+            "True, False, False, False",
+            "True, True, True, False",
+            "True, True, False, True",
+            "True, True, False, False",
+        ]
+    }
+)
+
+
+def test_proposed_inputs_are_recorded_on_the_original(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    fake_llm.replies += [IS_NESTING, EDIT_INPUTS, FLAT]
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == []
+    [suggestion] = result["suggestions"]
+    assert "5 characterization tests passed" in suggestion["body"]
+    assert models(fake_llm) == [LIGHTNING, SUPER, SUPER]
+
+
+@pytest.mark.parametrize(
+    ("rewrite", "failing"),
+    [
+        (DROPS_LOCKED, "capture(True, True, True, False)"),
+        (SIGNATURE + "    return int(user_active and is_owner and not locked and not archived)\n", "capture(True, True, False, False)"),
+    ],
+    ids=["value", "type"],
+)
+def test_recorded_calls_reject_a_rewrite_that_changes_the_result(make_repo, fake_llm, capsys, rewrite, failing):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    fake_llm.replies += [IS_NESTING, EDIT_INPUTS, rewrite, rewrite]
+
+    [rejected] = review(capsys, repo)["rejected"]
+
+    assert rejected["reason"].startswith("rewrite fails characterization tests")
+    assert failing in rejected["reason"]
+
+
+GRADE = '''\
+def grade(score):
+    if score is not None:
+        if score >= 0:
+            if score >= 50:
+                return "pass"
+            return "fail"
+    raise ValueError(f"bad score: {score}")
+'''
+
+GRADE_FLAT = '''\
+def grade(score):
+    if score is None or score < 0:
+        raise {error}(f"bad {noun}: {{score}}")
+    return "pass" if score >= 50 else "fail"
+'''
+
+
+@pytest.mark.parametrize(
+    ("error", "noun", "accepted"),
+    [("ValueError", "score", True), ("ValueError", "value", False), ("TypeError", "score", False)],
+    ids=["same", "message", "type"],
+)
+def test_recorded_exceptions_check_type_and_message(make_repo, fake_llm, capsys, error, noun, accepted):
+    repo = make_repo({"app/__init__.py": ""}, {"app/grades.py": GRADE})
+    rewrite = GRADE_FLAT.format(error=error, noun=noun)
+    calls = json.dumps({"inputs": ["70", "10", "-1", "None"]})
+    fake_llm.replies += [IS_NESTING, calls, rewrite, rewrite]
+
+    result = review(capsys, repo)
+
+    assert len(result["suggestions"]) == accepted
+    assert len(result["rejected"]) == (not accepted)
+
+
+def test_recorder_that_ends_without_results_is_rejected(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    fake_llm.replies += [IS_NESTING, json.dumps({"inputs": ["1,,"]})]
+
+    [rejected] = review(capsys, repo)["rejected"]
+
+    assert rejected["reason"].startswith("could not record calls")
+    assert models(fake_llm) == [LIGHTNING, SUPER]
+
+
+ADD_TAG = """\
+def add_tag(tags, tag):
+    if tag:
+        if tag not in tags:
+            if len(tags) < 3:
+                tags.append(tag)
+                return True
+    return False
+"""
+
+ADD_TAG_FLAT = """\
+def add_tag(tags, tag):
+    if not tag or tag in tags or len(tags) >= 3:
+        return False
+    tags.append(tag)
+    return True
+"""
+
+
+@pytest.mark.parametrize(
+    ("rewrite", "accepted"),
+    [(ADD_TAG_FLAT, True), (ADD_TAG_FLAT.replace("    tags.append(tag)\n", ""), False)],
+    ids=["keeps-append", "drops-append"],
+)
+def test_recorded_inputs_check_the_arguments_after_the_call(make_repo, fake_llm, capsys, rewrite, accepted):
+    repo = make_repo({"app/__init__.py": ""}, {"app/tags.py": ADD_TAG})
+    inputs = json.dumps({"inputs": ['["a"], ""', '["a"], "a"', '["a", "b", "c"], "d"', '["a"], "b"']})
+    fake_llm.replies += [IS_NESTING, inputs, rewrite, rewrite]
+
+    result = review(capsys, repo)
+
+    assert len(result["suggestions"]) == accepted
+    assert len(result["rejected"]) == (not accepted)
+
+
+def test_methods_are_not_offered_the_inputs_form(make_repo, fake_llm, capsys):
+    method = "class Policy:\n" + textwrap.indent("@staticmethod\n" + NESTED, "    ")
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED + "\n\n" + method})
+    fake_llm.replies += [IS_NESTING, IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), FLAT]
+    fake_llm.replies += [TESTS.format(name="Policy", call="Policy.can_edit"), "@staticmethod\n" + FLAT]
+
+    review(capsys, repo)
+
+    function_prompt, method_prompt = [prompt for _, prompt in fake_llm.calls if prompt.startswith("Write characterization")]
+    assert '{"inputs":' in function_prompt
+    assert '{"inputs":' not in method_prompt
+
+
+LOG_VALUE = '''\
+def log_value(log, value):
+    log.append(value)
+    if value is not None:
+        if value >= 0:
+            if value < 10:
+                return value
+    raise ValueError("out of range")
+'''
+
+CHECKS_FIRST = '''\
+def log_value(log, value):
+    if value is None or not 0 <= value < 10:
+        raise ValueError("out of range")
+    log.append(value)
+    return value
+'''
+
+
+def test_recorded_inputs_check_the_arguments_after_an_exception(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/log.py": LOG_VALUE})
+    fake_llm.replies += [IS_NESTING, json.dumps({"inputs": ["[], 5", "[], 50", "[], -1", "[], None"]}), CHECKS_FIRST, CHECKS_FIRST]
+
+    [rejected] = review(capsys, repo)["rejected"]
+
+    assert rejected["reason"].startswith("rewrite fails characterization tests")
+    assert "test_call_1" in rejected["reason"]
