@@ -8,15 +8,15 @@ Start with a short spike: confirm which ConTree SDK call starts a new run from a
 
 **Blocked by:** 01
 
-**Status:** needs-live-check
+**Status:** done
 
 - [x] The spike result is written under `## Comments` in this ticket.
-- [ ] The nested-function fixture from ticket 01 passes under the `live` marker with the real sandbox, with the same JSON result as the fake.
+- [x] The nested-function fixture from ticket 01 passes under the `live` marker with the real sandbox, with the same JSON result as the fake.
 - [x] The repo installs once per review, no matter how many trials run (checked by counting install runs).
 - [x] A trial with a broken edit reports failure and does not affect the next trial.
 - [x] `.slopgate.toml` with `[sandbox]` keys `setup` and `test` overrides the detected commands.
 - [x] A repo whose install fails produces one `rejected`-style notice that starts with "could not build test environment" and holds the last 20 output lines, and the process exits 0.
-- [ ] Without `.slopgate.toml`, both `pyproject.toml` and `requirements.txt` repos are detected correctly.
+- [x] Without `.slopgate.toml`, both `pyproject.toml` and `requirements.txt` repos are detected correctly.
 
 ## Comments
 
@@ -27,3 +27,4 @@ Start with a short spike: confirm which ConTree SDK call starts a new run from a
 - Offline half built: `Local` and `Contree` sandboxes in `slopgate/sandbox.py`, command detection (`.slopgate.toml` keys win one by one, then `pyproject.toml` -> `pip install -e .`, then root `requirements*.txt` -> `pip install -r ...`, default test `python -m pytest -q`), install once per review before any LLM call, install failure as one rejected notice, and a repo-test run on each rewrite (exit 0 or 5 passes). `--sandbox local|contree`, default `contree`. 10 offline tests pass; 7 code mutations each fail at least one test.
 - Trials run one at a time. That satisfies the cap of 8. A thread pool of 8 is the upgrade when review time matters (marked with a `ponytail:` comment in `review`).
 - 2026-10-03: Sandboxes access is requested and waiting for Nebius approval. Status set to `needs-live-check`: the offline work is done; the two live boxes stay open. When access is approved, create a fresh API key if needed, run `uv run --env-file .env pytest -m live -q`, tick the two boxes, and set `Status: done`.
+- 2026-10-03: Sandboxes access approved. Live spike confirmed the SDK reading: install with `disposable=False` took 6.6 s; two parallel trials plus one more from the same checkpoint took 2.4 s in total; a file written by one trial was absent in the others; a trial's exit code (3) comes back unchanged; pip has network inside the sandbox. `uv run --env-file .env pytest -m live` on commit 20af887: 4 passed in 45 s (model IDs, nested fixture gives identical JSON under contree and local, pyproject and requirements detection). Status set to `done`.
