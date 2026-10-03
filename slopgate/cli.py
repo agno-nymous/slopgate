@@ -2,6 +2,7 @@ import argparse
 import json
 import sys
 
+from slopgate import index
 from slopgate.review import review
 from slopgate.sandbox import Contree, Local
 
@@ -15,7 +16,15 @@ def main(argv=None):
     review_args.add_argument("--head", required=True)
     review_args.add_argument("--dry-run", action="store_true")
     review_args.add_argument("--sandbox", choices=["local", "contree"], default="contree")
+    index_args = commands.add_parser("index")
+    index_args.add_argument("--repo", default=".")
+    index_args.add_argument("--ref", required=True)
     args = parser.parse_args(argv)
+
+    if args.command == "index":
+        path = index.location(args.repo, args.ref)
+        print(json.dumps({"ref": path.stem, "functions": len(index.build(args.repo, args.ref)), "path": str(path)}))
+        return
 
     result = {"suggestions": [], "followup": [], "rejected": []}
     try:

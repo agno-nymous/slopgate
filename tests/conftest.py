@@ -1,9 +1,12 @@
+import math
+import re
 import subprocess
+import zlib
 from types import SimpleNamespace
 
 import pytest
 
-from slopgate import llm
+from slopgate import embed, llm
 
 
 @pytest.fixture
@@ -39,4 +42,25 @@ def fake_llm(monkeypatch):
         return fake.replies.pop(0)
 
     monkeypatch.setattr(llm, "complete", complete)
+    return fake
+
+
+@pytest.fixture(autouse=True)
+def fake_embed(request, monkeypatch):
+    fake = SimpleNamespace(calls=[], real=embed.encode)
+    if request.node.get_closest_marker("live"):
+        return fake
+
+    def vector(text):
+        counts = [0] * 1024
+        for token in re.findall(r"[A-Za-z_]\w*", text):
+            counts[zlib.crc32(token.encode()) % 1024] += 1
+        norm = math.sqrt(sum(c * c for c in counts)) or 1
+        return [c / norm for c in counts]
+
+    def encode(texts, query=False):
+        fake.calls.append((texts, query))
+        return [vector(text) for text in texts]
+
+    monkeypatch.setattr(embed, "encode", encode)
     return fake

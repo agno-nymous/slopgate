@@ -5,9 +5,9 @@ import textwrap
 
 import vulture
 
-from slopgate import diff, llm
-from slopgate.config import COMPLEXITY, LIGHTNING, NESTING, SUPER, ULTRA
-from slopgate.functions import complexity, nesting
+from slopgate import diff, embed, index, llm
+from slopgate.config import COMPLEXITY, DUPLICATE_SCORE, LIGHTNING, NESTING, SUPER, ULTRA
+from slopgate.functions import complexity, nesting, structure_hash
 from slopgate.sandbox import InstallError, commands, tail
 
 KINDS = {
@@ -71,6 +71,23 @@ Failure:
 )
 
 
+SAME_JOB_PROMPT = """Decide whether the new Python function does the same job as the existing helper, so that callers of the new function could call the helper instead.
+
+Reply with JSON only, in the form {{"same_job": true or false, "difference": "<the behavior difference, or an empty string>"}}.
+
+New function, in {path}:
+
+{source}
+
+Existing helper, in {helper_path}:
+
+{helper_source}"""
+
+
+def module_of(path: str) -> str:
+    return path.removesuffix(".py").replace("/", ".")
+
+
 def strip_fence(text: str) -> str:
     m = re.search(r"```[\w-]*\n(.*?)```", text, re.S)
     return m[1] if m else text
@@ -125,12 +142,157 @@ def broken_rule(original: str, rewrite: str) -> str | None:
     return None
 
 
+def find_duplicate(function, pool) -> dict | None:
+    code_hash = structure_hash(function.source)
+    for record in pool:
+        if record["hash"] == code_hash:
+            return {"helper": record, "exact": True, "difference": "", "note": "exact structural copy"}
+    [vector] = embed.encode([function.source], query=True)
+    for score, record in index.search(pool, vector, DUPLICATE_SCORE, 5):
+        prompt = SAME_JOB_PROMPT.format(
+            path=function.path, source=function.source, helper_path=record["path"], helper_source=record["source"]
+        )
+        try:
+            verdict = json.loads(llm.complete(SUPER, prompt, json=True))
+            if verdict["same_job"] is True:
+                return {"helper": record, "exact": False, "difference": str(verdict.get("difference") or ""), "note": f"score {score:.2f}"}
+        except (TypeError, ValueError, KeyError):
+            continue
+    return None
+
+
+def apply(text: str, edits) -> str:
+    lines = text.encode().splitlines(keepends=True) + [b""]
+    for start_line, start_col, end_line, end_col, new in sorted(edits, reverse=True):
+        lines[start_line - 1 : end_line] = [lines[start_line - 1][:start_col] + new.encode() + lines[end_line - 1][end_col:]]
+    return b"".join(lines).decode()
+
+
+def replace_calls(repo, head, function, helper) -> dict[str, str]:
+    old, new = function.qualname, helper["qualname"]
+    module, helper_module = module_of(function.path), module_of(helper["path"])
+    files = {}
+    for path in diff.git(repo, "ls-tree", "-r", "--name-only", head).splitlines():
+        if not path.endswith(".py"):
+            continue
+        text = diff.git(repo, "show", f"{head}:{path}")
+        try:
+            tree = ast.parse(text)
+        except SyntaxError:
+            continue
+        edits = []
+        deleted = range(0)
+        if path == function.path:
+            lines = text.splitlines()
+            last = function.end
+            while last < len(lines) and not lines[last].strip():
+                last += 1
+            deleted = range(function.start, last + 1)
+            edits.append((function.start, 0, last + 1, 0, ""))
+        sees = path == function.path
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.level == 0 and node.module == module:
+                [alias] = [a for a in node.names if a.name == old] or [None]
+                if alias:
+                    sees = sees or alias.asname is None
+                    keep = [a for a in node.names if a is not alias]
+                    imports = [ast.ImportFrom(module, keep, 0)] if keep else []
+                    imports.append(ast.ImportFrom(helper_module, [ast.alias(new, alias.asname)], 0))
+                    replacement = "; ".join(ast.unparse(i) for i in imports)
+                    edits.append((node.lineno, node.col_offset, node.end_lineno, node.end_col_offset, replacement))
+        calls = [
+            node
+            for node in ast.walk(tree)
+            if sees and isinstance(node, ast.Name) and node.id == old and isinstance(node.ctx, ast.Load) and node.lineno not in deleted
+        ]
+        edits += [(n.lineno, n.col_offset, n.end_lineno, n.end_col_offset, new) for n in calls]
+        bound = {n.name for n in tree.body if isinstance(n, (*DEFS, ast.ClassDef))} | {
+            (a.asname or a.name).split(".")[0] for n in tree.body if isinstance(n, (ast.Import, ast.ImportFrom)) for a in n.names
+        }
+        if path == function.path and calls and new not in bound:
+            after = max((n.end_lineno for n in tree.body if isinstance(n, (ast.Import, ast.ImportFrom))), default=0)
+            edits.append((after + 1, 0, after + 1, 0, f"from {helper_module} import {new}\n"))
+        if edits:
+            files[path] = apply(text, edits)
+    return files
+
+
+def characterize(sandbox, checkpoint, function, test_path, cmd) -> tuple[str | None, str | None]:
+    name = nondeterministic(textwrap.dedent(function.source))
+    if name:
+        return None, f"nondeterministic: uses {name}"
+    tests = strip_fence(
+        llm.complete(
+            SUPER,
+            TESTS_PROMPT.format(
+                module=module_of(function.path),
+                name=function.qualname.split(".")[0],
+                qualname=function.qualname,
+                path=function.path,
+                source=function.source,
+            ),
+        )
+    )
+    code, output = sandbox.run(
+        checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o -"
+    )
+    second, _ = sandbox.run(checkpoint, {test_path: tests}, f"PYTHONHASHSEED=2 {cmd}")
+    if bool(code) != bool(second):
+        return None, "nondeterministic: characterization tests differ across two runs"
+    if code:
+        return None, f"characterization tests fail on original: {tail(output)}"
+    report = json.loads(output.split(COVERAGE)[1])["files"][function.path]
+    missed = sum(function.start <= line <= function.end for line, _ in report["missing_branches"])
+    if missed:
+        return None, f"characterization tests miss branches: {missed}"
+    return tests, None
+
+
+def deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, test_path, cmd) -> tuple[dict | None, str | None]:
+    helper = match["helper"]
+    reason = f"`{function.qualname}` does the same job as `{helper['qualname']}` in {helper['path']} ({match['note']})."
+    if tests is not None:
+        target = f"from {module_of(function.path)} import {function.qualname}"
+        swapped = re.sub(
+            rf"^{re.escape(target)}$",
+            f"from {module_of(helper['path'])} import {helper['qualname']} as {function.qualname}",
+            tests,
+            count=1,
+            flags=re.M,
+        )
+        if swapped == tests:
+            return None, f"characterization tests lack the import line: {target}"
+        code, output = sandbox.run(checkpoint, {test_path: swapped}, cmd)
+        if code and not match["difference"]:
+            return None, f"differential tests fail on helper: {tail(output)}"
+        if code:
+            failed = ", ".join(re.findall(r"^FAILED \S+::(\w+)", output, re.M))
+            reason += f" Difference: {match['difference'].rstrip('.')}. Differential tests that fail on the helper: {failed}."
+    files = replace_calls(repo, head, function, helper)
+    code, output = sandbox.run(checkpoint, files, test)
+    if code not in (0, 5):
+        return None, f"rewrite fails repo tests: {tail(output)}"
+    return {"function": function.qualname, "kind": "duplicate", "reason": reason, "files": files}, None
+
+
 def review(repo, base, head, sandbox) -> dict:
     result = {"suggestions": [], "followup": [], "rejected": []}
+    changed = diff.changed_functions(repo, base, head)
+    matches = {}
+    if any("." not in function.qualname for function, _ in changed):
+        base_index = index.build(repo, base)
+        known = {(r["path"], r["qualname"]) for r in base_index}
+        skip = {(function.path, function.qualname) for function, _ in changed}
+        pool = [r for r in base_index if "." not in r["qualname"] and (r["path"], r["qualname"]) not in skip]
+        for function, _ in changed:
+            if "." not in function.qualname and (function.path, function.qualname) not in known:
+                matches[function] = find_duplicate(function, pool)
     candidates = []
-    for function, added in diff.changed_functions(repo, base, head):
+    for function, added in changed:
         text = diff.git(repo, "show", f"{head}:{function.path}")
-        if dead_lines(function.path, text) & set(range(function.start, function.end + 1)):
+        if matches.get(function):
+            kind = "duplicate"
+        elif dead_lines(function.path, text) & set(range(function.start, function.end + 1)):
             kind = "dead"
         elif complexity(function.source) >= COMPLEXITY or nesting(function.source) > NESTING:
             kind = classify(function.source)
@@ -149,44 +311,24 @@ def review(repo, base, head, sandbox) -> dict:
     # ponytail: one trial at a time (well under the cap of 8); a thread pool of 8 when review time matters
     for n, (function, added, kind, text) in enumerate(candidates):
         rejected = {"function": function.qualname, "path": function.path}
-        dedented = textwrap.dedent(function.source)
-        name = nondeterministic(dedented)
-        if name:
-            result["rejected"].append({**rejected, "reason": f"nondeterministic: uses {name}"})
-            continue
-
-        module = function.path.removesuffix(".py").replace("/", ".")
-        tests = strip_fence(
-            llm.complete(
-                SUPER,
-                TESTS_PROMPT.format(
-                    module=module,
-                    name=function.qualname.split(".")[0],
-                    qualname=function.qualname,
-                    path=function.path,
-                    source=function.source,
-                ),
-            )
-        )
         test_path = f"tests/test_slopgate_{n}.py"
         cmd = f"python -m coverage run --branch -m pytest -q {test_path}"
-
-        code, output = sandbox.run(
-            checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o -"
-        )
-        second, _ = sandbox.run(checkpoint, {test_path: tests}, f"PYTHONHASHSEED=2 {cmd}")
-        if bool(code) != bool(second):
-            result["rejected"].append({**rejected, "reason": "nondeterministic: characterization tests differ across two runs"})
-            continue
-        if code:
-            result["rejected"].append({**rejected, "reason": f"characterization tests fail on original: {tail(output)}"})
-            continue
-        report = json.loads(output.split(COVERAGE)[1])["files"][function.path]
-        missed = sum(function.start <= line <= function.end for line, _ in report["missing_branches"])
-        if missed:
-            result["rejected"].append({**rejected, "reason": f"characterization tests miss branches: {missed}"})
+        match = matches.get(function)
+        tests = None
+        if not (match and match["exact"]):
+            tests, failure = characterize(sandbox, checkpoint, function, test_path, cmd)
+            if failure:
+                result["rejected"].append({**rejected, "reason": failure})
+                continue
+        if match:
+            followup, failure = deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, test_path, cmd)
+            if failure:
+                result["rejected"].append({**rejected, "reason": failure})
+            else:
+                result["followup"].append(followup)
             continue
 
+        dedented = textwrap.dedent(function.source)
         indent = function.source[: len(function.source) - len(function.source.lstrip())]
         lines = text.splitlines(keepends=True)
         reply = llm.complete(SUPER, REWRITE_PROMPT.format(instruction=KINDS[kind], source=dedented))
@@ -214,19 +356,18 @@ def review(repo, base, head, sandbox) -> dict:
             continue
 
         start, end = function.start, function.end
+        passed = re.search(r"(\d+) passed", output)[1]
+        summary = (
+            f"Slopgate (`{kind}`) rewrite of `{function.qualname}`: "
+            f"nesting {nesting(function.source)} -> {nesting(rewrite)}, "
+            f"complexity {complexity(function.source)} -> {complexity(rewrite)}. "
+            f"{passed} characterization tests passed in sandbox."
+        )
         if set(range(start, end + 1)) <= added:
-            passed = re.search(r"(\d+) passed", output)[1]
-            body = (
-                f"Slopgate (`{kind}`) rewrite of `{function.qualname}`: "
-                f"nesting {nesting(function.source)} -> {nesting(rewrite)}, "
-                f"complexity {complexity(function.source)} -> {complexity(rewrite)}. "
-                f"{passed} characterization tests passed in sandbox.\n\n"
-                f"```suggestion\n{suggested}```"
-            )
-            suggestion = {"path": function.path, "line": end, "side": "RIGHT", "body": body}
+            suggestion = {"path": function.path, "line": end, "side": "RIGHT", "body": f"{summary}\n\n```suggestion\n{suggested}```"}
             if start != end:
                 suggestion |= {"start_line": start, "start_side": "RIGHT"}
             result["suggestions"].append(suggestion)
         else:
-            result["followup"].append({"path": function.path, "start_line": start, "end_line": end, "code": suggested})
+            result["followup"].append({"function": function.qualname, "kind": kind, "reason": summary, "files": {function.path: spliced}})
     return result

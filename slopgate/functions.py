@@ -1,4 +1,5 @@
 import ast
+import hashlib
 import textwrap
 from dataclasses import dataclass
 
@@ -31,6 +32,27 @@ def parse(path: str, text: str) -> list[Function]:
 
     walk(ast.parse(text).body, "")
     return found
+
+
+def structure_hash(source: str) -> str:
+    node = ast.parse(textwrap.dedent(source)).body[0]
+    if ast.get_docstring(node) is not None:
+        node.body = node.body[1:] or [ast.Pass()]
+    names = {}
+
+    def placeholder(name):
+        return names.setdefault(name, f"_{len(names)}")
+
+    node.name = placeholder(node.name)
+    args = node.args
+    for arg in [*args.posonlyargs, *args.args, args.vararg, *args.kwonlyargs, args.kwarg]:
+        if arg:
+            arg.arg = placeholder(arg.arg)
+    stored = {n.id for n in ast.walk(node) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Store)}
+    for n in ast.walk(node):
+        if isinstance(n, ast.Name) and (n.id in names or n.id in stored):
+            n.id = placeholder(n.id)
+    return hashlib.sha256(ast.dump(node).encode()).hexdigest()
 
 
 def complexity(source: str) -> int:
