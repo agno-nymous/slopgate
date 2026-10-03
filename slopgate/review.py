@@ -25,6 +25,7 @@ KINDS = {
 DEAD = {"unreachable_code", "variable"}
 NONDETERMINISTIC = {"random", "secrets", "uuid", "time", "datetime"}
 DEFS = (ast.FunctionDef, ast.AsyncFunctionDef)
+BOOL_CALLS = {"bool", "isinstance", "issubclass", "callable", "hasattr", "all", "any"}
 COVERAGE = "--slopgate-coverage--"
 RECORDED = "--slopgate-recorded--"
 RECORDER_PATH = "slopgate_record.py"
@@ -118,6 +119,7 @@ REWRITE_PROMPT = """Rewrite the Python function below. {instruction}
 Rules:
 - Keep the exact signature, the decorators, and the behavior, bugs included.
 - Add no new functions, no lambdas, and no new classes.
+- If every return gives True or False, keep it that way: `a and b` returns `a` itself when `a` is falsy, so wrap such a chain in bool().
 - Reply with the full rewritten function, decorators included, and nothing else.
 
 {source}"""
@@ -188,6 +190,23 @@ def signature(node) -> tuple:
     return type(node), node.name, ast.dump(node.args), node.returns and ast.dump(node.returns)
 
 
+def boolish(node) -> bool:
+    match node:
+        case ast.Constant(value=bool()) | ast.Compare() | ast.UnaryOp(op=ast.Not()):
+            return True
+        case ast.Call(func=ast.Name(id=name)):
+            return name in BOOL_CALLS
+        case ast.BoolOp(values=values):
+            return all(boolish(value) for value in values)
+        case ast.IfExp(body=body, orelse=orelse):
+            return boolish(body) and boolish(orelse)
+    return False
+
+
+def returns(fn) -> list:
+    return [node.value for node in scope(fn) if isinstance(node, ast.Return)]
+
+
 def broken_rule(original: str, rewrite: str) -> str | None:
     try:
         new = ast.parse(rewrite)
@@ -204,6 +223,9 @@ def broken_rule(original: str, rewrite: str) -> str | None:
         return "adds a function"
     if len(new.body) != 1 or not isinstance(new.body[0], DEFS) or signature(new.body[0]) != signature(old.body[0]):
         return "signature changed"
+    old_returns = returns(old.body[0])
+    if old_returns and all(map(boolish, old_returns)) and not all(map(boolish, returns(new.body[0]))):
+        return "returns a non-bool value where the original returns only bools"
     return None
 
 

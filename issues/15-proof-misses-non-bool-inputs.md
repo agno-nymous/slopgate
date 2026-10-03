@@ -13,9 +13,13 @@ Make the proof cover this class of change. Options to compare: ask for at least 
 
 **Blocked by:** 14
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The `can_checkout` demo rewrite above is rejected, or rewritten to return the same values (for example with `bool(...)`).
-- [ ] A rewrite that keeps bool results (for example `return bool(a and b)`) is still accepted.
+- [x] The `can_checkout` demo rewrite above is rejected, or rewritten to return the same values (for example with `bool(...)`).
+- [x] A rewrite that keeps bool results (for example `return bool(a and b)`) is still accepted.
 
 ## Comments
+- 2026-10-03: Built as a static rule in `broken_rule` (`slopgate/review.py`), so it covers both test forms with no model call: when every `return` of the original gives a bool (a bool constant, a comparison, `not`, a call to `bool`/`isinstance`/`issubclass`/`callable`/`hasattr`/`all`/`any`, or an `and`/`or`/`if` expression built only from those; see `boolish`), every `return` of the rewrite must too. Otherwise the rewrite is rejected before any trial with "rule: returns a non-bool value where the original returns only bools". The rewrite prompt also states the rule, so Super writes `bool(...)` instead of losing the candidate.
+- Test fixtures that returned a bare `and` chain for the bool-only `can_edit` now use `bool(...)`; the result-type check of ticket 14 moved to a function that returns a number (`log_value` rewritten to return `float(value)`).
+- 5 new seam tests (3 rejected shapes, 3 accepted shapes, the prompt line; plus the moved type test); 7 mutations (rule off, rule on for every function, `and`/`or` with any bool part, `if` expression with either side, any call counted as bool, comparisons not counted, prompt line removed) each fail one.
+- Live, real Super plus real sandbox, the demo pull request head before the applied suggestion (`441d235`), 3 runs: each produced `return bool(user_active and has_items and address_ok and paid)` for `can_checkout`, with 2 suggestions, 2 follow-ups, 0 rejected.
