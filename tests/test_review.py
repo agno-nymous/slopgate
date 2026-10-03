@@ -1,8 +1,13 @@
+import ast
 import json
 import re
 import textwrap
 
+import pytest
+
 from slopgate.cli import main
+from slopgate.config import LIGHTNING, SUPER, ULTRA
+from slopgate.sandbox import Local
 
 NESTED = '''\
 def can_edit(user_active, is_owner, locked, archived):
@@ -63,8 +68,10 @@ def test_active_owner_can_edit_open_item():
     assert {call}(True, True, False, False) is True
 '''
 
+IS_NESTING = '{"kind": "nesting"}'
 VIEW = NESTED.replace("can_edit", "can_view")
 FLAT_VIEW = FLAT.replace("can_edit", "can_view")
+DROPS_LOCKED = "def can_edit(user_active, is_owner, locked, archived):\n    return user_active and is_owner and not archived\n"
 
 
 def review(capsys, repo, sandbox="local"):
@@ -78,12 +85,17 @@ def suggested_code(body):
     return re.search(r"```suggestion\n(.*?)```", body, re.S)[1]
 
 
+def models(fake_llm):
+    return [model for model, _ in fake_llm.calls]
+
+
 def test_nested_function_gets_one_proven_suggestion(make_repo, fake_llm, capsys):
     repo = make_repo(
         {"app/__init__.py": "", "README.md": "demo\n"},
         {"app/perms.py": NESTED + "\n\n" + SIMPLE},
     )
     fake_llm.replies += [
+        IS_NESTING,
         "```python\n" + TESTS.format(name="can_edit", call="can_edit") + "```",
         "Here is the rewrite:\n```python\n" + FLAT + "```",
     ]
@@ -91,7 +103,7 @@ def test_nested_function_gets_one_proven_suggestion(make_repo, fake_llm, capsys)
     result = review(capsys, repo)
 
     assert result["followup"] == [] and result["rejected"] == []
-    assert len(fake_llm.calls) == 2
+    assert len(fake_llm.calls) == 3
     [suggestion] = result["suggestions"]
     assert suggestion["path"] == "app/perms.py"
     assert suggestion["side"] == "RIGHT"
@@ -111,6 +123,7 @@ def test_method_keeps_qualname_decorator_line_and_indentation(make_repo, fake_ll
     method = "class Policy:\n    VERSION = 1\n\n" + textwrap.indent("@staticmethod\n" + NESTED, "    ")
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": method})
     fake_llm.replies += [
+        IS_NESTING,
         TESTS.format(name="Policy", call="Policy.can_edit"),
         "@staticmethod\n" + FLAT,
     ]
@@ -120,7 +133,10 @@ def test_method_keeps_qualname_decorator_line_and_indentation(make_repo, fake_ll
     assert "Policy.can_edit" in suggestion["body"]
     assert suggestion["start_line"] == 4
     assert suggestion["line"] == 18
-    assert suggested_code(suggestion["body"]) == textwrap.indent("@staticmethod\n" + FLAT, "    ")
+    code = suggested_code(suggestion["body"])
+    assert code == textwrap.indent("@staticmethod\n" + FLAT, "    ")
+    lines = method.splitlines(keepends=True)
+    ast.parse("".join(lines[: suggestion["start_line"] - 1]) + code + "".join(lines[suggestion["line"] :]))
 
 
 def test_one_line_function_flagged_by_complexity_has_no_start_line(make_repo, fake_llm, capsys):
@@ -129,6 +145,7 @@ def test_one_line_function_flagged_by_complexity_has_no_start_line(make_repo, fa
         {"app/flags.py": "def all_set(a, b, c, d, e, f): return a and b and c and d and e and f\n"},
     )
     fake_llm.replies += [
+        IS_NESTING,
         "from app.flags import all_set\n\n\n"
         + "".join(
             f"def test_false_at_{i}():\n    args = [True] * 6\n    args[{i}] = False\n    assert all_set(*args) is False\n\n\n"
@@ -147,10 +164,7 @@ def test_one_line_function_flagged_by_complexity_has_no_start_line(make_repo, fa
 
 def test_rewrite_that_changes_behavior_is_rejected(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [
-        TESTS.format(name="can_edit", call="can_edit"),
-        "def can_edit(user_active, is_owner, locked, archived):\n    return user_active and is_owner and not archived\n",
-    ]
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), DROPS_LOCKED, DROPS_LOCKED]
 
     result = review(capsys, repo)
 
@@ -159,6 +173,19 @@ def test_rewrite_that_changes_behavior_is_rejected(make_repo, fake_llm, capsys):
     assert (rejected["function"], rejected["path"]) == ("can_edit", "app/perms.py")
     assert rejected["reason"].startswith("rewrite fails characterization tests")
     assert "test_locked_cannot_edit" in rejected["reason"]
+    assert models(fake_llm) == [LIGHTNING, SUPER, SUPER, ULTRA]
+
+
+def test_failed_rewrite_gets_one_ultra_retry(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), DROPS_LOCKED, FLAT]
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == []
+    [suggestion] = result["suggestions"]
+    assert suggested_code(suggestion["body"]) == FLAT
+    assert models(fake_llm) == [LIGHTNING, SUPER, SUPER, ULTRA]
 
 
 def test_non_python_change_prints_empty_result_without_llm(make_repo, fake_llm, capsys):
@@ -179,6 +206,8 @@ def test_repo_installs_once_per_review(make_repo, fake_llm, capsys, tmp_path_fac
     installs = tmp_path_factory.mktemp("log") / "installs"
     repo = two_nested_functions(make_repo, f"setup = 'echo x >> {installs}'\n")
     fake_llm.replies += [
+        IS_NESTING,
+        IS_NESTING,
         TESTS.format(name="can_edit", call="can_edit"),
         FLAT,
         TESTS.format(name="can_view", call="can_view"),
@@ -193,9 +222,13 @@ def test_repo_installs_once_per_review(make_repo, fake_llm, capsys, tmp_path_fac
 
 def test_broken_trial_does_not_affect_the_next(make_repo, fake_llm, capsys):
     repo = two_nested_functions(make_repo, "")
+    crashes = "def can_edit(user_active, is_owner, locked, archived):\n    return undefined_name\n"
     fake_llm.replies += [
+        IS_NESTING,
+        IS_NESTING,
         TESTS.format(name="can_edit", call="can_edit"),
-        "def can_edit(:\n    return\n",
+        crashes,
+        crashes,
         TESTS.format(name="can_view", call="can_view"),
         FLAT_VIEW,
     ]
@@ -211,7 +244,7 @@ def test_broken_trial_does_not_affect_the_next(make_repo, fake_llm, capsys):
 
 def test_failing_test_override_rejects_rewrite(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED, ".slopgate.toml": "[sandbox]\ntest = 'exit 1'\n"})
-    fake_llm.replies += [TESTS.format(name="can_edit", call="can_edit"), FLAT]
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), FLAT, FLAT]
 
     result = review(capsys, repo)
 
@@ -226,7 +259,7 @@ def test_passing_test_override_replaces_red_repo_suite(make_repo, fake_llm, caps
         {"app/__init__.py": "", "tests/test_suite.py": "def test_suite_is_red():\n    assert False\n"},
         {"app/perms.py": NESTED, ".slopgate.toml": "[sandbox]\ntest = 'true'\n"},
     )
-    fake_llm.replies += [TESTS.format(name="can_edit", call="can_edit"), FLAT]
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), FLAT]
 
     result = review(capsys, repo)
 
@@ -238,6 +271,7 @@ def test_passing_test_override_replaces_red_repo_suite(make_repo, fake_llm, caps
 def test_install_failure_is_one_notice_with_last_20_lines(make_repo, fake_llm, capsys):
     setup = "echo boom; for i in $(seq 1 30); do echo line$i; done; exit 1"
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED, ".slopgate.toml": f"[sandbox]\nsetup = '{setup}'\n"})
+    fake_llm.replies += [IS_NESTING]
 
     result = review(capsys, repo)
 
@@ -247,4 +281,255 @@ def test_install_failure_is_one_notice_with_last_20_lines(make_repo, fake_llm, c
         "followup": [],
         "rejected": [{"reason": f"could not build test environment\n{tail}"}],
     }
-    assert fake_llm.calls == []
+    assert [model for model, _ in fake_llm.calls] == [LIGHTNING]
+
+
+KINDS_SOURCE = NESTED + '''
+
+def total(prices):
+    if prices is None:
+        return 0
+    if len(prices) == 0:
+        return 0
+    subtotal = 0
+    for price in prices:
+        if price is not None:
+            if price is not None and price > 0:
+                subtotal += price
+    return subtotal
+
+
+def parse_port(value):
+    try:
+        if value is None:
+            return 8080
+        if isinstance(value, bool):
+            return 8080
+        port = int(value)
+        if port < 1:
+            return 8080
+        if port > 65535:
+            return 8080
+        return port
+    except Exception:
+        return 8080
+
+
+def http_reason(code):
+    if code == 200:
+        return "OK"
+    elif code == 201:
+        return "Created"
+    elif code == 204:
+        return "No Content"
+    elif code == 400:
+        return "Bad Request"
+    elif code == 404:
+        return "Not Found"
+    elif code == 500:
+        return "Server Error"
+    return "Unknown"
+
+
+def clamp_all(values, low, high):
+    # return empty list for None
+    if values is None:
+        return []
+    # check the bounds
+    if low > high:
+        raise ValueError("low > high")
+    # create the result list
+    result = []
+    # loop over the values
+    for value in values:
+        # check if value is too low
+        if value < low:
+            result.append(low)
+        # check if value is too high
+        elif value > high:
+            result.append(high)
+        else:
+            result.append(value)
+    # return the result
+    return result
+
+
+def describe(n):
+    label = "n"
+    return f"value {n}"
+    print("done")
+'''
+
+KIND_CASES = [
+    ("nesting", TESTS.format(name="can_edit", call="can_edit"), FLAT),
+    (
+        "redundant_check",
+        "from app.perms import total\n\n\n"
+        "def test_none():\n    assert total(None) == 0\n\n\n"
+        "def test_empty():\n    assert total([]) == 0\n\n\n"
+        "def test_mixed():\n    assert total([None, -1, 2, 3]) == 5\n",
+        "def total(prices):\n    if prices is None:\n        return 0\n"
+        "    return sum(price for price in prices if price is not None and price > 0)\n",
+    ),
+    (
+        "swallowed_error",
+        "from app.perms import parse_port\n\n\n"
+        + "".join(
+            f"def test_{name}():\n    assert parse_port({arg}) == {want}\n\n\n"
+            for name, arg, want in [
+                ("none", None, 8080),
+                ("bool", True, 8080),
+                ("low", '"0"', 8080),
+                ("high", '"70000"', 8080),
+                ("garbage", '"abc"', 8080),
+                ("valid", '"443"', 443),
+            ]
+        ),
+        "def parse_port(value):\n    if value is None or isinstance(value, bool):\n        return 8080\n"
+        "    try:\n        port = int(value)\n    except (TypeError, ValueError):\n        return 8080\n"
+        "    return port if 1 <= port <= 65535 else 8080\n",
+    ),
+    (
+        "lookup_table",
+        "from app.perms import http_reason\n\n\n"
+        + "".join(
+            f"def test_{code}():\n    assert http_reason({code}) == {reason!r}\n\n\n"
+            for code, reason in [
+                (200, "OK"),
+                (201, "Created"),
+                (204, "No Content"),
+                (400, "Bad Request"),
+                (404, "Not Found"),
+                (500, "Server Error"),
+                (999, "Unknown"),
+            ]
+        ),
+        "def http_reason(code):\n    return {200: 'OK', 201: 'Created', 204: 'No Content', 400: 'Bad Request', "
+        "404: 'Not Found', 500: 'Server Error'}.get(code, 'Unknown')\n",
+    ),
+    (
+        "filler_comment",
+        "import pytest\n\nfrom app.perms import clamp_all\n\n\n"
+        "def test_none():\n    assert clamp_all(None, 0, 1) == []\n\n\n"
+        "def test_bad_bounds():\n    with pytest.raises(ValueError):\n        clamp_all([1], 2, 1)\n\n\n"
+        "def test_clamps():\n    assert clamp_all([0, 5, 10], 1, 9) == [1, 5, 9]\n",
+        "def clamp_all(values, low, high):\n    if values is None:\n        return []\n"
+        "    if low > high:\n        raise ValueError('low > high')\n    result = []\n"
+        "    for value in values:\n        if value < low:\n            result.append(low)\n"
+        "        elif value > high:\n            result.append(high)\n        else:\n            result.append(value)\n"
+        "    return result\n",
+    ),
+    (
+        "dead",
+        "from app.perms import describe\n\n\ndef test_describe():\n    assert describe(3) == 'value 3'\n",
+        "def describe(n):\n    return f'value {n}'\n",
+    ),
+]
+
+
+def test_each_in_place_kind_gets_a_suggestion_naming_it(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": KINDS_SOURCE})
+    fake_llm.replies += [json.dumps({"kind": kind}) for kind, _, _ in KIND_CASES if kind != "dead"]
+    fake_llm.replies += [reply for _, tests, rewrite in KIND_CASES for reply in (tests, rewrite)]
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == []
+    assert len(result["suggestions"]) == 6
+    for (kind, _, _), suggestion in zip(KIND_CASES, result["suggestions"]):
+        assert f"Slopgate (`{kind}`)" in suggestion["body"]
+    assert models(fake_llm).count(LIGHTNING) == 5
+
+
+@pytest.fixture
+def trials(monkeypatch):
+    commands = []
+    run = Local.run
+
+    def spy(self, checkpoint, files, cmd):
+        commands.append(cmd)
+        return run(self, checkpoint, files, cmd)
+
+    monkeypatch.setattr(Local, "run", spy)
+    return commands
+
+
+SIGNATURE = "def can_edit(user_active, is_owner, locked, archived):\n"
+
+
+@pytest.mark.parametrize(
+    ("rewrite", "rule"),
+    [
+        ("def can_edit(user_active, is_owner, locked):\n    return user_active and is_owner and not locked\n", "signature changed"),
+        (SIGNATURE + "    class Box:\n        pass\n    return user_active and is_owner and not locked and not archived\n", "adds a class"),
+        (SIGNATURE + "    def check():\n        return not archived\n    return user_active and is_owner and not locked and check()\n", "adds a function"),
+        ("def can_edit(user_active, is_owner, locked, archived:\n    return True\n", "does not parse"),
+    ],
+)
+def test_rule_breaking_rewrite_is_rejected_without_a_trial(make_repo, fake_llm, capsys, trials, rewrite, rule):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), rewrite]
+
+    result = review(capsys, repo)
+
+    assert result["suggestions"] == []
+    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "reason": f"rule: {rule}"}]
+    assert len(trials) == 2
+    assert models(fake_llm) == [LIGHTNING, SUPER, SUPER]
+
+
+def test_function_using_random_is_rejected_as_nondeterministic(make_repo, fake_llm, capsys):
+    source = "import random\n\n\ndef roll(a, b, c, d, e, f):\n    return random.random() if a and b and c and d and e and f else 0\n"
+    repo = make_repo({"app/__init__.py": ""}, {"app/dice.py": source})
+    fake_llm.replies += [IS_NESTING]
+
+    result = review(capsys, repo)
+
+    assert result["suggestions"] == []
+    [rejected] = result["rejected"]
+    assert rejected["function"] == "roll"
+    assert "nondeterministic" in rejected["reason"]
+    assert models(fake_llm) == [LIGHTNING]
+
+
+def test_tests_that_miss_a_branch_are_rejected_with_the_count(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    weak = TESTS.format(name="can_edit", call="can_edit").replace(
+        "def test_locked_cannot_edit():\n    assert can_edit(True, True, True, False) is False\n", ""
+    )
+    fake_llm.replies += [IS_NESTING, weak]
+
+    result = review(capsys, repo)
+
+    assert result["suggestions"] == []
+    assert result["rejected"] == [
+        {"function": "can_edit", "path": "app/perms.py", "reason": "characterization tests miss branches: 1"}
+    ]
+    assert models(fake_llm) == [LIGHTNING, SUPER]
+
+
+@pytest.mark.parametrize("reply", ['{"kind": "none"}', "not json", '{"kind": "wrapper"}', '{"type": "nesting"}', "[]"])
+def test_classifier_none_or_garbage_drops_the_function_silently(make_repo, fake_llm, capsys, reply):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    fake_llm.replies += [reply]
+
+    assert review(capsys, repo) == {"suggestions": [], "followup": [], "rejected": []}
+    assert models(fake_llm) == [LIGHTNING]
+
+
+def test_tests_that_differ_across_two_runs_are_rejected(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    # hash("b") is odd under PYTHONHASHSEED=1 and even under PYTHONHASHSEED=2
+    flaky = TESTS.format(name="can_edit", call="can_edit") + '\n\ndef test_hash_order():\n    assert hash("b") % 2 == 1\n'
+    fake_llm.replies += [IS_NESTING, flaky]
+
+    result = review(capsys, repo)
+
+    assert result["suggestions"] == []
+    assert result["rejected"] == [
+        {
+            "function": "can_edit",
+            "path": "app/perms.py",
+            "reason": "nondeterministic: characterization tests differ across two runs",
+        }
+    ]

@@ -2,7 +2,7 @@ import os
 
 import pytest
 from openai import OpenAI
-from test_review import FLAT, NESTED, SIMPLE, TESTS, review
+from test_review import FLAT, IS_NESTING, NESTED, SIMPLE, TESTS, review
 
 from slopgate import config
 
@@ -45,6 +45,7 @@ def test_nested_fixture_gives_same_json_in_contree_and_local(make_repo, fake_llm
         {"app/perms.py": NESTED + "\n\n" + SIMPLE},
     )
     fake_llm.replies += 2 * [
+        IS_NESTING,
         "```python\n" + TESTS.format(name="can_edit", call="can_edit") + "```",
         "Here is the rewrite:\n```python\n" + FLAT + "```",
     ]
@@ -59,7 +60,7 @@ def test_nested_fixture_gives_same_json_in_contree_and_local(make_repo, fake_llm
 @pytest.mark.parametrize("manifest", [{"pyproject.toml": PYPROJECT}, {"requirements.txt": "attrs\n"}], ids=["pyproject", "requirements"])
 def test_detected_install_provides_dependency(make_repo, fake_llm, capsys, manifest):
     repo = make_repo({"app/__init__.py": "", **manifest}, {"app/perms.py": "import attrs\n\n\n" + NESTED})
-    fake_llm.replies += [TESTS.format(name="can_edit", call="can_edit"), FLAT]
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), FLAT]
 
     result = review(capsys, repo, "contree")
 
