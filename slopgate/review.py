@@ -7,7 +7,7 @@ import vulture
 
 from slopgate import diff, embed, index, llm
 from slopgate.config import COMPLEXITY, DUPLICATE_SCORE, LIGHTNING, NESTING, SUPER, ULTRA
-from slopgate.functions import complexity, nesting, structure_hash
+from slopgate.functions import complexity, nesting, parse, structure_hash
 from slopgate.sandbox import InstallError, commands, tail
 
 KINDS = {
@@ -168,6 +168,173 @@ def apply(text: str, edits) -> str:
     return b"".join(lines).decode()
 
 
+def removal_edit(text: str, function) -> tuple:
+    lines = text.splitlines()
+    last = function.end
+    while last < len(lines) and not lines[last].strip():
+        last += 1
+    start = function.start
+    while last == len(lines) and start > 1 and not lines[start - 2].strip():
+        start -= 1
+    return start, 0, last + 1, 0, ""
+
+
+def forwarded(node) -> ast.Call | None:
+    args = node.args
+    # ponytail: *args/**kwargs wrappers are skipped; map star arguments through when real wrappers need it
+    if not isinstance(node, ast.FunctionDef) or node.decorator_list or args.vararg or args.kwarg:
+        return None
+    body = node.body[1:] if ast.get_docstring(node) is not None else node.body
+    if len(body) != 1 or not isinstance(body[0], ast.Return) or not isinstance(body[0].value, ast.Call):
+        return None
+    call = body[0].value
+    root = call.func
+    while isinstance(root, ast.Attribute):
+        root = root.value
+    params = [a.arg for a in (*args.posonlyargs, *args.args, *args.kwonlyargs)]
+    if not isinstance(root, ast.Name) or root.id in params or root.id == node.name:
+        return None
+    names = [a.id if isinstance(a, ast.Name) else None for a in call.args]
+    names += [k.arg if isinstance(k.value, ast.Name) and k.value.id == k.arg else None for k in call.keywords]
+    return call if names == params else None
+
+
+def import_line(tree, module: str, name: str) -> str | None:
+    for stmt in tree.body:
+        if isinstance(stmt, (ast.Import, ast.ImportFrom)):
+            for alias in stmt.names:
+                if (alias.asname or alias.name).split(".")[0] == name:
+                    return ast.unparse(ast.Import([alias]) if isinstance(stmt, ast.Import) else ast.ImportFrom(stmt.module, [alias], stmt.level))
+        elif (isinstance(stmt, (*DEFS, ast.ClassDef)) and stmt.name == name) or (
+            isinstance(stmt, ast.Assign) and any(isinstance(t, ast.Name) and t.id == name for t in stmt.targets)
+        ):
+            return f"from {module} import {name}"
+    return None
+
+
+def scope(fn):
+    stack = list(fn.body)
+    while stack:
+        node = stack.pop()
+        yield node
+        if not isinstance(node, (*DEFS, ast.ClassDef, ast.Lambda)):
+            stack.extend(ast.iter_child_nodes(node))
+
+
+def wrapper_rule(trees, files, function) -> str | None:
+    try:
+        new = {path: ast.parse(text) for path, text in files.items()}
+    except SyntaxError:
+        return "does not parse"
+
+    def count(group):
+        return sum(isinstance(node, (*DEFS, ast.ClassDef)) for tree in group for node in ast.walk(tree))
+
+    if any(isinstance(node, DEFS) and node.name == function.qualname for node in new[function.path].body):
+        return "wrapper not deleted"
+    if count(new.values()) != count(trees[path] for path in files) - 1:
+        return "adds a function or class"
+    return None
+
+
+def removal(repo, head, function, text, node, inner) -> dict | None:
+    module, name = module_of(function.path), function.qualname
+    sources, trees, uses = {}, {}, []
+    for path in diff.git(repo, "ls-tree", "-r", "--name-only", head).splitlines():
+        if not path.endswith(".py"):
+            continue
+        source = text if path == function.path else diff.git(repo, "show", f"{head}:{path}")
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            continue
+        aliases = [
+            a for n in ast.walk(tree) if isinstance(n, ast.ImportFrom) and n.level == 0 and n.module == module for a in n.names if a.name == name
+        ]
+        if any(a.asname for a in aliases) or any(isinstance(n, ast.Attribute) and n.attr == name for n in ast.walk(tree)):
+            return None
+        if path != function.path and not aliases:
+            continue
+        sources[path], trees[path] = source, tree
+        uses += [
+            (path, n)
+            for n in ast.walk(tree)
+            if isinstance(n, ast.Name)
+            and n.id == name
+            and isinstance(n.ctx, ast.Load)
+            and not (path == function.path and node.lineno <= n.lineno <= node.end_lineno)
+        ]
+    if len(uses) != 1:
+        return None
+    [(path, use)] = uses
+    found = [(fn, n) for fn in trees[path].body if isinstance(fn, DEFS) for n in scope(fn) if isinstance(n, ast.Call) and n.func is use]
+    if not found:
+        return None
+    [(fn, site)] = found
+    args = node.args
+    positional = [a.arg for a in (*args.posonlyargs, *args.args)]
+    defaults = dict(zip(reversed(positional), reversed(args.defaults)))
+    defaults |= {a.arg: d for a, d in zip(args.kwonlyargs, args.kw_defaults) if d}
+    if len(site.args) > len(positional) or any(isinstance(a, ast.Starred) for a in site.args):
+        return None
+    given = dict(zip(positional, site.args))
+    for keyword in site.keywords:
+        if keyword.arg not in {a.arg for a in (*args.args, *args.kwonlyargs)} or keyword.arg in given:
+            return None
+        given[keyword.arg] = keyword.value
+    order = [*positional, *(a.arg for a in args.kwonlyargs)]
+    # inlining evaluates the arguments in parameter order, and a substituted default once per call
+    reordered = list(given) != sorted(given, key=order.index)
+    if reordered and any(isinstance(n, ast.Call) for v in given.values() for n in ast.walk(v)):
+        return None
+    if any(not isinstance(defaults[p], ast.Constant) for p in order if p not in given and p in defaults):
+        return None
+    exprs = {}
+    for param in [*positional, *(a.arg for a in args.kwonlyargs)]:
+        if param in given:
+            exprs[param] = ast.get_source_segment(sources[path], given[param])
+        elif param in defaults:
+            exprs[param] = ast.get_source_segment(text, defaults[param])
+        else:
+            return None
+    call_args = [exprs[a.id] for a in inner.args] + [f"{k.arg}={exprs[k.arg]}" for k in inner.keywords]
+    callee = ast.get_source_segment(text, inner.func)
+    edits = {function.path: [removal_edit(text, function)]}
+    edits.setdefault(path, []).append((site.lineno, site.col_offset, site.end_lineno, site.end_col_offset, f"{callee}({', '.join(call_args)})"))
+    if path != function.path:
+        for n in trees[path].body:
+            if isinstance(n, ast.ImportFrom) and n.level == 0 and n.module == module and any(a.name == name for a in n.names):
+                keep = [a for a in n.names if a.name != name]
+                if keep:
+                    edits[path].append((n.lineno, n.col_offset, n.end_lineno, n.end_col_offset, ast.unparse(ast.ImportFrom(module, keep, 0))))
+                else:
+                    edits[path].append((n.lineno, 0, n.end_lineno + 1, 0, ""))
+        root = callee.split(".")[0]
+        line = import_line(trees[function.path], module, root)
+        if line and not import_line(trees[path], module_of(path), root):
+            after = max((n.end_lineno for n in trees[path].body if isinstance(n, (ast.Import, ast.ImportFrom))), default=0)
+            edits[path].append((after + 1, 0, after + 1, 0, line + "\n"))
+    files = {p: apply(sources[p], e) for p, e in edits.items()}
+    caller = next(f for f in parse(path, sources[path]) if f.qualname == fn.name and f.end == fn.end_lineno)
+    return {"caller": caller, "inner": callee, "files": files, "rule": wrapper_rule(trees, files, function)}
+
+
+def inline(sandbox, checkpoint, function, plan, tests, test, test_path, cmd) -> tuple[dict | None, str | None]:
+    code, output = sandbox.run(checkpoint, {**plan["files"], test_path: tests}, cmd)
+    if code:
+        return None, f"rewrite fails characterization tests: {tail(output)}"
+    repo_code, repo_output = sandbox.run(checkpoint, plan["files"], test)
+    if repo_code not in (0, 5):
+        return None, f"rewrite fails repo tests: {tail(repo_output)}"
+    caller = plan["caller"]
+    passed = re.search(r"(\d+) passed", output)[1]
+    reason = (
+        f"`{function.qualname}` only forwards to `{plan['inner']}`; inlined into its single caller `{caller.qualname}` in {caller.path}. "
+        f"{passed} characterization tests of the caller passed."
+    )
+    return {"function": function.qualname, "kind": "wrapper", "reason": reason, "files": plan["files"]}, None
+
+
 def replace_calls(repo, head, function, helper) -> dict[str, str]:
     old, new = function.qualname, helper["qualname"]
     module, helper_module = module_of(function.path), module_of(helper["path"])
@@ -183,12 +350,9 @@ def replace_calls(repo, head, function, helper) -> dict[str, str]:
         edits = []
         deleted = range(0)
         if path == function.path:
-            lines = text.splitlines()
-            last = function.end
-            while last < len(lines) and not lines[last].strip():
-                last += 1
-            deleted = range(function.start, last + 1)
-            edits.append((function.start, 0, last + 1, 0, ""))
+            edit = removal_edit(text, function)
+            deleted = range(edit[0], edit[2])
+            edits.append(edit)
         sees = path == function.path
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom) and node.level == 0 and node.module == module:
@@ -278,6 +442,19 @@ def deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, t
 def review(repo, base, head, sandbox) -> dict:
     result = {"suggestions": [], "followup": [], "rejected": []}
     changed = diff.changed_functions(repo, base, head)
+    wrapped, plans = set(), {}
+    for function, _ in changed:
+        if "." not in function.qualname:
+            text = diff.git(repo, "show", f"{head}:{function.path}")
+            node = next((n for n in ast.parse(text).body if isinstance(n, DEFS) and n.lineno == function.start), None)
+            inner = node and forwarded(node)
+            if inner:
+                wrapped.add(function)
+                plan = removal(repo, head, function, text, node, inner)
+                if plan and plan["rule"]:
+                    result["rejected"].append({"function": function.qualname, "path": function.path, "reason": f"rule: {plan['rule']}"})
+                elif plan:
+                    plans[function] = plan
     matches = {}
     if any("." not in function.qualname for function, _ in changed):
         base_index = index.build(repo, base)
@@ -285,12 +462,16 @@ def review(repo, base, head, sandbox) -> dict:
         skip = {(function.path, function.qualname) for function, _ in changed}
         pool = [r for r in base_index if "." not in r["qualname"] and (r["path"], r["qualname"]) not in skip]
         for function, _ in changed:
-            if "." not in function.qualname and (function.path, function.qualname) not in known:
+            if "." not in function.qualname and function not in wrapped and (function.path, function.qualname) not in known:
                 matches[function] = find_duplicate(function, pool)
     candidates = []
     for function, added in changed:
         text = diff.git(repo, "show", f"{head}:{function.path}")
-        if matches.get(function):
+        if function in plans:
+            kind = "wrapper"
+        elif function in wrapped:
+            continue
+        elif matches.get(function):
             kind = "duplicate"
         elif dead_lines(function.path, text) & set(range(function.start, function.end + 1)):
             kind = "dead"
@@ -314,14 +495,18 @@ def review(repo, base, head, sandbox) -> dict:
         test_path = f"tests/test_slopgate_{n}.py"
         cmd = f"python -m coverage run --branch -m pytest -q {test_path}"
         match = matches.get(function)
+        plan = plans.get(function)
         tests = None
         if not (match and match["exact"]):
-            tests, failure = characterize(sandbox, checkpoint, function, test_path, cmd)
+            tests, failure = characterize(sandbox, checkpoint, plan["caller"] if plan else function, test_path, cmd)
             if failure:
                 result["rejected"].append({**rejected, "reason": failure})
                 continue
-        if match:
-            followup, failure = deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, test_path, cmd)
+        if match or plan:
+            if plan:
+                followup, failure = inline(sandbox, checkpoint, function, plan, tests, test, test_path, cmd)
+            else:
+                followup, failure = deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, test_path, cmd)
             if failure:
                 result["rejected"].append({**rejected, "reason": failure})
             else:
