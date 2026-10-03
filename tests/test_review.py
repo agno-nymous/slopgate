@@ -540,3 +540,14 @@ def test_unused_argument_is_not_dead_code(make_repo, fake_llm, capsys):
 
     assert review(capsys, repo) == {"suggestions": [], "followup": [], "rejected": []}
     assert fake_llm.calls == []
+
+
+def test_tests_prompt_without_repo_callees_has_no_context_section(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), FLAT]
+
+    review(capsys, repo)
+
+    tests_prompt = fake_llm.calls[1][1]
+    assert tests_prompt.rstrip().endswith(NESTED.rstrip())
+    assert "Code it calls" not in tests_prompt

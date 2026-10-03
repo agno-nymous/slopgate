@@ -49,6 +49,12 @@ File: {path}
 
 {source}"""
 
+CALLEES = """
+
+Code it calls (context only; test the function above, through its behavior):
+
+{code}"""
+
 REWRITE_PROMPT = """Rewrite the Python function below. {instruction}
 
 Rules:
@@ -382,22 +388,55 @@ def replace_calls(repo, head, function, helper) -> dict[str, str]:
     return files
 
 
-def characterize(sandbox, checkpoint, function, test_path, cmd) -> tuple[str | None, str | None]:
+def called_code(repo, head, function, depth=2) -> str:
+    paths = set(diff.git(repo, "ls-tree", "-r", "--name-only", head).splitlines())
+    texts = {}
+
+    def module_functions(path):
+        if path not in texts:
+            texts[path] = diff.git(repo, "show", f"{head}:{path}")
+        return {f.qualname: f for f in parse(path, texts[path]) if "." not in f.qualname}
+
+    seen, found, frontier = {(function.path, function.qualname)}, [], [function]
+    # ponytail: follows plain-name calls only; `module.func()` and `self.method()` callees are not resolved
+    for _ in range(depth):
+        following = []
+        for caller in frontier:
+            local = module_functions(caller.path)
+            imported = {
+                alias.asname or alias.name: (node.module, alias.name)
+                for node in ast.parse(texts[caller.path]).body
+                if isinstance(node, ast.ImportFrom) and node.level == 0
+                for alias in node.names
+            }
+            for call in ast.walk(ast.parse(textwrap.dedent(caller.source))):
+                if not (isinstance(call, ast.Call) and isinstance(call.func, ast.Name)):
+                    continue
+                target = local.get(call.func.id)
+                if target is None and call.func.id in imported:
+                    module, name = imported[call.func.id]
+                    path = next((p for p in (f"{module.replace('.', '/')}.py", f"{module.replace('.', '/')}/__init__.py") if p in paths), None)
+                    target = path and module_functions(path).get(name)
+                if target and (target.path, target.qualname) not in seen:
+                    seen.add((target.path, target.qualname))
+                    found.append(target)
+                    following.append(target)
+        frontier = following
+    return "\n\n".join(f"# {f.path}\n{textwrap.dedent(f.source)}" for f in found)
+
+
+def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> tuple[str | None, str | None]:
     name = nondeterministic(textwrap.dedent(function.source))
     if name:
         return None, f"nondeterministic: uses {name}"
-    tests = strip_fence(
-        llm.complete(
-            SUPER,
-            TESTS_PROMPT.format(
-                module=module_of(function.path),
-                name=function.qualname.split(".")[0],
-                qualname=function.qualname,
-                path=function.path,
-                source=function.source,
-            ),
-        )
+    prompt = TESTS_PROMPT.format(
+        module=module_of(function.path),
+        name=function.qualname.split(".")[0],
+        qualname=function.qualname,
+        path=function.path,
+        source=function.source,
     )
+    tests = strip_fence(llm.complete(SUPER, prompt + (CALLEES.format(code=context) if context else "")))
     code, output = sandbox.run(
         checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o -"
     )
@@ -499,7 +538,8 @@ def review(repo, base, head, sandbox) -> dict:
         plan = plans.get(function)
         tests = None
         if not (match and match["exact"]):
-            tests, failure = characterize(sandbox, checkpoint, plan["caller"] if plan else function, test_path, cmd)
+            target = plan["caller"] if plan else function
+            tests, failure = characterize(sandbox, checkpoint, target, test_path, cmd, called_code(repo, head, target))
             if failure:
                 result["rejected"].append({**rejected, "reason": failure})
                 continue

@@ -175,3 +175,45 @@ def test_inlining_that_would_change_evaluation_is_left_alone(make_repo, fake_llm
 
     assert review(capsys, repo) == EMPTY
     assert fake_llm.calls == []
+
+
+def test_tests_prompt_shows_the_code_the_target_calls(make_repo, fake_llm, capsys):
+    repo = make_repo(
+        {"app/__init__.py": "", "app/tax.py": COMPUTE_TAX},
+        {
+            "app/billing.py": "from app.tax import compute_tax\n" + TAX_FOR + INVOICE_TOTAL,
+        },
+    )
+    fake_llm.replies += [INVOICE_TESTS]
+
+    review(capsys, repo)
+
+    [(_, prompt)] = fake_llm.calls
+    context = prompt.split("Code it calls")[1]
+    assert "# app/billing.py\n" + TAX_FOR.strip() in context
+    assert "# app/tax.py\n" + COMPUTE_TAX.strip() in context
+    assert "def invoice_total" not in context
+
+
+APPLY_DISCOUNT = '''\
+def apply_discount(price, percent):
+    if percent < 0 or percent > 100:
+        raise ValueError("percent must be 0-100")
+    return round(price * (100 - percent) / 100, 2)
+'''
+
+
+@pytest.mark.live
+def test_real_super_proves_a_wrapper_whose_caller_depends_on_the_helper(make_repo, capsys):
+    wrapper = '\n\ndef discounted(price, percent):\n    """Return the price after the discount."""\n    return apply_discount(price, percent)\n'
+    cart = "from shop.pricing import discounted\n\n\ndef cart_total(prices, percent):\n    return sum(discounted(p, percent) for p in prices)\n"
+    repo = make_repo(
+        {"shop/__init__.py": "", "shop/pricing.py": APPLY_DISCOUNT},
+        {"shop/pricing.py": APPLY_DISCOUNT + wrapper, "shop/cart.py": cart},
+    )
+
+    result = review(capsys, repo, "contree")
+
+    assert result["rejected"] == []
+    [followup] = result["followup"]
+    assert followup["files"] == {"shop/pricing.py": APPLY_DISCOUNT, "shop/cart.py": cart.replace("discounted", "apply_discount")}

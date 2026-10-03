@@ -6,12 +6,15 @@ Add the source of every repo function that the target calls directly (one level,
 
 **Blocked by:** 05
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The tests prompt for a function that calls a repo helper contains the helper's source; a seam test checks the recorded prompt.
-- [ ] A function with no repo callees gets the same prompt as before.
-- [ ] Under the `live` marker, the demo below produces the wrapper followup with real Nemotron Super and the real sandbox.
+- [x] The tests prompt for a function that calls a repo helper contains the helper's source; a seam test checks the recorded prompt.
+- [x] A function with no repo callees gets the same prompt as before.
+- [x] Under the `live` marker, the demo below produces the wrapper followup with real Nemotron Super and the real sandbox.
 
 ## Comments
 
 - 2026-10-03: Found in a real run (real Super, real sandbox). Repo: `shop/pricing.py` has `apply_discount(price, percent)`, which raises `ValueError` outside 0..100. The PR adds the wrapper `discounted(price, percent)` and `shop/cart.py` with `cart_total(prices, percent)`, which calls `discounted`. Super wrote tests for `cart_total` that used `percent = -50`; two of four failed on the original, so the gate rejected the candidate with "characterization tests fail on original". With correct caller tests, the same run produced the expected wrapper followup.
+- 2026-10-03: Built. `called_code` in `slopgate/review.py` collects the module-level repo functions the target calls by plain name (same file, or `from <repo module> import <name>`), two levels deep, so a wrapper's caller gets both the wrapper and its inner function. The tests prompt gets a "Code it calls" section only when that list is non-empty; otherwise the prompt is unchanged. `module.func()` and `self.method()` callees are not resolved (marked `ponytail:`).
+- 2 new seam tests; 4 mutations (context dropped, one level only, section always added, imports not followed) each fail one. 48 offline tests pass.
+- Live, real Super plus real sandbox on the demo repo: 6 of 9 runs produce the wrapper followup (before this ticket the first two real runs both failed). The ValueError guess is gone: Super now tests the out-of-range percent with `pytest.raises`. The one remaining rejection captured in detail was a mispredicted exact value: Super asserted `cart_total([0.01], 50) == 0.0` when `round(0.005, 2)` gives `0.01`. Filed as ticket 13. The live test `test_real_super_proves_a_wrapper_whose_caller_depends_on_the_helper` is therefore flaky at about that rate until ticket 13 lands.
