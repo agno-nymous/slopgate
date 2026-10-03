@@ -41,7 +41,7 @@ def shipping_band(weight):
 
 FLAT = '''\
 def can_edit(user_active, is_owner, locked, archived):
-    return user_active and is_owner and not locked and not archived
+    return bool(user_active and is_owner and not locked and not archived)
 '''
 
 TESTS = '''\
@@ -71,7 +71,7 @@ def test_active_owner_can_edit_open_item():
 IS_NESTING = '{"kind": "nesting"}'
 VIEW = NESTED.replace("can_edit", "can_view")
 FLAT_VIEW = FLAT.replace("can_edit", "can_view")
-DROPS_LOCKED = "def can_edit(user_active, is_owner, locked, archived):\n    return user_active and is_owner and not archived\n"
+DROPS_LOCKED = "def can_edit(user_active, is_owner, locked, archived):\n    return bool(user_active and is_owner and not archived)\n"
 
 
 def review(capsys, repo, sandbox="local"):
@@ -222,7 +222,7 @@ def test_repo_installs_once_per_review(make_repo, fake_llm, capsys, tmp_path_fac
 
 def test_broken_trial_does_not_affect_the_next(make_repo, fake_llm, capsys):
     repo = two_nested_functions(make_repo, "")
-    crashes = "def can_edit(user_active, is_owner, locked, archived):\n    return undefined_name\n"
+    crashes = "def can_edit(user_active, is_owner, locked, archived):\n    return bool(undefined_name)\n"
     fake_llm.replies += [
         IS_NESTING,
         IS_NESTING,
@@ -464,6 +464,12 @@ SIGNATURE = "def can_edit(user_active, is_owner, locked, archived):\n"
         (SIGNATURE + "    class Box:\n        pass\n    return user_active and is_owner and not locked and not archived\n", "adds a class"),
         (SIGNATURE + "    def check():\n        return not archived\n    return user_active and is_owner and not locked and check()\n", "adds a function"),
         ("def can_edit(user_active, is_owner, locked, archived:\n    return True\n", "does not parse"),
+        (
+            SIGNATURE + "    return user_active and is_owner and not locked and not archived\n",
+            "returns a non-bool value where the original returns only bools",
+        ),
+        (SIGNATURE + "    return False if locked else user_active\n", "returns a non-bool value where the original returns only bools"),
+        (SIGNATURE + "    return min(user_active, is_owner)\n", "returns a non-bool value where the original returns only bools"),
     ],
 )
 def test_rule_breaking_rewrite_is_rejected_without_a_trial(make_repo, fake_llm, capsys, trials, rewrite, rule):
@@ -615,9 +621,8 @@ def test_proposed_inputs_are_recorded_on_the_original(make_repo, fake_llm, capsy
     ("rewrite", "failing"),
     [
         (DROPS_LOCKED, "capture(True, True, True, False)"),
-        (SIGNATURE + "    return int(user_active and is_owner and not locked and not archived)\n", "capture(True, True, False, False)"),
     ],
-    ids=["value", "type"],
+    ids=["value"],
 )
 def test_recorded_calls_reject_a_rewrite_that_changes_the_result(make_repo, fake_llm, capsys, rewrite, failing):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
@@ -749,3 +754,42 @@ def test_recorded_inputs_check_the_arguments_after_an_exception(make_repo, fake_
 
     assert rejected["reason"].startswith("rewrite fails characterization tests")
     assert "test_call_1" in rejected["reason"]
+
+
+def test_rewrite_prompt_states_the_bool_rule(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), FLAT]
+
+    review(capsys, repo)
+
+    assert "If every return gives True or False, keep it that way" in fake_llm.calls[2][1]
+
+
+@pytest.mark.parametrize(
+    "returned",
+    [
+        "not locked and (not archived or user_active == 1)",
+        "True if user_active else is_owner > 0",
+        "isinstance(user_active, bool) or all((is_owner, locked))",
+    ],
+)
+def test_bool_expressions_pass_the_bool_rule(make_repo, fake_llm, capsys, trials, returned):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), SIGNATURE + f"    return {returned}\n"]
+    fake_llm.replies += [FLAT]
+
+    result = review(capsys, repo)
+
+    assert not any(r["reason"].startswith("rule:") for r in result["rejected"])
+    assert len(trials) > 2
+
+
+def test_recorded_inputs_reject_a_changed_result_type(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/log.py": LOG_VALUE})
+    as_float = LOG_VALUE.replace("return value", "return float(value)")
+    fake_llm.replies += [IS_NESTING, json.dumps({"inputs": ["[], 5", "[], 50", "[], -1", "[], None"]}), as_float, as_float]
+
+    [rejected] = review(capsys, repo)["rejected"]
+
+    assert rejected["reason"].startswith("rewrite fails characterization tests")
+    assert "5.0" in rejected["reason"]
