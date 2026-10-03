@@ -533,3 +533,10 @@ def test_tests_that_differ_across_two_runs_are_rejected(make_repo, fake_llm, cap
             "reason": "nondeterministic: characterization tests differ across two runs",
         }
     ]
+
+
+def test_unused_argument_is_not_dead_code(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/labels.py": 'def label(n, style):\n    return f"#{n}"\n'})
+
+    assert review(capsys, repo) == {"suggestions": [], "followup": [], "rejected": []}
+    assert fake_llm.calls == []

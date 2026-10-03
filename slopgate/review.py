@@ -93,15 +93,16 @@ def strip_fence(text: str) -> str:
     return m[1] if m else text
 
 
-def dead_lines(path: str, text: str) -> set[int]:
+def has_dead_code(function, text: str) -> bool:
     scan = vulture.Vulture()
-    scan.scan(text, filename=path)
-    return {
-        line
+    scan.scan(text, filename=function.path)
+    args = ast.parse(textwrap.dedent(function.source)).body[0].args
+    # vulture reports unused parameters as typ "variable"; removing one would change the signature
+    params = {a.arg for a in (*args.posonlyargs, *args.args, args.vararg, *args.kwonlyargs, args.kwarg) if a}
+    return any(
+        item.typ in DEAD and function.start <= item.first_lineno <= function.end and item.name not in params
         for item in scan.get_unused_code()
-        if item.typ in DEAD
-        for line in range(item.first_lineno, item.last_lineno + 1)
-    }
+    )
 
 
 def classify(source: str) -> str | None:
@@ -473,7 +474,7 @@ def review(repo, base, head, sandbox) -> dict:
             continue
         elif matches.get(function):
             kind = "duplicate"
-        elif dead_lines(function.path, text) & set(range(function.start, function.end + 1)):
+        elif has_dead_code(function, text):
             kind = "dead"
         elif complexity(function.source) >= COMPLEXITY or nesting(function.source) > NESTING:
             kind = classify(function.source)
