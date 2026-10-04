@@ -108,6 +108,17 @@ Failure:
 
 {failure}"""
 
+INPUTS_RETRY = """
+
+Your earlier inputs could not be recorded on the unchanged code above. Each input must evaluate as Python with only literals and builtins: quote every string, and use no bare names. Reply again.
+
+Earlier reply:
+
+{reply}
+Failure:
+
+{failure}"""
+
 CALLEES = """
 
 Code it calls (context only; test the function above, through its behavior):
@@ -541,29 +552,25 @@ def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> t
         inputs_form="" if "." in function.qualname else INPUTS_FORM.format(name=function.qualname),
     )
     request = prompt + (CALLEES.format(code=context) if context else "")
-
-    def tests_from(reply):
-        reply = strip_fence(reply)
+    retry = ""
+    for last in (False, True):
+        reply = strip_fence(llm.complete(SUPER, request + retry))
         inputs = proposed_inputs(reply)
-        return record(sandbox, checkpoint, function, inputs) if inputs is not None else (reply, None)
-
-    tests, failure = tests_from(llm.complete(SUPER, request))
-    if failure:
-        return None, failure
-    for retry in (False, True):
-        code, output = sandbox.run(
-            checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o -"
-        )
-        second, _ = sandbox.run(checkpoint, {test_path: tests}, f"PYTHONHASHSEED=2 {cmd}")
-        if bool(code) != bool(second):
-            return None, "nondeterministic: characterization tests differ across two runs"
-        if not code:
-            break
-        if retry:
-            return None, f"characterization tests fail on original: {tail(output)}"
-        failure = "\n".join(output.strip().splitlines()[-60:])
-        tests, failure = tests_from(llm.complete(SUPER, request + TESTS_RETRY.format(tests=tests, failure=failure)))
+        tests, failure = (reply, None) if inputs is None else record(sandbox, checkpoint, function, inputs)
         if failure:
+            retry = INPUTS_RETRY.format(reply=reply, failure=failure)
+        else:
+            code, output = sandbox.run(
+                checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o -"
+            )
+            second, _ = sandbox.run(checkpoint, {test_path: tests}, f"PYTHONHASHSEED=2 {cmd}")
+            if bool(code) != bool(second):
+                return None, "nondeterministic: characterization tests differ across two runs"
+            if not code:
+                break
+            failure = f"characterization tests fail on original: {tail(output)}"
+            retry = TESTS_RETRY.format(tests=tests, failure="\n".join(output.strip().splitlines()[-60:]))
+        if last:
             return None, failure
     report = json.loads(output.split(COVERAGE)[1])["files"][function.path]
     missed = sum(function.start <= line <= function.end for line, _ in report["missing_branches"])
