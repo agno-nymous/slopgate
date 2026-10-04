@@ -4,10 +4,6 @@ import os
 import sys
 import time
 
-from slopgate import github, index
-from slopgate.review import review
-from slopgate.sandbox import Contree, Local
-
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="slopgate")
@@ -21,12 +17,33 @@ def main(argv=None):
     index_args = commands.add_parser("index")
     index_args.add_argument("--repo", default=".")
     index_args.add_argument("--ref", required=True)
+    commands.add_parser("hook")
     args = parser.parse_args(argv)
 
-    if args.command == "index":
-        path = index.location(args.repo, args.ref)
-        print(json.dumps({"ref": path.stem, "functions": len(index.build(args.repo, args.ref)), "path": str(path)}))
+    if args.command == "hook":
+        try:
+            from slopgate import live
+
+            if out := live.hook(sys.stdin.read()):
+                print(out)
+        except Exception as error:
+            print(f"slopgate: {error!r}", file=sys.stderr)
         return
+
+    if args.command == "index":
+        from slopgate import embed, index, live
+
+        ready = embed.compile_model()
+        path = index.location(args.repo, args.ref)
+        records = index.build(args.repo, args.ref)
+        if ready:
+            live.seed(args.repo, records)
+        print(json.dumps({"ref": path.stem, "functions": len(records), "path": str(path)}))
+        return
+
+    from slopgate import github
+    from slopgate.review import review
+    from slopgate.sandbox import Contree, Local
 
     result = {"suggestions": [], "followup": [], "rejected": []}
     started = time.monotonic()

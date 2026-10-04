@@ -1,10 +1,13 @@
+import inspect
 import os
 
 import pytest
 from openai import OpenAI
+from test_duplicates import SLUGIFY
+from test_hook import SLUG_COPY, UNIQUE, indexed, write
 from test_review import FLAT, IS_NESTING, NESTED, SIMPLE, TESTS, review
 
-from slopgate import config
+from slopgate import config, embed, live, llm
 
 pytestmark = [
     pytest.mark.live,
@@ -66,3 +69,33 @@ def test_detected_install_provides_dependency(make_repo, fake_llm, capsys, manif
 
     assert result["rejected"] == []
     assert len(result["suggestions"]) == 1
+
+
+def test_reuse_prompt_separates_copy_from_unique():
+    copy = llm.yes_probability(config.LIGHTNING, live.question(SLUGIFY, SLUG_COPY))
+    unique = llm.yes_probability(config.LIGHTNING, live.question(SLUGIFY, UNIQUE))
+
+    assert copy >= config.FLAG and unique < 0.1, (copy, unique)
+
+
+def test_int8_model_matches_torch():
+    pytest.importorskip("onnxruntime")
+    assert embed.compile_model()
+    texts = [SLUGIFY, SLUG_COPY, UNIQUE, embed.PREFIX + SLUG_COPY, inspect.getsource(live.hook)]
+
+    int8 = embed.onnx_model().encode(texts, normalize_embeddings=True)
+    torch = embed.torch_model().encode(texts, normalize_embeddings=True)
+
+    assert min((int8 * torch).sum(1)) >= 0.9
+
+
+def test_hook_flags_copy_with_compiled_model_and_lightning(make_repo, monkeypatch, capsys):
+    pytest.importorskip("onnxruntime")
+    monkeypatch.setattr(embed, "model", None)
+    repo = indexed(make_repo, capsys, {"app/text.py": SLUGIFY, "app/ship.py": SIMPLE})
+
+    copy = write(monkeypatch, capsys, repo, "app/posts.py", SLUG_COPY)
+    unique = write(monkeypatch, capsys, repo, "app/band.py", UNIQUE)
+
+    assert "duplicates existing `slugify` (app/text.py:1)" in copy.out, copy.err
+    assert (unique.out, unique.err) == ("", "")

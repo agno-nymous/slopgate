@@ -42,7 +42,12 @@ def fake_llm(monkeypatch):
         llm.usage.append((model, 1000, 100))
         return fake.replies.pop(0)
 
+    def yes_probability(model, prompt):
+        fake.calls.append((model, prompt))
+        return fake.replies.pop(0)
+
     monkeypatch.setattr(llm, "complete", complete)
+    monkeypatch.setattr(llm, "yes_probability", yes_probability)
     monkeypatch.setattr(llm, "usage", [])
     return fake
 
@@ -65,4 +70,6 @@ def fake_embed(request, monkeypatch):
         return [vector(text) for text in texts]
 
     monkeypatch.setattr(embed, "encode", encode)
+    monkeypatch.setattr(embed, "compile_model", lambda: True)
+    monkeypatch.setattr(embed, "preload", lambda: None)
     return fake

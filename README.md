@@ -47,3 +47,45 @@ test = "python -m pytest -q tests/unit"
 ```
 
 GitHub does not start workflows for pull requests that the workflow token opens, so CI does not run on the follow-up pull request until someone pushes to it.
+
+## Flag copies while Claude Code writes
+
+`slopgate hook` checks each Python file that Claude Code writes or edits. When a new module-level function does the same job as an existing function, the hook adds a note to the agent's context. The note names the existing function, its file, and a confidence. The hook never blocks a write and always exits 0.
+
+1. Install Slopgate with the `hook` extra in the environment where Claude Code runs:
+
+   ```sh
+   pip install 'slopgate[hook] @ git+https://github.com/agno-nymous/slopgate'
+   ```
+
+2. Index the repo once. The first run on a machine also compiles the embedding model to `~/.cache/slopgate/` (about 30 s). Later hook runs load it in about 0.3 s.
+
+   ```sh
+   slopgate index --ref HEAD
+   ```
+
+3. Add the hook to `.claude/settings.json` in the repo:
+
+   ```json
+   {
+     "hooks": {
+       "PostToolUse": [
+         {
+           "matcher": "Write|Edit|MultiEdit",
+           "hooks": [{ "type": "command", "command": "slopgate hook", "timeout": 30 }]
+         }
+       ]
+     }
+   }
+   ```
+
+4. Export `NEBIUS_API_KEY` in the shell that starts Claude Code. The hook asks Nemotron Lightning only when a local search finds a likely copy.
+
+The hook keeps the functions of the working tree in `.slopgate/live.db`. Each write updates the rows of its own file, so the agent's earlier functions are found too. Functions under `tests/` and functions named `test_*` are never checked or matched.
+
+Files that change outside Claude Code, for example after `git pull`, stay out of date until the next write or the next `slopgate index`. To index after every pull, add `.git/hooks/post-merge` and make it executable:
+
+```sh
+#!/bin/sh
+slopgate index --ref HEAD >/dev/null
+```
