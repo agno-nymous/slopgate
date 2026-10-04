@@ -15,6 +15,9 @@ dependencies = [
     "einops>=0.8.2",
 ]
 
+[project.optional-dependencies]
+hook = ["onnx", "onnxruntime"]
+
 [project.scripts]
 slopgate = "slopgate.cli:main"
 
