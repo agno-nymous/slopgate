@@ -48,6 +48,14 @@ test = "python -m pytest -q tests/unit"
 
 GitHub does not start workflows for pull requests that the workflow token opens, so CI does not run on the follow-up pull request until someone pushes to it.
 
+## Review a pull request on your machine
+
+`slopgate review --pr <number>` reviews one pull request from a local clone and posts the review to GitHub. It does not need a workflow run. It fetches the base and head commits of the pull request from `origin`. It does not change your working tree. Log in with `gh auth login` first. Set `NEBIUS_API_KEY` and `NEBIUS_PROJECT_ID` in the environment. Add `--sandbox local` to run the tests on your machine. Add `--dry-run` to print the result and post nothing.
+
+```sh
+slopgate review --pr 12
+```
+
 ## Flag copies while Claude Code writes
 
 `slopgate hook` checks each Python file that Claude Code writes or edits. When a new module-level function does the same job as an existing function, the hook adds a note to the agent's context. The note names the existing function, its file, and a confidence. The hook never blocks a write and always exits 0.

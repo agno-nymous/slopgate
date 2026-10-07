@@ -28,6 +28,10 @@ if left:
     sys.exit("HTTP 503: No server is currently available to service your request.")
 if args[:2] == ["pr", "list"]:
     print(os.environ.get("GH_EXISTING_PR", ""))
+elif args[:2] == ["repo", "view"]:
+    print("acme/shop")
+elif args[0] == "api" and "--method" not in args:
+    print(open(os.environ["GH_PR"]).read())
 elif args[:2] == ["pr", "create"] and os.environ.get("GH_CREATE_ERROR"):
     sys.exit(os.environ["GH_CREATE_ERROR"])
 elif args[:2] == ["pr", "create"]:
@@ -95,6 +99,41 @@ def test_inline_suggestions_are_posted_as_one_comment_review(github, fake_llm, c
     # fake usage is 1000 prompt + 100 completion tokens per call: Lightning, Super, Super, Ultra
     assert re.search(r"Token cost: \$0\.0022 \(4,400 tokens\)\. Time: \d+ s\.", review["body"])
     assert fake_llm.calls[-1][0] == ULTRA
+
+
+def test_pr_flag_fetches_the_pull_request_reviews_it_and_posts_to_it(github, fake_llm, capsys, monkeypatch, tmp_path_factory):
+    make, calls = github
+    repo, origin = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+
+    def git(*args, cwd=repo):
+        return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True).stdout.strip()
+
+    base, head = git("rev-parse", "HEAD~1"), git("rev-parse", "HEAD")
+    git("push", "-q", "origin", f"{base}:refs/heads/main", f"{head}:refs/pull/7/head")
+    clone = str(tmp_path_factory.mktemp("clone"))
+    git("clone", "-q", "--no-local", str(origin), clone, cwd=None)
+    pr = json.load(open(__import__("os").environ["GITHUB_EVENT_PATH"]))["pull_request"] | {"base": {"sha": base}}
+    pr_file = tmp_path_factory.mktemp("pr") / "pr.json"
+    pr_file.write_text(json.dumps(pr))
+    monkeypatch.setenv("GH_PR", str(pr_file))
+    monkeypatch.delenv("GITHUB_EVENT_PATH")
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), FLAT, SUMMARY]
+
+    assert main(["review", "--repo", clone, "--pr", "7", "--sandbox", "local"]) is None
+
+    viewed, read, posted = calls()
+    assert viewed["args"][:2] == ["repo", "view"]
+    assert read["args"] == ["api", "repos/acme/shop/pulls/7"]
+    assert posted["args"] == ["api", "--method", "POST", "repos/acme/shop/pulls/7/reviews", "--input", "-"]
+    review = json.loads(posted["stdin"])
+    assert review["commit_id"] == head
+    assert "```suggestion\n" + FLAT in review["comments"][0]["body"]
+
+
+def test_review_needs_pr_or_base_and_head(capsys):
+    with pytest.raises(SystemExit):
+        main(["review", "--base", "HEAD~1"])
+    assert "give --pr, or both --base and --head" in capsys.readouterr().err
 
 
 WRAPPER_BASE = {"app/__init__.py": "", "app/billing.py": COMPUTE_TAX}

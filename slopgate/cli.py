@@ -10,8 +10,9 @@ def main(argv=None):
     commands = parser.add_subparsers(dest="command", required=True)
     review_args = commands.add_parser("review")
     review_args.add_argument("--repo", default=".")
-    review_args.add_argument("--base", required=True)
-    review_args.add_argument("--head", required=True)
+    review_args.add_argument("--base")
+    review_args.add_argument("--head")
+    review_args.add_argument("--pr", type=int)
     review_args.add_argument("--dry-run", action="store_true")
     review_args.add_argument("--sandbox", choices=["local", "contree"], default="contree")
     index_args = commands.add_parser("index")
@@ -19,6 +20,8 @@ def main(argv=None):
     index_args.add_argument("--ref", required=True)
     commands.add_parser("hook")
     args = parser.parse_args(argv)
+    if args.command == "review" and not args.pr and not (args.base and args.head):
+        review_args.error("give --pr, or both --base and --head")
 
     if args.command == "hook":
         try:
@@ -48,10 +51,17 @@ def main(argv=None):
     result = {"suggestions": [], "followup": [], "rejected": []}
     started = time.monotonic()
     try:
-        result = review(args.repo, args.base, args.head, {"local": Local, "contree": Contree}[args.sandbox]())
+        if args.pr:
+            event = github.pull_request(args.repo, args.pr)
+            base, head = event["pull_request"]["base"]["sha"], event["pull_request"]["head"]["sha"]
+        else:
+            event, base, head = None, args.base, args.head
+        result = review(args.repo, base, head, {"local": Local, "contree": Contree}[args.sandbox]())
         if not args.dry_run:
-            with open(os.environ["GITHUB_EVENT_PATH"]) as event:
-                github.publish(args.repo, result, json.load(event), time.monotonic() - started)
+            if event is None:
+                with open(os.environ["GITHUB_EVENT_PATH"]) as file:
+                    event = json.load(file)
+            github.publish(args.repo, result, event, time.monotonic() - started)
     except Exception as error:
         print(f"slopgate: {error!r}", file=sys.stderr)
     print(json.dumps(result, indent=2))
