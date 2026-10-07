@@ -20,4 +20,4 @@ Read the file at the referenced path. The user normally passes the path or the t
 
 ## Frontier
 
-The frontier is every ticket that is not done and whose blockers are all done. Take the lowest number first.
+The frontier is every ticket that is not done and whose blockers are all done. `issues/ROADMAP.md` gives the order and the next ticket. Follow it, not the ticket numbers.
