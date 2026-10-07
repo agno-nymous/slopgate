@@ -89,6 +89,13 @@ def summary(result, followup_line, seconds) -> str:
     return text + "\n\n".join(lines)
 
 
+def pull_request(repo, number) -> dict:
+    target = run("gh", "repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner", cwd=repo)
+    pr = json.loads(gh("api", f"repos/{target}/pulls/{number}"))
+    run("git", "fetch", "-q", "origin", pr["base"]["sha"], f"pull/{number}/head", cwd=repo)
+    return {"pull_request": pr, "repository": {"full_name": target}}
+
+
 def publish(repo, result, event, seconds) -> None:
     if not any(result.values()):
         return

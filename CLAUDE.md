@@ -11,6 +11,7 @@ Slopgate finds slop in Python code that coding agents write. It has two parts:
 
 - The tickets are in `issues/`, one file each. **`issues/ROADMAP.md` gives the next ticket and the order.** `docs/agents/issue-tracker.md` gives the ticket format and the status values.
 - Do one ticket on one branch, and finish it with a pull request to `main`.
+- The Slopgate gate does not run on the pull requests of this repo in GitHub. Run it locally with `--pr` before you merge.
 - Ask the user before every commit and every push.
 - Write tickets, ticket comments, pull request text, and replies in ASD-STE100 Simplified Technical English: one idea per sentence, short sentences, active voice, one term for one concept.
 - When a ticket is done, add a `## Comments` entry with a worked example and the measured results.
@@ -24,6 +25,7 @@ uv sync
 uv run pytest -q                                   # offline tests; fakes replace the models and the sandbox
 uv run --env-file .env pytest -m live -q           # live tests against Token Factory
 uv run --env-file .env slopgate review --repo <repo> --base <ref> --head <ref> --dry-run --sandbox local
+uv run --env-file .env slopgate review --pr <number>   # review a PR on this machine and post to GitHub
 uv run slopgate index --repo <repo> --ref HEAD     # base index, plus the hook's ONNX model and store
 ```
 
