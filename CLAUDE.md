@@ -9,6 +9,7 @@ Slopgate finds slop in Python code that coding agents write. It has two parts:
 
 ## Work on this repo
 
+- Run `/start-dev` (`.claude/skills/start-dev/SKILL.md`) to work the next ticket end to end. Add a ticket number to work a specific one.
 - The tickets are in `issues/`, one file each. **`issues/ROADMAP.md` gives the next ticket and the order.** `docs/agents/issue-tracker.md` gives the ticket format and the status values.
 - Do one ticket on one branch, and finish it with a pull request to `main`.
 - The Slopgate gate does not run on the pull requests of this repo in GitHub. Run it locally with `--pr` before you merge.
