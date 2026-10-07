@@ -1,3 +1,4 @@
+import importlib.util
 import io
 import json
 from pathlib import Path
@@ -198,3 +199,19 @@ def test_new_function_is_stored_even_when_classifier_fails(make_repo, fake_llm, 
     result = write(monkeypatch, capsys, repo, "app/views.py", SLUG_COPY.replace("make_slug(heading)", "to_slug(text)").replace("heading", "text"))
 
     assert result.out == note("to_slug", "app/views.py:1", "make_slug", "app/posts.py:1", "1.00")
+
+
+@pytest.mark.parametrize("installed, expected", [(True, "onnx"), (False, "torch")])
+def test_cached_onnx_model_is_used_only_when_onnxruntime_is_installed(tmp_path, monkeypatch, installed, expected):
+    from slopgate import embed
+
+    compiled = tmp_path / "coderank-int8.onnx"
+    compiled.touch()
+    find_spec = importlib.util.find_spec
+    monkeypatch.setattr(importlib.util, "find_spec", lambda name, *a: (installed or None) if name == "onnxruntime" else find_spec(name, *a))
+    monkeypatch.setattr(embed, "COMPILED", compiled)
+    monkeypatch.setattr(embed, "model", None)
+    monkeypatch.setattr(embed, "onnx_model", lambda: "onnx")
+    monkeypatch.setattr(embed, "torch_model", lambda: "torch")
+    embed.load()
+    assert embed.model == expected

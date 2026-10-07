@@ -1,3 +1,4 @@
+import importlib.util
 import os
 import tempfile
 import threading
@@ -28,7 +29,8 @@ def load() -> None:
     global model
     with lock:
         if model is None:
-            model = onnx_model() if COMPILED.exists() else torch_model()
+            onnx = COMPILED.exists() and importlib.util.find_spec("onnxruntime")
+            model = onnx_model() if onnx else torch_model()
 
 
 def torch_model():
