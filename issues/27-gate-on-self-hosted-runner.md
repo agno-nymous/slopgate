@@ -34,6 +34,7 @@ A self-hosted runner gives both: the workflow starts when a pull request opens, 
 1. On GitHub, open the repo, then **Settings → Actions → Runners → New self-hosted runner**. Select **macOS** and **ARM64**.
 2. In a terminal, run the download and `./config.sh --url https://github.com/agno-nymous/slopgate --token <token>` commands that the page shows. Use a folder such as `~/actions-runner`. Accept the default name and labels.
 3. Run `./svc.sh install` and then `./svc.sh start` in that folder. The runner then starts at login.
+4. After that, use the repo `Makefile`: `make runner-start`, `make runner-stop`, `make runner-status`, and `make runner-logs`.
 
 ## Acceptance
 
