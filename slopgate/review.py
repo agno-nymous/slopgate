@@ -173,9 +173,15 @@ def strip_fence(text: str) -> str:
 def has_dead_code(function, text: str) -> bool:
     scan = vulture.Vulture()
     scan.scan(text, filename=function.path)
-    args = ast.parse(textwrap.dedent(function.source)).body[0].args
-    # vulture reports unused parameters as typ "variable"; removing one would change the signature
-    params = {a.arg for a in (*args.posonlyargs, *args.args, args.vararg, *args.kwonlyargs, args.kwarg) if a}
+    tree = ast.parse(textwrap.dedent(function.source))
+    # vulture reports unused parameters as typ "variable"; removing one would change a signature callers use
+    params = {
+        a.arg
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda))
+        for a in (*node.args.posonlyargs, *node.args.args, node.args.vararg, *node.args.kwonlyargs, node.args.kwarg)
+        if a
+    }
     return any(
         item.typ in DEAD and function.start <= item.first_lineno <= function.end and item.name not in params
         for item in scan.get_unused_code()

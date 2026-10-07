@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Context
 
@@ -25,10 +25,39 @@ Known limit: a local variable with the same name as a nested parameter is also i
 
 ## Acceptance
 
-- [ ] A function that returns `lambda texts, unused: texts` and has no other dead code is not flagged `dead`.
-- [ ] A function with a nested `def inner(a, unused): return a` and no other dead code is not flagged `dead`.
-- [ ] A function with an unused local variable `x = 1` is still flagged `dead`.
-- [ ] Code after a `return` is still flagged `dead`.
-- [ ] `uv run pytest -q` passes.
+- [x] A function that returns `lambda texts, unused: texts` and has no other dead code is not flagged `dead`.
+- [x] A function with a nested `def inner(a, unused): return a` and no other dead code is not flagged `dead`.
+- [x] A function with an unused local variable `x = 1` is still flagged `dead`.
+- [x] Code after a `return` is still flagged `dead`.
+- [x] `uv run pytest -q` passes.
 
 ## Comments
+
+- 2026-10-06: Built. `has_dead_code` in `slopgate/review.py` now walks the AST of the function with `ast.walk`. It collects the parameter names of every `FunctionDef`, `AsyncFunctionDef`, and `Lambda` in the tree. Before, it collected only the parameters of the top-level function. The rest of the check did not change.
+- Cause: vulture reports an unused parameter with type `variable`. The old code removed only the top-level parameters from these reports. So an unused parameter of a nested function or a lambda made the function `dead`.
+- The two false hits from PR #9, measured with `has_dead_code` on the real files:
+
+  | Function | main | this branch |
+  |---|---|---|
+  | `onnx_model` in `slopgate/embed.py` | dead | not dead |
+  | `fake_llm` in `tests/conftest.py` | dead | not dead |
+
+- Worked example. A demo repo adds two functions to `app/enc.py` in one commit:
+
+  ```python
+  def encoder(scale):
+      return SimpleNamespace(encode=lambda texts, normalize_embeddings: [len(t) * scale for t in texts])
+
+
+  def total(values):
+      count = 0
+      result = 0
+      for v in values:
+          result += v
+      return result
+  ```
+
+  The lambda must accept `normalize_embeddings`, because callers pass it. `count` in `total` is real dead code. On main, `has_dead_code` flags both functions. On this branch, it flags only `total`. The live gate run (`slopgate review --dry-run --sandbox local`, real Super) took 13.0 s. It gave one suggestion: the `dead` rewrite of `total` without `count`, with 2 characterization tests passed in the sandbox. It gave no suggestion for `encoder` and made no model call for it.
+- Tests: one test with 4 parameter sets in `tests/test_review.py` calls `has_dead_code` directly. It covers the 4 behavior boxes. Before the fix, the lambda case and the nested `def` case failed (`assert True is False`, 2 failed, 2 passed). After the fix, all 4 pass. The `dead` entry in `KIND_CASES` already tested an unused local and code after `return` together in one function. The new test checks each of the two alone, so a break in one check cannot hide behind the other.
+- Full offline suite: 110 passed, 10 deselected (the `live` tests).
+- Known limit (from the design): a local variable with the same name as a nested parameter is also ignored. This causes only a missed `dead` finding, never a wrong change.

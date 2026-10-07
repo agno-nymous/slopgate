@@ -7,6 +7,8 @@ import pytest
 
 from slopgate.cli import main
 from slopgate.config import LIGHTNING, SUPER, ULTRA
+from slopgate.functions import parse
+from slopgate.review import has_dead_code
 from slopgate.sandbox import Local
 
 NESTED = '''\
@@ -548,6 +550,21 @@ def test_unused_argument_is_not_dead_code(make_repo, fake_llm, capsys):
 
     assert review(capsys, repo) == {"suggestions": [], "followup": [], "rejected": []}
     assert fake_llm.calls == []
+
+
+@pytest.mark.parametrize(
+    "source, expected",
+    [
+        ("def encoder():\n    return lambda texts, unused: texts\n", False),
+        ("def outer():\n    def inner(a, unused):\n        return a\n    return inner\n", False),
+        ("def setup():\n    x = 1\n    return 2\n", True),
+        ("def stop():\n    return 1\n    print('done')\n", True),
+    ],
+)
+def test_dead_code_ignores_nested_parameters_only(source, expected):
+    (function,) = parse("app/mod.py", source)
+
+    assert has_dead_code(function, source) is expected
 
 
 def test_tests_prompt_without_repo_callees_has_no_context_section(make_repo, fake_llm, capsys):
