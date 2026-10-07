@@ -18,7 +18,7 @@ runs:
       with:
         python-version: "3.12"
     - uses: actions/cache@v4
-      if: ${{ !startsWith(github.head_ref, 'slopgate/') }}
+      if: ${{ !startsWith(github.head_ref, 'slopgate/') && runner.environment == 'github-hosted' }}
       with:
         path: ~/.cache/huggingface
         key: slopgate-coderankembed-v1

@@ -59,7 +59,7 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
 1. **Ask the user before you commit and before you push.** Show the list of changed files and the commit message first.
 2. Use the conventional commit format: `type(scope): message`. Keep each commit to one logical change.
 3. Open a PR to `main` with `gh pr create`. The PR text says what changed, why, and the measured results.
-4. Run the gate on the PR from this machine: `uv run --env-file <main checkout>/.env slopgate review --pr <number>`. It posts the review to the PR. GitHub does not run the gate on this repo (ticket 26).
+4. Read the `slopgate` check and the review that it posts. The check runs on the self-hosted runner on the user's Mac (ticket 27). If it stays queued because the runner is offline, run the gate by hand: `uv run --env-file <main checkout>/.env slopgate review --pr <number>`.
 5. Bind the PR with the app's PR tools, and read its checks there. Do not use auto-merge: the repo has no branch protection, so auto-merge would merge before the checks finish.
 6. When all checks pass, report the result to the user. Merge only when the user says to merge. Then call `ExitWorktree` with `action: "remove"`.
 7. In the final report, give a worked example and a plain explanation of what changed.
