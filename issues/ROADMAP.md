@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**22 — Dead-code check ignores unused parameters of nested functions and lambdas.**
+**21 — Code replies: one Python block, thinking off, reject "no change".**
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -12,7 +12,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 
 | Order | Ticket | Status | Blocked by | Why it is in this position |
 |---|---|---|---|---|
-| 1 | [22 — Dead-code check ignores nested parameters](22-dead-code-ignores-nested-parameters.md) | ready-for-agent | — | Smallest fix. It removes the two false "dead" hits from PR #9. |
+| 1 | [22 — Dead-code check ignores nested parameters](22-dead-code-ignores-nested-parameters.md) | done | — | Smallest fix. It removes the two false "dead" hits from PR #9. |
 | 2 | [21 — Code replies: one Python block, thinking off, reject "no change"](21-rewrite-reply-as-python-block.md) | ready-for-agent | — | Stops cut-off replies and empty suggestions. Ticket 20 uses its `strip_fence` and thinking changes. |
 | 3 | [17 — Test files get review notes only](17-test-files-get-notes-only.md) | ready-for-agent | — | Stops the gate from changing tests. Fixes the `fake_llm` failure at its cause. |
 | 4 | [20 — Tests reply as one pydantic object, sent as markdown](20-tests-reply-as-pydantic-object.md) | ready-for-agent | 21 | Stops prose from becoming a test file, for every function. |
@@ -26,7 +26,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 12 | [09 — Jev classifier backend and comparison](09-jev-backend-and-comparison.md) | ready-for-agent | 07 (done) | Lowest priority. Skip it if time runs short. |
 | 13 | [11 — Hackathon submission package](11-submission-package.md) | ready-for-agent | 06, 08, 10 | Last. It describes the finished project. |
 
-Tickets 01 to 07 and 12 to 16 are done.
+Tickets 01 to 07, 12 to 16, and 22 are done.
 
 ## Rules for the order
 
