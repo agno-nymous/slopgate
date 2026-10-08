@@ -29,6 +29,7 @@ NONDETERMINISTIC = {"random", "secrets", "uuid", "time", "datetime"}
 DEFS = (ast.FunctionDef, ast.AsyncFunctionDef)
 BOOL_CALLS = {"bool", "isinstance", "issubclass", "callable", "hasattr", "all", "any"}
 COVERAGE = "--slopgate-coverage--"
+MISSED = "import json, sys; print(json.dumps(json.load(sys.stdin)['files'][sys.argv[1]]['missing_branches'], separators=(',', ':')))"
 RECORDED = "--slopgate-recorded--"
 RECORDER_PATH = "slopgate_record.py"
 
@@ -587,7 +588,7 @@ def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> t
             retry = INPUTS_RETRY.format(reply=reply, failure=failure)
         else:
             code, output = sandbox.run(
-                checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o -"
+                checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o - | python -c \"{MISSED}\" {function.path}"
             )
             second, _ = sandbox.run(checkpoint, {test_path: tests}, f"PYTHONHASHSEED=2 {cmd}")
             if bool(code) != bool(second):
@@ -598,8 +599,8 @@ def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> t
             retry = TESTS_RETRY.format(tests=tests, failure="\n".join(output.strip().splitlines()[-60:]))
         if last:
             return None, failure
-    report = json.loads(output.split(COVERAGE)[1])["files"][function.path]
-    missed = sum(function.start <= line <= function.end for line, _ in report["missing_branches"])
+    branches = json.loads(output.split(COVERAGE)[1].strip().splitlines()[0])
+    missed = sum(function.start <= line <= function.end for line, _ in branches)
     if missed:
         return None, f"characterization tests miss branches: {missed}"
     return tests, None

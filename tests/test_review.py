@@ -506,6 +506,27 @@ def test_function_using_random_is_rejected_as_nondeterministic(make_repo, fake_l
     assert models(fake_llm) == [LIGHTNING]
 
 
+def test_review_survives_a_sandbox_that_cuts_output_at_65535_characters(make_repo, fake_llm, capsys, monkeypatch):
+    run = Local.run
+
+    def cut(self, checkpoint, files, cmd):
+        code, output = run(self, checkpoint, files, cmd)
+        return code, output[:65535]
+
+    monkeypatch.setattr(Local, "run", cut)
+    big = "".join(f"VALUE_{i} = {i}\n" for i in range(6000))
+    repo = make_repo(
+        {"app/__init__.py": "", "app/big.py": big},
+        {"app/perms.py": "from app import big\n\n\n" + NESTED},
+    )
+    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == []
+    assert len(result["suggestions"]) == 1
+
+
 def test_tests_that_miss_a_branch_are_rejected_with_the_count(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
     weak = TESTS.format(name="can_edit", call="can_edit").replace(
