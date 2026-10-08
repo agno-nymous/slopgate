@@ -46,7 +46,13 @@ def fake_llm(monkeypatch):
         fake.calls.append((model, prompt))
         return fake.replies.pop(0)
 
+    def decide(model, prompt, schema):
+        fake.calls.append((model, prompt))
+        llm.usage.append((model, 1000, 100))
+        return fake.replies.pop(0)
+
     monkeypatch.setattr(llm, "complete", complete)
+    monkeypatch.setattr(llm, "decide", decide)
     monkeypatch.setattr(llm, "yes_probability", yes_probability)
     monkeypatch.setattr(llm, "usage", [])
     return fake

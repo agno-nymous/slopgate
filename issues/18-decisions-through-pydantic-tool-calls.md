@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Context
 
@@ -73,10 +73,46 @@ A forced tool call does not turn thinking off by itself. On 2026-10-06, with the
 
 ## Acceptance
 
-- [ ] `decide` with a fake client returns a `SameJob` object for a valid tool call, and `None` for a reply with no tool call or with a missing field.
-- [ ] The request that `decide` sends has one tool, whose parameters hold each field description, a `tool_choice` that names it, and `chat_template_kwargs: {"enable_thinking": False}`.
-- [ ] `find_duplicate` skips a candidate when `decide` returns `None`, and returns the helper when `same_job` is true.
-- [ ] Live test (`-m live`): `decide(SUPER, ..., SameJob)` and `decide(LIGHTNING, ..., SameJob)` each return `same_job=True` for a renamed copy of `apply_discount`.
-- [ ] `uv run pytest -q` passes.
+- [x] `decide` with a fake client returns a `SameJob` object for a valid tool call, and `None` for a reply with no tool call or with a missing field.
+- [x] The request that `decide` sends has one tool, whose parameters hold each field description, a `tool_choice` that names it, and `chat_template_kwargs: {"enable_thinking": False}`.
+- [x] `find_duplicate` skips a candidate when `decide` returns `None`, and returns the helper when `same_job` is true.
+- [x] Live test (`-m live`): `decide(SUPER, ..., SameJob)` and `decide(LIGHTNING, ..., SameJob)` each return `same_job=True` for a renamed copy of `apply_discount`.
+- [x] `uv run pytest -q` passes.
 
 ## Comments
+
+### 2026-10-07 — done
+
+**What was built.** `llm.decide(model, prompt, schema)` sends one forced tool call. The tool parameters are the JSON schema of a pydantic model. The tool description is the class docstring. Thinking is off. `decide` returns the parsed object. It returns `None` when the reply has no tool call or when the arguments fail validation. `find_duplicate` now calls `decide(SUPER, ..., SameJob)` and does not parse JSON by hand. `SAME_JOB_PROMPT` puts each source in a ```` ```python ```` block. `classify` still uses `complete(..., json=True)`. Ticket 19 changes it.
+
+`llm.py` has no runtime pydantic import. `decide` catches `ValueError`, which is the base class of pydantic's `ValidationError`. The hook imports `llm`, and a pydantic import takes 47 ms, while the full hook import takes 33 ms (measured by the code review). `pydantic>=2` is now a direct dependency in `pyproject.toml`.
+
+**Worked example (live, 2026-10-07).** The new function adds a check that the helper does not have:
+
+```python
+def discounted(price, percent):
+    if percent > 100:
+        raise ValueError('percent above 100')
+    return round(price * (1 - percent / 100), 2)
+```
+
+The helper is `apply_discount(price, percent)`, which returns `round(price * (1 - percent / 100), 2)`. `decide` gave these objects:
+
+- Super, 1.60 s: `SameJob(difference='The new function raises ValueError for percent > 100, while the helper does not validate input.', same_job=False)`
+- Lightning, 0.75 s: `SameJob(difference='The new function checks if percent > 100 and raises ValueError, while the existing helper does not perform this validation.', same_job=False)`
+
+For a renamed copy of `apply_discount` (the live test), both models gave `SameJob(difference='', same_job=True)`.
+
+**Measured results.**
+
+- Live test `test_decide_finds_a_renamed_copy_of_apply_discount`: 2 passed. Super took 1.31 s and 1.84 s in two runs. Lightning took 0.67 s and 0.78 s.
+- Offline, after the rebase on ticket 21: `uv run pytest -q` gives 144 passed, 14 deselected, in 240 s.
+- Super took 1.75 s and Lightning 0.76 s in a third live run, after the rebase.
+- New offline tests: `tests/test_llm.py` (the parse result, `None` for no tool call and for a missing field, the request shape) and `test_candidate_without_a_verdict_is_skipped` in `tests/test_duplicates.py`.
+
+**Known limits.**
+
+- The live checks use one copy and one function that differs. The accuracy of the duplicate check on real pull requests is not measured.
+- The effect of the field order (`difference` before `same_job`) is not measured.
+- The `fake_llm` fake of `decide` returns the queued object (a `SameJob` or `None`). It does not parse JSON. `tests/test_llm.py` tests the parse against a fake client.
+- A cut-off tool call (`finish_reason: "length"`) has incomplete arguments. `decide` then returns `None`, and `find_duplicate` goes to the next candidate. `decide` does not raise `CutOff`.

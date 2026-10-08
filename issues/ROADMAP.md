@@ -17,7 +17,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 3 | [28 — Keyword duplicate search in the gate](28-keyword-duplicate-search.md) | ready-for-agent | — | The user set it next. The gate then needs no embedding model: the torch fallback took 14 GB on the 16 GB Mac. |
 | 4 | [17 — Test files get review notes only](17-test-files-get-notes-only.md) | ready-for-agent | — | Stops the gate from changing tests. Fixes the `fake_llm` failure at its cause. |
 | 5 | [20 — Tests reply as one pydantic object, sent as markdown](20-tests-reply-as-pydantic-object.md) | ready-for-agent | 21 | Stops prose from becoming a test file, for every function. |
-| 6 | [18 — Model decisions through pydantic tool calls](18-decisions-through-pydantic-tool-calls.md) | ready-for-agent | — | Adds `decide`. Ticket 19 needs it. |
+| 6 | [18 — Model decisions through pydantic tool calls](18-decisions-through-pydantic-tool-calls.md) | done | — | Adds `decide`. Ticket 19 needs it. |
 | 7 | [19 — Several slop kinds per function](19-several-slop-kinds-per-function.md) | ready-for-agent | 18, 21 | Fixes all problems of a function in one suggestion. |
 | 8 | [23 — Log the time of each gate step](23-log-time-per-gate-step.md) | ready-for-agent | — | The review of PR #9 took 33 min, and the cause is not measured. |
 | 9 | [24 — Save the embedding model cache on main](24-model-cache-on-main.md) | ready-for-agent | — | Each new pull request downloads the 506 MB model again. |
@@ -34,7 +34,7 @@ Added after the order was set:
 | [26 — Review a pull request on the local machine](26-review-a-pr-locally.md) | done | Adds `slopgate review --pr <number>`. |
 | [27 — Run the gate automatically on a self-hosted runner](27-gate-on-self-hosted-runner.md) | needs-live-check | The workflow runs on the user's Mac. It needs the runner to be registered. |
 
-Tickets 01 to 07, 12 to 16, 21, 22, and 26 are done.
+Tickets 01 to 07, 12 to 16, 18, 21, 22, and 26 are done.
 
 ## Rules for the order
 
@@ -53,4 +53,5 @@ Tickets 01 to 07, 12 to 16, 21, 22, and 26 are done.
 5. Run `uv run pytest -q`. Run the live tests that the ticket names with `uv run --env-file .env pytest -m live -q`.
 6. Add a `## Comments` entry with the date, what was built, a worked example, and the measured results.
 7. Set `Status: done`. Update the table above and "Next ticket".
-8. Ask the user before you commit or push. Then open a pull request to `main`.
+8. Run a code review with the `pstack:thermo-nuclear-code-quality-review` skill (an Opus subagent). Apply the findings, or reject each one with a reason.
+9. Ask the user before you commit or push. Start each commit message with the ticket number: `ticket-<NN>: type(scope): message`. Then open a pull request to `main`.

@@ -11,6 +11,7 @@ from test_wrappers import COMPUTE_TAX, INVOICE_TESTS, INVOICE_TOTAL, TAX_FOR
 from slopgate.cli import main
 from slopgate.github import duration
 from slopgate.config import ULTRA
+from slopgate.review import SameJob
 
 SUMMARY = "One function got flatter."
 PR_URL = "https://github.com/acme/shop/pull/8"
@@ -256,7 +257,7 @@ def test_followups_that_edit_the_same_file_open_only_the_first(github, fake_llm,
     make, calls = github
     repo, origin = make(WRAPPER_BASE, {"app/billing.py": COMPUTE_TAX + TAX_FOR + INVOICE_TOTAL + FEE_FOR})
     fee_tests = "from app.billing import fee_total\n\n\ndef test_fee():\n    assert fee_total(100) == 110.0\n"
-    fake_llm.replies += ['{"same_job": false}', INVOICE_TESTS, fee_tests, SUMMARY]
+    fake_llm.replies += [SameJob(difference="", same_job=False), INVOICE_TESTS, fee_tests, SUMMARY]
 
     post(repo)
 

@@ -14,6 +14,8 @@ Slopgate finds slop in Python code that coding agents write. It has two parts:
 - Do one ticket on one branch, and finish it with a pull request to `main`.
 - The Slopgate workflow runs on a self-hosted runner on the user's Mac (ticket 27). It is off (`if: false`) until ticket 28. Until then, run `uv run --extra hook --env-file .env slopgate review --pr <number>` by hand.
 - Ask the user before every commit and every push.
+- Start each commit message with the ticket number: `ticket-<NN>: type(scope): message`, for example `ticket-18: feat(llm): add decide`.
+- When a ticket's code is done, run a code review with the `pstack:thermo-nuclear-code-quality-review` skill before the commit (`/start-dev` step 4).
 - Write tickets, ticket comments, pull request text, and replies in ASD-STE100 Simplified Technical English: one idea per sentence, short sentences, active voice, one term for one concept.
 - When a ticket is done, add a `## Comments` entry with a worked example and the measured results.
 - The CI has no branch protection (the repo is private on a free plan). Do not use auto-merge: it merges before the checks finish. Wait for the checks to pass, then merge.
@@ -46,7 +48,7 @@ Run the gate with `--extra hook`. A plain `uv run` syncs the venv without `onnxr
 | `slopgate/review.py` | The gate: find candidates, classify them, write characterization tests, rewrite, prove in the sandbox. All model prompts of the gate are here. |
 | `slopgate/github.py` | Posts the review, the follow-up pull request, and the summary. |
 | `slopgate/sandbox.py` | `Local` (temporary folder) and `Contree` (Nebius sandbox). Each run starts from one checkpoint. |
-| `slopgate/llm.py` | Token Factory client: `complete` (text) and `yes_probability` (one-token yes/no with logprobs). |
+| `slopgate/llm.py` | Token Factory client: `complete` (text), `decide` (forced tool call, returns a pydantic object), and `yes_probability` (one-token yes/no with logprobs). |
 | `slopgate/embed.py` | CodeRankEmbed embeddings. The hook uses an int8 ONNX copy in `~/.cache/slopgate/`. |
 | `slopgate/index.py` | Function index of a commit, in `.slopgate/<sha>.json`. |
 | `slopgate/live.py` | The hook. Its store is `.slopgate/live.db` (SQLite). |

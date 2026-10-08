@@ -885,7 +885,12 @@ def fake_client(monkeypatch, replies):
         finish_reason, content = replies.pop(0)
         return SimpleNamespace(
             usage=SimpleNamespace(prompt_tokens=1, completion_tokens=1),
-            choices=[SimpleNamespace(finish_reason=finish_reason, message=SimpleNamespace(content=content))],
+            choices=[
+                SimpleNamespace(
+                    finish_reason=finish_reason,
+                    message=SimpleNamespace(content=content, tool_calls=[SimpleNamespace(function=SimpleNamespace(arguments=content))]),
+                )
+            ],
         )
 
     monkeypatch.setattr(llm, "client", lambda: SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create))))
