@@ -150,3 +150,21 @@ With the same prompt, the kind `nesting`, and thinking off, Super gave `can_edit
 - `characterize` accepts only a ```` ```python ```` block. If Super puts the JSON `inputs` reply only in a ```` ```json ```` block, or the tests in an untagged fence, the raw text with the fences goes on as the reply. That reply then fails and uses the one retry. Ticket 20 replaces this path.
 - If the Ultra retry is cut off, the reason is "reply cut off". The reason of the earlier Super failure is lost.
 - A docstring line that is only ```` ``` ```` ends the block, so that rewrite fails the rule check ("does not parse").
+
+### 2026-10-07: gate crash on the review of PR #15
+
+**Problem.** The Slopgate check of PR #15 was green, but the review did not run. After 8.5 min, the gate stopped with `JSONDecodeError('Expecting property name enclosed in double quotes: line 2 column 65416 (char 65416)')` and printed an empty result.
+
+**Cause (measured).** The Contree sandbox cuts command output at 65,535 characters. Commands that print 70,000, 100,000, and 200,000 characters each gave 65,535 characters. `characterize` printed the full coverage report with `coverage json -o -`. For this repo, that report is 120,171 characters (12 files). The JSON was cut at character 65,416, and 65,416 plus about 119 characters of pytest output and marker is 65,535. `review()` does not catch the error, so the gate lost the whole review. `cli.py` exits 0 on purpose, because the gate must never fail CI (spec, user story 12).
+
+**Fix.** The sandbox now prints only the missed branches of the function's file, as one short JSON line (`MISSED` in `slopgate/review.py`). The size of this line does not depend on the size of the repo.
+
+**Test.** `test_review_survives_a_sandbox_that_cuts_output_at_65535_characters` cuts each sandbox output at 65,535 characters, like Contree. The repo imports a module with 6,000 executed lines. With the old code, the test fails with the same `JSONDecodeError` at character 65,416. With the fix, the test passes.
+
+**Memory of the gate.** During the rerun of the gate on the refs of PR #15, the process took 14 GB on the 16 GB Mac and used 6.7 GB of swap. The venv had no `onnxruntime`, so `embed.load` used the torch model. The torch model embeds up to 8,192 tokens per function (`max_seq_length` in the model config) in padded batches. The int8 ONNX model cuts each function at 512 tokens and embeds one function at a time. The workflow now runs `uv run --extra hook`, and `CLAUDE.md` gives the same commands.
+
+**Rerun with the fix and ONNX** (`slopgate review --base 74fcd0d --head 22635c3 --dry-run`, measured with `/usr/bin/time -l`):
+
+- The review finished, with no crash. The run took 320 s. The failed CI run took 8.5 min before it stopped.
+- The peak resident memory was 397 MB. The torch run was at 14 GB when it was stopped.
+- The result was 0 suggestions and 10 rejected. Two functions (`strip_fence`, and one test function) were rejected with "rewrite makes no change". Seven of the 10 candidates are test functions, which ticket 17 handles.
