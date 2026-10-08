@@ -9,7 +9,7 @@ import tokenize
 import vulture
 from pydantic import BaseModel, Field
 
-from slopgate import diff, embed, index, llm
+from slopgate import diff, index, llm
 from slopgate.config import COMPLEXITY, DUPLICATE_SCORE, LIGHTNING, NESTING, SUPER, ULTRA
 from slopgate.functions import complexity, nesting, parse, structure_hash
 from slopgate.sandbox import InstallError, commands, tail
@@ -283,8 +283,7 @@ def find_duplicate(function, pool) -> dict | None:
     for record in pool:
         if record["hash"] == code_hash:
             return {"helper": record, "exact": True, "difference": "", "note": "exact structural copy"}
-    [vector] = embed.encode([function.source], query=True)
-    for score, record in index.search(pool, vector, DUPLICATE_SCORE, 5):
+    for score, record in index.search(pool, function.source, DUPLICATE_SCORE, 5):
         prompt = SAME_JOB_PROMPT.format(
             path=function.path, source=function.source, helper_path=record["path"], helper_source=record["source"]
         )

@@ -1709,38 +1709,48 @@ source = { editable = "." }
 dependencies = [
     { name = "contree-sdk" },
     { name = "coverage" },
-    { name = "einops" },
     { name = "openai" },
     { name = "pydantic" },
     { name = "pytest" },
     { name = "radon" },
-    { name = "sentence-transformers" },
-    { name = "transformers" },
     { name = "vulture" },
 ]
 
 [package.optional-dependencies]
 hook = [
+    { name = "einops" },
+    { name = "numpy" },
     { name = "onnx" },
     { name = "onnxruntime" },
+    { name = "sentence-transformers" },
+    { name = "transformers" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "numpy" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "contree-sdk", specifier = ">=0.3.6" },
     { name = "coverage" },
-    { name = "einops", specifier = ">=0.8.2" },
+    { name = "einops", marker = "extra == 'hook'", specifier = ">=0.8.2" },
+    { name = "numpy", marker = "extra == 'hook'" },
     { name = "onnx", marker = "extra == 'hook'" },
     { name = "onnxruntime", marker = "extra == 'hook'" },
     { name = "openai" },
     { name = "pydantic", specifier = ">=2" },
     { name = "pytest" },
     { name = "radon" },
-    { name = "sentence-transformers", specifier = "<6" },
-    { name = "transformers", specifier = "<5" },
+    { name = "sentence-transformers", marker = "extra == 'hook'", specifier = "<6" },
+    { name = "transformers", marker = "extra == 'hook'", specifier = "<5" },
     { name = "vulture", specifier = ">=2.16" },
 ]
 provides-extras = ["hook"]
+
+[package.metadata.requires-dev]
+dev = [{ name = "numpy" }]
 
 [[package]]
 name = "sniffio"

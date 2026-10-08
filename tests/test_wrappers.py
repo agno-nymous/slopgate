@@ -1,5 +1,5 @@
 import pytest
-from test_duplicates import EMPTY
+from test_duplicates import EMPTY, OTHER_JOB
 from test_review import models, review
 
 from slopgate.config import SUPER
@@ -40,12 +40,12 @@ def test_same_file_wrapper_is_inlined_into_its_caller(make_repo, fake_llm, capsy
         {"app/__init__.py": "", "app/billing.py": COMPUTE_TAX},
         {"app/billing.py": COMPUTE_TAX + TAX_FOR + INVOICE_TOTAL},
     )
-    fake_llm.replies += [INVOICE_TESTS]
+    fake_llm.replies += [OTHER_JOB, INVOICE_TESTS]
 
     result = review(capsys, repo)
 
-    assert models(fake_llm) == [SUPER]
-    assert "Call the function as `invoice_total`" in fake_llm.calls[0][1]
+    assert models(fake_llm) == [SUPER, SUPER]
+    assert "Call the function as `invoice_total`" in fake_llm.calls[1][1]
     assert result["suggestions"] == [] and result["rejected"] == []
     assert result["followup"] == [
         {
@@ -63,7 +63,7 @@ def test_caller_tests_run_on_the_rewrite(make_repo, fake_llm, capsys):
         {"app/__init__.py": "", "app/billing.py": COMPUTE_TAX},
         {"app/billing.py": COMPUTE_TAX + TAX_FOR + INVOICE_TOTAL},
     )
-    fake_llm.replies += [INVOICE_TESTS + "\n\ndef test_wrapper_exists():\n    import app.billing\n\n    assert app.billing.tax_for\n"]
+    fake_llm.replies += [OTHER_JOB, INVOICE_TESTS + "\n\ndef test_wrapper_exists():\n    import app.billing\n\n    assert app.billing.tax_for\n"]
 
     result = review(capsys, repo)
 
@@ -103,11 +103,11 @@ def invoice_total(subtotal):
 )
 def test_cross_file_wrapper_edits_both_files(make_repo, fake_llm, capsys, base, api, imports, fixed):
     repo = make_repo({"app/__init__.py": "", **base}, {"app/api.py": api, "app/views.py": VIEWS.format(imports=imports)})
-    fake_llm.replies += [INVOICE_TESTS.replace("app.billing", "app.views")]
+    fake_llm.replies += [OTHER_JOB, INVOICE_TESTS.replace("app.billing", "app.views")]
 
     result = review(capsys, repo)
 
-    assert models(fake_llm) == [SUPER]
+    assert models(fake_llm) == [SUPER, SUPER]
     assert result["rejected"] == []
     [followup] = result["followup"]
     assert followup["reason"].startswith("`tax_for` only forwards to `compute_tax`; inlined into its single caller `invoice_total` in app/views.py.")
@@ -129,7 +129,7 @@ def test_cross_file_wrapper_edits_both_files(make_repo, fake_llm, capsys, base, 
 def test_call_site_arguments_fill_the_inner_call(make_repo, fake_llm, capsys, wrapper, call, inlined, want):
     caller = f"\n\ndef total(a, r):\n    return {call}\n"
     repo = make_repo({"app/__init__.py": "", "app/billing.py": COMPUTE_TAX}, {"app/billing.py": COMPUTE_TAX + wrapper + caller})
-    fake_llm.replies += [f"from app.billing import total\n\n\ndef test_total():\n    assert total(10, 0.5) == {want}\n"]
+    fake_llm.replies += [OTHER_JOB, f"from app.billing import total\n\n\ndef test_total():\n    assert total(10, 0.5) == {want}\n"]
 
     [followup] = review(capsys, repo)["followup"]
 
@@ -150,15 +150,18 @@ class Invoice:
 '''
 
 
-@pytest.mark.parametrize("callers", [INVOICE_TOTAL + RECEIPT_LINE, INVOICE_METHOD], ids=["two-callers", "method-caller"])
-def test_wrapper_without_one_function_caller_is_left_alone(make_repo, fake_llm, capsys, callers):
+@pytest.mark.parametrize(
+    ("callers", "same_job_checks"), [(INVOICE_TOTAL + RECEIPT_LINE, 1), (INVOICE_METHOD, 0)], ids=["two-callers", "method-caller"]
+)
+def test_wrapper_without_one_function_caller_is_left_alone(make_repo, fake_llm, capsys, callers, same_job_checks):
     repo = make_repo(
         {"app/__init__.py": "", "app/billing.py": COMPUTE_TAX},
         {"app/billing.py": COMPUTE_TAX + TAX_FOR + callers},
     )
+    fake_llm.replies += [OTHER_JOB] * same_job_checks
 
     assert review(capsys, repo) == EMPTY
-    assert fake_llm.calls == []
+    assert models(fake_llm) == [SUPER] * same_job_checks
 
 
 @pytest.mark.parametrize(
@@ -172,9 +175,10 @@ def test_wrapper_without_one_function_caller_is_left_alone(make_repo, fake_llm, 
 def test_inlining_that_would_change_evaluation_is_left_alone(make_repo, fake_llm, capsys, wrapper, call):
     caller = f"\n\nRATES = [0.5]\n\n\ndef total(a, r):\n    return {call}\n"
     repo = make_repo({"app/__init__.py": "", "app/billing.py": COMPUTE_TAX}, {"app/billing.py": COMPUTE_TAX + wrapper + caller})
+    fake_llm.replies += [OTHER_JOB]
 
     assert review(capsys, repo) == EMPTY
-    assert fake_llm.calls == []
+    assert models(fake_llm) == [SUPER]
 
 
 def test_tests_prompt_shows_the_code_the_target_calls(make_repo, fake_llm, capsys):
@@ -184,11 +188,11 @@ def test_tests_prompt_shows_the_code_the_target_calls(make_repo, fake_llm, capsy
             "app/billing.py": "from app.tax import compute_tax\n" + TAX_FOR + INVOICE_TOTAL,
         },
     )
-    fake_llm.replies += [INVOICE_TESTS]
+    fake_llm.replies += [OTHER_JOB, INVOICE_TESTS]
 
     review(capsys, repo)
 
-    [(_, prompt)] = fake_llm.calls
+    [_, (_, prompt)] = fake_llm.calls
     context = prompt.split("Code it calls")[1]
     assert "# app/billing.py\n" + TAX_FOR.strip() in context
     assert "# app/tax.py\n" + COMPUTE_TAX.strip() in context

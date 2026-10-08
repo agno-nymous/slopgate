@@ -5,13 +5,13 @@ import sys
 import textwrap
 
 import pytest
+from test_duplicates import OTHER_JOB
 from test_review import FLAT, IS_NESTING, NESTED, TESTS, fenced
 from test_wrappers import COMPUTE_TAX, INVOICE_TESTS, INVOICE_TOTAL, TAX_FOR
 
 from slopgate.cli import main
 from slopgate.github import duration
 from slopgate.config import ULTRA
-from slopgate.review import SameJob
 
 SUMMARY = "One function got flatter."
 PR_URL = "https://github.com/acme/shop/pull/8"
@@ -144,7 +144,7 @@ WRAPPER_HEAD = {"app/billing.py": COMPUTE_TAX + TAX_FOR + INVOICE_TOTAL}
 def test_followup_changes_open_one_pull_request_on_the_author_branch(github, fake_llm, capsys):
     make, calls = github
     repo, origin = make(WRAPPER_BASE, WRAPPER_HEAD)
-    fake_llm.replies += [INVOICE_TESTS, SUMMARY]
+    fake_llm.replies += [OTHER_JOB, INVOICE_TESTS, SUMMARY]
 
     post(repo)
 
@@ -169,7 +169,7 @@ def test_existing_followup_pull_request_is_updated_not_duplicated(github, fake_l
     subprocess.run(["git", "commit", "-q", "--allow-empty", "-m", "earlier review"], cwd=repo, check=True)
     subprocess.run(["git", "push", "-q", "origin", "HEAD:refs/heads/slopgate/feature"], cwd=repo, check=True)
     subprocess.run(["git", "reset", "-q", "--hard", "HEAD~1"], cwd=repo, check=True)
-    fake_llm.replies += [INVOICE_TESTS, SUMMARY]
+    fake_llm.replies += [OTHER_JOB, INVOICE_TESTS, SUMMARY]
 
     post(repo)
 
@@ -181,7 +181,7 @@ def test_existing_followup_pull_request_is_updated_not_duplicated(github, fake_l
 def test_fork_pull_request_gets_no_followup_branch(github, fake_llm, capsys):
     make, calls = github
     repo, origin = make(WRAPPER_BASE, WRAPPER_HEAD, fork=True)
-    fake_llm.replies += [INVOICE_TESTS, SUMMARY]
+    fake_llm.replies += [OTHER_JOB, INVOICE_TESTS, SUMMARY]
 
     post(repo)
 
@@ -257,7 +257,7 @@ def test_followups_that_edit_the_same_file_open_only_the_first(github, fake_llm,
     make, calls = github
     repo, origin = make(WRAPPER_BASE, {"app/billing.py": COMPUTE_TAX + TAX_FOR + INVOICE_TOTAL + FEE_FOR})
     fee_tests = "from app.billing import fee_total\n\n\ndef test_fee():\n    assert fee_total(100) == 110.0\n"
-    fake_llm.replies += [SameJob(difference="", same_job=False), INVOICE_TESTS, fee_tests, SUMMARY]
+    fake_llm.replies += [OTHER_JOB, OTHER_JOB, INVOICE_TESTS, fee_tests, SUMMARY]
 
     post(repo)
 
@@ -271,7 +271,7 @@ def test_followup_pull_request_failure_still_posts_the_review(github, fake_llm, 
     make, calls = github
     repo, origin = make(WRAPPER_BASE, {"app/billing.py": COMPUTE_TAX + TAX_FOR + INVOICE_TOTAL, "app/perms.py": NESTED})
     monkeypatch.setenv("GH_CREATE_ERROR", "GitHub Actions is not permitted to create or approve pull requests")
-    fake_llm.replies += [IS_NESTING, INVOICE_TESTS, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT), SUMMARY]
+    fake_llm.replies += [OTHER_JOB, IS_NESTING, INVOICE_TESTS, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT), SUMMARY]
 
     post(repo)
 
@@ -290,7 +290,7 @@ def test_followup_push_failure_still_posts_the_review(github, fake_llm, capsys):
     make, calls = github
     repo, _ = make(WRAPPER_BASE, WRAPPER_HEAD)
     subprocess.run(["git", "remote", "set-url", "origin", "/nonexistent/origin.git"], cwd=repo, check=True)
-    fake_llm.replies += [INVOICE_TESTS, SUMMARY]
+    fake_llm.replies += [OTHER_JOB, INVOICE_TESTS, SUMMARY]
 
     post(repo)
 

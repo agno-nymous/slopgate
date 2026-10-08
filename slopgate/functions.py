@@ -1,5 +1,6 @@
 import ast
 import hashlib
+import re
 import textwrap
 from dataclasses import dataclass
 
@@ -68,3 +69,12 @@ def nesting(source: str) -> int:
         return (isinstance(node, BLOCKS) and not is_elif) + max(inner, default=0)
 
     return depth(ast.parse(textwrap.dedent(source)))
+
+
+def tokens(source: str) -> frozenset[str]:
+    words = re.findall(r"[A-Za-z_][A-Za-z0-9_]*|\d+|[^\sA-Za-z0-9_]", source)
+    return frozenset(part.lower() for word in words for part in re.split(r"_|(?<=[a-z])(?=[A-Z])", word) if part)
+
+
+def jaccard(a: frozenset[str], b: frozenset[str]) -> float:
+    return len(a & b) / len(a | b)
