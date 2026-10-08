@@ -23,8 +23,8 @@ A self-hosted runner gives both: the workflow starts when a pull request opens, 
 
 ## Design
 
-1. Restore `.github/workflows/slopgate.yml` with `runs-on: self-hosted`. The steps do not change: checkout, then `uses: ./`.
-2. In `action.yml`, run the `actions/cache` step only on GitHub runners (`runner.environment == 'github-hosted'`). On the Mac, `~/.cache/huggingface` stays between runs, so a cache restore only downloads 506 MB again.
+1. Restore `.github/workflows/slopgate.yml` with `runs-on: self-hosted`. The job checks out the repo and runs `uv run slopgate review --base "$BASE" --head "$HEAD"` with the Mac's `uv`.
+2. The job does not use `uses: ./`. The action runs `actions/setup-python`, and on a self-hosted Mac that step fails with `mkdir: /Users/runner: Permission denied` (seen on PR #14, also with `AGENT_TOOLSDIRECTORY` set in the runner's `.env`). `uv` uses its own cache, and `~/.cache/huggingface` stays between runs, so the job needs no install step and no cache step. `action.yml` does not change.
 3. `ci.yml` (pytest) stays on `ubuntu-latest`.
 4. `CLAUDE.md` and the `/start-dev` skill say that the gate runs on the runner, and that `--pr` is the manual fallback when the runner is offline.
 5. Before the repo is public (2026-10-30), set `runs-on: ubuntu-latest` again and remove the runner. On a public repo, a pull request from a fork could run its code on the Mac.
@@ -39,7 +39,7 @@ A self-hosted runner gives both: the workflow starts when a pull request opens, 
 ## Acceptance
 
 - [x] `.github/workflows/slopgate.yml` uses `runs-on: self-hosted`.
-- [x] `action.yml` skips `actions/cache` on a self-hosted runner.
+- [x] The job runs the gate with `uv` and does not use `actions/setup-python`.
 - [ ] A new pull request starts the `slopgate` job on the Mac runner, and the job posts its result to the pull request.
 - [ ] The job takes less than 10 min.
 - [x] `CLAUDE.md` says to switch back to `ubuntu-latest` before the repo is public.
