@@ -53,4 +53,5 @@ Tickets 01 to 07, 12 to 16, 18, 21, 22, and 26 are done.
 5. Run `uv run pytest -q`. Run the live tests that the ticket names with `uv run --env-file .env pytest -m live -q`.
 6. Add a `## Comments` entry with the date, what was built, a worked example, and the measured results.
 7. Set `Status: done`. Update the table above and "Next ticket".
-8. Ask the user before you commit or push. Then open a pull request to `main`.
+8. Run a code review with the `pstack:thermo-nuclear-code-quality-review` skill (an Opus subagent). Apply the findings, or reject each one with a reason.
+9. Ask the user before you commit or push. Start each commit message with the ticket number: `ticket-<NN>: type(scope): message`. Then open a pull request to `main`.

@@ -33,9 +33,14 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
 ## 3. Implement in poteto mode
 
 1. Invoke the `pstack:poteto-mode` skill and follow it.
-2. Implementation goes to `pstack:poteto-agent` subagents. The main session designs, reviews the diff, and verifies on the real artifact.
-3. Dispatch subagents without `isolation: "worktree"`. That option is broken in this setup: the subagent's shell refuses every command with "The working-directory isolation context for this agent was lost". A subagent without `isolation` works in the session's worktree from step 2.
-4. Choose each subagent's model by the complexity of its task. Always pass `model` explicitly. Never use Fable.
+2. Research and design before code, when the ticket needs it:
+   - The ticket leaves a design decision open, or the change crosses a function boundary: use the `pstack:architect` skill. If the design is contested, use the `pstack:interrogate` skill before you implement.
+   - You must learn how a part of this repo works first: use the `pstack:how` skill.
+   - The ticket needs facts from outside the repo (a library, a model, an API, a benchmark): use the `anthropic-skills:deep-research` skill, or a `library-explorer` subagent for one library.
+   - Measure a fact when you can (a prototype, a timing, a live call). Do not ask the user for it.
+3. Implementation goes to `pstack:poteto-agent` subagents. The main session designs, reviews the diff, and verifies on the real artifact.
+4. Dispatch subagents without `isolation: "worktree"`. That option is broken in this setup: the subagent's shell refuses every command with "The working-directory isolation context for this agent was lost". A subagent without `isolation` works in the session's worktree from step 2.
+5. Choose each subagent's model by the complexity of its task. Always pass `model` explicitly. Never use Fable.
 
    | Model | `model` value | Use it for |
    |---|---|---|
@@ -44,8 +49,8 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
    | Haiku 4.5 | `"haiku"` | Mechanical work: find where code is, rename, edit ticket or doc text, run commands and summarize their output or logs. |
 
    If you are not sure, choose the stronger model. If a Sonnet or Haiku subagent fails or returns wrong work, give the task again to the next stronger model. Do not retry with the same model. `~/.claude/pstack-models.md` maps pstack roles to opus by default.
-5. Follow the ticket's design. If the code shows that the design is wrong, stop and tell the user with evidence. Do not change the design silently.
-6. Do not add features, abstractions, or error handling that the ticket does not ask for.
+6. Follow the ticket's design. If the code shows that the design is wrong, stop and tell the user with evidence. Do not change the design silently.
+7. Do not add features, abstractions, or error handling that the ticket does not ask for.
 
 ## 4. Verify
 
@@ -54,6 +59,7 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
 3. For a gate change, run one local dry run: `uv run --env-file <main checkout>/.env slopgate review --repo <repo> --base <ref> --head <ref> --dry-run`. Do not use `--sandbox local` on this repo: `.slopgate.toml` installs with `apt-get`, which exists only in the Contree Linux image.
 4. Check each acceptance box only after you see it pass. If a box cannot pass (for example, it needs an external service that is not available), leave it open, and use `Status: needs-live-check` instead of `done`.
 5. Measure the numbers that the ticket asks for (time, counts, rates). Do not estimate them.
+6. Run a code review when the feature is done and the tests pass. Dispatch a read-only `pstack:poteto-agent` subagent with `model: "opus"`. Tell it to invoke the `pstack:thermo-nuclear-code-quality-review` skill on the diff against `origin/main` plus the untracked files, and to check the diff against the ticket's design and acceptance boxes. Apply each finding, or reject it with a reason. Then run `uv run pytest -q` again. Give the findings and what you did with each to the user.
 
 ## 5. Finish the ticket text
 
@@ -69,7 +75,7 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
 ## 6. Commit, PR, and merge
 
 1. **Ask the user before you commit and before you push.** Show the list of changed files and the commit message first.
-2. Use the conventional commit format: `type(scope): message`. Keep each commit to one logical change.
+2. Start each commit message with the ticket number, then the conventional commit format: `ticket-<NN>: type(scope): message`, for example `ticket-18: feat(llm): add decide for pydantic tool-call decisions`. Keep each commit to one logical change.
 3. Open a PR to `main` with `gh pr create`. The PR text says what changed, why, and the measured results.
 4. Read the `slopgate` check and the review that it posts. The check runs on the self-hosted runner on the user's Mac (ticket 27). If it stays queued because the runner is offline, run the gate by hand: `uv run --env-file <main checkout>/.env slopgate review --pr <number>`.
 5. Bind the PR with the app's PR tools, and read its checks there. Do not use auto-merge: the repo has no branch protection, so auto-merge would merge before the checks finish.
