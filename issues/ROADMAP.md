@@ -14,7 +14,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 |---|---|---|---|---|
 | 1 | [22 — Dead-code check ignores nested parameters](22-dead-code-ignores-nested-parameters.md) | done | — | Smallest fix. It removes the two false "dead" hits from PR #9. |
 | 2 | [21 — Code replies: one Python block, thinking off, reject "no change"](21-rewrite-reply-as-python-block.md) | done | — | Stops cut-off replies and empty suggestions. Ticket 20 uses its `strip_fence` and thinking changes. |
-| 3 | [28 — Keyword duplicate search in the gate](28-keyword-duplicate-search.md) | needs-live-check | — | The user set it next. The gate then needs no embedding model: the torch fallback took 14 GB on the 16 GB Mac. |
+| 3 | [28 — Keyword duplicate search in the gate](28-keyword-duplicate-search.md) | done | — | The user set it next. The gate then needs no embedding model: the torch fallback took 14 GB on the 16 GB Mac. |
 | 4 | [17 — Test files get review notes only](17-test-files-get-notes-only.md) | ready-for-agent | — | Stops the gate from changing tests. Fixes the `fake_llm` failure at its cause. |
 | 5 | [20 — Tests reply as one pydantic object, sent as markdown](20-tests-reply-as-pydantic-object.md) | ready-for-agent | 21 | Stops prose from becoming a test file, for every function. |
 | 6 | [18 — Model decisions through pydantic tool calls](18-decisions-through-pydantic-tool-calls.md) | done | — | Adds `decide`. Ticket 19 needs it. |
@@ -34,7 +34,7 @@ Added after the order was set:
 | [26 — Review a pull request on the local machine](26-review-a-pr-locally.md) | done | Adds `slopgate review --pr <number>`. |
 | [27 — Run the gate automatically on a self-hosted runner](27-gate-on-self-hosted-runner.md) | needs-live-check | The workflow runs on the user's Mac. It needs the runner to be registered. |
 
-Tickets 01 to 07, 12 to 16, 18, 21, 22, and 26 are done. Ticket 28 needs a live check of the workflow. Ticket 24 is wontfix.
+Tickets 01 to 07, 12 to 16, 18, 21, 22, 26, and 28 are done. Ticket 24 is wontfix.
 
 ## Rules for the order
 

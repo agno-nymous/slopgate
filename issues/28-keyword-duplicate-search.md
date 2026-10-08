@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately. Ticket 18 also edits `find_duplicate`. Do not do the two tickets at the same time.
 
-**Status:** needs-live-check
+**Status:** done
 
 The user chose go on 2026-10-08. Keyword search ranks copies worse than the hybrid of the hook. It finds more copies than the gate finds today, and it makes more Super calls. The Slopgate workflow was off until this ticket (`if: false` in `.github/workflows/slopgate.yml`).
 
@@ -182,7 +182,7 @@ On pool B, two rows change. `module_of` ranks 4th: `strip_quotes` and two other 
 - [x] `uv sync` with no extra installs no `torch`. With `--extra hook`, the hook tests pass.
 - [x] `spec.md`, `CLAUDE.md`, `README.md`, and ticket 24 match the Design.
 - [x] `uv run pytest -q` passes.
-- [ ] The Slopgate workflow runs again: `.github/workflows/slopgate.yml` gets back `if: ${{ !startsWith(github.head_ref, 'slopgate/') }}`, and a new pull request shows the `slopgate` check.
+- [x] The Slopgate workflow runs again: `.github/workflows/slopgate.yml` gets back `if: ${{ !startsWith(github.head_ref, 'slopgate/') }}`, and a new pull request shows the `slopgate` check.
 - [x] Live run: `slopgate review --base 74fcd0d --head 22635c3 --dry-run` on this repo. Record the time, the peak memory (`/usr/bin/time -l`), and the duplicate result. Ticket 21 measured 320 s and 397 MB with ONNX.
 
 ## Comments
@@ -224,6 +224,10 @@ On pool B, two rows change. `module_of` ranks 4th: `strip_quotes` and two other 
 3. Empty inputs (a defect from before this ticket). For a function that takes objects, Super often replied `{"inputs": []}`. The gate recorded zero calls and rejected the candidate with "no tests ran". Live Super, 8 tries per function: `find_duplicate` gave an empty list 6 times, `characterize` 8 times, `seed` 1 time. A prompt rule against an empty list did not help (8 of 8 still empty). One retry with a request for a pytest file gave a test file in 19 of 19 cases. The gate now does that retry and runs no sandbox for an empty list.
 
 After these fixes, `uv run pytest -q` gave 186 passed, 12 deselected.
+
+4. Runner sleep. The gate run on commit 8ca2676 was cancelled after 10 min. The Mac went to idle sleep 39 s into the job, and the runner stopped renewing the job. The gate step now runs under `caffeinate -i`.
+
+**Workflow check.** The `slopgate` check ran on PR #17 and passed on commit d0c6675 (4 min 35 s, 10 rejected, 0 accepted). The moved `tokens` rejection is gone. `find_duplicate` got a pytest file after the empty-inputs retry, but that file failed on the original code. `matches` gave an empty list twice and was rejected with no sandbox run. The other rejections come from generated tests that mock badly, from test files (ticket 17), and from one cut-off reply.
 
 **Other test changes.** At the floor 0.30, the new callers in the wrapper fixtures (`invoice_total`, `fee_total`, `total`) score 0.35 to 0.53 against `compute_tax`. Each costs one Super same-job call. 17 tests in `tests/test_wrappers.py` and `tests/test_github.py` now queue one "not the same job" reply for each call.
 
