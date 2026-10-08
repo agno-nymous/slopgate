@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**21 — Code replies: one Python block, thinking off, reject "no change".**
+**17 — Test files get review notes only.**
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -13,7 +13,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | Order | Ticket | Status | Blocked by | Why it is in this position |
 |---|---|---|---|---|
 | 1 | [22 — Dead-code check ignores nested parameters](22-dead-code-ignores-nested-parameters.md) | done | — | Smallest fix. It removes the two false "dead" hits from PR #9. |
-| 2 | [21 — Code replies: one Python block, thinking off, reject "no change"](21-rewrite-reply-as-python-block.md) | ready-for-agent | — | Stops cut-off replies and empty suggestions. Ticket 20 uses its `strip_fence` and thinking changes. |
+| 2 | [21 — Code replies: one Python block, thinking off, reject "no change"](21-rewrite-reply-as-python-block.md) | done | — | Stops cut-off replies and empty suggestions. Ticket 20 uses its `strip_fence` and thinking changes. |
 | 3 | [17 — Test files get review notes only](17-test-files-get-notes-only.md) | ready-for-agent | — | Stops the gate from changing tests. Fixes the `fake_llm` failure at its cause. |
 | 4 | [20 — Tests reply as one pydantic object, sent as markdown](20-tests-reply-as-pydantic-object.md) | ready-for-agent | 21 | Stops prose from becoming a test file, for every function. |
 | 5 | [18 — Model decisions through pydantic tool calls](18-decisions-through-pydantic-tool-calls.md) | ready-for-agent | — | Adds `decide`. Ticket 19 needs it. |
@@ -33,7 +33,7 @@ Added after the order was set:
 | [26 — Review a pull request on the local machine](26-review-a-pr-locally.md) | done | Adds `slopgate review --pr <number>`. |
 | [27 — Run the gate automatically on a self-hosted runner](27-gate-on-self-hosted-runner.md) | needs-live-check | The workflow runs on the user's Mac. It needs the runner to be registered. |
 
-Tickets 01 to 07, 12 to 16, 22, and 26 are done.
+Tickets 01 to 07, 12 to 16, 21, 22, and 26 are done.
 
 ## Rules for the order
 
