@@ -15,7 +15,8 @@ jobs:
         with:
           fetch-depth: 0
       - name: Review the pull request
-        run: uv run slopgate review --base "$BASE" --head "$HEAD"
+        # caffeinate keeps the Mac out of idle sleep; on 2026-10-08 a sleep stopped the job lease renewals and GitHub cancelled the run.
+        run: caffeinate -i uv run slopgate review --base "$BASE" --head "$HEAD"
         env:
           NEBIUS_API_KEY: ${{ secrets.NEBIUS_API_KEY }}
           NEBIUS_PROJECT_ID: ${{ secrets.NEBIUS_PROJECT_ID }}
