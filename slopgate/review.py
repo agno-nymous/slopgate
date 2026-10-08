@@ -669,7 +669,8 @@ def review(repo, base, head, sandbox) -> dict:
         base_index = index.build(repo, base)
         known = {(r["path"], r["qualname"]) for r in base_index}
         skip = {(function.path, function.qualname) for function, _ in changed}
-        pool = [r for r in base_index if "." not in r["qualname"] and (r["path"], r["qualname"]) not in skip]
+        kept = {(r["path"], r["qualname"]) for r in index.build(repo, head)}
+        pool = [r for r in base_index if "." not in r["qualname"] and (r["path"], r["qualname"]) not in skip and (r["path"], r["qualname"]) in kept]
         for function, _ in changed:
             if "." not in function.qualname and function not in wrapped and (function.path, function.qualname) not in known:
                 matches[function] = find_duplicate(function, pool)

@@ -17,6 +17,9 @@ def make_repo(tmp_path):
 
         def commit(files, message):
             for rel, content in files.items():
+                if content is None:
+                    (tmp_path / rel).unlink()
+                    continue
                 (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
                 (tmp_path / rel).write_text(content)
             git("add", "-A")

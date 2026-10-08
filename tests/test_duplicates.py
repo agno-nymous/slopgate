@@ -272,6 +272,26 @@ def test_function_changed_in_the_same_pr_is_not_a_helper(make_repo, fake_llm, ca
     assert fake_llm.calls == []
 
 
+def test_helper_moved_in_the_same_pr_is_not_a_helper(make_repo, fake_llm, capsys):
+    repo = make_repo(
+        {"app/__init__.py": "", "app/text.py": SLUGIFY},
+        {"app/text.py": None, "app/words.py": SLUGIFY + "\n\n" + SIMPLE},
+    )
+
+    assert review(capsys, repo) == EMPTY
+    assert fake_llm.calls == []
+
+
+def test_helper_deleted_in_the_same_pr_is_not_a_helper(make_repo, fake_llm, capsys):
+    repo = make_repo(
+        {"app/__init__.py": "", "app/text.py": SLUGIFY},
+        {"app/text.py": None, "app/posts.py": RENAMED_COPY},
+    )
+
+    assert review(capsys, repo) == EMPTY
+    assert fake_llm.calls == []
+
+
 def test_gate_imports_no_hook_only_module():
     code = (
         "import slopgate.cli, slopgate.review, slopgate.index, slopgate.github, slopgate.sandbox, sys; "
