@@ -4,7 +4,7 @@
 
 **Blocked by:** 21 (it changes `strip_fence` and turns thinking off in `complete`; this ticket uses both)
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Context
 
@@ -87,11 +87,22 @@ Decision: the model replies in markdown, and the gate parses the reply into the 
    ```
    ````
 
-3. Replace `proposed_inputs` with `parse_tests_reply(text, function, calls_allowed) -> TestsReply | None`:
+3. Replace `proposed_inputs` with `parse_tests_reply(text, function, calls_allowed) -> TestsReply`:
    1. The reply starts with `CANNOT_TEST:`: return `CannotTest`.
-   2. No ```` ```python ```` block (`strip_fence` returns `None`, ticket 21), or `ast.parse` fails: return `None`.
-   3. `calls_allowed`, and every top-level statement is an expression that calls `{qualname}` by name: return `Calls`. Each item is the text between the outer parentheses of one call (`ast.get_source_segment` of the call, without the name and the parentheses). This is the same text that `record` takes today.
+   2. No ```` ```python ```` block (`strip_fence` returns `None`, ticket 21), or `ast.parse` fails: raise `ValueError` with the error text. The retry text uses it as `{error}`.
+   3. `calls_allowed`, and the block has no top-level `def`, `async def`, or `class`: the block is a script. Return `Calls` with each call to `{qualname}` in the script, in source order. Each item is the argument text of one call. Skip a call whose arguments use a name other than a builtin, because the recorder cannot evaluate it. If no call is left, raise `ValueError`.
    4. Otherwise: return `TestFile`.
+
+   **Change during implementation (2026-10-08).** The first version of step 3.3 took `Calls` only when every top-level statement was a bare call. Live Super never replied in that shape for `apply_discount`. It wrote a script: the import line, `assert apply_discount(100, 20) == 80.0` lines, `try/except ValueError` blocks, and sometimes `print(...)`. Measured with thinking off, 8 tries each:
+
+   | Parser or prompt | `apply_discount` as `Calls` | `broken_rule` |
+   |---|---|---|
+   | Bare calls only (first version) | 0/8 | 8/8 test file |
+   | Bare calls, plus an example block of calls in the prompt | 0/8 | 8/8 `CANNOT_TEST` (wrong) |
+   | Skip the import, unwrap `print` and one-call `try` | 5/8 | 8/8 test file |
+   | Script: every call in a block with no `def` or `class` | 7/8 (1/8 was a pytest file) | 8/8 test file |
+
+   The user chose the script rule. The recorder runs each call on the real code, so the values that the model predicts in the script do not matter.
 
 4. In `characterize`, handle each result as below. Each retry text is appended to the request, as the retries are today. The function makes at most 2 model requests in total, as today.
    - `CannotTest`: reject the function with the reason "model cannot test: <reason>". Do not retry.
@@ -144,14 +155,75 @@ Decision: the model replies in markdown, and the gate parses the reply into the 
 
 ## Acceptance
 
-- [ ] A fake reply of prose with no block retries once, and then rejects with the reason "tests reply is not python". No test file is written to the sandbox.
-- [ ] A fake reply `CANNOT_TEST: fixture` rejects with "model cannot test: fixture" and makes no retry.
-- [ ] A fake reply with a block of three calls to the function gives `Calls` with three items, and `record` gets the same argument text as today.
-- [ ] A fake reply with a block that holds `def test_x(): ...` gives `TestFile`.
-- [ ] For a method, the prompt has no calls form, and a block of bare calls gives `TestFile`.
-- [ ] Fake calls that pass but miss a branch cause one retry that asks for a test file. A passing test file from that retry is used.
-- [ ] The rendered prompt contains the form 3 text "you do not need to see helpers or imports".
-- [ ] Live test (`-m live`): on `apply_discount` and on `broken_rule`, the gate proves the tests. On `fake_llm`, the reply is `CannotTest`.
-- [ ] `uv run pytest -q` passes.
+- [x] A fake reply of prose with no block retries once, and then rejects with the reason "tests reply is not python". No test file is written to the sandbox.
+- [x] A fake reply `CANNOT_TEST: fixture` rejects with "model cannot test: fixture" and makes no retry.
+- [x] A fake reply with a block of three calls to the function gives `Calls` with three items, and `record` gets the same argument text as today.
+- [x] A fake reply with a block that holds `def test_x(): ...` gives `TestFile`.
+- [x] For a method, the prompt has no calls form, and a block of bare calls gives `TestFile`.
+- [x] Fake calls that pass but miss a branch cause one retry that asks for a test file. A passing test file from that retry is used.
+- [x] The rendered prompt contains the form 3 text "you do not need to see helpers or imports".
+- [x] Live test (`-m live`): on `apply_discount` and on `broken_rule`, the gate proves the tests. On `fake_llm`, the reply is `CannotTest`.
+- [x] `uv run pytest -q` passes.
 
 ## Comments
+
+### 2026-10-08: done
+
+**What was built.** The gate asks Super for characterization tests in one of three forms: calls, a test file, or `CANNOT_TEST: <reason>`. `parse_tests_reply` in `slopgate/review.py` reads the reply into one of three pydantic objects: `Calls`, `TestFile`, or `CannotTest`. Prose never becomes a test file now. A reply without a python block gets one retry, and then the function is rejected with "tests reply is not python". When recorded calls miss a branch, the gate asks once for a test file. `proposed_inputs`, `INPUTS_FORM`, `EMPTY_INPUTS_RETRY`, and the JSON fence fallback are deleted.
+
+**Two changes to the design.**
+
+1. `parse_tests_reply` raises `ValueError` and does not return `None`. The retry text needs the error, and `None` cannot hold it.
+2. A block with no top-level `def` or `class` is a script, and every call in it is recorded (design step 3, "Change during implementation"). Calls whose arguments use a name that is not a builtin are skipped.
+
+**Worked example (live run, Super, thinking off).** The target is `apply_discount` in `app/pricing.py`:
+
+```python
+def apply_discount(price, percent):
+    if percent < 0 or percent > 100:
+        raise ValueError("percent must be 0-100")
+    return round(price * (100 - percent) / 100, 2)
+```
+
+Super replied with a script, not with bare calls. Part of it:
+
+```python
+from app.pricing import apply_discount
+
+assert apply_discount(99.99, 50) == 50.0
+try:
+    apply_discount(100, -5)
+    assert False, "Expected ValueError"
+except ValueError as e:
+    assert str(e) == "percent must be 0-100"
+assert apply_discount(100, 0.001) == 99.9
+```
+
+Two of the predicted values are wrong. The real results are `49.99` and `100.0`. The first version of the parser read this reply as a test file. Pytest then found no tests ("no tests ran"), and the gate rejected the function. The new parser reads the script as `Calls` with 22 items, for example `'99.99, 50'` and `'100, -5'`. The recorder runs each call on the real code and writes the tests from the real results. The tests passed on the original code and covered every branch, from 1 reply in 7.3 s.
+
+**Measured results.**
+
+- `uv run pytest -q`: 216 passed, 15 deselected.
+- Live test `test_super_tests_reply_is_proven_or_cannot_test`, 4 runs (3 before the review fixes, 1 after):
+
+  | Function | Result | Replies | Time |
+  |---|---|---|---|
+  | `apply_discount` | proven 4/4 | 1 each | 3.4 to 7.3 s |
+  | `broken_rule` | proven 4/4 | 1 in 3 runs, 2 in 1 run | 5.0 to 41.1 s |
+  | `fake_llm` | `CannotTest` 4/4 | 1 each | 1.1 to 1.3 s |
+
+- Parser measurement, 8 tries each: see the table in design step 3.
+
+**Code review.** The review gave 13 findings. Fixes were applied for the argument text (`(f)(1)` gave `')(1'`), calls with names bound in the script, the error for a script with no usable call, and the structure of `characterize`. A new test calls the parser with odd call shapes. These findings were rejected:
+
+- Force a test file after the missed-branch retry. A script in that retry then gives "no tests ran". Its calls can cover the missed branch.
+- `def main()` scripts. No measured reply had this shape.
+- Nested target calls. They are recorded as two calls, and a test shows this.
+- Retry text for recorded calls that fail on the original code. This case is rare.
+- An untagged union. The ticket asks for the tagged models.
+
+**Known limits.**
+
+- Sandbox runs have no time limit. A call such as `input()` or an infinite loop blocks the run. This was true before this ticket. A separate task tracks it.
+- For a method, a script reply runs as a pytest file and gives "no tests ran". The one retry then asks for a corrected file.
+- The `form` tags of the pydantic models are not checked, because the parser builds each model directly.

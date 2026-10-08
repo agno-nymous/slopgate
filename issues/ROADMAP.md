@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**20 — Tests reply as one pydantic object, sent as markdown.**
+**30 — Give the test writer the constants the target reads.**
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -16,7 +16,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 2 | [21 — Code replies: one Python block, thinking off, reject "no change"](21-rewrite-reply-as-python-block.md) | done | — | Stops cut-off replies and empty suggestions. Ticket 20 uses its `strip_fence` and thinking changes. |
 | 3 | [28 — Keyword duplicate search in the gate](28-keyword-duplicate-search.md) | done | — | The user set it next. The gate then needs no embedding model: the torch fallback took 14 GB on the 16 GB Mac. |
 | 4 | [17 — Test files get review notes only](17-test-files-get-notes-only.md) | done | — | Stops the gate from changing tests. Fixes the `fake_llm` failure at its cause. |
-| 5 | [20 — Tests reply as one pydantic object, sent as markdown](20-tests-reply-as-pydantic-object.md) | ready-for-agent | 21 | Stops prose from becoming a test file, for every function. |
+| 5 | [20 — Tests reply as one pydantic object, sent as markdown](20-tests-reply-as-pydantic-object.md) | done | 21 | Stops prose from becoming a test file, for every function. |
 | 6 | [30 — Give the test writer the constants the target reads](30-constants-in-callee-context.md) | ready-for-agent | — | Super guessed `DUPLICATE_SCORE` on PR #17. No extra model call. |
 | 7 | [29 — Keep the passing characterization tests](29-keep-passing-characterization-tests.md) | ready-for-agent | 20 | One failing test rejects the whole file now. No extra model call. |
 | 8 | [31 — Retry once for missed branches, with 3 attempts in total](31-retry-missed-branches.md) | ready-for-agent | 29 | Missed branches reject at once now. Costs one Super call. |
@@ -37,7 +37,7 @@ Added after the order was set:
 | [26 — Review a pull request on the local machine](26-review-a-pr-locally.md) | done | Adds `slopgate review --pr <number>`. |
 | [27 — Run the gate automatically on a self-hosted runner](27-gate-on-self-hosted-runner.md) | needs-live-check | The workflow runs on the user's Mac. It needs the runner to be registered. |
 
-Tickets 01 to 07, 12 to 18, 21, 22, 26, and 28 are done. Ticket 24 is wontfix.
+Tickets 01 to 07, 12 to 18, 20 to 22, 26, and 28 are done. Ticket 24 is wontfix.
 
 ## Rules for the order
 
