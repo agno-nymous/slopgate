@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Context
 
@@ -43,13 +43,13 @@ The hook keeps functions in test files out of its search pool, and it does not f
 
 ## Acceptance
 
-- [ ] A function in `test/test_api.py`, `checks/api_test.py`, and `src/conftest.py` counts as a test file. A function in `tests/helpers.py` does not count, unless `python_files` matches it.
-- [ ] A repo with `python_files = ["check_*.py"]` in `[tool.pytest.ini_options]` makes `check_api.py` a test file and `test_api.py` a normal file.
-- [ ] A nested, slop-flagged function in a test file produces one entry in `result["notes"]` and no entry in `suggestions`, `followup`, or `rejected`. The fake LLM gets no rewrite request and no tests request for it.
-- [ ] A copy of an existing test function produces a note of kind `duplicate` that names the existing function.
-- [ ] `publish` posts a note as an inline comment without a suggestion block. A pull request with only notes gets a review.
-- [ ] The hook drops a function in `test/test_api.py` from its pool. It still keeps a function in `tests/helpers.py`.
-- [ ] `uv run pytest -q` passes.
+- [x] A function in `test/test_api.py`, `checks/api_test.py`, and `src/conftest.py` counts as a test file. A function in `tests/helpers.py` does not count, unless `python_files` matches it.
+- [x] A repo with `python_files = ["check_*.py"]` in `[tool.pytest.ini_options]` makes `check_api.py` a test file and `test_api.py` a normal file.
+- [x] A nested, slop-flagged function in a test file produces one entry in `result["notes"]` and no entry in `suggestions`, `followup`, or `rejected`. The fake LLM gets no rewrite request and no tests request for it.
+- [x] A copy of an existing test function produces a note of kind `duplicate` that names the existing function.
+- [x] `publish` posts a note as an inline comment without a suggestion block. A pull request with only notes gets a review.
+- [x] The hook drops a function in `test/test_api.py` from its pool. It still keeps a function in `tests/helpers.py`.
+- [x] `uv run pytest -q` passes.
 
 ## How to verify by hand
 
@@ -57,3 +57,46 @@ The hook keeps functions in test files out of its search pool, and it does not f
 2. Check that the printed result has the function in `notes` only.
 
 ## Comments
+
+### 2026-10-08: done
+
+**What was built.** The gate makes no code changes in test files. For a function in a test file, the gate posts a note: an inline review comment with no suggestion block. The gate does not write tests, ask for a rewrite, or start the sandbox for this function. If a pull request has only notes, the gate never prepares the sandbox.
+
+- `slopgate/functions.py` holds the shared rule. `pytest_patterns(read)` reads `python_files` from `pytest.ini` (`[pytest]`), or else from `pyproject.toml` (`[tool.pytest.ini_options]`). With no value, the patterns are `test_*.py` and `*_test.py`. `is_test_file(path, patterns)` matches the file name with `fnmatch.fnmatchcase`. `conftest.py` is always a test file.
+- `slopgate/review.py` reads the patterns at the head ref. Wrapper detection skips functions in test files. Kind detection does not change. A finding in a test file goes to `result["notes"]` as `{path, function, kind, line, body}`. `line` is the last added line of the function.
+- `slopgate/github.py` posts each note as a review comment in the same review as the suggestions. A pull request with only notes gets a review. The summary line counts the notes when there are any ("Notes on test files: N."). If the sandbox install fails, the notes still post, with the install notice as the review body. A duplicate note says "Call it instead." when the existing function is not in a test file.
+- `slopgate/live.py`: `pooled` uses the shared rule in place of the `tests` folder check. The hook reads the patterns from the working tree.
+
+**Worked example.** This is a live dry run on a clone of this repo. One commit adds two functions:
+
+- `reply_for` in `tests/conftest.py`, which has 5 levels of nested `if`.
+- `test_no_store_means_no_output` in `tests/test_hook.py`, which is a renamed copy of `test_repo_without_store_exits_zero_silently`.
+
+The command was `slopgate review --repo <clone> --base HEAD~1 --head HEAD --dry-run --sandbox local`. Its output was:
+
+```json
+{
+  "suggestions": [],
+  "followup": [],
+  "rejected": [],
+  "notes": [
+    {"path": "tests/conftest.py", "function": "reply_for", "kind": "dead", "line": 96,
+     "body": "**dead** (not proven): `reply_for`: It has unreachable code or unused variables. Remove them. Not proven: Slopgate does not change test files."},
+    {"path": "tests/test_hook.py", "function": "test_no_store_means_no_output", "kind": "duplicate", "line": 254,
+     "body": "**duplicate** (not proven): `test_no_store_means_no_output` does the same job as `test_repo_without_store_exits_zero_silently` in tests/test_hook.py. Consider one parametrized test. Not proven: Slopgate does not change test files."}
+  ]
+}
+```
+
+The gate wrote no tests, asked for no rewrite, and did not start the sandbox. Lightning named `reply_for` as `dead`. Vulture finds no dead code in it, so `nesting` is the correct kind. The classifier made this error, and it is not part of this ticket.
+
+**Measured results.**
+
+- `uv run pytest -q`: 201 passed, 12 deselected.
+- Mutation check: with `is_test_file` forced to return `False`, 11 tests fail. With the old `tests` folder check back in `pooled`, the `tests/helpers.py` hook test fails.
+
+**Known limits.**
+
+- The gate's duplicate pool still contains functions in test files. A new production function can match a test helper, and the gate then proposes to call the test helper. This ticket does not change that behavior.
+- `changed_functions` returns only functions that have an added line. Thus every note has a line, and the "no added line" fallback in the summary is not necessary.
+- A `pyproject.toml` or `pytest.ini` that is not valid at head stops the review with an error. The hook prints that error to stderr and exits 0.

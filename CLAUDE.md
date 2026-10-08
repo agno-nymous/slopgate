@@ -50,7 +50,7 @@ The live tests are marked `live` and are off by default (`addopts` in `pyproject
 | `slopgate/embed.py` | CodeRankEmbed embeddings for the hook only. Compiles to int8 ONNX in `~/.cache/slopgate/`. |
 | `slopgate/index.py` | Function index of a commit, in `.slopgate/<sha>.json`, and keyword search over it. |
 | `slopgate/live.py` | The hook. Its store is `.slopgate/live.db` (SQLite). |
-| `slopgate/diff.py`, `slopgate/functions.py` | Changed functions between two refs, function parsing, and token sets of functions. |
+| `slopgate/diff.py`, `slopgate/functions.py` | Changed functions between two refs, function parsing, token sets of functions, and the test-file rule (`is_test_file`, `pytest_patterns`) that the gate and the hook share. |
 | `slopgate/config.py` | Model names, thresholds, and prices. |
 
 ## Model rules
