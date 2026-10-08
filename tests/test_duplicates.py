@@ -8,6 +8,7 @@ from test_review import FLAT, IS_NESTING, NESTED, SIMPLE, TESTS, fenced, models,
 from slopgate import embed
 from slopgate.cli import main
 from slopgate.config import DUPLICATE_SCORE, SUPER
+from slopgate.review import SameJob
 
 SLUGIFY = '''\
 def slugify(title):
@@ -132,7 +133,7 @@ def test_renamed_exact_copy_is_replaced_by_the_helper_without_llm(make_repo, fak
 )
 def test_copy_with_other_error_on_none(make_repo, fake_llm, capsys, difference, outcome):
     repo = make_repo({"app/__init__.py": "", "app/text.py": SLUGIFY}, {"app/posts.py": TYPE_ERROR_COPY})
-    fake_llm.replies += [json.dumps({"same_job": True, "difference": difference}), SLUG_TESTS]
+    fake_llm.replies += [SameJob(difference=difference, same_job=True), SLUG_TESTS]
 
     result = review(capsys, repo)
 
@@ -145,6 +146,18 @@ def test_copy_with_other_error_on_none(make_repo, fake_llm, capsys, difference, 
     else:
         assert entry["reason"].startswith("differential tests fail on helper")
         assert result["followup"] == []
+
+
+def test_candidate_without_a_verdict_is_skipped(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": "", "app/a.py": SLUGIFY, "app/b.py": SLUGIFY}, {"app/posts.py": TYPE_ERROR_COPY})
+    fake_llm.replies += [None, SameJob(difference="raises TypeError", same_job=True), SLUG_TESTS]
+
+    result = review(capsys, repo)
+
+    assert models(fake_llm) == [SUPER, SUPER, SUPER]
+    [helper] = [path for path in ("app/a.py", "app/b.py") if f"Existing helper, in {path}:" in fake_llm.calls[1][1]]
+    [entry] = result["followup"]
+    assert f"`slugify` in {helper}" in entry["reason"] and "raises TypeError" in entry["reason"]
 
 
 def test_unrelated_helper_below_floor_costs_no_llm_call(make_repo, fake_llm, fake_embed, capsys):
@@ -182,7 +195,7 @@ def test_real_encode_prefixes_queries_only(make_repo, fake_llm, fake_embed, caps
     monkeypatch.setattr(embed, "model", Model())
     monkeypatch.setattr(embed, "encode", fake_embed.real)
     repo = make_repo({"app/text.py": SLUGIFY}, {"app/ship.py": SIMPLE})
-    fake_llm.replies += ["not json"]
+    fake_llm.replies += [None]
 
     assert review(capsys, repo) == EMPTY
     assert models(fake_llm) == [SUPER]
@@ -237,7 +250,7 @@ def test_restructured_copy_is_found_by_real_vector_search(make_repo, fake_llm, c
         {"app/__init__.py": "", "app/text.py": PLAIN_SLUGIFY}, {"app/posts.py": RESTRUCTURED.replace("title", parameter)}
     )
     fake_llm.replies += [
-        json.dumps({"same_job": True, "difference": "returns an empty string for None where the helper raises"}),
+        SameJob(difference="returns an empty string for None where the helper raises", same_job=True),
         RESTRUCTURED_TESTS,
     ]
 

@@ -1,7 +1,11 @@
 import math
 import os
+from typing import TYPE_CHECKING
 
 from slopgate.config import BASE_URL
+
+if TYPE_CHECKING:
+    from pydantic import BaseModel
 
 usage: list[tuple[str, int, int]] = []
 
@@ -47,3 +51,27 @@ def yes_probability(model: str, prompt: str) -> float:
     for choice in reply.choices[0].logprobs.content[0].top_logprobs:
         top.setdefault(choice.token.strip().lower(), math.exp(choice.logprob))
     return top.get("yes", 0.0)
+
+
+def decide[T: BaseModel](model: str, prompt: str, schema: type[T]) -> T | None:
+    parameters = schema.model_json_schema()
+    tool = {
+        "type": "function",
+        "function": {"name": schema.__name__, "description": parameters["description"], "parameters": parameters},
+    }
+    reply = client().chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0,
+        tools=[tool],
+        tool_choice={"type": "function", "function": {"name": schema.__name__}},
+        extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+    )
+    usage.append((model, reply.usage.prompt_tokens, reply.usage.completion_tokens))
+    calls = reply.choices[0].message.tool_calls
+    if not calls:
+        return None
+    try:
+        return schema.model_validate_json(calls[0].function.arguments)
+    except ValueError:
+        return None

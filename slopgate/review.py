@@ -7,6 +7,7 @@ import textwrap
 import tokenize
 
 import vulture
+from pydantic import BaseModel, Field
 
 from slopgate import diff, embed, index, llm
 from slopgate.config import COMPLEXITY, DUPLICATE_SCORE, LIGHTNING, NESTING, SUPER, ULTRA
@@ -159,15 +160,26 @@ Failure:
 
 SAME_JOB_PROMPT = """Decide whether the new Python function does the same job as the existing helper, so that callers of the new function could call the helper instead.
 
-Reply with JSON only, in the form {{"same_job": true or false, "difference": "<the behavior difference, or an empty string>"}}.
+Reply by calling the tool `SameJob`.
 
 New function, in {path}:
 
+```python
 {source}
+```
 
 Existing helper, in {helper_path}:
 
-{helper_source}"""
+```python
+{helper_source}
+```"""
+
+
+class SameJob(BaseModel):
+    """Report whether the new function does the same job as the existing helper."""
+
+    difference: str = Field(description="The behavior difference between the two functions, or an empty string when they behave the same.")
+    same_job: bool = Field(description="True if callers of the new function could call the existing helper instead and get the same behavior.")
 
 
 def module_of(path: str) -> str:
@@ -276,12 +288,9 @@ def find_duplicate(function, pool) -> dict | None:
         prompt = SAME_JOB_PROMPT.format(
             path=function.path, source=function.source, helper_path=record["path"], helper_source=record["source"]
         )
-        try:
-            verdict = json.loads(llm.complete(SUPER, prompt, json=True))
-            if verdict["same_job"] is True:
-                return {"helper": record, "exact": False, "difference": str(verdict.get("difference") or ""), "note": f"score {score:.2f}"}
-        except (TypeError, ValueError, KeyError, llm.CutOff):
-            continue
+        verdict = llm.decide(SUPER, prompt, SameJob)
+        if verdict and verdict.same_job:
+            return {"helper": record, "exact": False, "difference": verdict.difference, "note": f"score {score:.2f}"}
     return None
 
 

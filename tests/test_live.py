@@ -1,13 +1,16 @@
 import inspect
 import os
+import time
 
 import pytest
 from openai import OpenAI
 from test_duplicates import SLUGIFY
 from test_hook import SLUG_COPY, UNIQUE, indexed, write
 from test_review import FLAT, IS_NESTING, NESTED, SIMPLE, TESTS, fenced, review
+from test_wrappers import APPLY_DISCOUNT
 
 from slopgate import config, embed, live, llm
+from slopgate.review import SAME_JOB_PROMPT, SameJob
 
 pytestmark = [
     pytest.mark.live,
@@ -92,6 +95,18 @@ def test_reuse_prompt_separates_copy_from_unique():
     unique = llm.yes_probability(config.LIGHTNING, live.question(SLUGIFY, UNIQUE))
 
     assert copy >= config.FLAG and unique < 0.1, (copy, unique)
+
+
+@pytest.mark.parametrize("model", [config.SUPER, config.LIGHTNING], ids=["super", "lightning"])
+def test_decide_finds_a_renamed_copy_of_apply_discount(model):
+    copy = APPLY_DISCOUNT.replace("apply_discount", "discounted_price")
+    prompt = SAME_JOB_PROMPT.format(path="shop/cart.py", source=copy, helper_path="shop/pricing.py", helper_source=APPLY_DISCOUNT)
+
+    start = time.perf_counter()
+    verdict = llm.decide(model, prompt, SameJob)
+    print(f"{model}: {time.perf_counter() - start:.2f} s, {verdict!r}")
+
+    assert verdict is not None and verdict.same_job, verdict
 
 
 def test_int8_model_matches_torch():
