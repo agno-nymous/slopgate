@@ -48,7 +48,7 @@ def main(argv=None):
     from slopgate.review import review
     from slopgate.sandbox import Contree, Local
 
-    result = {"suggestions": [], "followup": [], "rejected": []}
+    result = {"suggestions": [], "followup": [], "rejected": [], "notes": []}
     started = time.monotonic()
     try:
         if args.pr:

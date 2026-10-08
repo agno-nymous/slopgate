@@ -76,7 +76,7 @@ def test_words():
     assert make_slug("Hello Big World") == "hello-big-world"
 '''
 
-EMPTY = {"suggestions": [], "followup": [], "rejected": []}
+EMPTY = {"suggestions": [], "followup": [], "rejected": [], "notes": []}
 OTHER_JOB = SameJob(difference="", same_job=False)
 
 
@@ -259,6 +259,45 @@ def test_restructured_copy_is_found_by_keyword_search(make_repo, fake_llm, capsy
     [followup] = result["followup"]
     assert followup["files"] == {"app/posts.py": ""}
     assert models(fake_llm) == [SUPER, SUPER]
+
+
+ORIGINAL_TEST = '''\
+def test_non_python_change(tmp_path):
+    (tmp_path / "notes.md").write_text("draft")
+    assert [p.name for p in tmp_path.iterdir()] == ["notes.md"]
+'''
+
+COPIED_TEST = '''\
+def test_unique_write(folder):
+    (folder / "notes.md").write_text("draft")
+    assert [f.name for f in folder.iterdir()] == ["notes.md"]
+'''
+
+
+def test_copied_test_function_gets_a_duplicate_note(make_repo, fake_llm, capsys):
+    repo = make_repo({"tests/test_hook.py": ORIGINAL_TEST}, {"tests/test_hook.py": ORIGINAL_TEST + "\n\n" + COPIED_TEST})
+
+    result = review(capsys, repo)
+
+    assert fake_llm.calls == []
+    body = (
+        "**duplicate** (not proven): `test_unique_write` does the same job as `test_non_python_change` in tests/test_hook.py. "
+        "Consider one parametrized test. Not proven: Slopgate does not change test files."
+    )
+    assert result == EMPTY | {"notes": [{"path": "tests/test_hook.py", "function": "test_unique_write", "kind": "duplicate", "line": 8, "body": body}]}
+
+
+def test_test_function_copying_a_production_function_says_to_call_it(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": "", "app/text.py": SLUGIFY}, {"tests/conftest.py": RENAMED_COPY})
+
+    result = review(capsys, repo)
+
+    assert fake_llm.calls == []
+    body = (
+        "**duplicate** (not proven): `make_slug` does the same job as `slugify` in app/text.py. "
+        "Call it instead. Not proven: Slopgate does not change test files."
+    )
+    assert result == EMPTY | {"notes": [{"path": "tests/conftest.py", "function": "make_slug", "kind": "duplicate", "line": 5, "body": body}]}
 
 
 def test_function_changed_in_the_same_pr_is_not_a_helper(make_repo, fake_llm, capsys):

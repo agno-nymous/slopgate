@@ -1,7 +1,10 @@
 import ast
+import configparser
+import fnmatch
 import hashlib
 import re
 import textwrap
+import tomllib
 from dataclasses import dataclass
 
 from radon.complexity import cc_visit
@@ -78,3 +81,20 @@ def tokens(source: str) -> frozenset[str]:
 
 def jaccard(a: frozenset[str], b: frozenset[str]) -> float:
     return len(a & b) / len(a | b)
+
+
+def pytest_patterns(read) -> list[str]:
+    if (ini := read("pytest.ini")) is not None:
+        config = configparser.ConfigParser(interpolation=None)
+        config.read_string(ini)
+        value = config.get("pytest", "python_files", fallback=None)
+    else:
+        value = tomllib.loads(read("pyproject.toml") or "").get("tool", {}).get("pytest", {}).get("ini_options", {}).get("python_files")
+    if not value:
+        return ["test_*.py", "*_test.py"]
+    return value.split() if isinstance(value, str) else value
+
+
+def is_test_file(path: str, patterns: list[str]) -> bool:
+    name = path.rsplit("/", 1)[-1]
+    return name == "conftest.py" or any(fnmatch.fnmatchcase(name, pattern) for pattern in patterns)

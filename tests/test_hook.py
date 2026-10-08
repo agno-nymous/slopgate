@@ -149,8 +149,8 @@ def test_repo_without_store_exits_zero_silently(make_repo, fake_llm, monkeypatch
 
 @pytest.mark.parametrize(
     "files",
-    [{"tests/helpers.py": SLUGIFY}, {"app/text.py": SLUGIFY.replace("def slugify", "def test_slugify")}],
-    ids=["under-tests", "named-test"],
+    [{"test/test_api.py": SLUGIFY}, {"app/text.py": SLUGIFY.replace("def slugify", "def test_slugify")}],
+    ids=["test-file", "named-test"],
 )
 def test_test_function_is_never_a_candidate(make_repo, fake_llm, monkeypatch, capsys, files):
     repo = indexed(make_repo, capsys, files)
@@ -159,6 +159,14 @@ def test_test_function_is_never_a_candidate(make_repo, fake_llm, monkeypatch, ca
 
     assert (result.out, result.err) == ("", "")
     assert fake_llm.calls == []
+
+
+def test_helper_in_tests_folder_is_still_a_candidate(make_repo, fake_llm, monkeypatch, capsys):
+    repo = indexed(make_repo, capsys, {"tests/helpers.py": SLUGIFY})
+
+    result = write(monkeypatch, capsys, repo, "app/posts.py", RENAMED_COPY)
+
+    assert result.out == note("make_slug", "app/posts.py:1", "slugify", "tests/helpers.py:1", "1.00")
 
 
 @pytest.mark.parametrize(

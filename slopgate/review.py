@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from slopgate import diff, index, llm
 from slopgate.config import COMPLEXITY, DUPLICATE_SCORE, LIGHTNING, NESTING, SUPER, ULTRA
-from slopgate.functions import complexity, nesting, parse, structure_hash
+from slopgate.functions import complexity, is_test_file, nesting, parse, pytest_patterns, structure_hash
 from slopgate.sandbox import InstallError, commands, tail
 
 KINDS = {
@@ -657,12 +657,25 @@ def deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, t
     return {"function": function.qualname, "kind": "duplicate", "reason": reason, "files": files}, None
 
 
+def note(function, kind, line, match, patterns) -> dict:
+    if kind == "duplicate":
+        helper = match["helper"]
+        fix = "Consider one parametrized test." if is_test_file(helper["path"], patterns) else "Call it instead."
+        finding = f"`{function.qualname}` does the same job as `{helper['qualname']}` in {helper['path']}. {fix}"
+    else:
+        finding = f"`{function.qualname}`: {KINDS[kind]}"
+    body = f"**{kind}** (not proven): {finding} Not proven: Slopgate does not change test files."
+    return {"path": function.path, "function": function.qualname, "kind": kind, "line": line, "body": body}
+
+
 def review(repo, base, head, sandbox) -> dict:
-    result = {"suggestions": [], "followup": [], "rejected": []}
+    result = {"suggestions": [], "followup": [], "rejected": [], "notes": []}
     changed = diff.changed_functions(repo, base, head)
+    names = diff.git(repo, "ls-tree", "--name-only", head).splitlines()
+    patterns = pytest_patterns(lambda name: diff.git(repo, "show", f"{head}:{name}") if name in names else None)
     wrapped, plans = set(), {}
     for function, _ in changed:
-        if "." not in function.qualname:
+        if "." not in function.qualname and not is_test_file(function.path, patterns):
             text = diff.git(repo, "show", f"{head}:{function.path}")
             node = next((n for n in ast.parse(text).body if isinstance(n, DEFS) and n.lineno == function.start), None)
             inner = node and forwarded(node)
@@ -698,7 +711,11 @@ def review(repo, base, head, sandbox) -> dict:
             kind = classify(function.source)
         else:
             continue
-        if kind:
+        if not kind:
+            continue
+        if is_test_file(function.path, patterns):
+            result["notes"].append(note(function, kind, max(added), matches.get(function), patterns))
+        else:
             candidates.append((function, added, kind, text))
     if not candidates:
         return result

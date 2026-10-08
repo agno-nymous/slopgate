@@ -80,7 +80,8 @@ def summary(result, followup_line, seconds) -> str:
         text = ""
     rejected = result["rejected"]
     lines = [
-        f"Accepted: {plural(len(result['suggestions']), 'inline suggestion')}, {followup_line}. Rejected: {len(rejected)}.",
+        f"Accepted: {plural(len(result['suggestions']), 'inline suggestion')}, {followup_line}. Rejected: {len(rejected)}."
+        + (f" Notes on test files: {len(result['notes'])}." if result["notes"] else ""),
         f"{cost()} Time: {duration(seconds)}.",
     ]
     if rejected:
@@ -104,31 +105,31 @@ def publish(repo, result, event, seconds) -> None:
     notice = next((r["reason"] for r in result["rejected"] if "function" not in r), None)
     if notice:
         output = notice.split("\n", 1)[1]
-        gh("pr", "comment", number, "--repo", target, "--body",
-           f"Slopgate could not build the test environment, so it proved nothing.\n\n```\n{output}\n```")
-        return
-    followups = result["followup"]
-    if not followups:
-        followup_line = "0 follow-up changes"
-    elif pr["head"]["repo"]["full_name"] != target:
-        followup_line = f"{plural(len(followups), 'follow-up change')} not opened: the pull request comes from a fork"
+        body = f"Slopgate could not build the test environment, so it proved nothing.\n\n```\n{output}\n```"
     else:
-        # each follow-up holds whole files proven against head on their own, so two that edit one file cannot both apply
-        kept, files = [], {}
-        for followup in followups:
-            if not files.keys() & followup["files"].keys():
-                kept.append(followup)
-                files |= followup["files"]
-        try:
-            where = open_followup(repo, kept, pr, target, files)
-        except RuntimeError as error:
-            where = f"not pushed ({error})"
-        followup_line = f"{plural(len(kept), 'follow-up change')} {where}"
-        if len(kept) < len(followups):
-            followup_line += f" ({len(followups) - len(kept)} skipped: it edits a file that an earlier follow-up edits)"
-    body = summary(result, followup_line, seconds)
-    if result["suggestions"]:
-        review = {"commit_id": pr["head"]["sha"], "event": "COMMENT", "body": body, "comments": result["suggestions"]}
+        followups = result["followup"]
+        if not followups:
+            followup_line = "0 follow-up changes"
+        elif pr["head"]["repo"]["full_name"] != target:
+            followup_line = f"{plural(len(followups), 'follow-up change')} not opened: the pull request comes from a fork"
+        else:
+            # each follow-up holds whole files proven against head on their own, so two that edit one file cannot both apply
+            kept, files = [], {}
+            for followup in followups:
+                if not files.keys() & followup["files"].keys():
+                    kept.append(followup)
+                    files |= followup["files"]
+            try:
+                where = open_followup(repo, kept, pr, target, files)
+            except RuntimeError as error:
+                where = f"not pushed ({error})"
+            followup_line = f"{plural(len(kept), 'follow-up change')} {where}"
+            if len(kept) < len(followups):
+                followup_line += f" ({len(followups) - len(kept)} skipped: it edits a file that an earlier follow-up edits)"
+        body = summary(result, followup_line, seconds)
+    comments = result["suggestions"] + [{"path": n["path"], "line": n["line"], "side": "RIGHT", "body": n["body"]} for n in result["notes"]]
+    if comments:
+        review = {"commit_id": pr["head"]["sha"], "event": "COMMENT", "body": body, "comments": comments}
         gh("api", "--method", "POST", f"repos/{target}/pulls/{number}/reviews", "--input", "-", stdin=json.dumps(review))
     else:
         gh("pr", "comment", number, "--repo", target, "--body", body)

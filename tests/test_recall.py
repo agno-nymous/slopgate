@@ -92,10 +92,10 @@ def apply_edits(source: str, changes) -> str:
 '''
 
 POOLED_COPY = '''\
-def is_candidate(file_path: str, name: str) -> bool:
+def is_candidate(file_path: str, name: str, globs: list[str]) -> bool:
     if "." in name or name.startswith("test_"):
         return False
-    return "tests" not in file_path.split("/")
+    return not is_test_file(file_path, globs)
 '''
 
 TOKENS_COPY = '''\
