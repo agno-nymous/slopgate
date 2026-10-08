@@ -12,6 +12,7 @@ from test_wrappers import COMPUTE_TAX, INVOICE_TESTS, INVOICE_TOTAL, TAX_FOR
 from slopgate.cli import main
 from slopgate.github import duration
 from slopgate.config import ULTRA
+from slopgate.review import KINDS
 
 SUMMARY = "One function got flatter."
 PR_URL = "https://github.com/acme/shop/pull/8"
@@ -201,6 +202,22 @@ def test_no_findings_post_nothing(github, fake_llm, capsys):
     assert fake_llm.calls == []
 
 
+def test_note_on_a_test_file_is_posted_as_a_review_comment_without_a_suggestion(github, fake_llm, capsys):
+    make, calls = github
+    repo, _ = make({"app/__init__.py": ""}, {"tests/conftest.py": NESTED})
+    fake_llm.replies += [IS_NESTING, SUMMARY]
+
+    post(repo)
+
+    [call] = calls()
+    assert call["args"] == ["api", "--method", "POST", "repos/acme/shop/pulls/7/reviews", "--input", "-"]
+    review = json.loads(call["stdin"])
+    assert "Accepted: 0 inline suggestions, 0 follow-up changes. Rejected: 0. Notes on test files: 1." in review["body"]
+    [comment] = review["comments"]
+    body = f"**nesting** (not proven): `can_edit`: {KINDS['nesting']} Not proven: Slopgate does not change test files."
+    assert comment == {"path": "tests/conftest.py", "line": 14, "side": "RIGHT", "body": body}
+
+
 def test_install_failure_posts_one_notice_without_a_summary_call(github, fake_llm, capsys):
     make, calls = github
     repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED, ".slopgate.toml": "[sandbox]\nsetup = 'echo broken; exit 1'\n"})
@@ -212,6 +229,22 @@ def test_install_failure_posts_one_notice_without_a_summary_call(github, fake_ll
     assert commented["args"][:2] == ["pr", "comment"]
     assert commented["args"][-1] == "Slopgate could not build the test environment, so it proved nothing.\n\n```\nbroken\n```"
     assert [model for model, _ in fake_llm.calls] != [] and ULTRA not in [model for model, _ in fake_llm.calls]
+
+
+def test_install_failure_still_posts_the_notes_as_a_review(github, fake_llm, capsys):
+    make, calls = github
+    repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED, "tests/conftest.py": NESTED, ".slopgate.toml": "[sandbox]\nsetup = 'echo broken; exit 1'\n"})
+    fake_llm.replies += [IS_NESTING, IS_NESTING]
+
+    post(repo)
+
+    [call] = calls()
+    assert call["args"] == ["api", "--method", "POST", "repos/acme/shop/pulls/7/reviews", "--input", "-"]
+    review = json.loads(call["stdin"])
+    assert review["body"] == "Slopgate could not build the test environment, so it proved nothing.\n\n```\nbroken\n```"
+    [comment] = review["comments"]
+    assert comment["path"] == "tests/conftest.py"
+    assert ULTRA not in [model for model, _ in fake_llm.calls]
 
 
 def test_rejections_are_listed_under_the_summary(github, fake_llm, capsys):

@@ -9,8 +9,8 @@ import pytest
 from slopgate import llm
 from slopgate.cli import main
 from slopgate.config import LIGHTNING, SUPER, ULTRA
-from slopgate.functions import parse
-from slopgate.review import EMPTY_INPUTS_RETRY, RECORDER_PATH, has_dead_code, same_code, strip_fence
+from slopgate.functions import is_test_file, parse, pytest_patterns
+from slopgate.review import EMPTY_INPUTS_RETRY, KINDS, RECORDER_PATH, has_dead_code, same_code, strip_fence
 from slopgate.sandbox import Local
 
 NESTED = '''\
@@ -199,8 +199,46 @@ def test_failed_rewrite_gets_one_ultra_retry(make_repo, fake_llm, capsys):
 def test_non_python_change_prints_empty_result_without_llm(make_repo, fake_llm, capsys):
     repo = make_repo({"app/perms.py": NESTED, "README.md": "# Demo\n"}, {"README.md": "# Demo\n\nSome *text*.\n"})
 
-    assert review(capsys, repo) == {"suggestions": [], "followup": [], "rejected": []}
+    assert review(capsys, repo) == {"suggestions": [], "followup": [], "rejected": [], "notes": []}
     assert fake_llm.calls == []
+
+
+CHECK_FILES = {"pyproject.toml": '[tool.pytest.ini_options]\npython_files = ["check_*.py"]\n'}
+HELPER_FILES = {"pytest.ini": "[pytest]\npython_files = check_*.py helpers.py\n"}
+
+
+@pytest.mark.parametrize(
+    ("config", "path", "expected"),
+    [
+        ({}, "test/test_api.py", True),
+        ({}, "checks/api_test.py", True),
+        ({}, "src/conftest.py", True),
+        ({}, "tests/helpers.py", False),
+        (CHECK_FILES, "check_api.py", True),
+        (CHECK_FILES, "test_api.py", False),
+        (CHECK_FILES, "src/conftest.py", True),
+        (HELPER_FILES, "tests/helpers.py", True),
+        (HELPER_FILES, "test_api.py", False),
+    ],
+)
+def test_test_files_are_found_by_file_name_and_pytest_config(config, path, expected):
+    assert is_test_file(path, pytest_patterns(config.get)) is expected
+
+
+def test_slop_in_a_test_file_gets_a_note_and_no_proof(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"tests/conftest.py": "import pytest\n\n\n" + NESTED + "\n\n" + SIMPLE})
+    fake_llm.replies += [IS_NESTING]
+
+    result = review(capsys, repo)
+
+    assert models(fake_llm) == [LIGHTNING]
+    body = f"**nesting** (not proven): `can_edit`: {KINDS['nesting']} Not proven: Slopgate does not change test files."
+    assert result == {
+        "suggestions": [],
+        "followup": [],
+        "rejected": [],
+        "notes": [{"path": "tests/conftest.py", "function": "can_edit", "kind": "nesting", "line": 17, "body": body}],
+    }
 
 
 def two_nested_functions(make_repo, slopgate_toml):
@@ -288,6 +326,7 @@ def test_install_failure_is_one_notice_with_last_20_lines(make_repo, fake_llm, c
         "suggestions": [],
         "followup": [],
         "rejected": [{"reason": f"could not build test environment\n{tail}"}],
+        "notes": [],
     }
     assert [model for model, _ in fake_llm.calls] == [LIGHTNING]
 
@@ -548,7 +587,7 @@ def test_classifier_none_or_garbage_drops_the_function_silently(make_repo, fake_
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
     fake_llm.replies += [reply]
 
-    assert review(capsys, repo) == {"suggestions": [], "followup": [], "rejected": []}
+    assert review(capsys, repo) == {"suggestions": [], "followup": [], "rejected": [], "notes": []}
     assert models(fake_llm) == [LIGHTNING]
 
 
@@ -575,7 +614,7 @@ def test_tests_that_differ_across_two_runs_are_rejected(make_repo, fake_llm, cap
 def test_unused_argument_is_not_dead_code(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/labels.py": 'def label(n, style):\n    return f"#{n}"\n'})
 
-    assert review(capsys, repo) == {"suggestions": [], "followup": [], "rejected": []}
+    assert review(capsys, repo) == {"suggestions": [], "followup": [], "rejected": [], "notes": []}
     assert fake_llm.calls == []
 
 
@@ -1095,5 +1134,5 @@ def test_cut_off_duplicate_verdict_skips_the_helper_and_the_review_goes_on(make_
 
     result = review(capsys, repo)
 
-    assert result == {"suggestions": [], "followup": [], "rejected": []}
+    assert result == {"suggestions": [], "followup": [], "rejected": [], "notes": []}
     assert len(requests) == 1

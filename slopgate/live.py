@@ -7,7 +7,7 @@ from typing import NamedTuple
 
 from slopgate import embed, llm
 from slopgate.config import FLAG, HOOK_FLOOR, HOOK_K, LIGHTNING
-from slopgate.functions import Function, jaccard, parse, structure_hash, tokens
+from slopgate.functions import Function, is_test_file, jaccard, parse, pytest_patterns, structure_hash, tokens
 
 STORE = Path(".slopgate") / "live.db"
 
@@ -62,7 +62,8 @@ def hook(payload: str) -> str:
         return ""
     rel = path.relative_to(root).as_posix()
     stamp = path.stat().st_mtime_ns
-    functions = [f for f in parse(rel, path.read_text()) if pooled(f.path, f.qualname)]
+    patterns = patterns_in(root)
+    functions = [f for f in parse(rel, path.read_text()) if pooled(f.path, f.qualname, patterns)]
     db = store(root)
     vectors = {row.qualname: row.vector for row in rows(db, rel)}
     new = [f for f in functions if f.qualname not in vectors]
@@ -82,7 +83,8 @@ def hook(payload: str) -> str:
 
 
 def seed(repo: str, records: list[dict]) -> None:
-    pool = [r for r in records if pooled(r["path"], r["qualname"])]
+    patterns = patterns_in(Path(repo))
+    pool = [r for r in records if pooled(r["path"], r["qualname"], patterns)]
     vectors = embed.encode([r["source"] for r in pool]) if pool else []
     db = store(Path(repo))
     with db:
@@ -94,8 +96,12 @@ def seed(repo: str, records: list[dict]) -> None:
         )
 
 
-def pooled(path: str, qualname: str) -> bool:
-    return "." not in qualname and not qualname.startswith("test_") and "tests" not in path.split("/")
+def patterns_in(root: Path) -> list[str]:
+    return pytest_patterns(lambda name: (root / name).read_text() if (root / name).exists() else None)
+
+
+def pooled(path: str, qualname: str, patterns: list[str]) -> bool:
+    return "." not in qualname and not qualname.startswith("test_") and not is_test_file(path, patterns)
 
 
 def store(root: Path) -> sqlite3.Connection:
