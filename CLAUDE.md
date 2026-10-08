@@ -12,7 +12,7 @@ Slopgate finds slop in Python code that coding agents write. It has two parts:
 - Run `/start-dev` (`.claude/skills/start-dev/SKILL.md`) to work the next ticket end to end. Add a ticket number to work a specific one.
 - The tickets are in `issues/`, one file each. **`issues/ROADMAP.md` gives the next ticket and the order.** `docs/agents/issue-tracker.md` gives the ticket format and the status values.
 - Do one ticket on one branch, and finish it with a pull request to `main`.
-- The Slopgate workflow runs on a self-hosted runner on the user's Mac (ticket 27). It is off (`if: false`) until ticket 28. Until then, run `uv run --extra hook --env-file .env slopgate review --pr <number>` by hand.
+- The Slopgate workflow runs on a self-hosted runner on the user's Mac (ticket 27). It starts when a pull request opens. If the runner is offline, the job waits in the queue. Then run `uv run --env-file .env slopgate review --pr <number>` by hand.
 - Ask the user before every commit and every push.
 - Start each commit message with the ticket number: `ticket-<NN>: type(scope): message`, for example `ticket-18: feat(llm): add decide`.
 - When a ticket's code is done, run a code review with the `pstack:thermo-nuclear-code-quality-review` skill before the commit (`/start-dev` step 4).
@@ -24,17 +24,15 @@ Slopgate finds slop in Python code that coding agents write. It has two parts:
 ## Commands
 
 ```bash
-uv sync --extra hook                               # onnxruntime: the gate embeds with the int8 ONNX model, not torch
+uv sync
 uv run pytest -q                                   # offline tests; fakes replace the models and the sandbox
-uv run --env-file .env pytest -m live -q           # live tests against Token Factory
-uv run --extra hook --env-file .env slopgate review --repo <repo> --base <ref> --head <ref> --dry-run --sandbox local
-uv run --extra hook --env-file .env slopgate review --pr <number>   # review a PR on this machine and post to GitHub
-uv run slopgate index --repo <repo> --ref HEAD     # base index, plus the hook's ONNX model and store
+uv run --extra hook --env-file .env pytest -m live -q   # live tests against Token Factory; the hook extra runs the embedding tests
+uv run --env-file .env slopgate review --repo <repo> --base <ref> --head <ref> --dry-run --sandbox local
+uv run --env-file .env slopgate review --pr <number>   # review a PR on this machine and post to GitHub
+uv run --extra hook slopgate index --repo <repo> --ref HEAD   # base index, plus the hook's ONNX model and store
 ```
 
 The live tests are marked `live` and are off by default (`addopts` in `pyproject.toml`).
-
-Run the gate with `--extra hook`. A plain `uv run` syncs the venv without `onnxruntime`. The gate then falls back to the torch model, which embeds up to 8,192 tokens per function and took 14 GB on the 16 GB Mac. With ONNX, the peak is 0.4 GB. The ONNX path also needs the compiled model in `~/.cache/slopgate/`. `slopgate index` creates it once per machine. Without it, the gate falls back to torch.
 
 ## Secrets
 
@@ -49,10 +47,10 @@ Run the gate with `--extra hook`. A plain `uv run` syncs the venv without `onnxr
 | `slopgate/github.py` | Posts the review, the follow-up pull request, and the summary. |
 | `slopgate/sandbox.py` | `Local` (temporary folder) and `Contree` (Nebius sandbox). Each run starts from one checkpoint. |
 | `slopgate/llm.py` | Token Factory client: `complete` (text), `decide` (forced tool call, returns a pydantic object), and `yes_probability` (one-token yes/no with logprobs). |
-| `slopgate/embed.py` | CodeRankEmbed embeddings. The hook uses an int8 ONNX copy in `~/.cache/slopgate/`. |
-| `slopgate/index.py` | Function index of a commit, in `.slopgate/<sha>.json`. |
+| `slopgate/embed.py` | CodeRankEmbed embeddings for the hook only. Compiles to int8 ONNX in `~/.cache/slopgate/`. |
+| `slopgate/index.py` | Function index of a commit, in `.slopgate/<sha>.json`, and keyword search over it. |
 | `slopgate/live.py` | The hook. Its store is `.slopgate/live.db` (SQLite). |
-| `slopgate/diff.py`, `slopgate/functions.py` | Changed functions between two refs, and function parsing. |
+| `slopgate/diff.py`, `slopgate/functions.py` | Changed functions between two refs, function parsing, and token sets of functions. |
 | `slopgate/config.py` | Model names, thresholds, and prices. |
 
 ## Model rules

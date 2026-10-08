@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** wontfix
 
 ## Context
 
@@ -33,3 +33,5 @@ The Slopgate workflow (`.github/workflows/slopgate.yml`, and the workflow in `RE
 2. Open a new pull request. Check the cache step in its log.
 
 ## Comments
+
+**2026-10-08:** Ticket 28 removes the embedding model from the gate. The gate downloads no model. The cache has nothing to save.
