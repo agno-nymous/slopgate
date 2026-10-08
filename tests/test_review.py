@@ -931,6 +931,7 @@ def test_complete_turns_thinking_off(monkeypatch):
 
     assert llm.complete(SUPER, "hi") == "ok"
     assert requests[0]["extra_body"] == {"chat_template_kwargs": {"enable_thinking": False}}
+    assert requests[0]["max_tokens"] == 32768
 
 
 def test_unexpected_error_in_one_candidate_keeps_the_others(make_repo, fake_llm, monkeypatch, capsys):
