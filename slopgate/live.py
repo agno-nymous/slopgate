@@ -1,5 +1,4 @@
 import json
-import re
 import sqlite3
 from array import array
 from concurrent.futures import ThreadPoolExecutor
@@ -8,7 +7,7 @@ from typing import NamedTuple
 
 from slopgate import embed, llm
 from slopgate.config import FLAG, HOOK_FLOOR, HOOK_K, LIGHTNING
-from slopgate.functions import Function, parse, structure_hash
+from slopgate.functions import Function, jaccard, parse, structure_hash, tokens
 
 STORE = Path(".slopgate") / "live.db"
 
@@ -83,17 +82,15 @@ def hook(payload: str) -> str:
 
 
 def seed(repo: str, records: list[dict]) -> None:
+    pool = [r for r in records if pooled(r["path"], r["qualname"])]
+    vectors = embed.encode([r["source"] for r in pool]) if pool else []
     db = store(Path(repo))
     with db:
         db.execute("BEGIN IMMEDIATE")
         put(
             db,
             {r["path"] for r in records},
-            [
-                (r["path"], r["qualname"], r["start"], r["hash"], r["source"], array("f", r["vector"]).tobytes())
-                for r in records
-                if pooled(r["path"], r["qualname"])
-            ],
+            [(r["path"], r["qualname"], r["start"], r["hash"], r["source"], array("f", v).tobytes()) for r, v in zip(pool, vectors)],
         )
 
 
@@ -136,8 +133,8 @@ def matches(new: list[Function], queries: list[list[float]], pool: list[Row]) ->
             found.append(Candidate(function, exact, True))
             continue
         words = tokens(function.source)
-        jaccard = numpy.array([len(words & row.tokens) / len(words | row.tokens) for row in pool])
-        fused = 0.5 * (vectors @ numpy.array(query, numpy.float32)) + 0.5 * jaccard
+        overlap = numpy.array([jaccard(words, row.tokens) for row in pool])
+        fused = 0.5 * (vectors @ numpy.array(query, numpy.float32)) + 0.5 * overlap
         found += [Candidate(function, pool[i], False) for i in numpy.argsort(-fused)[:HOOK_K] if fused[i] >= HOOK_FLOOR]
     return found
 
@@ -173,8 +170,3 @@ def note(flags: list[Flag]) -> str:
         for f in flags
     ]
     return json.dumps({"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": "\n".join(lines)}})
-
-
-def tokens(source: str) -> frozenset[str]:
-    words = re.findall(r"[A-Za-z_][A-Za-z0-9_]*|\d+|[^\sA-Za-z0-9_]", source)
-    return frozenset(part.lower() for word in words for part in re.split(r"_|(?<=[a-z])(?=[A-Z])", word) if part)

@@ -9,7 +9,7 @@ import tokenize
 import vulture
 from pydantic import BaseModel, Field
 
-from slopgate import diff, embed, index, llm
+from slopgate import diff, index, llm
 from slopgate.config import COMPLEXITY, DUPLICATE_SCORE, LIGHTNING, NESTING, SUPER, ULTRA
 from slopgate.functions import complexity, nesting, parse, structure_hash
 from slopgate.sandbox import InstallError, commands, tail
@@ -123,6 +123,10 @@ Earlier reply:
 Failure:
 
 {failure}"""
+
+EMPTY_INPUTS_RETRY = """
+
+Your earlier reply was an empty list of inputs, which records nothing. Plain values cannot cover this function, so reply with one pytest file instead."""
 
 CALLEES = """
 
@@ -283,8 +287,7 @@ def find_duplicate(function, pool) -> dict | None:
     for record in pool:
         if record["hash"] == code_hash:
             return {"helper": record, "exact": True, "difference": "", "note": "exact structural copy"}
-    [vector] = embed.encode([function.source], query=True)
-    for score, record in index.search(pool, vector, DUPLICATE_SCORE, 5):
+    for score, record in index.search(pool, function.source, DUPLICATE_SCORE, 5):
         prompt = SAME_JOB_PROMPT.format(
             path=function.path, source=function.source, helper_path=record["path"], helper_source=record["source"]
         )
@@ -595,6 +598,11 @@ def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> t
             fenced = strip_fence(reply, "json")
         reply = reply if fenced is None else fenced
         inputs = proposed_inputs(reply)
+        if inputs == []:
+            failure, retry = "characterization reply has no inputs", EMPTY_INPUTS_RETRY
+            if last:
+                return None, failure
+            continue
         tests, failure = (reply, None) if inputs is None else record(sandbox, checkpoint, function, inputs)
         if failure:
             retry = INPUTS_RETRY.format(reply=reply, failure=failure)
@@ -670,7 +678,8 @@ def review(repo, base, head, sandbox) -> dict:
         base_index = index.build(repo, base)
         known = {(r["path"], r["qualname"]) for r in base_index}
         skip = {(function.path, function.qualname) for function, _ in changed}
-        pool = [r for r in base_index if "." not in r["qualname"] and (r["path"], r["qualname"]) not in skip]
+        kept = {(r["path"], r["qualname"]) for r in index.build(repo, head)}
+        pool = [r for r in base_index if "." not in r["qualname"] and (r["path"], r["qualname"]) not in skip and (r["path"], r["qualname"]) in kept]
         for function, _ in changed:
             if "." not in function.qualname and function not in wrapped and (function.path, function.qualname) not in known:
                 matches[function] = find_duplicate(function, pool)

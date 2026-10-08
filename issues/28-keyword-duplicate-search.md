@@ -4,9 +4,9 @@
 
 **Blocked by:** None — can start immediately. Ticket 18 also edits `find_duplicate`. Do not do the two tickets at the same time.
 
-**Status:** ready-for-agent
+**Status:** done
 
-The user chose go on 2026-10-08. Keyword search ranks copies worse than the hybrid of the hook. It finds more copies than the gate finds today, and it makes more Super calls. The Slopgate workflow is off until this ticket is done (`if: false` in `.github/workflows/slopgate.yml`).
+The user chose go on 2026-10-08. Keyword search ranks copies worse than the hybrid of the hook. It finds more copies than the gate finds today, and it makes more Super calls. The Slopgate workflow was off until this ticket (`if: false` in `.github/workflows/slopgate.yml`).
 
 ## Context
 
@@ -172,17 +172,68 @@ On pool B, two rows change. `module_of` ranks 4th: `strip_quotes` and two other 
 
 ## Acceptance
 
-- [ ] `python -c "import slopgate.review, slopgate.index, sys; assert 'slopgate.embed' not in sys.modules"` passes.
-- [ ] A review with a duplicate candidate makes no `embed` call. A test makes `embed.encode` raise, and the gate still finds the duplicate.
-- [ ] Recall gate, pool A: for each of the 16 copies, `index.search` returns the original in the top 5 at or above `DUPLICATE_SCORE`.
-- [ ] Recall gate, pool B: the same, for all 16 copies.
-- [ ] The Comments record how many of the 16 originals rank first on pool A and on pool B. This ticket measured 16/16 and 15/16. Rank 1 is not a gate, because the gate sends all top-5 candidates above the floor to Super.
-- [ ] The Comments record the Super calls per new function with no copy, on pool A at floor 0.30. This ticket measured 3.54. More than 5 is not possible (top 5).
-- [ ] A renamed exact copy still gives zero LLM calls (the existing test stays).
-- [ ] `uv sync` with no extra installs no `torch`. With `--extra hook`, the hook tests pass.
-- [ ] `spec.md`, `CLAUDE.md`, `README.md`, and ticket 24 match the Design.
-- [ ] `uv run pytest -q` passes.
-- [ ] The Slopgate workflow runs again: `.github/workflows/slopgate.yml` gets back `if: ${{ !startsWith(github.head_ref, 'slopgate/') }}`, and a new pull request shows the `slopgate` check.
-- [ ] Live run: `slopgate review --base 74fcd0d --head 22635c3 --dry-run` on this repo. Record the time, the peak memory (`/usr/bin/time -l`), and the duplicate result. Ticket 21 measured 320 s and 397 MB with ONNX.
+- [x] `python -c "import slopgate.review, slopgate.index, sys; assert 'slopgate.embed' not in sys.modules"` passes.
+- [x] A review with a duplicate candidate makes no `embed` call. A test makes `embed.encode` raise, and the gate still finds the duplicate.
+- [x] Recall gate, pool A: for each of the 16 copies, `index.search` returns the original in the top 5 at or above `DUPLICATE_SCORE`.
+- [x] Recall gate, pool B: the same, for all 16 copies.
+- [x] The Comments record how many of the 16 originals rank first on pool A and on pool B. This ticket measured 16/16 and 15/16. Rank 1 is not a gate, because the gate sends all top-5 candidates above the floor to Super.
+- [x] The Comments record the Super calls per new function with no copy, on pool A at floor 0.30. This ticket measured 3.54. More than 5 is not possible (top 5).
+- [x] A renamed exact copy still gives zero LLM calls (the existing test stays).
+- [x] `uv sync` with no extra installs no `torch`. With `--extra hook`, the hook tests pass.
+- [x] `spec.md`, `CLAUDE.md`, `README.md`, and ticket 24 match the Design.
+- [x] `uv run pytest -q` passes.
+- [x] The Slopgate workflow runs again: `.github/workflows/slopgate.yml` gets back `if: ${{ !startsWith(github.head_ref, 'slopgate/') }}`, and a new pull request shows the `slopgate` check.
+- [x] Live run: `slopgate review --base 74fcd0d --head 22635c3 --dry-run` on this repo. Record the time, the peak memory (`/usr/bin/time -l`), and the duplicate result. Ticket 21 measured 320 s and 397 MB with ONNX.
 
 ## Comments
+
+### 2026-10-08 — Done
+
+**What was built.** The gate finds duplicate candidates with keyword search. `index.search` scores each base-index record by the Jaccard of the token sets of `tokens`. It returns the top 5 records at or above `DUPLICATE_SCORE` (0.30). The exact structure-hash match stays first. The Super same-job check stays the final decision. The base index stores no vectors, and `slopgate.review` and `slopgate.index` do not import `slopgate.embed`. `tokens` moved to `slopgate/functions.py`. `live.seed` now computes the vectors of the hook store with `embed.encode`. `sentence-transformers`, `transformers`, and `einops` moved to the `hook` extra. A new dependency group `dev = ["numpy"]` keeps the hook tests runnable with a plain `uv run pytest -q`, because `live.matches` needs numpy. The Slopgate workflow runs again, without `--extra hook`.
+
+**Worked example.** The copy `make_slug` (`TYPE_ERROR_COPY`) in `app/posts.py` raises `TypeError` where `slugify` raises `ValueError`. The structure hashes differ, so the gate runs keyword search. `slugify` is the first result. Super says "same job", and the gate gives a follow-up that names `slugify` in `app/text.py`. The test `test_copy_is_found_when_the_embedding_model_fails` makes `embed.encode` raise, and the gate gives the same follow-up.
+
+**The copy set.** The 13 copies of this ticket were not in the repo. New copies were written, one for each row of the "Per copy" table, with the same tier. They are in `tests/test_recall.py`. Each case asserts that the copy has a different structure hash than its original. The 12 repo originals are read from the repo at test time.
+
+**Measured results.**
+
+- Pools: pool A has 198 functions (71 in `slopgate/`, 125 in `tests/`, 2 fixtures). Pool B has 3,060 (2,862 from the Python 3.12.10 standard library). The ticket counted 2,667 standard-library functions. The filter of the ticket script is not known.
+- Recall gate: 16 of 16 originals are in the top 5 at or above 0.30 on pool A, and 16 of 16 on pool B.
+- Rank 1: 16 of 16 on pool A, and 15 of 16 on pool B. On pool B, `chunks` ranks 3rd (0.385, below `_strip_padding` at 0.414 and one other function).
+- Smallest lead on pool A: 0.016 (`chunks`), then 0.029 (`module_of`). Lowest original score: 0.385 (`chunks`).
+- Super calls per new function with no copy, pool A, floor 0.30: 3.58 (mean over the 71 functions of `slopgate/`). The ticket measured 3.54 over 70. The new function `jaccard` is the 71st.
+- Time: one query on pool B takes 11 ms. The pool B build takes 1.15 s (0.85 s parse, 0.30 s tokens). The 32 recall cases run in 1.99 s.
+- Live run `slopgate review --base 74fcd0d --head 22635c3 --dry-run` on this repo, Contree sandbox: 311 s, peak memory 88 MB (`maximum resident set size` 88,211,456). Ticket 21 measured 320 s and 397 MB with ONNX. The result had 0 suggestions, 0 follow-ups, and 10 rejected entries. No entry was a duplicate.
+- Duplicate result of the live run: the range adds 12 new module-level functions (1 in `slopgate/`, 11 in `tests/`). Keyword search sent 35 candidates to Super. Super said "same job" for none. 5 test functions fill the top 5 with other tests at 0.33 to 0.61.
+- `uv run pytest -q`: 174 passed, 10 deselected, in 240 s. `uv run --extra hook pytest -q`: 174 passed.
+- `uv sync` with no extra installs no `torch` and no `sentence-transformers`.
+
+**Rebase on ticket 18.** Ticket 18 merged first. `find_duplicate` now asks Super through `llm.decide` with `SameJob`, after the keyword search. After the rebase and the review fixes, `uv run pytest -q` gave 182 passed, 12 deselected. The live run gave 341 s, peak memory 83 MB, 0 suggestions, 0 follow-ups, and no duplicate.
+
+**Code review.** A thermo-nuclear review gave 11 findings. These were applied: a test that the gate imports no hook-only module, a test of the `seed` alignment of records and vectors, a test that `index.build` loads the file, a unit test of `index.search` for `top` and `floor`, one `jaccard` in `slopgate/functions.py` for the gate and the hook, and `numpy` in the `hook` extra. The ticket status changed to `needs-live-check`. These were rejected:
+
+- Freeze the recall pools. Design step 6 builds the pool at test time. A new function that pushes an original out of the top 5 is a real loss of recall, so the test must fail.
+- Give the fake `decide` its own reply queue. The fake comes from ticket 18. A reply of the wrong type fails at once.
+- Put `@cache` on `tokens`. Design step 1 says: do not change the function.
+- Run `find_duplicate` in parallel. Tickets 23 and 25 own the gate time.
+
+**Fixes from the gate review of PR #17.**
+
+1. Sandbox setup. `pip install -e .` does not install the uv `dev` group, so `tests/test_hook.py` could not import numpy, and the repo tests failed in the sandbox. `.slopgate.toml` now installs `numpy` too. The PyTorch index is gone. The next gate run passed one rewrite in the sandbox.
+2. Moved helper (a defect from before this ticket). The duplicate pool kept base helpers that the pull request moved or deleted. The moved `tokens` matched its old copy in `live.py`, and the follow-up imported it from a module that no longer defines it. The pool now keeps a base record only when its path and name exist at head. Two tests (a move and a delete) failed before the fix and pass after it.
+3. Empty inputs (a defect from before this ticket). For a function that takes objects, Super often replied `{"inputs": []}`. The gate recorded zero calls and rejected the candidate with "no tests ran". Live Super, 8 tries per function: `find_duplicate` gave an empty list 6 times, `characterize` 8 times, `seed` 1 time. A prompt rule against an empty list did not help (8 of 8 still empty). One retry with a request for a pytest file gave a test file in 19 of 19 cases. The gate now does that retry and runs no sandbox for an empty list.
+
+After these fixes, `uv run pytest -q` gave 186 passed, 12 deselected.
+
+4. Runner sleep. The gate run on commit 8ca2676 was cancelled after 10 min. The Mac went to idle sleep 39 s into the job, and the runner stopped renewing the job. The gate step now runs under `caffeinate -i`.
+
+**Workflow check.** The `slopgate` check ran on PR #17 and passed on commit d0c6675 (4 min 35 s, 10 rejected, 0 accepted). The moved `tokens` rejection is gone. `find_duplicate` got a pytest file after the empty-inputs retry, but that file failed on the original code. `matches` gave an empty list twice and was rejected with no sandbox run. The other rejections come from generated tests that mock badly, from test files (ticket 17), and from one cut-off reply.
+
+**Other test changes.** At the floor 0.30, the new callers in the wrapper fixtures (`invoice_total`, `fee_total`, `total`) score 0.35 to 0.53 against `compute_tax`. Each costs one Super same-job call. 17 tests in `tests/test_wrappers.py` and `tests/test_github.py` now queue one "not the same job" reply for each call.
+
+**Known limits.**
+
+- Test functions are similar to each other. On the live run, they caused 30 of the 35 Super calls. Ticket 17 (test files get review notes only) can remove test functions from the duplicate search.
+- `chunks` on pool B ranks 3rd, with a lead of -0.029. Keyword search ranks copies worse than the hybrid score of the hook.
+- `slopgate index` now embeds the pooled functions on each run, also when the index file of the ref exists already. Before, the vectors were in the index file. A new ref embedded all functions before too.
+- The live test `test_real_super_proves_a_wrapper_whose_caller_depends_on_the_helper` was not run. Its caller can now get a real Super same-job call.

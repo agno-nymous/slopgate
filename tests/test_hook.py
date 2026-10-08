@@ -1,13 +1,17 @@
 import importlib.util
 import io
 import json
+from array import array
 from pathlib import Path
 
+import numpy
 import pytest
 from test_duplicates import RENAMED_COPY, SLUGIFY
 
+from slopgate import embed
 from slopgate.cli import main
 from slopgate.config import LIGHTNING
+from slopgate.live import rows, store
 
 SLUG_COPY = '''\
 def make_slug(heading):
@@ -190,6 +194,32 @@ def test_editing_a_known_function_loads_no_model(make_repo, fake_llm, fake_embed
     assert fake_embed.calls == []
 
 
+def test_real_encode_prefixes_queries_only(make_repo, fake_llm, fake_embed, monkeypatch, capsys):
+    texts = []
+
+    class Model:
+        def encode(self, batch, normalize_embeddings):
+            assert normalize_embeddings
+            texts.extend(batch)
+            return numpy.full((len(batch), 4), 0.5)
+
+    monkeypatch.setattr(embed, "model", Model())
+    monkeypatch.setattr(embed, "encode", fake_embed.real)
+    repo = indexed(make_repo, capsys, {"app/text.py": SLUGIFY})
+    fake_llm.replies += [0.1]
+
+    assert write(monkeypatch, capsys, repo, "app/ship.py", UNIQUE).out == ""
+    assert texts == [SLUGIFY, embed.PREFIX + UNIQUE, UNIQUE]
+
+
+def test_seed_stores_each_pooled_function_with_its_own_vector(make_repo, fake_embed, capsys):
+    repo = indexed(make_repo, capsys, {"app/text.py": "class Box:\n    def open(self):\n        return 1\n\n\n" + SLUGIFY})
+
+    assert fake_embed.calls[0][0] == [SLUGIFY]
+    [row] = rows(store(Path(repo)), "app/text.py")
+    assert (row.qualname, row.vector) == ("slugify", array("f", embed.encode([SLUGIFY])[0]).tobytes())
+
+
 def test_new_function_is_stored_even_when_classifier_fails(make_repo, fake_llm, monkeypatch, capsys):
     repo = indexed(make_repo, capsys, {"app/text.py": SLUGIFY})
     failed = write(monkeypatch, capsys, repo, "app/posts.py", SLUG_COPY)
@@ -203,8 +233,6 @@ def test_new_function_is_stored_even_when_classifier_fails(make_repo, fake_llm, 
 
 @pytest.mark.parametrize("installed, expected", [(True, "onnx"), (False, "torch")])
 def test_cached_onnx_model_is_used_only_when_onnxruntime_is_installed(tmp_path, monkeypatch, installed, expected):
-    from slopgate import embed
-
     compiled = tmp_path / "coderank-int8.onnx"
     compiled.touch()
     find_spec = importlib.util.find_spec

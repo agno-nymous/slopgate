@@ -2,7 +2,7 @@ import math
 import os
 from typing import TYPE_CHECKING
 
-from slopgate.config import BASE_URL
+from slopgate.config import BASE_URL, MAX_OUTPUT_TOKENS
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
@@ -25,6 +25,7 @@ def complete(model: str, prompt: str, json: bool = False) -> str:
         model=model,
         messages=[{"role": "user", "content": prompt}],
         temperature=0,
+        max_tokens=MAX_OUTPUT_TOKENS,
         extra_body={"chat_template_kwargs": {"enable_thinking": False}},
         **({"response_format": {"type": "json_object"}} if json else {}),
     )

@@ -12,7 +12,7 @@ Slopgate finds slop in Python code that coding agents write. It has two parts:
 - Run `/start-dev` (`.claude/skills/start-dev/SKILL.md`) to work the next ticket end to end. Add a ticket number to work a specific one.
 - The tickets are in `issues/`, one file each. **`issues/ROADMAP.md` gives the next ticket and the order.** `docs/agents/issue-tracker.md` gives the ticket format and the status values.
 - Do one ticket on one branch, and finish it with a pull request to `main`.
-- The Slopgate workflow runs on a self-hosted runner on the user's Mac (ticket 27). It is off (`if: false`) until ticket 28. Until then, run `uv run --extra hook --env-file .env slopgate review --pr <number>` by hand.
+- The Slopgate workflow runs on a self-hosted runner on the user's Mac (ticket 27). It starts when a pull request opens. If the runner is offline, the job waits in the queue. Then run `uv run --env-file .env slopgate review --pr <number>` by hand.
 - Ask the user before every commit and every push.
 - Start each commit message with the ticket number: `ticket-<NN>: type(scope): message`, for example `ticket-18: feat(llm): add decide`.
 - When a ticket's code is done, run a code review with the `pstack:thermo-nuclear-code-quality-review` skill before the commit (`/start-dev` step 4).
@@ -24,17 +24,15 @@ Slopgate finds slop in Python code that coding agents write. It has two parts:
 ## Commands
 
 ```bash
-uv sync --extra hook                               # onnxruntime: the gate embeds with the int8 ONNX model, not torch
+uv sync
 uv run pytest -q                                   # offline tests; fakes replace the models and the sandbox
-uv run --env-file .env pytest -m live -q           # live tests against Token Factory
-uv run --extra hook --env-file .env slopgate review --repo <repo> --base <ref> --head <ref> --dry-run --sandbox local
-uv run --extra hook --env-file .env slopgate review --pr <number>   # review a PR on this machine and post to GitHub
-uv run slopgate index --repo <repo> --ref HEAD     # base index, plus the hook's ONNX model and store
+uv run --extra hook --env-file .env pytest -m live -q   # live tests against Token Factory; the hook extra runs the embedding tests
+uv run --env-file .env slopgate review --repo <repo> --base <ref> --head <ref> --dry-run --sandbox local
+uv run --env-file .env slopgate review --pr <number>   # review a PR on this machine and post to GitHub
+uv run --extra hook slopgate index --repo <repo> --ref HEAD   # base index, plus the hook's ONNX model and store
 ```
 
 The live tests are marked `live` and are off by default (`addopts` in `pyproject.toml`).
-
-Run the gate with `--extra hook`. A plain `uv run` syncs the venv without `onnxruntime`. The gate then falls back to the torch model, which embeds up to 8,192 tokens per function and took 14 GB on the 16 GB Mac. With ONNX, the peak is 0.4 GB. The ONNX path also needs the compiled model in `~/.cache/slopgate/`. `slopgate index` creates it once per machine. Without it, the gate falls back to torch.
 
 ## Secrets
 
@@ -49,16 +47,17 @@ Run the gate with `--extra hook`. A plain `uv run` syncs the venv without `onnxr
 | `slopgate/github.py` | Posts the review, the follow-up pull request, and the summary. |
 | `slopgate/sandbox.py` | `Local` (temporary folder) and `Contree` (Nebius sandbox). Each run starts from one checkpoint. |
 | `slopgate/llm.py` | Token Factory client: `complete` (text), `decide` (forced tool call, returns a pydantic object), and `yes_probability` (one-token yes/no with logprobs). |
-| `slopgate/embed.py` | CodeRankEmbed embeddings. The hook uses an int8 ONNX copy in `~/.cache/slopgate/`. |
-| `slopgate/index.py` | Function index of a commit, in `.slopgate/<sha>.json`. |
+| `slopgate/embed.py` | CodeRankEmbed embeddings for the hook only. Compiles to int8 ONNX in `~/.cache/slopgate/`. |
+| `slopgate/index.py` | Function index of a commit, in `.slopgate/<sha>.json`, and keyword search over it. |
 | `slopgate/live.py` | The hook. Its store is `.slopgate/live.db` (SQLite). |
-| `slopgate/diff.py`, `slopgate/functions.py` | Changed functions between two refs, and function parsing. |
+| `slopgate/diff.py`, `slopgate/functions.py` | Changed functions between two refs, function parsing, and token sets of functions. |
 | `slopgate/config.py` | Model names, thresholds, and prices. |
 
 ## Model rules
 
 - Lightning (`nvidia/Nemotron-3_5-Lightning`), Super (`nvidia/nemotron-3-super-120b-a12b`), and Ultra (`nvidia/Nemotron-3-Ultra-550b-a55b`) are all thinking models. Super writes tests and rewrites. Ultra does the rewrite retry and the summary. Lightning names slop kinds and runs the hook's yes/no check.
-- **Turn thinking off on every request:** `extra_body={"chat_template_kwargs": {"enable_thinking": False}}`. With thinking on, a complex request can spend the whole 8,192-token output limit on reasoning and return an empty or cut-off reply (`finish_reason: "length"`). A forced tool call does not turn thinking off by itself.
+- **Turn thinking off on every request:** `extra_body={"chat_template_kwargs": {"enable_thinking": False}}`. With thinking on, a complex request can spend the whole output limit on reasoning and return an empty or cut-off reply (`finish_reason: "length"`). A forced tool call does not turn thinking off by itself.
+- `complete` sends `max_tokens=32768` (`MAX_OUTPUT_TOKENS`). The server default is 8,192 output tokens, and one long test file passed it on PR #17.
 - **Code comes back as one ```` ```python ```` block in markdown. Never ask for code inside JSON or inside tool-call arguments.** In the fair run on 2026-10-06 (equal prompts, thinking off, 54 replies each), markdown proved 45 and a forced tool call proved 41, with 3 broken files from wrong bracket types (ticket 20).
 - **Decisions** (a kind, a verdict, a reason) come back as a forced tool call whose parameters are a pydantic model (`decide`, ticket 18). The chat template shows each `Field(description=...)` to the model, so the descriptions act as instructions. Put the reason field before the verdict field. Do not use `response_format` with a JSON schema: the server enforces the shape there, but the model does not see the descriptions.
 - Never offer "cannot do it" as an optional tool next to a text reply. Models choose the optional tool too often (12 of 12 false refusals in one test). Use a text line such as `CANNOT_TEST: <reason>` instead.

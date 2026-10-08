@@ -1,14 +1,15 @@
 import json
 import subprocess
+import sys
 
-import numpy
 import pytest
 from test_review import FLAT, IS_NESTING, NESTED, SIMPLE, TESTS, fenced, models, review
 
 from slopgate import embed
 from slopgate.cli import main
-from slopgate.config import DUPLICATE_SCORE, SUPER
+from slopgate.config import SUPER
 from slopgate.review import SameJob
+from slopgate.index import build, search
 
 SLUGIFY = '''\
 def slugify(title):
@@ -76,6 +77,7 @@ def test_words():
 '''
 
 EMPTY = {"suggestions": [], "followup": [], "rejected": []}
+OTHER_JOB = SameJob(difference="", same_job=False)
 
 
 def index(capsys, repo):
@@ -92,10 +94,13 @@ def test_index_is_written_once_and_loaded_after(make_repo, fake_embed, capsys, t
     path = tmp_path / ".slopgate" / f"{sha}.json"
     assert first == {"ref": sha, "functions": 2, "path": str(path)}
     written = path.read_bytes()
-    assert len(fake_embed.calls) == 1
-    assert index(capsys, repo) == first
-    assert path.read_bytes() == written
-    assert len(fake_embed.calls) == 1
+    fake_embed.calls.clear()
+    sentinel = [{"source": "def sentinel(): pass\n"}]
+    path.write_text(json.dumps(sentinel))
+    assert build(repo, "HEAD") == sentinel
+    path.write_bytes(written)
+    assert fake_embed.calls == []
+    assert all("vector" not in record for record in json.loads(written))
 
 
 def test_renamed_exact_copy_is_replaced_by_the_helper_without_llm(make_repo, fake_llm, capsys, tmp_path_factory):
@@ -165,7 +170,22 @@ def test_unrelated_helper_below_floor_costs_no_llm_call(make_repo, fake_llm, fak
 
     assert review(capsys, repo) == EMPTY
     assert fake_llm.calls == []
-    assert fake_embed.calls == [([SLUGIFY], False), ([SIMPLE], True)]
+    assert fake_embed.calls == []
+
+
+def test_copy_is_found_when_the_embedding_model_fails(make_repo, fake_llm, capsys, monkeypatch):
+    def encode(texts, query=False):
+        raise RuntimeError("no embedding model")
+
+    monkeypatch.setattr(embed, "encode", encode)
+    repo = make_repo({"app/__init__.py": "", "app/text.py": SLUGIFY}, {"app/posts.py": TYPE_ERROR_COPY})
+    fake_llm.replies += [SameJob(difference="raises TypeError instead of ValueError on None", same_job=True), SLUG_TESTS]
+
+    result = review(capsys, repo)
+
+    [followup] = result["followup"]
+    assert "`slugify` in app/text.py" in followup["reason"]
+    assert followup["files"] == {"app/posts.py": ""}
 
 
 @pytest.mark.parametrize(
@@ -181,25 +201,6 @@ def test_methods_are_never_duplicates(make_repo, fake_llm, capsys, base, head):
 
     assert review(capsys, repo) == EMPTY
     assert fake_llm.calls == []
-
-
-def test_real_encode_prefixes_queries_only(make_repo, fake_llm, fake_embed, capsys, monkeypatch):
-    texts = []
-
-    class Model:
-        def encode(self, batch, normalize_embeddings):
-            assert normalize_embeddings
-            texts.extend(batch)
-            return numpy.full((len(batch), 4), 0.5)
-
-    monkeypatch.setattr(embed, "model", Model())
-    monkeypatch.setattr(embed, "encode", fake_embed.real)
-    repo = make_repo({"app/text.py": SLUGIFY}, {"app/ship.py": SIMPLE})
-    fake_llm.replies += [None]
-
-    assert review(capsys, repo) == EMPTY
-    assert models(fake_llm) == [SUPER]
-    assert texts == [SLUGIFY, "Represent this query for searching relevant code: " + SIMPLE]
 
 
 def test_partly_changed_function_lands_in_followup_with_full_file(make_repo, fake_llm, capsys):
@@ -243,9 +244,8 @@ def test_words():
 '''
 
 
-@pytest.mark.live
 @pytest.mark.parametrize("parameter", ["title", "heading"])
-def test_restructured_copy_is_found_by_real_vector_search(make_repo, fake_llm, capsys, parameter):
+def test_restructured_copy_is_found_by_keyword_search(make_repo, fake_llm, capsys, parameter):
     repo = make_repo(
         {"app/__init__.py": "", "app/text.py": PLAIN_SLUGIFY}, {"app/posts.py": RESTRUCTURED.replace("title", parameter)}
     )
@@ -257,9 +257,6 @@ def test_restructured_copy_is_found_by_real_vector_search(make_repo, fake_llm, c
     result = review(capsys, repo)
 
     [followup] = result["followup"]
-    print(followup["reason"])
-    score = float(followup["reason"].split("(score ")[1].split(")")[0])
-    assert score >= DUPLICATE_SCORE
     assert followup["files"] == {"app/posts.py": ""}
     assert models(fake_llm) == [SUPER, SUPER]
 
@@ -273,3 +270,47 @@ def test_function_changed_in_the_same_pr_is_not_a_helper(make_repo, fake_llm, ca
 
     assert review(capsys, repo) == EMPTY
     assert fake_llm.calls == []
+
+
+def test_helper_moved_in_the_same_pr_is_not_a_helper(make_repo, fake_llm, capsys):
+    repo = make_repo(
+        {"app/__init__.py": "", "app/text.py": SLUGIFY},
+        {"app/text.py": None, "app/words.py": SLUGIFY + "\n\n" + SIMPLE},
+    )
+
+    assert review(capsys, repo) == EMPTY
+    assert fake_llm.calls == []
+
+
+def test_helper_deleted_in_the_same_pr_is_not_a_helper(make_repo, fake_llm, capsys):
+    repo = make_repo(
+        {"app/__init__.py": "", "app/text.py": SLUGIFY},
+        {"app/text.py": None, "app/posts.py": RENAMED_COPY},
+    )
+
+    assert review(capsys, repo) == EMPTY
+    assert fake_llm.calls == []
+
+
+def test_gate_imports_no_hook_only_module():
+    code = (
+        "import slopgate.cli, slopgate.review, slopgate.index, slopgate.github, slopgate.sandbox, sys; "
+        "bad = {'slopgate.embed', 'numpy', 'torch', 'onnxruntime', 'sentence_transformers'} & set(sys.modules); "
+        "assert not bad, bad"
+    )
+    assert subprocess.run([sys.executable, "-c", code]).returncode == 0
+
+
+def test_search_returns_best_top_above_floor():
+    def record(extra):
+        return {"source": f"a b c d e f g h i j {extra}"}
+
+    query = "a b c d e f g h i j"
+    close = [record(" ".join(f"x{i}" for i in range(n))) for n in range(7)]
+    far = {"source": "a b c d e f g h i j " + " ".join(f"y{i}" for i in range(100))}
+
+    found = search([far, *reversed(close)], query, 0.5, 5)
+
+    assert [r for _, r in found] == close[:5]
+    assert [round(score, 2) for score, _ in found] == [1.0, 0.91, 0.83, 0.77, 0.71]
+    assert far not in [r for _, r in search([far, *close], query, 0.5, 20)]

@@ -11,13 +11,13 @@ dependencies = [
     "pytest",
     "contree-sdk>=0.3.6",
     "vulture>=2.16",
-    "sentence-transformers<6",
-    "transformers<5",
-    "einops>=0.8.2",
 ]
 
 [project.optional-dependencies]
-hook = ["onnx", "onnxruntime"]
+hook = ["numpy", "onnx", "onnxruntime", "sentence-transformers<6", "transformers<5", "einops>=0.8.2"]
+
+[dependency-groups]
+dev = ["numpy"]
 
 [project.scripts]
 slopgate = "slopgate.cli:main"
