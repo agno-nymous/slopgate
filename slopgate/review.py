@@ -1,7 +1,10 @@
 import ast
+import io
 import json
 import re
+import shlex
 import textwrap
+import tokenize
 
 import vulture
 
@@ -27,6 +30,7 @@ NONDETERMINISTIC = {"random", "secrets", "uuid", "time", "datetime"}
 DEFS = (ast.FunctionDef, ast.AsyncFunctionDef)
 BOOL_CALLS = {"bool", "isinstance", "issubclass", "callable", "hasattr", "all", "any"}
 COVERAGE = "--slopgate-coverage--"
+MISSED = "import json, sys; print(json.dumps(json.load(sys.stdin)['files'][sys.argv[1]]['missing_branches'], separators=(',', ':')))"
 RECORDED = "--slopgate-recorded--"
 RECORDER_PATH = "slopgate_record.py"
 
@@ -131,9 +135,11 @@ Rules:
 - Keep the exact signature, the decorators, and the behavior, bugs included.
 - Add no new functions, no lambdas, and no new classes.
 - If every return gives True or False, keep it that way: `a and b` returns `a` itself when `a` is falsy, so wrap such a chain in bool().
-- Reply with the full rewritten function, decorators included, and nothing else.
+- Reply with one ```python block that holds the full rewritten function, decorators included. Put no text outside the block.
 
-{source}"""
+```python
+{source}
+```"""
 
 RETRY_PROMPT = (
     REWRITE_PROMPT
@@ -141,7 +147,10 @@ RETRY_PROMPT = (
 
 This earlier rewrite failed:
 
+```python
 {rewrite}
+```
+
 Failure:
 
 {failure}"""
@@ -165,9 +174,21 @@ def module_of(path: str) -> str:
     return path.removesuffix(".py").replace("/", ".")
 
 
-def strip_fence(text: str) -> str:
-    m = re.search(r"```[\w-]*\n(.*?)```", text, re.S)
-    return m[1] if m else text
+def strip_fence(text: str, language: str = "python") -> str | None:
+    lines = text.splitlines(keepends=True)
+    start = next((i for i, line in enumerate(lines) if line.startswith("```" + language)), None)
+    if start is None:
+        return None
+    end = next((i for i in range(start + 1, len(lines)) if lines[i].strip() == "```"), None)
+    return None if end is None else "".join(lines[start + 1 : end])
+
+
+def same_code(a: str, b: str) -> bool:
+    def comments(code):
+        return [t.string for t in tokenize.generate_tokens(io.StringIO(code).readline) if t.type == tokenize.COMMENT]
+
+    a, b = textwrap.dedent(a), textwrap.dedent(b)
+    return ast.dump(ast.parse(a)) == ast.dump(ast.parse(b)) and comments(a) == comments(b)
 
 
 def has_dead_code(function, text: str) -> bool:
@@ -190,11 +211,10 @@ def has_dead_code(function, text: str) -> bool:
 
 def classify(source: str) -> str | None:
     kinds = "\n".join(f"- {kind}: {instruction}" for kind, instruction in KINDS.items())
-    reply = llm.complete(LIGHTNING, CLASSIFY_PROMPT.format(kinds=kinds, source=source), json=True)
     try:
-        kind = json.loads(reply)["kind"]
+        kind = json.loads(llm.complete(LIGHTNING, CLASSIFY_PROMPT.format(kinds=kinds, source=source), json=True))["kind"]
         return kind if kind in KINDS else None
-    except (TypeError, ValueError, KeyError):
+    except (TypeError, ValueError, KeyError, llm.CutOff):
         return None
 
 
@@ -260,7 +280,7 @@ def find_duplicate(function, pool) -> dict | None:
             verdict = json.loads(llm.complete(SUPER, prompt, json=True))
             if verdict["same_job"] is True:
                 return {"helper": record, "exact": False, "difference": str(verdict.get("difference") or ""), "note": f"score {score:.2f}"}
-        except (TypeError, ValueError, KeyError):
+        except (TypeError, ValueError, KeyError, llm.CutOff):
             continue
     return None
 
@@ -560,26 +580,34 @@ def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> t
     request = prompt + (CALLEES.format(code=context) if context else "")
     retry = ""
     for last in (False, True):
-        reply = strip_fence(llm.complete(SUPER, request + retry))
+        reply = llm.complete(SUPER, request + retry)
+        fenced = strip_fence(reply)
+        if fenced is None:
+            fenced = strip_fence(reply, "json")
+        reply = reply if fenced is None else fenced
         inputs = proposed_inputs(reply)
         tests, failure = (reply, None) if inputs is None else record(sandbox, checkpoint, function, inputs)
         if failure:
             retry = INPUTS_RETRY.format(reply=reply, failure=failure)
         else:
             code, output = sandbox.run(
-                checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o -"
+                checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o - | python -c \"{MISSED}\" {shlex.quote(function.path)}"
             )
             second, _ = sandbox.run(checkpoint, {test_path: tests}, f"PYTHONHASHSEED=2 {cmd}")
-            if bool(code) != bool(second):
+            passed = COVERAGE in output
+            if passed != (not second):
                 return None, "nondeterministic: characterization tests differ across two runs"
-            if not code:
+            if passed:
+                try:
+                    branches = json.loads(output.split(COVERAGE)[1].strip().splitlines()[0])
+                except (ValueError, IndexError):
+                    return None, f"coverage has no data for {function.path}"
                 break
             failure = f"characterization tests fail on original: {tail(output)}"
             retry = TESTS_RETRY.format(tests=tests, failure="\n".join(output.strip().splitlines()[-60:]))
         if last:
             return None, failure
-    report = json.loads(output.split(COVERAGE)[1])["files"][function.path]
-    missed = sum(function.start <= line <= function.end for line, _ in report["missing_branches"])
+    missed = sum(function.start <= line <= function.end for line, _ in branches)
     if missed:
         return None, f"characterization tests miss branches: {missed}"
     return tests, None
@@ -665,68 +693,81 @@ def review(repo, base, head, sandbox) -> dict:
     # ponytail: one trial at a time (well under the cap of 8); a thread pool of 8 when review time matters
     for n, (function, added, kind, text) in enumerate(candidates):
         rejected = {"function": function.qualname, "path": function.path}
-        test_path = f"tests/test_slopgate_{n}.py"
-        cmd = f"python -m coverage run --branch -m pytest -q {test_path}"
-        match = matches.get(function)
-        plan = plans.get(function)
-        tests = None
-        if not (match and match["exact"]):
-            target = plan["caller"] if plan else function
-            tests, failure = characterize(sandbox, checkpoint, target, test_path, cmd, called_code(repo, head, target))
+        try:
+            test_path = f"tests/test_slopgate_{n}.py"
+            cmd = f"python -m coverage run --branch -m pytest -q {test_path}"
+            match = matches.get(function)
+            plan = plans.get(function)
+            tests = None
+            if not (match and match["exact"]):
+                target = plan["caller"] if plan else function
+                tests, failure = characterize(sandbox, checkpoint, target, test_path, cmd, called_code(repo, head, target))
+                if failure:
+                    result["rejected"].append({**rejected, "reason": failure})
+                    continue
+            if match or plan:
+                if plan:
+                    followup, failure = inline(sandbox, checkpoint, function, plan, tests, test, test_path, cmd)
+                else:
+                    followup, failure = deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, test_path, cmd)
+                if failure:
+                    result["rejected"].append({**rejected, "reason": failure})
+                else:
+                    result["followup"].append(followup)
+                continue
+
+            dedented = textwrap.dedent(function.source)
+            indent = function.source[: len(function.source) - len(function.source.lstrip())]
+            lines = text.splitlines(keepends=True)
+            reply = llm.complete(SUPER, REWRITE_PROMPT.format(instruction=KINDS[kind], source=dedented))
+            for retry in (False, True):
+                fenced = strip_fence(reply)
+                if fenced is None:
+                    failure = "rewrite reply is not a python block"
+                    break
+                rewrite = textwrap.dedent(fenced).strip("\n") + "\n"
+                failure = broken_rule(dedented, rewrite)
+                if failure:
+                    failure = f"rule: {failure}"
+                    break
+                if same_code(dedented, rewrite):
+                    failure = "rewrite makes no change"
+                    break
+                suggested = textwrap.indent(rewrite, indent)
+                spliced = "".join(lines[: function.start - 1]) + suggested + "".join(lines[function.end :])
+                code, output = sandbox.run(checkpoint, {test_path: tests, function.path: spliced}, cmd)
+                if code:
+                    failure = f"rewrite fails characterization tests: {tail(output)}"
+                else:
+                    repo_code, repo_output = sandbox.run(checkpoint, {function.path: spliced}, test)
+                    failure = f"rewrite fails repo tests: {tail(repo_output)}" if repo_code not in (0, 5) else None
+                if not failure or retry:
+                    break
+                reply = llm.complete(
+                    ULTRA, RETRY_PROMPT.format(instruction=KINDS[kind], source=dedented, rewrite=rewrite, failure=failure)
+                )
             if failure:
                 result["rejected"].append({**rejected, "reason": failure})
                 continue
-        if match or plan:
-            if plan:
-                followup, failure = inline(sandbox, checkpoint, function, plan, tests, test, test_path, cmd)
-            else:
-                followup, failure = deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, test_path, cmd)
-            if failure:
-                result["rejected"].append({**rejected, "reason": failure})
-            else:
-                result["followup"].append(followup)
-            continue
 
-        dedented = textwrap.dedent(function.source)
-        indent = function.source[: len(function.source) - len(function.source.lstrip())]
-        lines = text.splitlines(keepends=True)
-        reply = llm.complete(SUPER, REWRITE_PROMPT.format(instruction=KINDS[kind], source=dedented))
-        for retry in (False, True):
-            rewrite = textwrap.dedent(strip_fence(reply)).strip("\n") + "\n"
-            failure = broken_rule(dedented, rewrite)
-            if failure:
-                failure = f"rule: {failure}"
-                break
-            suggested = textwrap.indent(rewrite, indent)
-            spliced = "".join(lines[: function.start - 1]) + suggested + "".join(lines[function.end :])
-            code, output = sandbox.run(checkpoint, {test_path: tests, function.path: spliced}, cmd)
-            if code:
-                failure = f"rewrite fails characterization tests: {tail(output)}"
-            else:
-                repo_code, repo_output = sandbox.run(checkpoint, {function.path: spliced}, test)
-                failure = f"rewrite fails repo tests: {tail(repo_output)}" if repo_code not in (0, 5) else None
-            if not failure or retry:
-                break
-            reply = llm.complete(
-                ULTRA, RETRY_PROMPT.format(instruction=KINDS[kind], source=dedented, rewrite=rewrite, failure=failure)
+            start, end = function.start, function.end
+            passed = re.search(r"(\d+) passed", output)[1]
+            summary = (
+                f"Slopgate (`{kind}`) rewrite of `{function.qualname}`: "
+                f"nesting {nesting(function.source)} -> {nesting(rewrite)}, "
+                f"complexity {complexity(function.source)} -> {complexity(rewrite)}. "
+                f"{passed} characterization tests passed in sandbox."
             )
-        if failure:
-            result["rejected"].append({**rejected, "reason": failure})
-            continue
-
-        start, end = function.start, function.end
-        passed = re.search(r"(\d+) passed", output)[1]
-        summary = (
-            f"Slopgate (`{kind}`) rewrite of `{function.qualname}`: "
-            f"nesting {nesting(function.source)} -> {nesting(rewrite)}, "
-            f"complexity {complexity(function.source)} -> {complexity(rewrite)}. "
-            f"{passed} characterization tests passed in sandbox."
-        )
-        if set(range(start, end + 1)) <= added:
-            suggestion = {"path": function.path, "line": end, "side": "RIGHT", "body": f"{summary}\n\n```suggestion\n{suggested}```"}
-            if start != end:
-                suggestion |= {"start_line": start, "start_side": "RIGHT"}
-            result["suggestions"].append(suggestion)
-        else:
-            result["followup"].append({"function": function.qualname, "kind": kind, "reason": summary, "files": {function.path: spliced}})
+            if set(range(start, end + 1)) <= added:
+                suggestion = {"path": function.path, "line": end, "side": "RIGHT", "body": f"{summary}\n\n```suggestion\n{suggested}```"}
+                if start != end:
+                    suggestion |= {"start_line": start, "start_side": "RIGHT"}
+                result["suggestions"].append(suggestion)
+            else:
+                result["followup"].append({"function": function.qualname, "kind": kind, "reason": summary, "files": {function.path: spliced}})
+        except llm.CutOff:
+            result["rejected"].append({**rejected, "reason": "reply cut off"})
+        # One broken candidate must not lose the results of the others (the review of PR #15 was lost this way).
+        except Exception as error:
+            result["rejected"].append({**rejected, "reason": f"internal error: {error!r}"})
     return result

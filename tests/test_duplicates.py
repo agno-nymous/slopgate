@@ -3,7 +3,7 @@ import subprocess
 
 import numpy
 import pytest
-from test_review import FLAT, IS_NESTING, NESTED, SIMPLE, TESTS, models, review
+from test_review import FLAT, IS_NESTING, NESTED, SIMPLE, TESTS, fenced, models, review
 
 from slopgate import embed
 from slopgate.cli import main
@@ -191,7 +191,7 @@ def test_real_encode_prefixes_queries_only(make_repo, fake_llm, fake_embed, caps
 
 def test_partly_changed_function_lands_in_followup_with_full_file(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": "", "app/perms.py": NESTED}, {"app/perms.py": NESTED.replace("return True", "return bool(1)")})
-    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), FLAT]
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT)]
 
     result = review(capsys, repo)
 

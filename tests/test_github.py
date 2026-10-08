@@ -5,7 +5,7 @@ import sys
 import textwrap
 
 import pytest
-from test_review import FLAT, IS_NESTING, NESTED, TESTS
+from test_review import FLAT, IS_NESTING, NESTED, TESTS, fenced
 from test_wrappers import COMPUTE_TAX, INVOICE_TESTS, INVOICE_TOTAL, TAX_FOR
 
 from slopgate.cli import main
@@ -83,7 +83,7 @@ def branch_file(origin, path):
 def test_inline_suggestions_are_posted_as_one_comment_review(github, fake_llm, capsys):
     make, calls = github
     repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), FLAT, SUMMARY]
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT), SUMMARY]
 
     post(repo)
 
@@ -117,7 +117,7 @@ def test_pr_flag_fetches_the_pull_request_reviews_it_and_posts_to_it(github, fak
     pr_file.write_text(json.dumps(pr))
     monkeypatch.setenv("GH_PR", str(pr_file))
     monkeypatch.delenv("GITHUB_EVENT_PATH")
-    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), FLAT, SUMMARY]
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT), SUMMARY]
 
     assert main(["review", "--repo", clone, "--pr", "7", "--sandbox", "local"]) is None
 
@@ -231,7 +231,7 @@ def test_rejections_are_listed_under_the_summary(github, fake_llm, capsys):
 def test_summary_failure_still_posts_the_results(github, fake_llm, capsys):
     make, calls = github
     repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), FLAT]
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT)]
 
     post(repo)
 
@@ -270,7 +270,7 @@ def test_followup_pull_request_failure_still_posts_the_review(github, fake_llm, 
     make, calls = github
     repo, origin = make(WRAPPER_BASE, {"app/billing.py": COMPUTE_TAX + TAX_FOR + INVOICE_TOTAL, "app/perms.py": NESTED})
     monkeypatch.setenv("GH_CREATE_ERROR", "GitHub Actions is not permitted to create or approve pull requests")
-    fake_llm.replies += [IS_NESTING, INVOICE_TESTS, TESTS.format(name="can_edit", call="can_edit"), FLAT, SUMMARY]
+    fake_llm.replies += [IS_NESTING, INVOICE_TESTS, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT), SUMMARY]
 
     post(repo)
 
@@ -316,7 +316,7 @@ def test_github_server_errors_are_retried(github, fake_llm, capsys, outages):
     set_count, sleeps = outages
     repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
     set_count(2)
-    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), FLAT, SUMMARY]
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT), SUMMARY]
 
     post(repo)
 
@@ -331,7 +331,7 @@ def test_github_server_errors_give_up_after_three_tries(github, fake_llm, capsys
     set_count, _ = outages
     repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
     set_count(3)
-    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), FLAT, SUMMARY]
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT), SUMMARY]
 
     post(repo)
 

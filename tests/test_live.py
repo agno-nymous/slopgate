@@ -5,7 +5,7 @@ import pytest
 from openai import OpenAI
 from test_duplicates import SLUGIFY
 from test_hook import SLUG_COPY, UNIQUE, indexed, write
-from test_review import FLAT, IS_NESTING, NESTED, SIMPLE, TESTS, review
+from test_review import FLAT, IS_NESTING, NESTED, SIMPLE, TESTS, fenced, review
 
 from slopgate import config, embed, live, llm
 
@@ -63,12 +63,28 @@ def test_nested_fixture_gives_same_json_in_contree_and_local(make_repo, fake_llm
 @pytest.mark.parametrize("manifest", [{"pyproject.toml": PYPROJECT}, {"requirements.txt": "attrs\n"}], ids=["pyproject", "requirements"])
 def test_detected_install_provides_dependency(make_repo, fake_llm, capsys, manifest):
     repo = make_repo({"app/__init__.py": "", **manifest}, {"app/perms.py": "import attrs\n\n\n" + NESTED})
-    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), FLAT]
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT)]
 
     result = review(capsys, repo, "contree")
 
     assert result["rejected"] == []
     assert len(result["suggestions"]) == 1
+
+
+@pytest.mark.parametrize("model", [config.SUPER, config.ULTRA])
+def test_complete_replies_without_reasoning(monkeypatch, model):
+    openai = llm.client()
+    create = openai.chat.completions.create
+    replies = []
+    monkeypatch.setattr(openai.chat.completions, "create", lambda **kwargs: replies.append(create(**kwargs)) or replies[-1])
+    monkeypatch.setattr(llm, "client", lambda: openai)
+
+    text = llm.complete(model, "Is 17 prime? Answer in one word.")
+
+    [reply] = replies
+    extra = reply.choices[0].message.model_extra
+    assert text.strip()
+    assert not extra.get("reasoning") and not extra.get("reasoning_content"), extra
 
 
 def test_reuse_prompt_separates_copy_from_unique():
