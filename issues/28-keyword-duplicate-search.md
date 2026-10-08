@@ -217,6 +217,14 @@ On pool B, two rows change. `module_of` ranks 4th: `strip_quotes` and two other 
 - Put `@cache` on `tokens`. Design step 1 says: do not change the function.
 - Run `find_duplicate` in parallel. Tickets 23 and 25 own the gate time.
 
+**Fixes from the gate review of PR #17.**
+
+1. Sandbox setup. `pip install -e .` does not install the uv `dev` group, so `tests/test_hook.py` could not import numpy, and the repo tests failed in the sandbox. `.slopgate.toml` now installs `numpy` too. The PyTorch index is gone. The next gate run passed one rewrite in the sandbox.
+2. Moved helper (a defect from before this ticket). The duplicate pool kept base helpers that the pull request moved or deleted. The moved `tokens` matched its old copy in `live.py`, and the follow-up imported it from a module that no longer defines it. The pool now keeps a base record only when its path and name exist at head. Two tests (a move and a delete) failed before the fix and pass after it.
+3. Empty inputs (a defect from before this ticket). For a function that takes objects, Super often replied `{"inputs": []}`. The gate recorded zero calls and rejected the candidate with "no tests ran". Live Super, 8 tries per function: `find_duplicate` gave an empty list 6 times, `characterize` 8 times, `seed` 1 time. A prompt rule against an empty list did not help (8 of 8 still empty). One retry with a request for a pytest file gave a test file in 19 of 19 cases. The gate now does that retry and runs no sandbox for an empty list.
+
+After these fixes, `uv run pytest -q` gave 186 passed, 12 deselected.
+
 **Other test changes.** At the floor 0.30, the new callers in the wrapper fixtures (`invoice_total`, `fee_total`, `total`) score 0.35 to 0.53 against `compute_tax`. Each costs one Super same-job call. 17 tests in `tests/test_wrappers.py` and `tests/test_github.py` now queue one "not the same job" reply for each call.
 
 **Known limits.**
