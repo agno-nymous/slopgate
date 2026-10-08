@@ -900,6 +900,26 @@ def test_complete_turns_thinking_off(monkeypatch):
     assert requests[0]["extra_body"] == {"chat_template_kwargs": {"enable_thinking": False}}
 
 
+def test_unexpected_error_in_one_candidate_keeps_the_others(make_repo, fake_llm, monkeypatch, capsys):
+    repo = two_nested_functions(make_repo, "")
+    fake_llm.replies += [IS_NESTING, IS_NESTING, TESTS.format(name="can_view", call="can_view"), fenced(FLAT_VIEW)]
+    complete = llm.complete
+
+    def broken_third_call(model, prompt, json=False):
+        if len(fake_llm.calls) == 2:
+            fake_llm.calls.append((model, prompt))
+            raise RuntimeError("boom")
+        return complete(model, prompt, json)
+
+    monkeypatch.setattr(llm, "complete", broken_third_call)
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "reason": "internal error: RuntimeError('boom')"}]
+    [suggestion] = result["suggestions"]
+    assert suggested_code(suggestion["body"]) == FLAT_VIEW
+
+
 @pytest.mark.parametrize("cut", ["tests", "rewrite"])
 def test_cut_off_reply_rejects_the_candidate_and_the_next_one_runs(make_repo, monkeypatch, capsys, cut):
     repo = two_nested_functions(make_repo, "")
@@ -1010,3 +1030,36 @@ def test_rewrite_and_retry_prompts_hold_code_in_python_blocks(make_repo, fake_ll
     assert "```python\n" + NESTED + "\n```" in rewrite_prompt
     assert retry_prompt.startswith(rewrite_prompt)
     assert "This earlier rewrite failed:\n\n```python\n" + DROPS_LOCKED + "\n```" in retry_prompt
+
+
+def test_coverage_that_omits_the_file_is_not_called_nondeterministic(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED, ".coveragerc": "[run]\nomit = app/perms.py\n"})
+    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit")]
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "reason": "coverage has no data for app/perms.py"}]
+
+
+def test_inputs_reply_in_a_json_fence_is_parsed(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    inputs = json.dumps({"inputs": ["True, True, False, False", "True, True, True, False", "False, True, False, False", "True, False, False, False", "True, True, False, True"]})
+    fake_llm.replies += [IS_NESTING, "```json\n" + inputs + "\n```", fenced(FLAT)]
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == []
+    [suggestion] = result["suggestions"]
+    assert suggested_code(suggestion["body"]) == FLAT
+
+
+def test_cut_off_duplicate_verdict_skips_the_helper_and_the_review_goes_on(make_repo, monkeypatch, capsys):
+    from test_duplicates import SLUGIFY, TYPE_ERROR_COPY
+
+    repo = make_repo({"app/__init__.py": "", "app/text.py": SLUGIFY}, {"app/posts.py": TYPE_ERROR_COPY})
+    requests = fake_client(monkeypatch, [("length", '{"same_')])
+
+    result = review(capsys, repo)
+
+    assert result == {"suggestions": [], "followup": [], "rejected": []}
+    assert len(requests) == 1

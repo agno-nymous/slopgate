@@ -2,6 +2,7 @@ import ast
 import io
 import json
 import re
+import shlex
 import textwrap
 import tokenize
 
@@ -173,9 +174,9 @@ def module_of(path: str) -> str:
     return path.removesuffix(".py").replace("/", ".")
 
 
-def strip_fence(text: str) -> str | None:
+def strip_fence(text: str, language: str = "python") -> str | None:
     lines = text.splitlines(keepends=True)
-    start = next((i for i, line in enumerate(lines) if line.startswith("```python")), None)
+    start = next((i for i, line in enumerate(lines) if line.startswith("```" + language)), None)
     if start is None:
         return None
     end = next((i for i in range(start + 1, len(lines)) if lines[i].strip() == "```"), None)
@@ -581,6 +582,8 @@ def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> t
     for last in (False, True):
         reply = llm.complete(SUPER, request + retry)
         fenced = strip_fence(reply)
+        if fenced is None:
+            fenced = strip_fence(reply, "json")
         reply = reply if fenced is None else fenced
         inputs = proposed_inputs(reply)
         tests, failure = (reply, None) if inputs is None else record(sandbox, checkpoint, function, inputs)
@@ -588,18 +591,22 @@ def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> t
             retry = INPUTS_RETRY.format(reply=reply, failure=failure)
         else:
             code, output = sandbox.run(
-                checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o - | python -c \"{MISSED}\" {function.path}"
+                checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o - | python -c \"{MISSED}\" {shlex.quote(function.path)}"
             )
             second, _ = sandbox.run(checkpoint, {test_path: tests}, f"PYTHONHASHSEED=2 {cmd}")
-            if bool(code) != bool(second):
+            passed = COVERAGE in output
+            if passed != (not second):
                 return None, "nondeterministic: characterization tests differ across two runs"
-            if not code:
+            if passed:
+                try:
+                    branches = json.loads(output.split(COVERAGE)[1].strip().splitlines()[0])
+                except (ValueError, IndexError):
+                    return None, f"coverage has no data for {function.path}"
                 break
             failure = f"characterization tests fail on original: {tail(output)}"
             retry = TESTS_RETRY.format(tests=tests, failure="\n".join(output.strip().splitlines()[-60:]))
         if last:
             return None, failure
-    branches = json.loads(output.split(COVERAGE)[1].strip().splitlines()[0])
     missed = sum(function.start <= line <= function.end for line, _ in branches)
     if missed:
         return None, f"characterization tests miss branches: {missed}"
@@ -760,4 +767,7 @@ def review(repo, base, head, sandbox) -> dict:
                 result["followup"].append({"function": function.qualname, "kind": kind, "reason": summary, "files": {function.path: spliced}})
         except llm.CutOff:
             result["rejected"].append({**rejected, "reason": "reply cut off"})
+        # One broken candidate must not lose the results of the others (the review of PR #15 was lost this way).
+        except Exception as error:
+            result["rejected"].append({**rejected, "reason": f"internal error: {error!r}"})
     return result
