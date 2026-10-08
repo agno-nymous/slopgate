@@ -46,7 +46,7 @@ Run the gate with `--extra hook`. A plain `uv run` syncs the venv without `onnxr
 | `slopgate/review.py` | The gate: find candidates, classify them, write characterization tests, rewrite, prove in the sandbox. All model prompts of the gate are here. |
 | `slopgate/github.py` | Posts the review, the follow-up pull request, and the summary. |
 | `slopgate/sandbox.py` | `Local` (temporary folder) and `Contree` (Nebius sandbox). Each run starts from one checkpoint. |
-| `slopgate/llm.py` | Token Factory client: `complete` (text) and `yes_probability` (one-token yes/no with logprobs). |
+| `slopgate/llm.py` | Token Factory client: `complete` (text), `decide` (forced tool call, returns a pydantic object), and `yes_probability` (one-token yes/no with logprobs). |
 | `slopgate/embed.py` | CodeRankEmbed embeddings. The hook uses an int8 ONNX copy in `~/.cache/slopgate/`. |
 | `slopgate/index.py` | Function index of a commit, in `.slopgate/<sha>.json`. |
 | `slopgate/live.py` | The hook. Its store is `.slopgate/live.db` (SQLite). |
