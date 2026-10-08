@@ -6,6 +6,10 @@ from slopgate.config import BASE_URL
 usage: list[tuple[str, int, int]] = []
 
 
+class CutOff(Exception):
+    pass
+
+
 def client():
     from openai import OpenAI
 
@@ -17,9 +21,12 @@ def complete(model: str, prompt: str, json: bool = False) -> str:
         model=model,
         messages=[{"role": "user", "content": prompt}],
         temperature=0,
+        extra_body={"chat_template_kwargs": {"enable_thinking": False}},
         **({"response_format": {"type": "json_object"}} if json else {}),
     )
     usage.append((model, reply.usage.prompt_tokens, reply.usage.completion_tokens))
+    if reply.choices[0].finish_reason == "length":
+        raise CutOff("reply cut off")
     return reply.choices[0].message.content
 
 
