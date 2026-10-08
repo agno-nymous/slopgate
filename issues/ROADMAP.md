@@ -24,9 +24,16 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 10 | [08 — Live duplicate flag at plan time](08-live-flag-plan-time.md) | ready-for-agent | 07 (done) | The second half of the live flag in the spec. Ticket 11 needs it. |
 | 11 | [10 — Benchmark on SWE-bench with injected slop](10-benchmark.md) | ready-for-agent | 02, 03, 04 (done) | The results go into the submission. Ticket 11 needs it. |
 | 12 | [09 — Jev classifier backend and comparison](09-jev-backend-and-comparison.md) | ready-for-agent | 07 (done) | Lowest priority. Skip it if time runs short. |
-| 13 | [11 — Hackathon submission package](11-submission-package.md) | ready-for-agent | 06, 08, 10 | Last. It describes the finished project. |
+| 13 | [11 — Hackathon submission package](11-submission-package.md) | ready-for-agent | 06, 08, 10 | Last. It describes the finished project. Before the repo is public, set the Slopgate workflow back to `ubuntu-latest` (ticket 27). |
 
-Tickets 01 to 07, 12 to 16, and 22 are done.
+Added after the order was set:
+
+| Ticket | Status | Note |
+|---|---|---|
+| [26 — Review a pull request on the local machine](26-review-a-pr-locally.md) | done | Adds `slopgate review --pr <number>`. |
+| [27 — Run the gate automatically on a self-hosted runner](27-gate-on-self-hosted-runner.md) | needs-live-check | The workflow runs on the user's Mac. It needs the runner to be registered. |
+
+Tickets 01 to 07, 12 to 16, 22, and 26 are done.
 
 ## Rules for the order
 

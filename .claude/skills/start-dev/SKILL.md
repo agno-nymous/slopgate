@@ -18,6 +18,10 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
 3. Read the whole ticket file. Each ticket has its context, design, prompt texts, and acceptance boxes.
 4. Check the `Blocked by:` line. Every listed ticket must have `Status: done`. If one does not, tell the user, and propose the next open ticket in the ROADMAP.md table whose blockers are all done. Then stop and wait for the user.
 5. Run `git fetch origin`. The ticket starts from `origin/main`. Do not switch the branch of the main checkout: other sessions may work there.
+6. Make sure that the self-hosted CI runner runs on this Mac. The `slopgate` check of every pull request runs on it (ticket 27).
+   - Run `make runner-status`. It must show `Started:` with a process number.
+   - Run `gh api repos/agno-nymous/slopgate/actions/runners -q '.runners[] | .name + " " + .status'`. The runner must be `online`.
+   - If the runner is stopped or offline, run `make runner-start` and check again. If it is still offline, tell the user. Show the user the output of `make runner-logs`, and continue the ticket. The `slopgate` check waits in the queue until the runner is online.
 
 ## 2. Start the ticket
 
@@ -31,7 +35,15 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
 1. Invoke the `pstack:poteto-mode` skill and follow it.
 2. Implementation goes to `pstack:poteto-agent` subagents. The main session designs, reviews the diff, and verifies on the real artifact.
 3. Dispatch subagents without `isolation: "worktree"`. That option is broken in this setup: the subagent's shell refuses every command with "The working-directory isolation context for this agent was lost". A subagent without `isolation` works in the session's worktree from step 2.
-4. Dispatch every subagent with `model: "opus"` (Opus 5.5, the most capable model). Never use Fable, also not for pstack roles that default to "strongest" or for arena, architect, and interrogate panels. `~/.claude/pstack-models.md` already maps every pstack role to opus.
+4. Choose each subagent's model by the complexity of its task. Always pass `model` explicitly. Never use Fable.
+
+   | Model | `model` value | Use it for |
+   |---|---|---|
+   | Opus 5.5 | `"opus"` | Design and architecture. A change across 3 or more files, or a change to a signature that other files call. A bug whose cause is not known. Model prompts and reply parsing in `slopgate/review.py`. Code review of the final diff. arena, architect, and interrogate panels. |
+   | Sonnet 5.5 | `"sonnet"` | A change in 1 or 2 files, with a clear design in the ticket and a clear test. Writing tests for a given behavior. Fixing a failing test whose cause is known. |
+   | Haiku 4.5 | `"haiku"` | Mechanical work: find where code is, rename, edit ticket or doc text, run commands and summarize their output or logs. |
+
+   If you are not sure, choose the stronger model. If a Sonnet or Haiku subagent fails or returns wrong work, give the task again to the next stronger model. Do not retry with the same model. `~/.claude/pstack-models.md` maps pstack roles to opus by default.
 5. Follow the ticket's design. If the code shows that the design is wrong, stop and tell the user with evidence. Do not change the design silently.
 6. Do not add features, abstractions, or error handling that the ticket does not ask for.
 
@@ -59,7 +71,7 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
 1. **Ask the user before you commit and before you push.** Show the list of changed files and the commit message first.
 2. Use the conventional commit format: `type(scope): message`. Keep each commit to one logical change.
 3. Open a PR to `main` with `gh pr create`. The PR text says what changed, why, and the measured results.
-4. Run the gate on the PR from this machine: `uv run --env-file <main checkout>/.env slopgate review --pr <number>`. It posts the review to the PR. GitHub does not run the gate on this repo (ticket 26).
+4. Read the `slopgate` check and the review that it posts. The check runs on the self-hosted runner on the user's Mac (ticket 27). If it stays queued because the runner is offline, run the gate by hand: `uv run --env-file <main checkout>/.env slopgate review --pr <number>`.
 5. Bind the PR with the app's PR tools, and read its checks there. Do not use auto-merge: the repo has no branch protection, so auto-merge would merge before the checks finish.
 6. When all checks pass, report the result to the user. Merge only when the user says to merge. Then call `ExitWorktree` with `action: "remove"`.
 7. In the final report, give a worked example and a plain explanation of what changed.

@@ -12,12 +12,12 @@ Slopgate finds slop in Python code that coding agents write. It has two parts:
 - Run `/start-dev` (`.claude/skills/start-dev/SKILL.md`) to work the next ticket end to end. Add a ticket number to work a specific one.
 - The tickets are in `issues/`, one file each. **`issues/ROADMAP.md` gives the next ticket and the order.** `docs/agents/issue-tracker.md` gives the ticket format and the status values.
 - Do one ticket on one branch, and finish it with a pull request to `main`.
-- The Slopgate gate does not run on the pull requests of this repo in GitHub. Run it locally with `--pr` before you merge.
+- The Slopgate workflow runs on a self-hosted runner on the user's Mac (ticket 27). It starts when a pull request opens. If the runner is offline, the job waits in the queue. Then run `slopgate review --pr <number>` by hand.
 - Ask the user before every commit and every push.
 - Write tickets, ticket comments, pull request text, and replies in ASD-STE100 Simplified Technical English: one idea per sentence, short sentences, active voice, one term for one concept.
 - When a ticket is done, add a `## Comments` entry with a worked example and the measured results.
 - The CI has no branch protection (the repo is private on a free plan). Do not use auto-merge: it merges before the checks finish. Wait for the checks to pass, then merge.
-- The `slopgate` and `slopgate-demo` repos stay private until the submission. Make both public before 2026-10-30, 10:00 PT.
+- The `slopgate` and `slopgate-demo` repos stay private until the submission. Make both public before 2026-10-30, 10:00 PT. Before `slopgate` is public, set `runs-on: ubuntu-latest` in `.github/workflows/slopgate.yml` and remove the self-hosted runner: on a public repo, a pull request from a fork could run its code on the Mac.
 
 ## Commands
 
