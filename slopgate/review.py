@@ -124,6 +124,10 @@ Failure:
 
 {failure}"""
 
+EMPTY_INPUTS_RETRY = """
+
+Your earlier reply was an empty list of inputs, which records nothing. Plain values cannot cover this function, so reply with one pytest file instead."""
+
 CALLEES = """
 
 Code it calls (context only; test the function above, through its behavior):
@@ -594,6 +598,11 @@ def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> t
             fenced = strip_fence(reply, "json")
         reply = reply if fenced is None else fenced
         inputs = proposed_inputs(reply)
+        if inputs == []:
+            failure, retry = "characterization reply has no inputs", EMPTY_INPUTS_RETRY
+            if last:
+                return None, failure
+            continue
         tests, failure = (reply, None) if inputs is None else record(sandbox, checkpoint, function, inputs)
         if failure:
             retry = INPUTS_RETRY.format(reply=reply, failure=failure)

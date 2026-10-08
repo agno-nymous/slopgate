@@ -10,7 +10,7 @@ from slopgate import llm
 from slopgate.cli import main
 from slopgate.config import LIGHTNING, SUPER, ULTRA
 from slopgate.functions import parse
-from slopgate.review import has_dead_code, same_code, strip_fence
+from slopgate.review import EMPTY_INPUTS_RETRY, RECORDER_PATH, has_dead_code, same_code, strip_fence
 from slopgate.sandbox import Local
 
 NESTED = '''\
@@ -730,6 +730,34 @@ def test_inputs_that_do_not_evaluate_get_one_retry_with_the_error(make_repo, fak
     assert retry_prompt.startswith(fake_llm.calls[1][1])
     assert BARE_NAME_INPUTS in retry_prompt
     assert "NameError: name '_' is not defined" in retry_prompt
+
+
+EMPTY_INPUTS = json.dumps({"inputs": []})
+
+
+def test_empty_inputs_get_one_retry_that_asks_for_a_test_file(make_repo, fake_llm, capsys, trials):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    fake_llm.replies += [IS_NESTING, EMPTY_INPUTS, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT)]
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == []
+    [suggestion] = result["suggestions"]
+    assert "5 characterization tests passed" in suggestion["body"]
+    assert models(fake_llm) == [LIGHTNING, SUPER, SUPER, SUPER]
+    assert fake_llm.calls[2][1] == fake_llm.calls[1][1] + EMPTY_INPUTS_RETRY
+    assert not any(RECORDER_PATH in cmd for cmd in trials)
+
+
+def test_empty_inputs_twice_are_rejected_without_a_sandbox_run(make_repo, fake_llm, capsys, trials):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    fake_llm.replies += [IS_NESTING, EMPTY_INPUTS, EMPTY_INPUTS]
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "reason": "characterization reply has no inputs"}]
+    assert models(fake_llm) == [LIGHTNING, SUPER, SUPER]
+    assert trials == []
 
 
 def test_recorder_that_ends_without_results_twice_is_rejected(make_repo, fake_llm, capsys):
