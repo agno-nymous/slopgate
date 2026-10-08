@@ -12,7 +12,7 @@ Slopgate finds slop in Python code that coding agents write. It has two parts:
 - Run `/start-dev` (`.claude/skills/start-dev/SKILL.md`) to work the next ticket end to end. Add a ticket number to work a specific one.
 - The tickets are in `issues/`, one file each. **`issues/ROADMAP.md` gives the next ticket and the order.** `docs/agents/issue-tracker.md` gives the ticket format and the status values.
 - Do one ticket on one branch, and finish it with a pull request to `main`.
-- The Slopgate workflow runs on a self-hosted runner on the user's Mac (ticket 27). It starts when a pull request opens. If the runner is offline, the job waits in the queue. Then run `slopgate review --pr <number>` by hand.
+- The Slopgate workflow runs on a self-hosted runner on the user's Mac (ticket 27). It starts when a pull request opens. If the runner is offline, the job waits in the queue. Then run `slopgate review --pr <number>` by hand. The workflow is off (`if: false`) until ticket 28 is done. Until then, run `slopgate review --pr <number>` by hand.
 - Ask the user before every commit and every push.
 - Write tickets, ticket comments, pull request text, and replies in ASD-STE100 Simplified Technical English: one idea per sentence, short sentences, active voice, one term for one concept.
 - When a ticket is done, add a `## Comments` entry with a worked example and the measured results.
@@ -22,15 +22,17 @@ Slopgate finds slop in Python code that coding agents write. It has two parts:
 ## Commands
 
 ```bash
-uv sync
+uv sync --extra hook                               # onnxruntime: the gate embeds with the int8 ONNX model, not torch
 uv run pytest -q                                   # offline tests; fakes replace the models and the sandbox
 uv run --env-file .env pytest -m live -q           # live tests against Token Factory
-uv run --env-file .env slopgate review --repo <repo> --base <ref> --head <ref> --dry-run --sandbox local
-uv run --env-file .env slopgate review --pr <number>   # review a PR on this machine and post to GitHub
+uv run --extra hook --env-file .env slopgate review --repo <repo> --base <ref> --head <ref> --dry-run --sandbox local
+uv run --extra hook --env-file .env slopgate review --pr <number>   # review a PR on this machine and post to GitHub
 uv run slopgate index --repo <repo> --ref HEAD     # base index, plus the hook's ONNX model and store
 ```
 
 The live tests are marked `live` and are off by default (`addopts` in `pyproject.toml`).
+
+Run the gate with `--extra hook`. A plain `uv run` syncs the venv without `onnxruntime`. The gate then falls back to the torch model, which embeds up to 8,192 tokens per function and took 14 GB on the 16 GB Mac. With ONNX, the peak is 0.4 GB.
 
 ## Secrets
 
