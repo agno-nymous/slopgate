@@ -8,17 +8,14 @@ jobs:
     # Runs on the maintainer's Mac while the repo is private. Before the repo is public, go back to
     # runs-on: ubuntu-latest with `uses: ./`. actions/setup-python cannot install Python on a self-hosted Mac
     # (it writes to /Users/runner), so this job uses the Mac's uv instead of the action.
-    # Off until ticket 28: the review loads the embedding model on the maintainer's Mac. Ticket 28 restores
-    # the condition: ${{ !startsWith(github.head_ref, 'slopgate/') }}
-    if: false
+    if: ${{ !startsWith(github.head_ref, 'slopgate/') }}
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Review the pull request
-        # The hook extra loads the int8 ONNX model from ~/.cache/slopgate; the torch fallback took 14 GB on this Mac.
-        run: uv run --extra hook slopgate review --base "$BASE" --head "$HEAD"
+        run: uv run slopgate review --base "$BASE" --head "$HEAD"
         env:
           NEBIUS_API_KEY: ${{ secrets.NEBIUS_API_KEY }}
           NEBIUS_PROJECT_ID: ${{ secrets.NEBIUS_PROJECT_ID }}

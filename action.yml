@@ -17,16 +17,11 @@ runs:
       if: ${{ !startsWith(github.head_ref, 'slopgate/') }}
       with:
         python-version: "3.12"
-    - uses: actions/cache@v4
-      if: ${{ !startsWith(github.head_ref, 'slopgate/') }}
-      with:
-        path: ~/.cache/huggingface
-        key: slopgate-coderankembed-v1
     - name: Install Slopgate
       if: ${{ !startsWith(github.head_ref, 'slopgate/') }}
       shell: bash
       continue-on-error: true
-      run: pip install --quiet --extra-index-url https://download.pytorch.org/whl/cpu "$GITHUB_ACTION_PATH"
+      run: pip install --quiet "$GITHUB_ACTION_PATH"
     - name: Review the pull request
       if: ${{ !startsWith(github.head_ref, 'slopgate/') }}
       shell: bash
