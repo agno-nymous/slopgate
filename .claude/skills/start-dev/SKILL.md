@@ -51,12 +51,15 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
    If you are not sure, choose the stronger model. If a Sonnet or Haiku subagent fails or returns wrong work, give the task again to the next stronger model. Do not retry with the same model. `~/.claude/pstack-models.md` maps pstack roles to opus by default.
 6. Follow the ticket's design. If the code shows that the design is wrong, stop and tell the user with evidence. Do not change the design silently.
 7. Do not add features, abstractions, or error handling that the ticket does not ask for.
+8. Read every line of each subagent's diff. Compare each command line in docs with the original: subagents drop flags such as `--env-file .env` and still report success. Run `uv run pytest -q` yourself after the last subagent edit.
+9. When a fix depends on a model reply, send the real prompt to the live model in a scratchpad script, and compare the fix variants with about 8 tries each. Choose by the counts. A prompt rule against a bad reply can make it more frequent.
 
 ## 4. Verify
 
 1. Run `uv run pytest -q`. All tests must pass.
-2. Run the live tests that the ticket names: `uv run --env-file <main checkout>/.env pytest -m live -q` (or the single test path).
+2. Run the live tests that the ticket names: `uv run --extra hook --env-file <main checkout>/.env pytest -m live -q` (or the single test path).
 3. For a gate change, run one local dry run: `uv run --env-file <main checkout>/.env slopgate review --repo <repo> --base <ref> --head <ref> --dry-run`. Do not use `--sandbox local` on this repo: `.slopgate.toml` installs with `apt-get`, which exists only in the Contree Linux image.
+   If the ticket changes the dependencies in `pyproject.toml`, also check the `setup` line of `.slopgate.toml` and the install step of `action.yml`. Both install with pip, and pip does not install uv dependency groups.
 4. Check each acceptance box only after you see it pass. If a box cannot pass (for example, it needs an external service that is not available), leave it open, and use `Status: needs-live-check` instead of `done`.
 5. Measure the numbers that the ticket asks for (time, counts, rates). Do not estimate them.
 6. Run a code review when the feature is done and the tests pass. Dispatch a read-only `pstack:poteto-agent` subagent with `model: "opus"`. Tell it to invoke the `pstack:thermo-nuclear-code-quality-review` skill on the diff against `origin/main` plus the untracked files, and to check the diff against the ticket's design and acceptance boxes. Apply each finding, or reject it with a reason. Then run `uv run pytest -q` again. Give the findings and what you did with each to the user.
@@ -76,11 +79,12 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
 
 1. **Ask the user before you commit and before you push.** Show the list of changed files and the commit message first.
 2. Start each commit message with the ticket number, then the conventional commit format: `ticket-<NN>: type(scope): message`, for example `ticket-18: feat(llm): add decide for pydantic tool-call decisions`. Keep each commit to one logical change.
-3. Open a PR to `main` with `gh pr create`. The PR text says what changed, why, and the measured results.
-4. Read the `slopgate` check and the review that it posts. The check runs on the self-hosted runner on the user's Mac (ticket 27). If it stays queued because the runner is offline, run the gate by hand: `uv run --env-file <main checkout>/.env slopgate review --pr <number>`.
-5. Bind the PR with the app's PR tools, and read its checks there. Do not use auto-merge: the repo has no branch protection, so auto-merge would merge before the checks finish.
-6. When all checks pass, report the result to the user. Merge only when the user says to merge. Then call `ExitWorktree` with `action: "remove"`.
-7. In the final report, give a worked example and a plain explanation of what changed.
+3. Before the push, run the gate on the ticket's own commits: `uv run --env-file <main checkout>/.env slopgate review --repo . --base origin/main --head HEAD --dry-run`. A dry run on an older range reads the old `.slopgate.toml` and code, so it misses breakage that the PR causes. Read every rejection. An import error or "no tests ran" points to the PR or to a gate defect, not to the generated tests. Fix it before the push.
+4. Open a PR to `main` with `gh pr create`. The PR text says what changed, why, and the measured results.
+5. Read the `slopgate` check and the review that it posts. The check runs on the self-hosted runner on the user's Mac (ticket 27). If it stays queued because the runner is offline, run the gate by hand: `uv run --env-file <main checkout>/.env slopgate review --pr <number>`. If the step shows `cancelled` after about 10 min, the Mac probably slept: the runner log in `~/actions-runner/_diag/` shows `renewjob failed`, and `pmset -g log` shows `Idle Sleep`. That is not a code failure. Keep the Mac awake and on power, and run the job again.
+6. Bind the PR with the app's PR tools, and read its checks there. Do not use auto-merge: the repo has no branch protection, so auto-merge would merge before the checks finish.
+7. When all checks pass, report the result to the user. Merge only when the user says to merge. Then call `ExitWorktree` with `action: "remove"`.
+8. In the final report, give a worked example and a plain explanation of what changed.
 
 ## Rules for every step
 
