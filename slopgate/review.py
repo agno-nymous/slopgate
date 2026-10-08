@@ -1,10 +1,12 @@
 import ast
+import builtins
 import io
 import json
 import re
 import shlex
 import textwrap
 import tokenize
+from typing import Annotated, Literal
 
 import vulture
 from pydantic import BaseModel, Field
@@ -45,22 +47,29 @@ Reply with JSON only, in the form {{"kind": "<kind>"}}.
 
 {source}"""
 
-TESTS_PROMPT = """Write characterization tests for the Python function below. They must record what the code does now, bugs included.
+TESTS_PROMPT = """Write characterization tests for the Python function below. The tests must record what the code does now, bugs included.
 
-{inputs_form}
-Rules:
-- Reply with one pytest file and nothing else.
-- Import the target with exactly this one import line, and no other import of the module under test: from {module} import {name}
-- Call the function as `{qualname}`.
-- Cover every branch of the function.
+Reply in one of these forms:
+
+{forms}
+
+For the calls form or the test file form, reply with one ```python block and no other text. For the cannot test form, reply with one line: CANNOT_TEST: <reason>
 
 File: {path}
 
-{source}"""
+```python
+{source}
+```"""
 
-INPUTS_FORM = """
-If calls with plain-value arguments (literals and builtins only) cover every branch, reply instead with JSON only, in the form {{"inputs": ["<arguments>", ...]}}. Each item is the text between the parentheses of one call to `{name}`, for example "[10], 50" or "price=10, percent=50". Do not predict results: each call runs on the code, and its return value or exception and the state of its arguments afterward are recorded.
-"""
+TESTS_FORMS = [
+    "Calls. Use this form if calls with plain-value arguments (literals and builtins only) cover every branch. "
+    "Write one call to `{qualname}` per statement, for example `apply_discount([10], 50)`. "
+    "Do not predict results: each call runs on the code, and its return value or exception is recorded.",
+    "Test file. Use this form for all other functions. Write one pytest file. "
+    "Import the target with exactly this line: from {module} import {name}. Call the function as `{qualname}`. Cover every branch.",
+    "Cannot test. The tests run the real code, so you do not need to see helpers or imports. "
+    "Use this form only when no test can call the function, for example a pytest fixture.",
+]
 
 CAPTURE = """
 
@@ -104,29 +113,39 @@ def test_call_{n}():
 
 TESTS_RETRY = """
 
-Your earlier test file failed on the unchanged code above, so some expected values are wrong. Reply with the corrected file: keep the inputs where you can, and change each expected value to what the code actually returns or raises.
+Your earlier test file failed on the unchanged code above, so some expected values are wrong. Reply with the corrected file in one ```python block: keep the inputs where you can, and change each expected value to what the code actually returns or raises.
 
 Earlier test file:
 
+```python
 {tests}
+```
+
 Failure:
 
 {failure}"""
 
 INPUTS_RETRY = """
 
-Your earlier inputs could not be recorded on the unchanged code above. Each input must evaluate as Python with only literals and builtins: quote every string, and use no bare names. Reply again.
+Your calls could not run on the unchanged code above. Each argument must be a literal or a builtin: quote every string, and use no bare names. Reply again with one ```python block of calls.
 
-Earlier reply:
+Earlier calls:
 
-{reply}
+```python
+{calls}
+```
+
 Failure:
 
 {failure}"""
 
-EMPTY_INPUTS_RETRY = """
+NOT_PYTHON_RETRY = """
 
-Your earlier reply was an empty list of inputs, which records nothing. Plain values cannot cover this function, so reply with one pytest file instead."""
+Your reply had no ```python block, or the block did not parse: {error}. Reply again in one of the forms above."""
+
+MISSED_RETRY = """
+
+Your calls miss {missed} branches of the function. Write a test file instead: reply with one ```python block that holds one pytest file. Import the target with exactly this line: from {module} import {name}. Cover every branch."""
 
 CALLEES = """
 
@@ -186,13 +205,31 @@ class SameJob(BaseModel):
     same_job: bool = Field(description="True if callers of the new function could call the existing helper instead and get the same behavior.")
 
 
+class Calls(BaseModel):
+    form: Literal["calls"]
+    calls: list[str]
+
+
+class TestFile(BaseModel):
+    form: Literal["test_file"]
+    code: str
+
+
+class CannotTest(BaseModel):
+    form: Literal["cannot_test"]
+    reason: str
+
+
+TestsReply = Annotated[Calls | TestFile | CannotTest, Field(discriminator="form")]
+
+
 def module_of(path: str) -> str:
     return path.removesuffix(".py").replace("/", ".")
 
 
-def strip_fence(text: str, language: str = "python") -> str | None:
+def strip_fence(text: str) -> str | None:
     lines = text.splitlines(keepends=True)
-    start = next((i for i, line in enumerate(lines) if line.startswith("```" + language)), None)
+    start = next((i for i, line in enumerate(lines) if line.startswith("```python")), None)
     if start is None:
         return None
     end = next((i for i in range(start + 1, len(lines)) if lines[i].strip() == "```"), None)
@@ -568,45 +605,65 @@ def record(sandbox, checkpoint, function, inputs) -> tuple[str | None, str | Non
     return tests, None
 
 
-def proposed_inputs(reply: str) -> list[str] | None:
+def parse_tests_reply(text: str, function, calls_allowed: bool) -> TestsReply:
+    reply = text.strip()
+    if reply.startswith("CANNOT_TEST:"):
+        return CannotTest(form="cannot_test", reason=reply.removeprefix("CANNOT_TEST:").partition("\n")[0].strip())
+    code = strip_fence(text)
+    if code is None:
+        raise ValueError("no ```python block")
     try:
-        inputs = json.loads(reply)["inputs"]
-    except (ValueError, TypeError, KeyError):
-        return None
-    return [str(text) for text in inputs] if isinstance(inputs, list) else None
+        tree = ast.parse(code)
+    except SyntaxError as error:
+        raise ValueError(str(error)) from None
+    if calls_allowed and not any(isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) for stmt in tree.body):
+        allowed = {*vars(builtins), function.qualname}
+        calls = []
+        for call in sorted(
+            (node for node in ast.walk(tree) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == function.qualname),
+            key=lambda node: (node.lineno, node.col_offset),
+        ):
+            arguments = sorted([*call.args, *call.keywords], key=lambda node: (node.lineno, node.col_offset))
+            if all(name.id in allowed for argument in arguments for name in ast.walk(argument) if isinstance(name, ast.Name)):
+                calls.append(", ".join(ast.get_source_segment(code, argument) for argument in arguments))
+        if not calls:
+            raise ValueError(f"the block holds no call to `{function.qualname}` with plain-value arguments")
+        return Calls(form="calls", calls=calls)
+    return TestFile(form="test_file", code=code)
 
 
 def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> tuple[str | None, str | None]:
     name = nondeterministic(textwrap.dedent(function.source))
     if name:
         return None, f"nondeterministic: uses {name}"
+    fields = {"module": module_of(function.path), "name": function.qualname.split(".")[0], "qualname": function.qualname}
+    # the recorder sees only the arguments, so a method's effect on its object would go unchecked
+    calls_allowed = "." not in function.qualname
+    forms = TESTS_FORMS if calls_allowed else TESTS_FORMS[1:]
     prompt = TESTS_PROMPT.format(
-        module=module_of(function.path),
-        name=function.qualname.split(".")[0],
-        qualname=function.qualname,
-        path=function.path,
-        source=function.source,
-        # the recorder sees only the arguments, so a method's effect on its object would go unchecked
-        inputs_form="" if "." in function.qualname else INPUTS_FORM.format(name=function.qualname),
+        forms="\n".join(f"{n}. {form.format(**fields)}" for n, form in enumerate(forms, 1)), path=function.path, source=function.source
     )
     request = prompt + (CALLEES.format(code=context) if context else "")
     retry = ""
-    for last in (False, True):
-        reply = llm.complete(SUPER, request + retry)
-        fenced = strip_fence(reply)
-        if fenced is None:
-            fenced = strip_fence(reply, "json")
-        reply = reply if fenced is None else fenced
-        inputs = proposed_inputs(reply)
-        if inputs == []:
-            failure, retry = "characterization reply has no inputs", EMPTY_INPUTS_RETRY
-            if last:
-                return None, failure
-            continue
-        tests, failure = (reply, None) if inputs is None else record(sandbox, checkpoint, function, inputs)
-        if failure:
-            retry = INPUTS_RETRY.format(reply=reply, failure=failure)
-        else:
+    for _ in range(2):
+        try:
+            reply = parse_tests_reply(llm.complete(SUPER, request + retry), function, calls_allowed)
+        except ValueError as exc:
+            reply, error = None, exc
+        match reply:
+            case CannotTest():
+                return None, f"model cannot test: {reply.reason}"
+            case None:
+                tests, failure, retry = None, "tests reply is not python", NOT_PYTHON_RETRY.format(error=error)
+            case Calls():
+                missed_retry = MISSED_RETRY
+                tests, failure = record(sandbox, checkpoint, function, reply.calls)
+                if failure:
+                    calls = "\n".join(f"{function.qualname}({call})" for call in reply.calls)
+                    retry = INPUTS_RETRY.format(calls=calls, failure=failure)
+            case TestFile():
+                tests, failure, missed_retry = reply.code, None, None
+        if tests is not None:
             code, output = sandbox.run(
                 checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o - | python -c \"{MISSED}\" {shlex.quote(function.path)}"
             )
@@ -619,15 +676,17 @@ def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> t
                     branches = json.loads(output.split(COVERAGE)[1].strip().splitlines()[0])
                 except (ValueError, IndexError):
                     return None, f"coverage has no data for {function.path}"
-                break
-            failure = f"characterization tests fail on original: {tail(output)}"
-            retry = TESTS_RETRY.format(tests=tests, failure="\n".join(output.strip().splitlines()[-60:]))
-        if last:
-            return None, failure
-    missed = sum(function.start <= line <= function.end for line, _ in branches)
-    if missed:
-        return None, f"characterization tests miss branches: {missed}"
-    return tests, None
+                missed = sum(function.start <= line <= function.end for line, _ in branches)
+                if not missed:
+                    return tests, None
+                failure = f"characterization tests miss branches: {missed}"
+                if missed_retry is None:
+                    return None, failure
+                retry = missed_retry.format(missed=missed, **fields)
+            else:
+                failure = f"characterization tests fail on original: {tail(output)}"
+                retry = TESTS_RETRY.format(tests=tests, failure="\n".join(output.strip().splitlines()[-60:]))
+    return None, failure
 
 
 def deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, test_path, cmd) -> tuple[dict | None, str | None]:

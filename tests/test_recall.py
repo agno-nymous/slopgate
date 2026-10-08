@@ -58,29 +58,18 @@ def dotted_name(file_path: str) -> str:
 '''
 
 STRIP_FENCE_COPY = '''\
-def extract_code_block(reply: str, lang: str = "python") -> str | None:
+def extract_code_block(reply: str) -> str | None:
     inside = False
     body = []
     for line in reply.splitlines(keepends=True):
         if not inside:
-            if line.startswith("```" + lang):
+            if line.startswith("```python"):
                 inside = True
         elif line.strip() == "```":
             return "".join(body)
         else:
             body.append(line)
     return None
-'''
-
-PROPOSED_INPUTS_COPY = '''\
-def parse_inputs(text: str) -> list[str] | None:
-    try:
-        data = json.loads(text)
-    except ValueError:
-        return None
-    if not isinstance(data, dict) or not isinstance(data.get("inputs"), list):
-        return None
-    return [str(item) for item in data["inputs"]]
 '''
 
 APPLY_COPY = '''\
@@ -140,7 +129,6 @@ COPIES = {
     "tail": ("slopgate/sandbox.py", "tail", "S", TAIL_COPY),
     "module_of": ("slopgate/review.py", "module_of", "S", MODULE_OF_COPY),
     "strip_fence": ("slopgate/review.py", "strip_fence", "S", STRIP_FENCE_COPY),
-    "proposed_inputs": ("slopgate/review.py", "proposed_inputs", "S", PROPOSED_INPUTS_COPY),
     "pooled": ("slopgate/live.py", "pooled", "S", POOLED_COPY),
     "tokens": ("slopgate/functions.py", "tokens", "R", TOKENS_COPY),
     "apply": ("slopgate/review.py", "apply", "R", APPLY_COPY),
