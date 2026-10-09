@@ -6,13 +6,13 @@ import textwrap
 
 import pytest
 from test_duplicates import OTHER_JOB
-from test_review import FLAT, IS_NESTING, NESTED, TESTS, fenced
+from test_review import FLAT, NO_LINES, NESTED, TESTS, fenced
 from test_wrappers import COMPUTE_TAX, INVOICE_TESTS, INVOICE_TOTAL, TAX_FOR
 
 from slopgate.cli import main
 from slopgate.github import duration
 from slopgate.config import ULTRA
-from slopgate.review import KINDS
+from slopgate.kinds import KINDS
 
 SUMMARY = "One function got flatter."
 PR_URL = "https://github.com/acme/shop/pull/8"
@@ -32,6 +32,8 @@ if args[:2] == ["pr", "list"]:
     print(os.environ.get("GH_EXISTING_PR", ""))
 elif args[:2] == ["repo", "view"]:
     print("acme/shop")
+elif args[0] == "api" and args[1].endswith("/comments"):
+    print(os.environ.get("GH_COMMENTS", ""))
 elif args[0] == "api" and "--method" not in args:
     print(open(os.environ["GH_PR"]).read())
 elif args[:2] == ["pr", "create"] and os.environ.get("GH_CREATE_ERROR"):
@@ -85,11 +87,12 @@ def branch_file(origin, path):
 def test_inline_suggestions_are_posted_as_one_comment_review(github, fake_llm, capsys):
     make, calls = github
     repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), SUMMARY]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), SUMMARY]
 
     post(repo)
 
-    [call] = calls()
+    read, call = calls()
+    assert read["args"][:2] == ["api", "repos/acme/shop/pulls/7/comments"]
     assert call["args"] == ["api", "--method", "POST", "repos/acme/shop/pulls/7/reviews", "--input", "-"]
     review = json.loads(call["stdin"])
     assert review["event"] == "COMMENT"
@@ -119,11 +122,11 @@ def test_pr_flag_fetches_the_pull_request_reviews_it_and_posts_to_it(github, fak
     pr_file.write_text(json.dumps(pr))
     monkeypatch.setenv("GH_PR", str(pr_file))
     monkeypatch.delenv("GITHUB_EVENT_PATH")
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), SUMMARY]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), SUMMARY]
 
     assert main(["review", "--repo", clone, "--pr", "7", "--sandbox", "local"]) is None
 
-    viewed, read, posted = calls()
+    viewed, read, _, posted = calls()
     assert viewed["args"][:2] == ["repo", "view"]
     assert read["args"] == ["api", "repos/acme/shop/pulls/7"]
     assert posted["args"] == ["api", "--method", "POST", "repos/acme/shop/pulls/7/reviews", "--input", "-"]
@@ -205,11 +208,11 @@ def test_no_findings_post_nothing(github, fake_llm, capsys):
 def test_note_on_a_test_file_is_posted_as_a_review_comment_without_a_suggestion(github, fake_llm, capsys):
     make, calls = github
     repo, _ = make({"app/__init__.py": ""}, {"tests/conftest.py": NESTED})
-    fake_llm.replies += [IS_NESTING, SUMMARY]
+    fake_llm.replies += [NO_LINES, SUMMARY]
 
     post(repo)
 
-    [call] = calls()
+    _, call = calls()
     assert call["args"] == ["api", "--method", "POST", "repos/acme/shop/pulls/7/reviews", "--input", "-"]
     review = json.loads(call["stdin"])
     assert "Accepted: 0 inline suggestions, 0 follow-up changes. Rejected: 0. Notes on test files: 1." in review["body"]
@@ -218,10 +221,60 @@ def test_note_on_a_test_file_is_posted_as_a_review_comment_without_a_suggestion(
     assert comment == {"path": "tests/conftest.py", "line": 14, "side": "RIGHT", "body": body}
 
 
+def test_comment_that_already_exists_on_the_pull_request_is_not_posted_again(github, fake_llm, capsys, monkeypatch):
+    make, calls = github
+    repo, _ = make({"app/__init__.py": ""}, {"tests/conftest.py": NESTED, "tests/test_perms.py": NESTED.replace("can_edit", "check_edit")})
+    first_line = f"**nesting** (not proven): `can_edit`: {KINDS['nesting']} Not proven: Slopgate does not change test files."
+    monkeypatch.setenv("GH_COMMENTS", json.dumps(["tests/conftest.py", first_line]) + "\n" + json.dumps(["tests/other.py", "**dead**"]))
+    fake_llm.replies += [NO_LINES, NO_LINES, SUMMARY]
+
+    post(repo)
+
+    read, call = calls()
+    assert read["args"] == ["api", "repos/acme/shop/pulls/7/comments", "--paginate", "--jq", '.[] | [.path, (.body | split("\\n")[0])] | @json']
+    [comment] = json.loads(call["stdin"])["comments"]
+    assert comment["path"] == "tests/test_perms.py"
+
+
+def test_review_with_only_existing_comments_posts_the_summary_alone(github, fake_llm, capsys, monkeypatch):
+    make, calls = github
+    repo, _ = make({"app/__init__.py": ""}, {"tests/conftest.py": NESTED})
+    first_line = f"**nesting** (not proven): `can_edit`: {KINDS['nesting']} Not proven: Slopgate does not change test files."
+    monkeypatch.setenv("GH_COMMENTS", json.dumps(["tests/conftest.py", first_line]))
+    fake_llm.replies += [NO_LINES, SUMMARY]
+
+    post(repo)
+
+    _, commented = calls()
+    assert commented["args"][:2] == ["pr", "comment"]
+    assert "Notes on test files: 1." in commented["args"][-1]
+
+
+def test_suggestion_with_a_new_pass_count_is_not_posted_again(github, fake_llm, capsys, monkeypatch):
+    make, calls = github
+    repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    tests = TESTS.format(name="can_edit", call="can_edit")
+    fake_llm.replies += [NO_LINES, fenced(tests), fenced(FLAT), SUMMARY]
+    post(repo)
+    [first] = json.loads(calls()[-1]["stdin"])["comments"]
+    first_line, second_line = first["body"].split("\n")[:2]
+    assert first_line == "Slopgate (`nesting`) rewrite of `can_edit`."
+    assert "5 characterization tests passed" in second_line
+
+    monkeypatch.setenv("GH_COMMENTS", json.dumps([first["path"], first_line]))
+    more_tests = tests + "\n\ndef test_owner_can_edit_again():\n    assert can_edit(True, True, False, False) is True\n"
+    fake_llm.replies += [NO_LINES, fenced(more_tests), fenced(FLAT), SUMMARY]
+    post(repo)
+
+    commented = calls()[-1]
+    assert commented["args"][:2] == ["pr", "comment"]
+    assert "Accepted: 1 inline suggestion" in commented["args"][-1]
+
+
 def test_install_failure_posts_one_notice_without_a_summary_call(github, fake_llm, capsys):
     make, calls = github
     repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED, ".slopgate.toml": "[sandbox]\nsetup = 'echo broken; exit 1'\n"})
-    fake_llm.replies += [IS_NESTING]
+    fake_llm.replies += [NO_LINES]
 
     post(repo)
 
@@ -234,11 +287,11 @@ def test_install_failure_posts_one_notice_without_a_summary_call(github, fake_ll
 def test_install_failure_still_posts_the_notes_as_a_review(github, fake_llm, capsys):
     make, calls = github
     repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED, "tests/conftest.py": NESTED, ".slopgate.toml": "[sandbox]\nsetup = 'echo broken; exit 1'\n"})
-    fake_llm.replies += [IS_NESTING, IS_NESTING]
+    fake_llm.replies += [NO_LINES, NO_LINES]
 
     post(repo)
 
-    [call] = calls()
+    _, call = calls()
     assert call["args"] == ["api", "--method", "POST", "repos/acme/shop/pulls/7/reviews", "--input", "-"]
     review = json.loads(call["stdin"])
     assert review["body"] == "Slopgate could not build the test environment, so it proved nothing.\n\n```\nbroken\n```"
@@ -253,23 +306,23 @@ def test_rejections_are_listed_under_the_summary(github, fake_llm, capsys):
     weak = fenced(TESTS.format(name="can_edit", call="can_edit")).replace(
         "def test_locked_cannot_edit():\n    assert can_edit(True, True, True, False) is False\n", ""
     )
-    fake_llm.replies += [IS_NESTING, weak, SUMMARY]
+    fake_llm.replies += [NO_LINES, weak, SUMMARY]
 
     post(repo)
 
     body = calls()[0]["args"][-1]
     assert "Accepted: 0 inline suggestions, 0 follow-up changes. Rejected: 1." in body
-    assert "- `can_edit` in app/perms.py: characterization tests miss branches: 1" in body
+    assert "- `can_edit` (nesting) in app/perms.py: characterization tests miss branches: 1" in body
 
 
 def test_summary_failure_still_posts_the_results(github, fake_llm, capsys):
     make, calls = github
     repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
 
     post(repo)
 
-    [call] = calls()
+    _, call = calls()
     review = json.loads(call["stdin"])
     assert len(review["comments"]) == 1
     assert review["body"].startswith("Accepted: 1 inline suggestion")
@@ -304,7 +357,7 @@ def test_followup_pull_request_failure_still_posts_the_review(github, fake_llm, 
     make, calls = github
     repo, origin = make(WRAPPER_BASE, {"app/billing.py": COMPUTE_TAX + TAX_FOR + INVOICE_TOTAL, "app/perms.py": NESTED})
     monkeypatch.setenv("GH_CREATE_ERROR", "GitHub Actions is not permitted to create or approve pull requests")
-    fake_llm.replies += [OTHER_JOB, IS_NESTING, fenced(INVOICE_TESTS), fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), SUMMARY]
+    fake_llm.replies += [OTHER_JOB, NO_LINES, fenced(INVOICE_TESTS), fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), SUMMARY]
 
     post(repo)
 
@@ -350,12 +403,12 @@ def test_github_server_errors_are_retried(github, fake_llm, capsys, outages):
     set_count, sleeps = outages
     repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
     set_count(2)
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), SUMMARY]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), SUMMARY]
 
     post(repo)
 
     assert capsys.readouterr().err == ""
-    assert len(calls()) == 3
+    assert len(calls()) == 4
     assert json.loads(calls()[-1]["stdin"])["event"] == "COMMENT"
     assert len(sleeps) == 2
 
@@ -365,7 +418,7 @@ def test_github_server_errors_give_up_after_three_tries(github, fake_llm, capsys
     set_count, _ = outages
     repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
     set_count(3)
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), SUMMARY]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), SUMMARY]
 
     post(repo)
 

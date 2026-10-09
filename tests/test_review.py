@@ -6,11 +6,12 @@ from types import SimpleNamespace
 
 import pytest
 
-from slopgate import llm
+from slopgate import kinds, llm
 from slopgate.cli import main
 from slopgate.config import LIGHTNING, SUPER, ULTRA
 from slopgate.functions import is_test_file, parse, pytest_patterns
-from slopgate.review import KINDS, MISSED_RETRY, NOT_PYTHON_RETRY, RECORDER_PATH, Calls, has_dead_code, parse_tests_reply, same_code, strip_fence
+from slopgate.kinds import KINDS, Check, has_dead_code
+from slopgate.review import MISSED_RETRY, NOT_PYTHON_RETRY, RECORDER_PATH, Calls, parse_tests_reply, same_code, strip_fence
 from slopgate.sandbox import Local
 
 NESTED = '''\
@@ -72,9 +73,13 @@ def test_active_owner_can_edit_open_item():
     assert {call}(True, True, False, False) is True
 '''
 
-IS_NESTING = '{"kind": "nesting"}'
+NO_LINES = Check(reason="No line matches the rule.", lines=[])
 VIEW = NESTED.replace("can_edit", "can_view")
 FLAT_VIEW = FLAT.replace("can_edit", "can_view")
+ALL_SET_LINE = "def all_set(a, b, c, d, e, f): return (a and b) and (c and d) and (e and f)"
+ALL_SET = ALL_SET_LINE + "\n"
+ALL_SET_CHECK = Check(reason="The groups repeat the and chain.", lines=[ALL_SET_LINE])
+SIGNATURE = "def can_edit(user_active, is_owner, locked, archived):\n"
 DROPS_LOCKED = "def can_edit(user_active, is_owner, locked, archived):\n    return bool(user_active and is_owner and not archived)\n"
 
 
@@ -103,7 +108,8 @@ def test_nested_function_gets_one_proven_suggestion(make_repo, fake_llm, capsys)
         {"app/perms.py": NESTED + "\n\n" + SIMPLE},
     )
     fake_llm.replies += [
-        IS_NESTING,
+        NO_LINES,
+        NO_LINES,
         "```python\n" + TESTS.format(name="can_edit", call="can_edit") + "```",
         "Here is the rewrite:\n```python\n" + FLAT + "```",
     ]
@@ -111,7 +117,7 @@ def test_nested_function_gets_one_proven_suggestion(make_repo, fake_llm, capsys)
     result = review(capsys, repo)
 
     assert result["followup"] == [] and result["rejected"] == []
-    assert len(fake_llm.calls) == 3
+    assert models(fake_llm) == [LIGHTNING, LIGHTNING, SUPER, SUPER]
     [suggestion] = result["suggestions"]
     assert suggestion["path"] == "app/perms.py"
     assert suggestion["side"] == "RIGHT"
@@ -131,7 +137,7 @@ def test_method_keeps_qualname_decorator_line_and_indentation(make_repo, fake_ll
     method = "class Policy:\n    VERSION = 1\n\n" + textwrap.indent("@staticmethod\n" + NESTED, "    ")
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": method})
     fake_llm.replies += [
-        IS_NESTING,
+        NO_LINES,
         fenced(TESTS.format(name="Policy", call="Policy.can_edit")),
         fenced("@staticmethod\n" + FLAT),
     ]
@@ -147,13 +153,10 @@ def test_method_keeps_qualname_decorator_line_and_indentation(make_repo, fake_ll
     ast.parse("".join(lines[: suggestion["start_line"] - 1]) + code + "".join(lines[suggestion["line"] :]))
 
 
-def test_one_line_function_flagged_by_complexity_has_no_start_line(make_repo, fake_llm, capsys):
-    repo = make_repo(
-        {"app/__init__.py": ""},
-        {"app/flags.py": "def all_set(a, b, c, d, e, f): return a and b and c and d and e and f\n"},
-    )
+def test_one_line_function_has_no_start_line(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/flags.py": ALL_SET})
     fake_llm.replies += [
-        IS_NESTING,
+        ALL_SET_CHECK,
         fenced(
             "from app.flags import all_set\n\n\n"
             + "".join(
@@ -174,7 +177,7 @@ def test_one_line_function_flagged_by_complexity_has_no_start_line(make_repo, fa
 
 def test_rewrite_that_changes_behavior_is_rejected(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(DROPS_LOCKED), fenced(DROPS_LOCKED)]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(DROPS_LOCKED), fenced(DROPS_LOCKED)]
 
     result = review(capsys, repo)
 
@@ -188,7 +191,7 @@ def test_rewrite_that_changes_behavior_is_rejected(make_repo, fake_llm, capsys):
 
 def test_failed_rewrite_gets_one_ultra_retry(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(DROPS_LOCKED), fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(DROPS_LOCKED), fenced(FLAT)]
 
     result = review(capsys, repo)
 
@@ -229,17 +232,17 @@ def test_test_files_are_found_by_file_name_and_pytest_config(config, path, expec
 
 def test_slop_in_a_test_file_gets_a_note_and_no_proof(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"tests/conftest.py": "import pytest\n\n\n" + NESTED + "\n\n" + SIMPLE})
-    fake_llm.replies += [IS_NESTING]
+    fake_llm.replies += [NO_LINES, NO_LINES]
 
     result = review(capsys, repo)
 
-    assert models(fake_llm) == [LIGHTNING]
+    assert models(fake_llm) == [LIGHTNING, LIGHTNING]
     body = f"**nesting** (not proven): `can_edit`: {KINDS['nesting']} Not proven: Slopgate does not change test files."
     assert result == {
         "suggestions": [],
         "followup": [],
         "rejected": [],
-        "notes": [{"path": "tests/conftest.py", "function": "can_edit", "kind": "nesting", "line": 17, "body": body}],
+        "notes": [{"path": "tests/conftest.py", "function": "can_edit", "kinds": ["nesting"], "line": 17, "body": body}],
     }
 
 
@@ -254,8 +257,8 @@ def test_repo_installs_once_per_review(make_repo, fake_llm, capsys, tmp_path_fac
     installs = tmp_path_factory.mktemp("log") / "installs"
     repo = two_nested_functions(make_repo, f"setup = 'echo x >> {installs}'\n")
     fake_llm.replies += [
-        IS_NESTING,
-        IS_NESTING,
+        NO_LINES,
+        NO_LINES,
         fenced(TESTS.format(name="can_edit", call="can_edit")),
         fenced(FLAT),
         fenced(TESTS.format(name="can_view", call="can_view")),
@@ -272,8 +275,8 @@ def test_broken_trial_does_not_affect_the_next(make_repo, fake_llm, capsys):
     repo = two_nested_functions(make_repo, "")
     crashes = "def can_edit(user_active, is_owner, locked, archived):\n    return bool(undefined_name)\n"
     fake_llm.replies += [
-        IS_NESTING,
-        IS_NESTING,
+        NO_LINES,
+        NO_LINES,
         fenced(TESTS.format(name="can_edit", call="can_edit")),
         fenced(crashes),
         fenced(crashes),
@@ -292,7 +295,7 @@ def test_broken_trial_does_not_affect_the_next(make_repo, fake_llm, capsys):
 
 def test_failing_test_override_rejects_rewrite(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED, ".slopgate.toml": "[sandbox]\ntest = 'exit 1'\n"})
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), fenced(FLAT)]
 
     result = review(capsys, repo)
 
@@ -307,7 +310,7 @@ def test_passing_test_override_replaces_red_repo_suite(make_repo, fake_llm, caps
         {"app/__init__.py": "", "tests/test_suite.py": "def test_suite_is_red():\n    assert False\n"},
         {"app/perms.py": NESTED, ".slopgate.toml": "[sandbox]\ntest = 'true'\n"},
     )
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
 
     result = review(capsys, repo)
 
@@ -319,7 +322,7 @@ def test_passing_test_override_replaces_red_repo_suite(make_repo, fake_llm, caps
 def test_install_failure_is_one_notice_with_last_20_lines(make_repo, fake_llm, capsys):
     setup = "echo boom; for i in $(seq 1 30); do echo line$i; done; exit 1"
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED, ".slopgate.toml": f"[sandbox]\nsetup = '{setup}'\n"})
-    fake_llm.replies += [IS_NESTING]
+    fake_llm.replies += [NO_LINES]
 
     result = review(capsys, repo)
 
@@ -478,16 +481,117 @@ KIND_CASES = [
 
 def test_each_in_place_kind_gets_a_suggestion_naming_it(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": KINDS_SOURCE})
-    fake_llm.replies += [json.dumps({"kind": kind}) for kind, _, _ in KIND_CASES if kind != "dead"]
+    redundant = Check(reason="The inner check repeats the outer one.", lines=["if price is not None and price > 0:"])
+    filler = Check(reason="The comments restate the code.", lines=["# create the result list", "# loop over the values"])
+    fake_llm.replies += [NO_LINES, redundant, NO_LINES, NO_LINES, {"redundant_check": NO_LINES, "filler_comment": filler}]
     fake_llm.replies += [fenced(reply) for _, tests, rewrite in KIND_CASES for reply in (tests, rewrite)]
 
     result = review(capsys, repo)
 
     assert result["rejected"] == []
-    assert len(result["suggestions"]) == 6
-    for (kind, _, _), suggestion in zip(KIND_CASES, result["suggestions"]):
-        assert f"Slopgate (`{kind}`)" in suggestion["body"]
-    assert models(fake_llm).count(LIGHTNING) == 5
+    named = [re.match(r"Slopgate \((.*?)\) rewrite", suggestion["body"])[1] for suggestion in result["suggestions"]]
+    assert named == ["`nesting`", "`nesting`, `redundant_check`", "`swallowed_error`", "`lookup_table`", "`filler_comment`", "`dead`"]
+    assert models(fake_llm).count(LIGHTNING) == 6
+    total_prompt = next(prompt for _, prompt in fake_llm.calls if prompt.startswith("Rewrite") and "def total" in prompt)
+    assert f"1. {KINDS['nesting']}\n2. {KINDS['redundant_check']} These lines:\n   if price is not None and price > 0:\n" in total_prompt
+
+
+COMMENTED = NESTED.replace("    if user_active:\n", "    # check the user\n    if user_active:\n", 1)
+FILLER = Check(reason="The comment restates the next line.", lines=["# check the user"])
+
+
+def test_nesting_and_filler_comment_get_one_rewrite_with_a_numbered_list(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": COMMENTED})
+    fake_llm.replies += [{"redundant_check": NO_LINES, "filler_comment": FILLER}, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+
+    result = review(capsys, repo)
+
+    [suggestion] = result["suggestions"]
+    assert suggestion["body"].startswith("Slopgate (`nesting`, `filler_comment`) rewrite of `can_edit`")
+    [rewrite_prompt] = [prompt for _, prompt in fake_llm.calls if prompt.startswith("Rewrite")]
+    problems = f"Fix these problems:\n\n1. {KINDS['nesting']}\n2. {KINDS['filler_comment']} These lines:\n   # check the user\n\nRules:"
+    assert problems in rewrite_prompt
+
+
+@pytest.mark.parametrize(
+    ("handler", "kinds"),
+    [("except Exception:\n        return None", [["swallowed_error"]]), ("except Exception as error:\n        return str(error)", [])],
+    ids=["error-dropped", "error-used"],
+)
+def test_broad_except_is_swallowed_only_when_the_handler_drops_the_error(make_repo, fake_llm, capsys, handler, kinds):
+    source = f"def parse_int(value):\n    try:\n        return int(value)\n    {handler}\n"
+    repo = make_repo({"app/__init__.py": ""}, {"tests/conftest.py": source})
+
+    result = review(capsys, repo)
+
+    assert [n["kinds"] for n in result["notes"]] == kinds
+    assert fake_llm.calls == []
+
+
+@pytest.mark.parametrize("source", [FLAT, 'def label(n):\n    return f"#{n}"\n'], ids=["one-condition", "hash-in-string"])
+def test_function_with_no_kind_makes_no_model_call(make_repo, fake_llm, capsys, source):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": source})
+
+    assert review(capsys, repo) == {"suggestions": [], "followup": [], "rejected": [], "notes": []}
+    assert fake_llm.calls == []
+
+
+STILL_NESTED = SIGNATURE + "    if user_active:\n        if is_owner:\n            if not locked:\n                return not archived\n    return False\n"
+PARSE_INT = "def parse_int(value):\n    try:\n        return int(value)\n    except Exception:\n        return None\n"
+PARSE_INT_TESTS = (
+    "from app.perms import parse_int\n\n\ndef test_number():\n    assert parse_int('3') == 3\n\n\n"
+    "def test_text():\n    assert parse_int('x') is None\n"
+)
+
+
+@pytest.mark.parametrize(
+    ("source", "checks", "tests", "rewrite", "kind"),
+    [
+        (NESTED, [NO_LINES], TESTS.format(name="can_edit", call="can_edit"), STILL_NESTED, "nesting"),
+        (
+            COMMENTED,
+            [{"redundant_check": NO_LINES, "filler_comment": FILLER}],
+            TESTS.format(name="can_edit", call="can_edit"),
+            SIGNATURE + "    # check the user\n    return bool(user_active and is_owner and not locked and not archived)\n",
+            "filler_comment",
+        ),
+        (PARSE_INT, [], PARSE_INT_TESTS, PARSE_INT.replace("except Exception", "except BaseException"), "swallowed_error"),
+    ],
+    ids=["detector", "evidence-line", "ruff"],
+)
+def test_rewrite_that_leaves_the_slop_is_rejected_after_one_retry(make_repo, fake_llm, capsys, trials, source, checks, tests, rewrite, kind):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": source})
+    fake_llm.replies += [*checks, fenced(tests), fenced(rewrite), fenced(rewrite)]
+
+    result = review(capsys, repo)
+
+    assert result["suggestions"] == []
+    [rejected] = result["rejected"]
+    assert rejected["reason"] == f"rewrite leaves the slop: {kind}"
+    assert models(fake_llm)[-3:] == [SUPER, SUPER, ULTRA]
+    assert f"Failure:\n\nrewrite leaves the slop: {kind}" in fake_llm.calls[-1][1]
+    assert len(trials) == 2
+
+
+GUARDED_TOTAL = "def total(prices):\n    if prices is None:\n        return 0\n    if prices is None or len(prices) == 0:\n        return 0\n    return sum(prices)\n"
+
+
+def test_redundant_check_rewrite_that_keeps_only_the_guard_line_is_accepted(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": GUARDED_TOTAL})
+    evidence = Check(reason="The second check repeats the first.", lines=["if prices is None:", "if prices is None or len(prices) == 0:"])
+    tests = (
+        "from app.perms import total\n\n\ndef test_none():\n    assert total(None) == 0\n\n\n"
+        "def test_empty():\n    assert total([]) == 0\n\n\ndef test_sum():\n    assert total([1, 2]) == 3\n"
+    )
+    rewrite = GUARDED_TOTAL.replace("prices is None or len(prices) == 0", "len(prices) == 0")
+    fake_llm.replies += [evidence, fenced(tests), fenced(rewrite)]
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == []
+    [suggestion] = result["suggestions"]
+    assert suggestion["body"].startswith("Slopgate (`redundant_check`) rewrite of `total`.\n")
+    assert suggested_code(suggestion["body"]) == rewrite
 
 
 @pytest.fixture
@@ -501,9 +605,6 @@ def trials(monkeypatch):
 
     monkeypatch.setattr(Local, "run", spy)
     return commands
-
-
-SIGNATURE = "def can_edit(user_active, is_owner, locked, archived):\n"
 
 
 @pytest.mark.parametrize(
@@ -523,20 +624,21 @@ SIGNATURE = "def can_edit(user_active, is_owner, locked, archived):\n"
 )
 def test_rule_breaking_rewrite_is_rejected_without_a_trial(make_repo, fake_llm, capsys, trials, rewrite, rule):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(rewrite)]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(rewrite)]
 
     result = review(capsys, repo)
 
     assert result["suggestions"] == []
-    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "reason": f"rule: {rule}"}]
+    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": f"rule: {rule}"}]
     assert len(trials) == 2
     assert models(fake_llm) == [LIGHTNING, SUPER, SUPER]
 
 
 def test_function_using_random_is_rejected_as_nondeterministic(make_repo, fake_llm, capsys):
-    source = "import random\n\n\ndef roll(a, b, c, d, e, f):\n    return random.random() if a and b and c and d and e and f else 0\n"
+    line = "return random.random() if a and b and c and d and e and f else 0"
+    source = f"import random\n\n\ndef roll(a, b, c, d, e, f):\n    {line}\n"
     repo = make_repo({"app/__init__.py": ""}, {"app/dice.py": source})
-    fake_llm.replies += [IS_NESTING]
+    fake_llm.replies += [Check(reason="a is tested twice.", lines=[line])]
 
     result = review(capsys, repo)
 
@@ -560,7 +662,7 @@ def test_review_survives_a_sandbox_that_cuts_output_at_65535_characters(make_rep
         {"app/__init__.py": "", "app/big.py": big},
         {"app/perms.py": "from app import big\n\n\n" + NESTED},
     )
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
 
     result = review(capsys, repo)
 
@@ -573,31 +675,106 @@ def test_tests_that_miss_a_branch_are_rejected_with_the_count(make_repo, fake_ll
     weak = fenced(TESTS.format(name="can_edit", call="can_edit")).replace(
         "def test_locked_cannot_edit():\n    assert can_edit(True, True, True, False) is False\n", ""
     )
-    fake_llm.replies += [IS_NESTING, weak]
+    fake_llm.replies += [NO_LINES, weak]
 
     result = review(capsys, repo)
 
     assert result["suggestions"] == []
     assert result["rejected"] == [
-        {"function": "can_edit", "path": "app/perms.py", "reason": "characterization tests miss branches: 1"}
+        {"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": "characterization tests miss branches: 1"}
     ]
     assert models(fake_llm) == [LIGHTNING, SUPER]
 
 
-@pytest.mark.parametrize("reply", ['{"kind": "none"}', "not json", '{"kind": "wrapper"}', '{"type": "nesting"}', "[]"])
-def test_classifier_none_or_garbage_drops_the_function_silently(make_repo, fake_llm, capsys, reply):
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+@pytest.mark.parametrize(
+    "reply",
+    [
+        None,
+        NO_LINES,
+        Check(reason="made up", lines=["if weight < 3:"]),
+        Check(reason="not a condition", lines=['return "small"']),
+    ],
+    ids=["no-reply", "no-lines", "line-not-in-function", "line-without-a-condition"],
+)
+def test_check_without_a_grounded_line_drops_the_function_silently(make_repo, fake_llm, capsys, reply):
+    repo = make_repo({"app/__init__.py": ""}, {"app/ship.py": SIMPLE})
     fake_llm.replies += [reply]
 
     assert review(capsys, repo) == {"suggestions": [], "followup": [], "rejected": [], "notes": []}
     assert models(fake_llm) == [LIGHTNING]
 
 
+LABEL = 'def label(n, wide):\n    # use the wide form if wide and n is set\n    if (n and\n            wide):\n        return "#" * n\n    return "#"\n'
+
+
+@pytest.mark.parametrize(
+    ("kind", "line"),
+    [("redundant_check", "# use the wide form if wide and n is set"), ("redundant_check", "if (n and"), ("filler_comment", 'return "#"')],
+    ids=["comment-as-condition", "unclosed-bracket", "hash-in-string-as-comment"],
+)
+def test_evidence_line_without_the_syntax_of_its_kind_is_not_grounded(make_repo, fake_llm, capsys, kind, line):
+    repo = make_repo({"app/__init__.py": ""}, {"app/labels.py": LABEL})
+    fake_llm.replies += [{"redundant_check": NO_LINES, "filler_comment": NO_LINES} | {kind: Check(reason="It matches.", lines=[line])}]
+
+    assert review(capsys, repo) == {"suggestions": [], "followup": [], "rejected": [], "notes": []}
+    assert models(fake_llm) == [LIGHTNING, LIGHTNING]
+
+
+def test_two_while_loops_are_checked_for_redundant_check(make_repo, fake_llm, capsys):
+    source = "def drain(queue, limit):\n    while queue:\n        queue.pop()\n    while limit > 0:\n        limit -= 1\n    return limit\n"
+    repo = make_repo({"app/__init__.py": ""}, {"app/queue.py": source})
+    fake_llm.replies += [NO_LINES]
+
+    assert review(capsys, repo) == {"suggestions": [], "followup": [], "rejected": [], "notes": []}
+    [(model, prompt)] = fake_llm.calls
+    assert model == LIGHTNING and prompt.startswith("Check the Python function below for one kind of slop: redundant_check.")
+
+
+def test_failed_check_keeps_the_measured_kinds(make_repo, fake_llm, monkeypatch, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": COMMENTED})
+    fake_llm.replies += [{"redundant_check": NO_LINES}, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    decide = llm.decide
+
+    def broken_filler_check(model, prompt, schema):
+        if "one kind of slop: filler_comment" in prompt:
+            raise RuntimeError("boom")
+        return decide(model, prompt, schema)
+
+    monkeypatch.setattr(llm, "decide", broken_filler_check)
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == []
+    [suggestion] = result["suggestions"]
+    assert suggestion["body"].startswith("Slopgate (`nesting`) rewrite of `can_edit`.\n")
+
+
+def test_ruff_failure_rejects_the_function_and_the_review_goes_on(make_repo, fake_llm, monkeypatch, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/broken.py": "def one():\n    return 1\n", "app/perms.py": NESTED})
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    ruff = kinds.ruff
+
+    def broken_ruff(path, text):
+        if path == "app/broken.py":
+            raise RuntimeError("ruff failed on app/broken.py")
+        return ruff(path, text)
+
+    monkeypatch.setattr(kinds, "ruff", broken_ruff)
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == [
+        {"function": "one", "path": "app/broken.py", "kinds": [], "reason": "internal error: RuntimeError('ruff failed on app/broken.py')"}
+    ]
+    [suggestion] = result["suggestions"]
+    assert suggestion["path"] == "app/perms.py"
+
+
 def test_tests_that_differ_across_two_runs_are_rejected(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
     # hash("b") is odd under PYTHONHASHSEED=1 and even under PYTHONHASHSEED=2
     flaky = fenced(TESTS.format(name="can_edit", call="can_edit") + '\n\ndef test_hash_order():\n    assert hash("b") % 2 == 1\n')
-    fake_llm.replies += [IS_NESTING, flaky]
+    fake_llm.replies += [NO_LINES, flaky]
 
     result = review(capsys, repo)
 
@@ -608,6 +785,7 @@ def test_tests_that_differ_across_two_runs_are_rejected(make_repo, fake_llm, cap
         {
             "function": "can_edit",
             "path": "app/perms.py",
+            "kinds": ["nesting"],
             "reason": "nondeterministic: characterization tests differ across two runs",
         }
     ]
@@ -637,7 +815,7 @@ def test_dead_code_ignores_nested_parameters_only(source, expected):
 
 def test_tests_prompt_without_repo_callees_has_no_context_section(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
 
     review(capsys, repo)
 
@@ -653,7 +831,7 @@ WRONG_TESTS = TESTS.format(name="can_edit", call="can_edit").replace(
 
 def test_tests_that_fail_on_original_get_one_retry_with_the_failure(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced(WRONG_TESTS), fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, fenced(WRONG_TESTS), fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
 
     result = review(capsys, repo)
 
@@ -668,7 +846,7 @@ def test_tests_that_fail_on_original_get_one_retry_with_the_failure(make_repo, f
 
 def test_tests_that_fail_on_original_twice_are_rejected(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced(WRONG_TESTS), fenced(WRONG_TESTS)]
+    fake_llm.replies += [NO_LINES, fenced(WRONG_TESTS), fenced(WRONG_TESTS)]
 
     result = review(capsys, repo)
 
@@ -688,7 +866,7 @@ EDIT_CALLS = fenced(
 
 def test_proposed_calls_are_recorded_on_the_original(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, EDIT_CALLS, fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, EDIT_CALLS, fenced(FLAT)]
 
     result = review(capsys, repo)
 
@@ -707,7 +885,7 @@ def test_proposed_calls_are_recorded_on_the_original(make_repo, fake_llm, capsys
 )
 def test_recorded_calls_reject_a_rewrite_that_changes_the_result(make_repo, fake_llm, capsys, rewrite, failing):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, EDIT_CALLS, fenced(rewrite), fenced(rewrite)]
+    fake_llm.replies += [NO_LINES, EDIT_CALLS, fenced(rewrite), fenced(rewrite)]
 
     [rejected] = review(capsys, repo)["rejected"]
 
@@ -742,7 +920,7 @@ def test_recorded_exceptions_check_type_and_message(make_repo, fake_llm, capsys,
     repo = make_repo({"app/__init__.py": ""}, {"app/grades.py": GRADE})
     rewrite = GRADE_FLAT.format(error=error, noun=noun)
     calls = fenced("grade(70)\ngrade(10)\ngrade(-1)\ngrade(None)\n")
-    fake_llm.replies += [IS_NESTING, calls, fenced(rewrite), fenced(rewrite)]
+    fake_llm.replies += [NO_LINES, calls, fenced(rewrite), fenced(rewrite)]
 
     result = review(capsys, repo)
 
@@ -755,7 +933,7 @@ BARE_NAME_CALLS = fenced("can_edit(*1)\n")
 
 def test_calls_that_do_not_evaluate_get_one_retry_with_the_error(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, BARE_NAME_CALLS, EDIT_CALLS, fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, BARE_NAME_CALLS, EDIT_CALLS, fenced(FLAT)]
 
     result = review(capsys, repo)
 
@@ -771,7 +949,7 @@ def test_calls_that_do_not_evaluate_get_one_retry_with_the_error(make_repo, fake
 
 def test_empty_block_gets_one_retry_that_names_the_error(make_repo, fake_llm, capsys, trials):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced(""), fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, fenced(""), fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
 
     result = review(capsys, repo)
 
@@ -785,18 +963,18 @@ def test_empty_block_gets_one_retry_that_names_the_error(make_repo, fake_llm, ca
 
 def test_empty_block_twice_is_rejected_without_a_sandbox_run(make_repo, fake_llm, capsys, trials):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced(""), fenced("")]
+    fake_llm.replies += [NO_LINES, fenced(""), fenced("")]
 
     result = review(capsys, repo)
 
-    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "reason": "tests reply is not python"}]
+    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": "tests reply is not python"}]
     assert models(fake_llm) == [LIGHTNING, SUPER, SUPER]
     assert trials == []
 
 
 def test_recorder_that_ends_without_results_twice_is_rejected(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced("can_edit(*1)\n"), BARE_NAME_CALLS]
+    fake_llm.replies += [NO_LINES, fenced("can_edit(*1)\n"), BARE_NAME_CALLS]
 
     [rejected] = review(capsys, repo)["rejected"]
 
@@ -815,7 +993,7 @@ def test_recorder_that_ends_without_results_twice_is_rejected(make_repo, fake_ll
 )
 def test_one_retry_covers_either_failure(make_repo, fake_llm, capsys, first, second, reason):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, first, second]
+    fake_llm.replies += [NO_LINES, first, second]
 
     [rejected] = review(capsys, repo)["rejected"]
 
@@ -850,7 +1028,7 @@ def add_tag(tags, tag):
 def test_recorded_calls_check_the_arguments_after_the_call(make_repo, fake_llm, capsys, rewrite, accepted):
     repo = make_repo({"app/__init__.py": ""}, {"app/tags.py": ADD_TAG})
     calls = fenced('add_tag(["a"], "")\nadd_tag(["a"], "a")\nadd_tag(["a", "b", "c"], "d")\nadd_tag(["a"], "b")\n')
-    fake_llm.replies += [IS_NESTING, calls, fenced(rewrite), fenced(rewrite)]
+    fake_llm.replies += [NO_LINES, calls, fenced(rewrite), fenced(rewrite)]
 
     result = review(capsys, repo)
 
@@ -861,7 +1039,7 @@ def test_recorded_calls_check_the_arguments_after_the_call(make_repo, fake_llm, 
 def test_method_prompt_has_no_calls_form_and_bare_calls_run_as_a_test_file(make_repo, fake_llm, capsys, trials):
     method = "class Policy:\n" + textwrap.indent("@staticmethod\n" + NESTED, "    ")
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED + "\n\n" + method})
-    fake_llm.replies += [IS_NESTING, IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
     bare_calls = fenced("Policy.can_edit(True, True, False, False)\nPolicy.can_edit(False, True, False, False)\n")
     fake_llm.replies += [bare_calls, fenced(TESTS.format(name="Policy", call="Policy.can_edit")), fenced("@staticmethod\n" + FLAT)]
 
@@ -899,7 +1077,7 @@ LOG_CALLS = fenced("log_value([], 5)\nlog_value([], 50)\nlog_value([], -1)\nlog_
 
 def test_recorded_calls_check_the_arguments_after_an_exception(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/log.py": LOG_VALUE})
-    fake_llm.replies += [IS_NESTING, LOG_CALLS, fenced(CHECKS_FIRST), fenced(CHECKS_FIRST)]
+    fake_llm.replies += [NO_LINES, LOG_CALLS, fenced(CHECKS_FIRST), fenced(CHECKS_FIRST)]
 
     [rejected] = review(capsys, repo)["rejected"]
 
@@ -909,7 +1087,7 @@ def test_recorded_calls_check_the_arguments_after_an_exception(make_repo, fake_l
 
 def test_rewrite_prompt_states_the_bool_rule(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
 
     review(capsys, repo)
 
@@ -926,7 +1104,7 @@ def test_rewrite_prompt_states_the_bool_rule(make_repo, fake_llm, capsys):
 )
 def test_bool_expressions_pass_the_bool_rule(make_repo, fake_llm, capsys, trials, returned):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(SIGNATURE + f"    return {returned}\n")]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(SIGNATURE + f"    return {returned}\n")]
     fake_llm.replies += [fenced(FLAT)]
 
     result = review(capsys, repo)
@@ -937,8 +1115,11 @@ def test_bool_expressions_pass_the_bool_rule(make_repo, fake_llm, capsys, trials
 
 def test_recorded_calls_reject_a_changed_result_type(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/log.py": LOG_VALUE})
-    as_float = LOG_VALUE.replace("return value", "return float(value)")
-    fake_llm.replies += [IS_NESTING, LOG_CALLS, fenced(as_float), fenced(as_float)]
+    as_float = (
+        "def log_value(log, value):\n    log.append(value)\n"
+        '    if value is None or not 0 <= value < 10:\n        raise ValueError("out of range")\n    return float(value)\n'
+    )
+    fake_llm.replies += [NO_LINES, LOG_CALLS, fenced(as_float), fenced(as_float)]
 
     [rejected] = review(capsys, repo)["rejected"]
 
@@ -977,20 +1158,20 @@ def test_complete_turns_thinking_off(monkeypatch):
 
 def test_unexpected_error_in_one_candidate_keeps_the_others(make_repo, fake_llm, monkeypatch, capsys):
     repo = two_nested_functions(make_repo, "")
-    fake_llm.replies += [IS_NESTING, IS_NESTING, fenced(TESTS.format(name="can_view", call="can_view")), fenced(FLAT_VIEW)]
+    fake_llm.replies += [NO_LINES, NO_LINES, fenced(TESTS.format(name="can_view", call="can_view")), fenced(FLAT_VIEW)]
     complete = llm.complete
 
-    def broken_third_call(model, prompt, json=False):
+    def broken_third_call(model, prompt):
         if len(fake_llm.calls) == 2:
             fake_llm.calls.append((model, prompt))
             raise RuntimeError("boom")
-        return complete(model, prompt, json)
+        return complete(model, prompt)
 
     monkeypatch.setattr(llm, "complete", broken_third_call)
 
     result = review(capsys, repo)
 
-    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "reason": "internal error: RuntimeError('boom')"}]
+    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": "internal error: RuntimeError('boom')"}]
     [suggestion] = result["suggestions"]
     assert suggested_code(suggestion["body"]) == FLAT_VIEW
 
@@ -1001,34 +1182,30 @@ def test_cut_off_reply_rejects_the_candidate_and_the_next_one_runs(make_repo, mo
     edit_tests = fenced(TESTS.format(name="can_edit", call="can_edit"))
     edit_replies = [("length", edit_tests[:40])] if cut == "tests" else [("stop", edit_tests), ("length", "```python\ndef")]
     view_replies = [("stop", fenced(TESTS.format(name="can_view", call="can_view"))), ("stop", fenced(FLAT_VIEW))]
-    fake_client(monkeypatch, [("stop", IS_NESTING), ("stop", IS_NESTING), *edit_replies, *view_replies])
+    fake_client(monkeypatch, [("stop", NO_LINES.model_dump_json()), ("stop", NO_LINES.model_dump_json()), *edit_replies, *view_replies])
 
     result = review(capsys, repo)
 
-    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "reason": "reply cut off"}]
+    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": "reply cut off"}]
     [suggestion] = result["suggestions"]
     assert suggested_code(suggestion["body"]) == FLAT_VIEW
 
 
-def test_cut_off_classify_reply_skips_the_function_and_the_review_goes_on(make_repo, monkeypatch, capsys):
-    repo = two_nested_functions(make_repo, "")
-    view_replies = [("stop", fenced(TESTS.format(name="can_view", call="can_view"))), ("stop", fenced(FLAT_VIEW))]
-    fake_client(monkeypatch, [("length", '{"ki'), ("stop", IS_NESTING), *view_replies])
+def test_cut_off_check_reply_gives_no_kind(make_repo, monkeypatch, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/ship.py": SIMPLE})
+    requests = fake_client(monkeypatch, [("length", '{"rea')])
 
-    result = review(capsys, repo)
-
-    assert result["rejected"] == []
-    [suggestion] = result["suggestions"]
-    assert suggested_code(suggestion["body"]) == FLAT_VIEW
+    assert review(capsys, repo) == {"suggestions": [], "followup": [], "rejected": [], "notes": []}
+    assert len(requests) == 1
 
 
 def test_prose_rewrite_reply_is_rejected_without_a_trial(make_repo, fake_llm, capsys, trials):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), "Return one bool() of the four checks."]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), "Return one bool() of the four checks."]
 
     result = review(capsys, repo)
 
-    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "reason": "rewrite reply is not a python block"}]
+    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": "rewrite reply is not a python block"}]
     assert len(trials) == 2
     assert models(fake_llm) == [LIGHTNING, SUPER, SUPER]
 
@@ -1067,11 +1244,11 @@ def test_strip_fence_takes_the_python_block_whole(reply, code):
 def test_unchanged_rewrite_is_rejected_without_a_trial_or_ultra(make_repo, fake_llm, capsys, trials):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
     blank_line_added = NESTED.replace("\n", "\n\n", 1)
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(blank_line_added)]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(blank_line_added)]
 
     result = review(capsys, repo)
 
-    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "reason": "rewrite makes no change"}]
+    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": "rewrite makes no change"}]
     assert len(trials) == 2
     assert models(fake_llm) == [LIGHTNING, SUPER, SUPER]
 
@@ -1097,7 +1274,7 @@ def test_same_code_compares_syntax_and_comments(original, rewrite, same):
 
 def test_rewrite_and_retry_prompts_hold_code_in_python_blocks(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(DROPS_LOCKED), fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(DROPS_LOCKED), fenced(FLAT)]
 
     review(capsys, repo)
 
@@ -1109,11 +1286,11 @@ def test_rewrite_and_retry_prompts_hold_code_in_python_blocks(make_repo, fake_ll
 
 def test_coverage_that_omits_the_file_is_not_called_nondeterministic(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED, ".coveragerc": "[run]\nomit = app/perms.py\n"})
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit"))]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit"))]
 
     result = review(capsys, repo)
 
-    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "reason": "coverage has no data for app/perms.py"}]
+    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": "coverage has no data for app/perms.py"}]
 
 
 def test_cut_off_duplicate_verdict_skips_the_helper_and_the_review_goes_on(make_repo, monkeypatch, capsys):
@@ -1131,11 +1308,11 @@ def test_cut_off_duplicate_verdict_skips_the_helper_and_the_review_goes_on(make_
 def test_prose_tests_reply_retries_once_and_is_rejected_without_a_sandbox_run(make_repo, fake_llm, capsys, trials):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
     prose = "I'm unable to write characterization tests without seeing the function’s helpers."
-    fake_llm.replies += [IS_NESTING, prose, prose]
+    fake_llm.replies += [NO_LINES, prose, prose]
 
     result = review(capsys, repo)
 
-    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "reason": "tests reply is not python"}]
+    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": "tests reply is not python"}]
     assert models(fake_llm) == [LIGHTNING, SUPER, SUPER]
     assert fake_llm.calls[2][1] == fake_llm.calls[1][1] + NOT_PYTHON_RETRY.format(error="no ```python block")
     assert trials == []
@@ -1143,7 +1320,7 @@ def test_prose_tests_reply_retries_once_and_is_rejected_without_a_sandbox_run(ma
 
 def test_block_that_does_not_parse_retries_with_the_syntax_error(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced("can_edit(True, True, False, False]\n"), EDIT_CALLS, fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, fenced("can_edit(True, True, False, False]\n"), EDIT_CALLS, fenced(FLAT)]
 
     result = review(capsys, repo)
 
@@ -1154,23 +1331,22 @@ def test_block_that_does_not_parse_retries_with_the_syntax_error(make_repo, fake
 
 def test_cannot_test_reply_is_rejected_with_its_reason_and_no_retry(make_repo, fake_llm, capsys, trials):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, "CANNOT_TEST: fixture\n"]
+    fake_llm.replies += [NO_LINES, "CANNOT_TEST: fixture\n"]
 
     result = review(capsys, repo)
 
-    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "reason": "model cannot test: fixture"}]
+    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": "model cannot test: fixture"}]
     assert models(fake_llm) == [LIGHTNING, SUPER]
     assert trials == []
 
 
-ALL_SET = "def all_set(a, b, c, d, e, f): return a and b and c and d and e and f\n"
 
 
 def test_block_of_three_calls_records_three_tests_with_the_argument_text(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/flags.py": ALL_SET})
     calls = fenced("all_set(True, True, True, True, True, True)\nall_set(True, False, True, True, True, True)\nall_set(\n    0, 1, 1, 1, 1, f=1\n)\n")
     as_bool = fenced("def all_set(a, b, c, d, e, f): return all((a, b, c, d, e, f))\n")
-    fake_llm.replies += [IS_NESTING, calls, as_bool, as_bool]
+    fake_llm.replies += [ALL_SET_CHECK, calls, as_bool, as_bool]
 
     [rejected] = review(capsys, repo)["rejected"]
 
@@ -1190,7 +1366,7 @@ def test_script_reply_is_recorded_as_calls_whatever_values_it_predicts(make_repo
         "try:\n    can_edit(True, True, True, False)\nexcept ValueError:\n    pass\n"
         "print(can_edit(True, True, False, True))\n"
     )
-    fake_llm.replies += [IS_NESTING, script, fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, script, fenced(FLAT)]
 
     result = review(capsys, repo)
 
@@ -1201,7 +1377,7 @@ def test_script_reply_is_recorded_as_calls_whatever_values_it_predicts(make_repo
 
 def test_block_with_test_functions_is_used_as_the_test_file(make_repo, fake_llm, capsys, trials):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
 
     result = review(capsys, repo)
 
@@ -1236,7 +1412,7 @@ GRADE_CALLS_WITHOUT_NONE = fenced("grade(70)\ngrade(10)\ngrade(-1)\n")
 def test_calls_that_miss_a_branch_get_one_retry_for_a_test_file(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/grades.py": GRADE})
     rewrite = fenced(GRADE_FLAT.format(error="ValueError", noun="score"))
-    fake_llm.replies += [IS_NESTING, GRADE_CALLS_WITHOUT_NONE, fenced(GRADE_TESTS), rewrite]
+    fake_llm.replies += [NO_LINES, GRADE_CALLS_WITHOUT_NONE, fenced(GRADE_TESTS), rewrite]
 
     result = review(capsys, repo)
 
@@ -1249,17 +1425,17 @@ def test_calls_that_miss_a_branch_get_one_retry_for_a_test_file(make_repo, fake_
 
 def test_calls_that_miss_a_branch_twice_are_rejected_with_the_count(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/grades.py": GRADE})
-    fake_llm.replies += [IS_NESTING, GRADE_CALLS_WITHOUT_NONE, GRADE_CALLS_WITHOUT_NONE]
+    fake_llm.replies += [NO_LINES, GRADE_CALLS_WITHOUT_NONE, GRADE_CALLS_WITHOUT_NONE]
 
     result = review(capsys, repo)
 
-    assert result["rejected"] == [{"function": "grade", "path": "app/grades.py", "reason": "characterization tests miss branches: 1"}]
+    assert result["rejected"] == [{"function": "grade", "path": "app/grades.py", "kinds": ["nesting"], "reason": "characterization tests miss branches: 1"}]
     assert models(fake_llm) == [LIGHTNING, SUPER, SUPER]
 
 
 def test_tests_prompt_says_helpers_and_imports_are_not_needed(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
 
     review(capsys, repo)
 

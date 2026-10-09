@@ -62,7 +62,7 @@ def open_followup(repo, followups, pr, target, files) -> str:
         commit = git("commit-tree", git("write-tree"), "-p", pr["head"]["sha"], "-m", "refactor: apply Slopgate follow-up changes")
         # the branch belongs to Slopgate; each review replaces it with a commit on the current head
         git("push", "--force", "origin", f"{commit}:refs/heads/{branch}")
-    body = "\n\n".join(f"**{f['kind']}**: {f['reason']}" for f in followups)
+    body = "\n\n".join(f"**{', '.join(f['kinds'])}**: {f['reason']}" for f in followups)
     try:
         url = gh("pr", "list", "--repo", target, "--head", branch, "--state", "open", "--json", "url", "--jq", ".[0].url") or gh(
             "pr", "create", "--repo", target, "--base", pr["head"]["ref"], "--head", branch,
@@ -86,7 +86,7 @@ def summary(result, followup_line, seconds) -> str:
         f"{cost()} Time: {duration(seconds)}.",
     ]
     if rejected:
-        reasons = "\n".join(f"- `{r['function']}` in {r['path']}: {r['reason']}" for r in rejected)
+        reasons = "\n".join(f"- `{r['function']}` ({', '.join(r['kinds'])}) in {r['path']}: {r['reason']}" for r in rejected)
         lines.append(f"<details><summary>Rejected</summary>\n\n{reasons}\n\n</details>")
     return text + "\n\n".join(lines)
 
@@ -129,6 +129,10 @@ def publish(repo, result, event, seconds) -> None:
                 followup_line += f" ({len(followups) - len(kept)} skipped: it edits a file that an earlier follow-up edits)"
         body = summary(result, followup_line, seconds)
     comments = result["suggestions"] + [{"path": n["path"], "line": n["line"], "side": "RIGHT", "body": n["body"]} for n in result["notes"]]
+    if comments:
+        posted = gh("api", f"repos/{target}/pulls/{number}/comments", "--paginate", "--jq", '.[] | [.path, (.body | split("\\n")[0])] | @json')
+        seen = {tuple(json.loads(line)) for line in posted.splitlines()}
+        comments = [c for c in comments if (c["path"], c["body"].split("\n")[0]) not in seen]
     if comments:
         review = {"commit_id": pr["head"]["sha"], "event": "COMMENT", "body": body, "comments": comments}
         gh("api", "--method", "POST", f"repos/{target}/pulls/{number}/reviews", "--input", "-", stdin=json.dumps(review))

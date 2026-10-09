@@ -1,34 +1,19 @@
 import ast
 import builtins
-import io
 import json
 import re
 import shlex
 import textwrap
-import tokenize
 from typing import Annotated, Literal
 
-import vulture
 from pydantic import BaseModel, Field
 
 from slopgate import diff, index, llm, trace
-from slopgate.config import COMPLEXITY, DUPLICATE_SCORE, LIGHTNING, NESTING, SUPER, ULTRA
+from slopgate.config import DUPLICATE_SCORE, SUPER, ULTRA
 from slopgate.functions import complexity, is_test_file, nesting, parse, pytest_patterns, structure_hash
+from slopgate.kinds import KINDS, classify, comments, leftover, problems
 from slopgate.sandbox import InstallError, commands, tail
 
-KINDS = {
-    "nesting": "It nests blocks deeply. Flatten it with guard clauses or a single boolean expression.",
-    "redundant_check": "It repeats a check that an earlier check already guarantees. Remove the repeated check.",
-    "swallowed_error": (
-        "It catches broad exceptions or wraps code that cannot raise in a try block. "
-        "Narrow each except to the exceptions that the code in its try block raises, "
-        "and remove try blocks around code that cannot raise. Every input must still give the same result."
-    ),
-    "lookup_table": "It maps values to results with a long if/elif chain. Replace the chain with a dict lookup.",
-    "filler_comment": "It has comments that only restate the code. Remove them and keep comments that explain why.",
-    "dead": "It has unreachable code or unused variables. Remove them.",
-}
-DEAD = {"unreachable_code", "variable"}
 NONDETERMINISTIC = {"random", "secrets", "uuid", "time", "datetime"}
 DEFS = (ast.FunctionDef, ast.AsyncFunctionDef)
 BOOL_CALLS = {"bool", "isinstance", "issubclass", "callable", "hasattr", "all", "any"}
@@ -36,16 +21,6 @@ COVERAGE = "--slopgate-coverage--"
 MISSED = "import json, sys; print(json.dumps(json.load(sys.stdin)['files'][sys.argv[1]]['missing_branches'], separators=(',', ':')))"
 RECORDED = "--slopgate-recorded--"
 RECORDER_PATH = "slopgate_record.py"
-
-CLASSIFY_PROMPT = """Name the slop kind that fits the Python function below best.
-
-Kinds:
-{kinds}
-- none: no kind above fits.
-
-Reply with JSON only, in the form {{"kind": "<kind>"}}.
-
-{source}"""
 
 TESTS_PROMPT = """Write characterization tests for the Python function below. The tests must record what the code does now, bugs included.
 
@@ -153,7 +128,9 @@ Code it calls (context only; test the function above, through its behavior):
 
 {code}"""
 
-REWRITE_PROMPT = """Rewrite the Python function below. {instruction}
+REWRITE_PROMPT = """Rewrite the Python function below. Fix these problems:
+
+{problems}
 
 Rules:
 - Keep the exact signature, the decorators, and the behavior, bugs included.
@@ -237,38 +214,8 @@ def strip_fence(text: str) -> str | None:
 
 
 def same_code(a: str, b: str) -> bool:
-    def comments(code):
-        return [t.string for t in tokenize.generate_tokens(io.StringIO(code).readline) if t.type == tokenize.COMMENT]
-
     a, b = textwrap.dedent(a), textwrap.dedent(b)
     return ast.dump(ast.parse(a)) == ast.dump(ast.parse(b)) and comments(a) == comments(b)
-
-
-def has_dead_code(function, text: str) -> bool:
-    scan = vulture.Vulture()
-    scan.scan(text, filename=function.path)
-    tree = ast.parse(textwrap.dedent(function.source))
-    # vulture reports unused parameters as typ "variable"; removing one would change a signature callers use
-    params = {
-        a.arg
-        for node in ast.walk(tree)
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda))
-        for a in (*node.args.posonlyargs, *node.args.args, node.args.vararg, *node.args.kwonlyargs, node.args.kwarg)
-        if a
-    }
-    return any(
-        item.typ in DEAD and function.start <= item.first_lineno <= function.end and item.name not in params
-        for item in scan.get_unused_code()
-    )
-
-
-def classify(source: str) -> str | None:
-    kinds = "\n".join(f"- {kind}: {instruction}" for kind, instruction in KINDS.items())
-    try:
-        kind = json.loads(llm.complete(LIGHTNING, CLASSIFY_PROMPT.format(kinds=kinds, source=source), json=True))["kind"]
-        return kind if kind in KINDS else None
-    except (TypeError, ValueError, KeyError, llm.CutOff):
-        return None
 
 
 def nondeterministic(source: str) -> str | None:
@@ -506,7 +453,7 @@ def inline(sandbox, checkpoint, function, plan, tests, test, test_path, cmd) -> 
         f"`{function.qualname}` only forwards to `{plan['inner']}`; inlined into its single caller `{caller.qualname}` in {caller.path}. "
         f"{passed} characterization tests of the caller passed."
     )
-    return {"function": function.qualname, "kind": "wrapper", "reason": reason, "files": plan["files"]}, None
+    return {"function": function.qualname, "kinds": ["wrapper"], "reason": reason, "files": plan["files"]}, None
 
 
 def replace_calls(repo, head, function, helper) -> dict[str, str]:
@@ -716,18 +663,18 @@ def deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, t
     code, output = sandbox.run(checkpoint, files, test)
     if code not in (0, 5):
         return None, f"rewrite fails repo tests: {tail(output)}"
-    return {"function": function.qualname, "kind": "duplicate", "reason": reason, "files": files}, None
+    return {"function": function.qualname, "kinds": ["duplicate"], "reason": reason, "files": files}, None
 
 
-def note(function, kind, line, match, patterns) -> dict:
-    if kind == "duplicate":
+def note(function, kinds, line, match, patterns) -> dict:
+    if kinds == ["duplicate"]:
         helper = match["helper"]
         fix = "Consider one parametrized test." if is_test_file(helper["path"], patterns) else "Call it instead."
         finding = f"`{function.qualname}` does the same job as `{helper['qualname']}` in {helper['path']}. {fix}"
     else:
-        finding = f"`{function.qualname}`: {KINDS[kind]}"
-    body = f"**{kind}** (not proven): {finding} Not proven: Slopgate does not change test files."
-    return {"path": function.path, "function": function.qualname, "kind": kind, "line": line, "body": body}
+        finding = f"`{function.qualname}`: " + " ".join(KINDS[kind] for kind in kinds)
+    body = f"{', '.join(f'**{kind}**' for kind in kinds)} (not proven): {finding} Not proven: Slopgate does not change test files."
+    return {"path": function.path, "function": function.qualname, "kinds": kinds, "line": line, "body": body}
 
 
 def review(repo, base, head, sandbox) -> dict:
@@ -745,7 +692,7 @@ def review(repo, base, head, sandbox) -> dict:
                 wrapped.add(function)
                 plan = removal(repo, head, function, text, node, inner)
                 if plan and plan["rule"]:
-                    result["rejected"].append({"function": function.qualname, "path": function.path, "reason": f"rule: {plan['rule']}"})
+                    result["rejected"].append({"function": function.qualname, "path": function.path, "kinds": ["wrapper"], "reason": f"rule: {plan['rule']}"})
                 elif plan:
                     plans[function] = plan
     matches = {}
@@ -765,25 +712,25 @@ def review(repo, base, head, sandbox) -> dict:
     for function, added in changed:
         text = diff.git(repo, "show", f"{head}:{function.path}")
         if function in plans:
-            kind = "wrapper"
+            kinds = {"wrapper": []}
         elif function in wrapped:
             continue
         elif matches.get(function):
-            kind = "duplicate"
-        elif has_dead_code(function, text):
-            kind = "dead"
-        elif complexity(function.source) >= COMPLEXITY or nesting(function.source) > NESTING:
-            with trace.span("gate.classify", path=function.path, qualname=function.qualname, prompt="CLASSIFY_PROMPT"):
-                kind = classify(function.source)
-                trace.output(kind)
+            kinds = {"duplicate": []}
         else:
-            continue
-        if not kind:
+            with trace.span("gate.classify", path=function.path, qualname=function.qualname):
+                try:
+                    kinds = classify(function, text)
+                except Exception as error:
+                    result["rejected"].append({"function": function.qualname, "path": function.path, "kinds": [], "reason": f"internal error: {error!r}"})
+                    continue
+                trace.output(kinds)
+        if not kinds:
             continue
         if is_test_file(function.path, patterns):
-            result["notes"].append(note(function, kind, max(added), matches.get(function), patterns))
+            result["notes"].append(note(function, list(kinds), max(added), matches.get(function), patterns))
         else:
-            candidates.append((function, added, kind, text))
+            candidates.append((function, added, kinds, text))
     if not candidates:
         return result
     setup, test = commands(repo, head)
@@ -794,10 +741,10 @@ def review(repo, base, head, sandbox) -> dict:
         result["rejected"].append({"reason": f"could not build test environment\n{error}"})
         return result
     # ponytail: one trial at a time (well under the cap of 8); a thread pool of 8 when review time matters
-    for n, (function, added, kind, text) in enumerate(candidates):
-        rejected = {"function": function.qualname, "path": function.path}
+    for n, (function, added, kinds, text) in enumerate(candidates):
+        rejected = {"function": function.qualname, "path": function.path, "kinds": list(kinds)}
         before = {key: len(items) for key, items in result.items()}
-        with trace.span("gate.function", path=function.path, qualname=function.qualname, slop_kind=kind):
+        with trace.span("gate.function", path=function.path, qualname=function.qualname, slop_kinds=list(kinds)):
             try:
                 test_path = f"tests/test_slopgate_{n}.py"
                 cmd = f"python -m coverage run --branch -m pytest -q {test_path}"
@@ -829,7 +776,7 @@ def review(repo, base, head, sandbox) -> dict:
                 indent = function.source[: len(function.source) - len(function.source.lstrip())]
                 lines = text.splitlines(keepends=True)
                 with trace.span("gate.rewrite", prompt="REWRITE_PROMPT"):
-                    reply = llm.complete(SUPER, REWRITE_PROMPT.format(instruction=KINDS[kind], source=dedented))
+                    reply = llm.complete(SUPER, REWRITE_PROMPT.format(problems=problems(kinds), source=dedented))
                 for retry in (False, True):
                     with trace.span("gate.proof", attempt=retry + 1):
                         fenced = strip_fence(reply)
@@ -846,18 +793,20 @@ def review(repo, base, head, sandbox) -> dict:
                             break
                         suggested = textwrap.indent(rewrite, indent)
                         spliced = "".join(lines[: function.start - 1]) + suggested + "".join(lines[function.end :])
-                        code, output = sandbox.run(checkpoint, {test_path: tests, function.path: spliced}, cmd)
-                        if code:
-                            failure = f"rewrite fails characterization tests: {tail(output)}"
-                        else:
-                            repo_code, repo_output = sandbox.run(checkpoint, {function.path: spliced}, test)
-                            failure = f"rewrite fails repo tests: {tail(repo_output)}" if repo_code not in (0, 5) else None
+                        failure = leftover(kinds, function, suggested, spliced)
+                        if not failure:
+                            code, output = sandbox.run(checkpoint, {test_path: tests, function.path: spliced}, cmd)
+                            if code:
+                                failure = f"rewrite fails characterization tests: {tail(output)}"
+                            else:
+                                repo_code, repo_output = sandbox.run(checkpoint, {function.path: spliced}, test)
+                                failure = f"rewrite fails repo tests: {tail(repo_output)}" if repo_code not in (0, 5) else None
                         trace.output(failure or "passed")
                     if not failure or retry:
                         break
                     with trace.span("gate.retry", prompt="RETRY_PROMPT"):
                         reply = llm.complete(
-                            ULTRA, RETRY_PROMPT.format(instruction=KINDS[kind], source=dedented, rewrite=rewrite, failure=failure)
+                            ULTRA, RETRY_PROMPT.format(problems=problems(kinds), source=dedented, rewrite=rewrite, failure=failure)
                         )
                 if failure:
                     result["rejected"].append({**rejected, "reason": failure})
@@ -866,7 +815,7 @@ def review(repo, base, head, sandbox) -> dict:
                 start, end = function.start, function.end
                 passed = re.search(r"(\d+) passed", output)[1]
                 summary = (
-                    f"Slopgate (`{kind}`) rewrite of `{function.qualname}`: "
+                    f"Slopgate ({', '.join(f'`{kind}`' for kind in kinds)}) rewrite of `{function.qualname}`.\n"
                     f"nesting {nesting(function.source)} -> {nesting(rewrite)}, "
                     f"complexity {complexity(function.source)} -> {complexity(rewrite)}. "
                     f"{passed} characterization tests passed in sandbox."
@@ -877,7 +826,7 @@ def review(repo, base, head, sandbox) -> dict:
                         suggestion |= {"start_line": start, "start_side": "RIGHT"}
                     result["suggestions"].append(suggestion)
                 else:
-                    result["followup"].append({"function": function.qualname, "kind": kind, "reason": summary, "files": {function.path: spliced}})
+                    result["followup"].append({"function": function.qualname, "kinds": list(kinds), "reason": summary, "files": {function.path: spliced}})
             except llm.CutOff:
                 result["rejected"].append({**rejected, "reason": "reply cut off"})
             # One broken candidate must not lose the results of the others (the review of PR #15 was lost this way).

@@ -32,7 +32,7 @@ To let Slopgate open follow-up pull requests, turn on **Settings > Actions > Gen
 
 ## What a pull request gets
 
-- One review with event `COMMENT`. Each rewrite that edits only lines the pull request added is a suggested change, with the slop kind, complexity and nesting before and after, and the number of characterization tests that passed.
+- One review with event `COMMENT`. Each rewrite that edits only lines the pull request added is a suggested change, with its slop kinds, complexity and nesting before and after, and the number of characterization tests that passed.
 - One follow-up pull request on branch `slopgate/<head branch>` for every other proven rewrite. It targets the author's branch. Pull requests from forks get no follow-up branch, because the workflow token cannot push to a fork.
 - A short summary by Nemotron Ultra with the accepted and rejected counts and the token cost.
 

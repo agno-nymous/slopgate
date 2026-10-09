@@ -1,6 +1,7 @@
 import math
 import re
 import subprocess
+import threading
 import time
 import zlib
 from types import SimpleNamespace
@@ -50,7 +51,7 @@ def make_repo(tmp_path):
 def fake_llm(monkeypatch):
     fake = SimpleNamespace(replies=[], calls=[])
 
-    def complete(model, prompt, json=False):
+    def complete(model, prompt):
         fake.calls.append((model, prompt))
         llm.usage.append((model, 1000, 100))
         return fake.replies.pop(0)
@@ -59,10 +60,20 @@ def fake_llm(monkeypatch):
         fake.calls.append((model, prompt))
         return fake.replies.pop(0)
 
+    lock = threading.Lock()
+
     def decide(model, prompt, schema):
-        fake.calls.append((model, prompt))
-        llm.usage.append((model, 1000, 100))
-        return fake.replies.pop(0)
+        with lock:
+            fake.calls.append((model, prompt))
+            llm.usage.append((model, 1000, 100))
+            if not isinstance(fake.replies[0], dict):
+                return fake.replies.pop(0)
+            # one dict holds the replies of the parallel checks of one function, keyed by kind
+            by_kind = fake.replies[0]
+            reply = by_kind.pop(re.search(r"one kind of slop: (\w+)\.", prompt)[1])
+            if not by_kind:
+                fake.replies.pop(0)
+            return reply
 
     monkeypatch.setattr(llm, "complete", complete)
     monkeypatch.setattr(llm, "decide", decide)
