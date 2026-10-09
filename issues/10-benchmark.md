@@ -13,7 +13,7 @@
 
 The benchmark runs as a Nebius Serverless Job.
 
-**Blocked by:** 02, 03, 04
+**Blocked by:** 02, 03, 04 (done), 37 (stage 1: detection only), 30, 35
 
 **Status:** ready-for-agent
 
