@@ -25,8 +25,9 @@ def main(argv=None):
 
     if args.command == "hook":
         try:
-            from slopgate import live
+            from slopgate import live, trace
 
+            trace.start("slopgate-hook")
             if out := live.hook(sys.stdin.read()):
                 print(out)
         except Exception as error:
@@ -44,10 +45,11 @@ def main(argv=None):
         print(json.dumps({"ref": path.stem, "functions": len(records), "path": str(path)}))
         return
 
-    from slopgate import github
+    from slopgate import diff, github, trace
     from slopgate.review import review
     from slopgate.sandbox import Contree, Local
 
+    trace.start("slopgate-gate")
     result = {"suggestions": [], "followup": [], "rejected": [], "notes": []}
     started = time.monotonic()
     try:
@@ -56,12 +58,16 @@ def main(argv=None):
             base, head = event["pull_request"]["base"]["sha"], event["pull_request"]["head"]["sha"]
         else:
             event, base, head = None, args.base, args.head
-        result = review(args.repo, base, head, {"local": Local, "contree": Contree}[args.sandbox]())
-        if not args.dry_run:
-            if event is None:
+            if not args.dry_run:
                 with open(os.environ["GITHUB_EVENT_PATH"]) as file:
                     event = json.load(file)
-            github.publish(args.repo, result, event, time.monotonic() - started)
+        pr = event and f"{event['repository']['full_name']}#{event['pull_request']['number']}"
+        session = pr or f"{os.path.basename(os.path.realpath(args.repo))}@{diff.git(args.repo, 'rev-parse', head).strip()[:12]}"
+        with trace.span("gate.review", session=session, input=f"{pr or args.repo} {base}..{head}", repo=args.repo, base=base, head=head, pr=pr, sandbox=args.sandbox):
+            result = review(args.repo, base, head, {"local": Local, "contree": Contree}[args.sandbox]())
+            if not args.dry_run:
+                github.publish(args.repo, result, event, time.monotonic() - started)
+            trace.output(result)
     except Exception as error:
         print(f"slopgate: {error!r}", file=sys.stderr)
     print(json.dumps(result, indent=2))

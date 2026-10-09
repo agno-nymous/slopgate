@@ -9,6 +9,7 @@ from pathlib import Path
 
 from contree_sdk import ContreeSync
 
+from slopgate import trace
 from slopgate.diff import git
 
 
@@ -39,7 +40,9 @@ def commands(repo, ref) -> tuple[str | None, str]:
 
 
 def shell(cmd: str, cwd) -> tuple[int, str]:
-    env = {**os.environ, "PATH": os.path.dirname(sys.executable) + os.pathsep + os.environ["PATH"]}
+    # The code under test must not see the API key or the tracing endpoint: it can print them into a span or a prompt.
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("NEBIUS_", "PHOENIX_", "OTEL_", "GH_TOKEN", "GITHUB_TOKEN"))}
+    env["PATH"] = os.path.dirname(sys.executable) + os.pathsep + os.environ["PATH"]
     proc = subprocess.run(cmd, shell=True, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     return proc.returncode, proc.stdout
 
@@ -55,13 +58,15 @@ class Local:
         return path
 
     def run(self, checkpoint: Path, files: dict[str, str], cmd: str) -> tuple[int, str]:
-        with tempfile.TemporaryDirectory() as tmp:
+        with trace.span("sandbox.run", input={"cmd": cmd, "files": files}), tempfile.TemporaryDirectory() as tmp:
             work = Path(tmp) / "repo"
             shutil.copytree(checkpoint, work)
             for rel, content in files.items():
                 (work / rel).parent.mkdir(parents=True, exist_ok=True)
                 (work / rel).write_text(content)
-            return shell(cmd, work)
+            code, output = shell(cmd, work)
+            trace.output({"exit_code": code, "output": output})
+            return code, output
 
 
 class Contree:
@@ -80,6 +85,9 @@ class Contree:
         return result
 
     def run(self, checkpoint, files: dict[str, str], cmd: str) -> tuple[int, str]:
-        files = {f"/repo/{rel}": content.encode() for rel, content in files.items()}
-        result = checkpoint.run(shell=cmd, cwd="/repo", files=files).wait()
-        return result.exit_code, result.stdout + result.stderr
+        with trace.span("sandbox.run", input={"cmd": cmd, "files": files}):
+            files = {f"/repo/{rel}": content.encode() for rel, content in files.items()}
+            result = checkpoint.run(shell=cmd, cwd="/repo", files=files).wait()
+            output = result.stdout + result.stderr
+            trace.output({"exit_code": result.exit_code, "output": output})
+            return result.exit_code, output

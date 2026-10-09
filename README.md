@@ -97,3 +97,40 @@ Files that change outside Claude Code, for example after `git pull`, stay out of
 #!/bin/sh
 slopgate index --ref HEAD >/dev/null
 ```
+
+## Trace model requests in Phoenix (development of this repo only)
+
+Tracing sends each model request of the gate, the hook, and the live tests to a local Arize Phoenix. Use tracing only for work on this repo. Other repos do not trace.
+
+1. Start Phoenix. It listens on this machine only.
+
+   ```sh
+   PHOENIX_HOST=127.0.0.1 uvx arize-phoenix serve
+   ```
+
+   The UI runs at http://127.0.0.1:6006.
+
+2. Run `uv sync`. It installs the trace packages in the `dev` group (the `trace` extra).
+
+3. Turn on tracing in this repo only. Add this line to the `.env` file of this repo:
+
+   ```sh
+   PHOENIX_COLLECTOR_ENDPOINT=http://127.0.0.1:6006
+   ```
+
+   The gate and the live tests read `.env` with `--env-file .env`.
+
+   For the hook, add the same variable to the `env` block of `.claude/settings.local.json` in this repo. Claude Code gives that block only to sessions in this repo.
+
+   Do not export the variable in a shell profile. Then every repo with the hook would send traces. Only a local endpoint is accepted.
+
+Traces go to these Phoenix projects: `slopgate-gate`, `slopgate-hook`, and `slopgate-tests`. All gate runs of one pull request are one Phoenix session. All hook runs of one Claude Code session are one Phoenix session. In one pytest run, all cases of one test are one Phoenix session.
+
+Example commands:
+
+```sh
+uv run --env-file .env slopgate review --repo . --base origin/main --head HEAD --dry-run
+uv run --env-file .env pytest -m live -q -k test_super_tests_reply
+```
+
+To turn tracing off, remove the `PHOENIX_COLLECTOR_ENDPOINT` line from `.env` and from `.claude/settings.local.json`.

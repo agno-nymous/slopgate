@@ -15,9 +15,10 @@ dependencies = [
 
 [project.optional-dependencies]
 hook = ["numpy", "onnx", "onnxruntime", "sentence-transformers<6", "transformers<5", "einops>=0.8.2"]
+trace = ["arize-phoenix-otel>=0.17.2", "openinference-instrumentation-openai>=0.1.64"]
 
 [dependency-groups]
-dev = ["numpy"]
+dev = ["numpy", "slopgate[trace]"]
 
 [project.scripts]
 slopgate = "slopgate.cli:main"
