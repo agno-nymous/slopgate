@@ -17,19 +17,23 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 3 | [28 — Keyword duplicate search in the gate](28-keyword-duplicate-search.md) | done | — | The user set it next. The gate then needs no embedding model: the torch fallback took 14 GB on the 16 GB Mac. |
 | 4 | [17 — Test files get review notes only](17-test-files-get-notes-only.md) | done | — | Stops the gate from changing tests. Fixes the `fake_llm` failure at its cause. |
 | 5 | [20 — Tests reply as one pydantic object, sent as markdown](20-tests-reply-as-pydantic-object.md) | done | 21 | Stops prose from becoming a test file, for every function. |
-| 6 | [32 — Trace every model request in Arize Phoenix](32-phoenix-tracing.md) | ready-for-agent | — | The user set it next on 2026-10-08. Each prompt and reply becomes visible, so a failed proof can be explained from the real run. Starts with a design stage for the span names. |
-| 7 | [30 — Give the test writer the constants the target reads](30-constants-in-callee-context.md) | ready-for-agent | — | Super guessed `DUPLICATE_SCORE` on PR #17. No extra model call. |
-| 8 | [29 — Keep the passing characterization tests](29-keep-passing-characterization-tests.md) | ready-for-agent | 20 | One failing test rejects the whole file now. No extra model call. |
-| 9 | [31 — Retry once for missed branches, with 3 attempts in total](31-retry-missed-branches.md) | ready-for-agent | 29 | Missed branches reject at once now. Costs one Super call. |
-| 10 | [18 — Model decisions through pydantic tool calls](18-decisions-through-pydantic-tool-calls.md) | done | — | Adds `decide`. Ticket 19 needs it. |
-| 11 | [19 — Several slop kinds per function](19-several-slop-kinds-per-function.md) | ready-for-agent | 18, 21 | Fixes all problems of a function in one suggestion. |
-| 12 | [23 — Log the time of each gate step](23-log-time-per-gate-step.md) | ready-for-agent | — | The review of PR #9 took 33 min, and the cause is not measured. |
-| 13 | [24 — Save the embedding model cache on main](24-model-cache-on-main.md) | wontfix | — | Ticket 28 removes the embedding model from the gate. |
-| 14 | [25 — Faster proof](25-faster-proof.md) | ready-for-agent | 23 | Needs the numbers from ticket 23 first. |
-| 15 | [08 — Live duplicate flag at plan time](08-live-flag-plan-time.md) | ready-for-agent | 07 (done) | The second half of the live flag in the spec. Ticket 11 needs it. |
-| 16 | [10 — Benchmark on SWE-bench with injected slop](10-benchmark.md) | ready-for-agent | 02, 03, 04 (done) | The results go into the submission. Ticket 11 needs it. |
-| 17 | [09 — Jev classifier backend and comparison](09-jev-backend-and-comparison.md) | ready-for-agent | 07 (done) | Lowest priority. Skip it if time runs short. |
-| 18 | [11 — Hackathon submission package](11-submission-package.md) | ready-for-agent | 06, 08, 10 | Last. It describes the finished project. Before the repo is public, set the Slopgate workflow back to `ubuntu-latest` (ticket 27). |
+| 6 | [18 — Model decisions through pydantic tool calls](18-decisions-through-pydantic-tool-calls.md) | done | — | Adds `decide`. Ticket 19 needs it. |
+| 7 | [32 — Trace every model request in Arize Phoenix](32-phoenix-tracing.md) | ready-for-agent | — | The user set it next on 2026-10-08. Each prompt and reply becomes visible, so a failed proof can be explained from the real run. Starts with a design stage for the span names. |
+| 8 | [36 — Design: how the gate picks a slop kind, and what input the model gets](36-design-slop-kind-input.md) | ready-for-agent | — | Design ticket. On PR #20, all 12 notes were wrong by the gate's own checks: complexity counts asserts, and the model's kind is not checked. |
+| 9 | [30 — Give the test writer the constants the target reads](30-constants-in-callee-context.md) | ready-for-agent | — | Super guessed `DUPLICATE_SCORE` on PR #17. No extra model call. |
+| 10 | [35 — Tell the test writer that the tests run without network and keys](35-tests-run-without-network.md) | ready-for-agent | 30 | `characterize` on PR #20: the tests called the real model client and patched a parameter by name. Needs a live measurement. |
+| 11 | [29 — Keep the passing characterization tests](29-keep-passing-characterization-tests.md) | ready-for-agent | 20 | One failing test rejects the whole file now. No extra model call. |
+| 12 | [31 — Retry once for missed branches, with 3 attempts in total](31-retry-missed-branches.md) | ready-for-agent | 29 | Missed branches reject at once now. Costs one Super call. |
+| 13 | [33 — Add a time limit to each sandbox run](33-sandbox-time-limit.md) | ready-for-agent | — | A model-written call such as `input()` blocks the gate with no end. |
+| 14 | [34 — Readable rejection reasons in the review comment](34-readable-rejection-reasons.md) | ready-for-agent | — | The raw pytest output on PR #20 looked like a crash of the gate. |
+| 15 | [19 — Several slop kinds per function](19-several-slop-kinds-per-function.md) | ready-for-agent | 18, 21, 36 | Fixes all problems of a function in one suggestion. |
+| 16 | [23 — Log the time of each gate step](23-log-time-per-gate-step.md) | ready-for-agent | — | The review of PR #9 took 33 min, and the cause is not measured. |
+| 17 | [24 — Save the embedding model cache on main](24-model-cache-on-main.md) | wontfix | — | Ticket 28 removes the embedding model from the gate. |
+| 18 | [25 — Faster proof](25-faster-proof.md) | ready-for-agent | 23 | Needs the numbers from ticket 23 first. |
+| 19 | [08 — Live duplicate flag at plan time](08-live-flag-plan-time.md) | ready-for-agent | 07 (done) | The second half of the live flag in the spec. Ticket 11 needs it. |
+| 20 | [10 — Benchmark on SWE-bench with injected slop](10-benchmark.md) | ready-for-agent | 02, 03, 04 (done) | The results go into the submission. Ticket 11 needs it. |
+| 21 | [09 — Jev classifier backend and comparison](09-jev-backend-and-comparison.md) | ready-for-agent | 07 (done) | Lowest priority. Skip it if time runs short. |
+| 22 | [11 — Hackathon submission package](11-submission-package.md) | ready-for-agent | 06, 08, 10 | Last. It describes the finished project. Before the repo is public, set the Slopgate workflow back to `ubuntu-latest` (ticket 27). |
 
 Added after the order was set:
 
@@ -42,7 +46,7 @@ Tickets 01 to 07, 12 to 18, 20 to 22, 26, and 28 are done. Ticket 24 is wontfix.
 
 ## Rules for the order
 
-1. Tickets 17 to 22 and 29 to 31 change the gate's model replies and its proof. They come first, because a wrong suggestion on a demo pull request costs more than a slow one. Ticket 32 comes before 29 to 31, because the user set it next: its traces show the real prompts that those tickets change.
+1. Tickets 17 to 22 and 29 to 31 change the gate's model replies and its proof. They come first, because a wrong suggestion on a demo pull request costs more than a slow one. Ticket 32 comes before 29 to 31, because the user set it next: its traces show the real prompts that those tickets change. Ticket 36 comes next, because the gate posts wrong slop kinds now. Ticket 19 waits for the design of 36, because 19 changes `classify`.
 2. Tickets 17, 19, 20, 21, 22, 29, 30, and 31 all edit `slopgate/review.py`. Do them one at a time, in the order above, to prevent merge conflicts.
 3. Ticket 24 edits only `action.yml`, the workflow, and `README.md`. It can run in parallel with any other ticket.
 4. If a ticket is blocked, take the next open row whose blockers are all done.
