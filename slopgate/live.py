@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import NamedTuple
 
-from slopgate import embed, llm
+from slopgate import embed, llm, trace
 from slopgate.config import FLAG, HOOK_FLOOR, HOOK_K, LIGHTNING
 from slopgate.functions import Function, is_test_file, jaccard, parse, pytest_patterns, structure_hash, tokens
 
@@ -54,7 +54,8 @@ class Flag(NamedTuple):
 
 
 def hook(payload: str) -> str:
-    path = Path(json.loads(payload)["tool_input"]["file_path"])
+    data = json.loads(payload)
+    path = Path(data["tool_input"]["file_path"])
     if path.suffix != ".py":
         return ""
     root = next((parent for parent in path.parents if (parent / STORE).exists()), None)
@@ -79,7 +80,12 @@ def hook(payload: str) -> str:
         # A later hook run for the same file owns its rows once the file has changed again.
         if path.stat().st_mtime_ns == stamp:
             put(db, {rel}, [(rel, f.qualname, f.start, structure_hash(f.source), f.source, vectors[f.qualname]) for f in functions])
-    return note(classify(root, candidates))
+    if not candidates:
+        return ""
+    with trace.span("hook.run", session=data.get("session_id"), path=rel):
+        out = note(classify(root, candidates))
+        trace.output(out)
+    return out
 
 
 def seed(repo: str, records: list[dict]) -> None:
@@ -148,7 +154,7 @@ def matches(new: list[Function], queries: list[list[float]], pool: list[Row]) ->
 def classify(root: Path, candidates: list[Candidate]) -> list[Flag]:
     asked = [c for c in candidates if not c.exact]
     with ThreadPoolExecutor() as threads:
-        confidences = list(threads.map(lambda c: llm.yes_probability(LIGHTNING, question(source(root, c.existing), c.new.source)), asked))
+        confidences = list(threads.map(trace.bind(lambda c: llm.yes_probability(LIGHTNING, question(source(root, c.existing), c.new.source))), asked))
     flags = [Flag(c.new, c.existing, 1.0) for c in candidates if c.exact]
     flags += [Flag(c.new, c.existing, confidence) for c, confidence in zip(asked, confidences) if confidence >= FLAG]
     best = {}

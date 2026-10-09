@@ -11,7 +11,7 @@ from typing import Annotated, Literal
 import vulture
 from pydantic import BaseModel, Field
 
-from slopgate import diff, index, llm
+from slopgate import diff, index, llm, trace
 from slopgate.config import COMPLEXITY, DUPLICATE_SCORE, LIGHTNING, NESTING, SUPER, ULTRA
 from slopgate.functions import complexity, is_test_file, nesting, parse, pytest_patterns, structure_hash
 from slopgate.sandbox import InstallError, commands, tail
@@ -328,7 +328,8 @@ def find_duplicate(function, pool) -> dict | None:
         prompt = SAME_JOB_PROMPT.format(
             path=function.path, source=function.source, helper_path=record["path"], helper_source=record["source"]
         )
-        verdict = llm.decide(SUPER, prompt, SameJob)
+        with trace.span("gate.same_job", helper=f"{record['path']}::{record['qualname']}", score=round(score, 2), prompt="SAME_JOB_PROMPT"):
+            verdict = llm.decide(SUPER, prompt, SameJob)
         if verdict and verdict.same_job:
             return {"helper": record, "exact": False, "difference": verdict.difference, "note": f"score {score:.2f}"}
     return None
@@ -644,48 +645,50 @@ def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> t
         forms="\n".join(f"{n}. {form.format(**fields)}" for n, form in enumerate(forms, 1)), path=function.path, source=function.source
     )
     request = prompt + (CALLEES.format(code=context) if context else "")
-    retry = ""
-    for _ in range(2):
-        try:
-            reply = parse_tests_reply(llm.complete(SUPER, request + retry), function, calls_allowed)
-        except ValueError as exc:
-            reply, error = None, exc
-        match reply:
-            case CannotTest():
-                return None, f"model cannot test: {reply.reason}"
-            case None:
-                tests, failure, retry = None, "tests reply is not python", NOT_PYTHON_RETRY.format(error=error)
-            case Calls():
-                missed_retry = MISSED_RETRY
-                tests, failure = record(sandbox, checkpoint, function, reply.calls)
-                if failure:
-                    calls = "\n".join(f"{function.qualname}({call})" for call in reply.calls)
-                    retry = INPUTS_RETRY.format(calls=calls, failure=failure)
-            case TestFile():
-                tests, failure, missed_retry = reply.code, None, None
-        if tests is not None:
-            code, output = sandbox.run(
-                checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o - | python -c \"{MISSED}\" {shlex.quote(function.path)}"
-            )
-            second, _ = sandbox.run(checkpoint, {test_path: tests}, f"PYTHONHASHSEED=2 {cmd}")
-            passed = COVERAGE in output
-            if passed != (not second):
-                return None, "nondeterministic: characterization tests differ across two runs"
-            if passed:
-                try:
-                    branches = json.loads(output.split(COVERAGE)[1].strip().splitlines()[0])
-                except (ValueError, IndexError):
-                    return None, f"coverage has no data for {function.path}"
-                missed = sum(function.start <= line <= function.end for line, _ in branches)
-                if not missed:
-                    return tests, None
-                failure = f"characterization tests miss branches: {missed}"
-                if missed_retry is None:
-                    return None, failure
-                retry = missed_retry.format(missed=missed, **fields)
-            else:
-                failure = f"characterization tests fail on original: {tail(output)}"
-                retry = TESTS_RETRY.format(tests=tests, failure="\n".join(output.strip().splitlines()[-60:]))
+    retry, template = "", "TESTS_PROMPT"
+    for attempt in (1, 2):
+        with trace.span("gate.tests", attempt=attempt, prompt=template):
+            try:
+                reply = parse_tests_reply(llm.complete(SUPER, request + retry), function, calls_allowed)
+            except ValueError as exc:
+                reply, error = None, exc
+            match reply:
+                case CannotTest():
+                    return None, f"model cannot test: {reply.reason}"
+                case None:
+                    tests, failure, retry, template = None, "tests reply is not python", NOT_PYTHON_RETRY.format(error=error), "NOT_PYTHON_RETRY"
+                case Calls():
+                    missed_retry = MISSED_RETRY
+                    tests, failure = record(sandbox, checkpoint, function, reply.calls)
+                    if failure:
+                        calls = "\n".join(f"{function.qualname}({call})" for call in reply.calls)
+                        retry, template = INPUTS_RETRY.format(calls=calls, failure=failure), "INPUTS_RETRY"
+                case TestFile():
+                    tests, failure, missed_retry = reply.code, None, None
+            if tests is not None:
+                code, output = sandbox.run(
+                    checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o - | python -c \"{MISSED}\" {shlex.quote(function.path)}"
+                )
+                second, _ = sandbox.run(checkpoint, {test_path: tests}, f"PYTHONHASHSEED=2 {cmd}")
+                passed = COVERAGE in output
+                if passed != (not second):
+                    return None, "nondeterministic: characterization tests differ across two runs"
+                if passed:
+                    try:
+                        branches = json.loads(output.split(COVERAGE)[1].strip().splitlines()[0])
+                    except (ValueError, IndexError):
+                        return None, f"coverage has no data for {function.path}"
+                    missed = sum(function.start <= line <= function.end for line, _ in branches)
+                    if not missed:
+                        return tests, None
+                    failure = f"characterization tests miss branches: {missed}"
+                    if missed_retry is None:
+                        return None, failure
+                    retry, template = missed_retry.format(missed=missed, **fields), "MISSED_RETRY"
+                else:
+                    failure = f"characterization tests fail on original: {tail(output)}"
+                    retry, template = TESTS_RETRY.format(tests=tests, failure="\n".join(output.strip().splitlines()[-60:])), "TESTS_RETRY"
+            trace.output(failure)
     return None, failure
 
 
@@ -747,14 +750,17 @@ def review(repo, base, head, sandbox) -> dict:
                     plans[function] = plan
     matches = {}
     if any("." not in function.qualname for function, _ in changed):
-        base_index = index.build(repo, base)
-        known = {(r["path"], r["qualname"]) for r in base_index}
-        skip = {(function.path, function.qualname) for function, _ in changed}
-        kept = {(r["path"], r["qualname"]) for r in index.build(repo, head)}
-        pool = [r for r in base_index if "." not in r["qualname"] and (r["path"], r["qualname"]) not in skip and (r["path"], r["qualname"]) in kept]
+        with trace.span("gate.index"):
+            base_index = index.build(repo, base)
+            known = {(r["path"], r["qualname"]) for r in base_index}
+            skip = {(function.path, function.qualname) for function, _ in changed}
+            kept = {(r["path"], r["qualname"]) for r in index.build(repo, head)}
+            pool = [r for r in base_index if "." not in r["qualname"] and (r["path"], r["qualname"]) not in skip and (r["path"], r["qualname"]) in kept]
         for function, _ in changed:
             if "." not in function.qualname and function not in wrapped and (function.path, function.qualname) not in known:
-                matches[function] = find_duplicate(function, pool)
+                with trace.span("gate.duplicate", path=function.path, qualname=function.qualname):
+                    matches[function] = find_duplicate(function, pool)
+                    trace.output(matches[function])
     candidates = []
     for function, added in changed:
         text = diff.git(repo, "show", f"{head}:{function.path}")
@@ -767,7 +773,9 @@ def review(repo, base, head, sandbox) -> dict:
         elif has_dead_code(function, text):
             kind = "dead"
         elif complexity(function.source) >= COMPLEXITY or nesting(function.source) > NESTING:
-            kind = classify(function.source)
+            with trace.span("gate.classify", path=function.path, qualname=function.qualname, prompt="CLASSIFY_PROMPT"):
+                kind = classify(function.source)
+                trace.output(kind)
         else:
             continue
         if not kind:
@@ -780,88 +788,101 @@ def review(repo, base, head, sandbox) -> dict:
         return result
     setup, test = commands(repo, head)
     try:
-        checkpoint = sandbox.prepare(repo, head, setup)
+        with trace.span("sandbox.prepare", input=setup):
+            checkpoint = sandbox.prepare(repo, head, setup)
     except InstallError as error:
         result["rejected"].append({"reason": f"could not build test environment\n{error}"})
         return result
     # ponytail: one trial at a time (well under the cap of 8); a thread pool of 8 when review time matters
     for n, (function, added, kind, text) in enumerate(candidates):
         rejected = {"function": function.qualname, "path": function.path}
-        try:
-            test_path = f"tests/test_slopgate_{n}.py"
-            cmd = f"python -m coverage run --branch -m pytest -q {test_path}"
-            match = matches.get(function)
-            plan = plans.get(function)
-            tests = None
-            if not (match and match["exact"]):
-                target = plan["caller"] if plan else function
-                tests, failure = characterize(sandbox, checkpoint, target, test_path, cmd, called_code(repo, head, target))
+        before = {key: len(items) for key, items in result.items()}
+        with trace.span("gate.function", path=function.path, qualname=function.qualname, slop_kind=kind):
+            try:
+                test_path = f"tests/test_slopgate_{n}.py"
+                cmd = f"python -m coverage run --branch -m pytest -q {test_path}"
+                match = matches.get(function)
+                plan = plans.get(function)
+                tests = None
+                if not (match and match["exact"]):
+                    target = plan["caller"] if plan else function
+                    with trace.span("gate.characterize"):
+                        tests, failure = characterize(sandbox, checkpoint, target, test_path, cmd, called_code(repo, head, target))
+                        trace.output(failure or "passed")
+                    if failure:
+                        result["rejected"].append({**rejected, "reason": failure})
+                        continue
+                if match or plan:
+                    with trace.span("gate.proof", attempt=1):
+                        if plan:
+                            followup, failure = inline(sandbox, checkpoint, function, plan, tests, test, test_path, cmd)
+                        else:
+                            followup, failure = deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, test_path, cmd)
+                        trace.output(failure or "passed")
+                    if failure:
+                        result["rejected"].append({**rejected, "reason": failure})
+                    else:
+                        result["followup"].append(followup)
+                    continue
+
+                dedented = textwrap.dedent(function.source)
+                indent = function.source[: len(function.source) - len(function.source.lstrip())]
+                lines = text.splitlines(keepends=True)
+                with trace.span("gate.rewrite", prompt="REWRITE_PROMPT"):
+                    reply = llm.complete(SUPER, REWRITE_PROMPT.format(instruction=KINDS[kind], source=dedented))
+                for retry in (False, True):
+                    with trace.span("gate.proof", attempt=retry + 1):
+                        fenced = strip_fence(reply)
+                        if fenced is None:
+                            failure = "rewrite reply is not a python block"
+                            break
+                        rewrite = textwrap.dedent(fenced).strip("\n") + "\n"
+                        failure = broken_rule(dedented, rewrite)
+                        if failure:
+                            failure = f"rule: {failure}"
+                            break
+                        if same_code(dedented, rewrite):
+                            failure = "rewrite makes no change"
+                            break
+                        suggested = textwrap.indent(rewrite, indent)
+                        spliced = "".join(lines[: function.start - 1]) + suggested + "".join(lines[function.end :])
+                        code, output = sandbox.run(checkpoint, {test_path: tests, function.path: spliced}, cmd)
+                        if code:
+                            failure = f"rewrite fails characterization tests: {tail(output)}"
+                        else:
+                            repo_code, repo_output = sandbox.run(checkpoint, {function.path: spliced}, test)
+                            failure = f"rewrite fails repo tests: {tail(repo_output)}" if repo_code not in (0, 5) else None
+                        trace.output(failure or "passed")
+                    if not failure or retry:
+                        break
+                    with trace.span("gate.retry", prompt="RETRY_PROMPT"):
+                        reply = llm.complete(
+                            ULTRA, RETRY_PROMPT.format(instruction=KINDS[kind], source=dedented, rewrite=rewrite, failure=failure)
+                        )
                 if failure:
                     result["rejected"].append({**rejected, "reason": failure})
                     continue
-            if match or plan:
-                if plan:
-                    followup, failure = inline(sandbox, checkpoint, function, plan, tests, test, test_path, cmd)
-                else:
-                    followup, failure = deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, test_path, cmd)
-                if failure:
-                    result["rejected"].append({**rejected, "reason": failure})
-                else:
-                    result["followup"].append(followup)
-                continue
 
-            dedented = textwrap.dedent(function.source)
-            indent = function.source[: len(function.source) - len(function.source.lstrip())]
-            lines = text.splitlines(keepends=True)
-            reply = llm.complete(SUPER, REWRITE_PROMPT.format(instruction=KINDS[kind], source=dedented))
-            for retry in (False, True):
-                fenced = strip_fence(reply)
-                if fenced is None:
-                    failure = "rewrite reply is not a python block"
-                    break
-                rewrite = textwrap.dedent(fenced).strip("\n") + "\n"
-                failure = broken_rule(dedented, rewrite)
-                if failure:
-                    failure = f"rule: {failure}"
-                    break
-                if same_code(dedented, rewrite):
-                    failure = "rewrite makes no change"
-                    break
-                suggested = textwrap.indent(rewrite, indent)
-                spliced = "".join(lines[: function.start - 1]) + suggested + "".join(lines[function.end :])
-                code, output = sandbox.run(checkpoint, {test_path: tests, function.path: spliced}, cmd)
-                if code:
-                    failure = f"rewrite fails characterization tests: {tail(output)}"
-                else:
-                    repo_code, repo_output = sandbox.run(checkpoint, {function.path: spliced}, test)
-                    failure = f"rewrite fails repo tests: {tail(repo_output)}" if repo_code not in (0, 5) else None
-                if not failure or retry:
-                    break
-                reply = llm.complete(
-                    ULTRA, RETRY_PROMPT.format(instruction=KINDS[kind], source=dedented, rewrite=rewrite, failure=failure)
+                start, end = function.start, function.end
+                passed = re.search(r"(\d+) passed", output)[1]
+                summary = (
+                    f"Slopgate (`{kind}`) rewrite of `{function.qualname}`: "
+                    f"nesting {nesting(function.source)} -> {nesting(rewrite)}, "
+                    f"complexity {complexity(function.source)} -> {complexity(rewrite)}. "
+                    f"{passed} characterization tests passed in sandbox."
                 )
-            if failure:
-                result["rejected"].append({**rejected, "reason": failure})
-                continue
-
-            start, end = function.start, function.end
-            passed = re.search(r"(\d+) passed", output)[1]
-            summary = (
-                f"Slopgate (`{kind}`) rewrite of `{function.qualname}`: "
-                f"nesting {nesting(function.source)} -> {nesting(rewrite)}, "
-                f"complexity {complexity(function.source)} -> {complexity(rewrite)}. "
-                f"{passed} characterization tests passed in sandbox."
-            )
-            if set(range(start, end + 1)) <= added:
-                suggestion = {"path": function.path, "line": end, "side": "RIGHT", "body": f"{summary}\n\n```suggestion\n{suggested}```"}
-                if start != end:
-                    suggestion |= {"start_line": start, "start_side": "RIGHT"}
-                result["suggestions"].append(suggestion)
-            else:
-                result["followup"].append({"function": function.qualname, "kind": kind, "reason": summary, "files": {function.path: spliced}})
-        except llm.CutOff:
-            result["rejected"].append({**rejected, "reason": "reply cut off"})
-        # One broken candidate must not lose the results of the others (the review of PR #15 was lost this way).
-        except Exception as error:
-            result["rejected"].append({**rejected, "reason": f"internal error: {error!r}"})
+                if set(range(start, end + 1)) <= added:
+                    suggestion = {"path": function.path, "line": end, "side": "RIGHT", "body": f"{summary}\n\n```suggestion\n{suggested}```"}
+                    if start != end:
+                        suggestion |= {"start_line": start, "start_side": "RIGHT"}
+                    result["suggestions"].append(suggestion)
+                else:
+                    result["followup"].append({"function": function.qualname, "kind": kind, "reason": summary, "files": {function.path: spliced}})
+            except llm.CutOff:
+                result["rejected"].append({**rejected, "reason": "reply cut off"})
+            # One broken candidate must not lose the results of the others (the review of PR #15 was lost this way).
+            except Exception as error:
+                result["rejected"].append({**rejected, "reason": f"internal error: {error!r}"})
+            finally:
+                trace.output({key: items[before[key]:] for key, items in result.items() if len(items) > before[key]})
     return result

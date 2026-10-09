@@ -1,12 +1,22 @@
 import math
 import re
 import subprocess
+import time
 import zlib
 from types import SimpleNamespace
 
 import pytest
 
-from slopgate import embed, llm
+from slopgate import embed, llm, trace
+
+STARTED = time.strftime("%Y-%m-%d %H:%M:%S")
+trace.start("slopgate-tests")
+
+
+@pytest.fixture(autouse=True)
+def traced(request):
+    with trace.span("test.run", session=f"{request.node.originalname} {STARTED}", input=request.node.nodeid, test=request.node.nodeid):
+        yield
 
 
 @pytest.fixture

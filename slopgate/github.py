@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 from time import sleep
 
-from slopgate import llm
+from slopgate import llm, trace
 from slopgate.config import PRICES, ULTRA
 
 SUMMARY_PROMPT = """Write a summary of at most two sentences for the author of a pull request. Slopgate reviewed the pull request and proved each accepted rewrite with characterization tests in a sandbox. Use plain words, no headings, no lists.
@@ -75,7 +75,8 @@ def open_followup(repo, followups, pr, target, files) -> str:
 
 def summary(result, followup_line, seconds) -> str:
     try:
-        text = llm.complete(ULTRA, SUMMARY_PROMPT.format(results=json.dumps(result, indent=1)[:20000])).strip() + "\n\n"
+        with trace.span("gate.summary", prompt="SUMMARY_PROMPT"):
+            text = llm.complete(ULTRA, SUMMARY_PROMPT.format(results=json.dumps(result, indent=1)[:20000])).strip() + "\n\n"
     except Exception:
         text = ""
     rejected = result["rejected"]

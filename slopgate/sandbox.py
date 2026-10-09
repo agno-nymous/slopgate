@@ -9,6 +9,7 @@ from pathlib import Path
 
 from contree_sdk import ContreeSync
 
+from slopgate import trace
 from slopgate.diff import git
 
 
@@ -57,13 +58,15 @@ class Local:
         return path
 
     def run(self, checkpoint: Path, files: dict[str, str], cmd: str) -> tuple[int, str]:
-        with tempfile.TemporaryDirectory() as tmp:
+        with trace.span("sandbox.run", input={"cmd": cmd, "files": files}), tempfile.TemporaryDirectory() as tmp:
             work = Path(tmp) / "repo"
             shutil.copytree(checkpoint, work)
             for rel, content in files.items():
                 (work / rel).parent.mkdir(parents=True, exist_ok=True)
                 (work / rel).write_text(content)
-            return shell(cmd, work)
+            code, output = shell(cmd, work)
+            trace.output({"exit_code": code, "output": output})
+            return code, output
 
 
 class Contree:
@@ -82,6 +85,9 @@ class Contree:
         return result
 
     def run(self, checkpoint, files: dict[str, str], cmd: str) -> tuple[int, str]:
-        files = {f"/repo/{rel}": content.encode() for rel, content in files.items()}
-        result = checkpoint.run(shell=cmd, cwd="/repo", files=files).wait()
-        return result.exit_code, result.stdout + result.stderr
+        with trace.span("sandbox.run", input={"cmd": cmd, "files": files}):
+            files = {f"/repo/{rel}": content.encode() for rel, content in files.items()}
+            result = checkpoint.run(shell=cmd, cwd="/repo", files=files).wait()
+            output = result.stdout + result.stderr
+            trace.output({"exit_code": result.exit_code, "output": output})
+            return result.exit_code, output

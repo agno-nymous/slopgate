@@ -20,6 +20,7 @@ jobs:
         env:
           NEBIUS_API_KEY: ${{ secrets.NEBIUS_API_KEY }}
           NEBIUS_PROJECT_ID: ${{ secrets.NEBIUS_PROJECT_ID }}
+          PHOENIX_COLLECTOR_ENDPOINT: ${{ vars.PHOENIX_COLLECTOR_ENDPOINT }}
           GH_TOKEN: ${{ github.token }}
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
