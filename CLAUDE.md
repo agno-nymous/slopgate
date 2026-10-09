@@ -20,12 +20,13 @@ Slopgate finds slop in Python code that coding agents write. It has two parts:
 - Write tickets, ticket comments, pull request text, and replies in ASD-STE100 Simplified Technical English: one idea per sentence, short sentences, active voice, one term for one concept.
 - When a ticket is done, add a `## Comments` entry with a worked example and the measured results.
 - The CI has no branch protection (the repo is private on a free plan). Do not use auto-merge: it merges before the checks finish. Wait for the checks to pass, then merge.
-- The `slopgate` and `slopgate-demo` repos stay private until the submission. Make both public before 2026-10-30, 10:00 PT. Before `slopgate` is public, set `runs-on: ubuntu-latest` in `.github/workflows/slopgate.yml` and remove the self-hosted runner: on a public repo, a pull request from a fork could run its code on the Mac.
+- The `slopgate` and `slopgate-demo` repos stay private until the submission. Make both public before 2026-10-30, 10:00 PT. Before `slopgate` is public, set `runs-on: ubuntu-latest` in `.github/workflows/slopgate.yml` and remove the self-hosted runner: on a public repo, a pull request from a fork could run its code on the Mac. Also remove the `PHOENIX_COLLECTOR_ENDPOINT` env line from the workflow with the self-hosted runner.
 
 ## Commands
 
 ```bash
 uv sync
+PHOENIX_HOST=127.0.0.1 uvx arize-phoenix serve   # local Phoenix for traces; set PHOENIX_COLLECTOR_ENDPOINT in .env to trace
 uv run pytest -q                                   # offline tests; fakes replace the models and the sandbox
 uv run --extra hook --env-file .env pytest -m live -q   # live tests against Token Factory; the hook extra runs the embedding tests
 uv run --env-file .env slopgate review --repo <repo> --base <ref> --head <ref> --dry-run --sandbox local
@@ -52,6 +53,7 @@ The live tests are marked `live` and are off by default (`addopts` in `pyproject
 | `slopgate/index.py` | Function index of a commit, in `.slopgate/<sha>.json`, and keyword search over it. |
 | `slopgate/live.py` | The hook. Its store is `.slopgate/live.db` (SQLite). |
 | `slopgate/diff.py`, `slopgate/functions.py` | Changed functions between two refs, function parsing, token sets of functions, and the test-file rule (`is_test_file`, `pytest_patterns`) that the gate and the hook share. |
+| `slopgate/trace.py` | Phoenix tracing: start, span, output, bind. Off unless PHOENIX_COLLECTOR_ENDPOINT is a local address; with tracing off it imports no OpenTelemetry module. |
 | `slopgate/config.py` | Model names, thresholds, and prices. |
 
 ## Model rules
@@ -70,3 +72,9 @@ The live tests are marked `live` and are off by default (`addopts` in `pyproject
 - The hook runs as a new process for each file write. It must exit 0 and print errors only to stderr.
 - With no candidate, it makes no network call.
 - The hook writes the store before it calls the model.
+
+## Tracing rules
+
+- Set `PHOENIX_COLLECTOR_ENDPOINT` only in this repo's `.env` and `.claude/settings.local.json`. Never set it in a shell profile.
+- A thread pool that sends model requests wraps its function with `trace.bind`. Otherwise its spans lose their parent.
+- The sandbox environment drops `NEBIUS_*`, `PHOENIX_*`, `OTEL_*`, `GH_TOKEN`, `GITHUB_TOKEN`.

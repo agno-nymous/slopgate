@@ -1,6 +1,8 @@
 # 23 — Log the time of each gate step
 
-**What to build:** The gate prints the time of each step to stderr, so a slow review shows where the time goes. The summary comment on the pull request also shows the slowest steps.
+Ticket 32 (Phoenix tracing) gives the time of each step when tracing is on. So this ticket adds only the `Slowest:` line, for runs without tracing. The parts that the spans cover are removed below.
+
+**What to build:** The summary comment on the pull request shows the 3 slowest steps of a review. The gate records the time of each step in the result, and the summary reads them.
 
 **Blocked by:** None — can start immediately.
 
@@ -18,7 +20,7 @@ Ticket 25 (faster proof) needs these numbers before it starts.
 
 ## Design
 
-1. Add one small timing helper, for example a context manager `step(name)` in `slopgate/review.py`. It prints `slopgate: <name> <seconds>s` to stderr when the step ends, and it adds `(name, seconds)` to a list in the result, `result["timings"]`.
+1. Add one small timing helper, for example a context manager `step(name)` in `slopgate/review.py`. It adds `(name, seconds)` to a list in the result, `result["timings"]`.
 2. Time these steps:
    - `diff`: find the changed functions.
    - `index`: build the base index.
@@ -31,7 +33,6 @@ Ticket 25 (faster proof) needs these numbers before it starts.
 
 ## Acceptance
 
-- [ ] A review with one candidate prints one stderr line for each step in the list above.
 - [ ] `result["timings"]` holds the same steps, with seconds as numbers.
 - [ ] The summary body has a "Slowest:" line with at most 3 steps.
 - [ ] A result with only `timings` is still treated as empty: no comment is posted.

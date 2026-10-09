@@ -2,7 +2,7 @@
 
 **What to build:** The gate proves candidates in parallel. It runs the full repo test suite once for all accepted rewrites, not once for each rewrite.
 
-**Blocked by:** 23
+**Blocked by:** 32. Phoenix span times show where the review time goes, so this ticket waits for them.
 
 **Status:** ready-for-agent
 
@@ -19,11 +19,11 @@ For each candidate, the loop does these steps in order:
 
 Each sandbox run starts from the same checkpoint and writes its own files, so candidates do not share state.
 
-Ticket 23 measures the time of each step. Use its numbers to confirm that steps 1 to 4 are the slow part before you start. If the sandbox setup or the index build is the slow part, record that in the Comments and stop. Then this ticket needs a new design.
+Run one traced review (ticket 32) and read the span times in Phoenix. Use these numbers to confirm that steps 1 to 4 are the slow part before you start. If the sandbox setup or the index build is the slow part, record that in the Comments and stop. Then this ticket needs a new design.
 
 ## Design
 
-1. Run the loop body for each candidate in a `ThreadPoolExecutor(8)`. Keep the order of the results the same as the order of the candidates.
+1. Run the loop body for each candidate in a `ThreadPoolExecutor(8)`. Wrap the worker function with `trace.bind`, so that its spans keep `gate.review` as their parent (ticket 32). Keep the order of the results the same as the order of the candidates.
 2. Remove step 4 from the loop. After the loop, apply all accepted rewrites together and run the repo suite once.
 3. If that run passes, keep all rewrites.
 4. If that run fails, run the repo suite for each rewrite alone, as the loop does today. Reject each rewrite that fails alone, with the reason "rewrite fails repo tests". Two rewrites in one file must be spliced into the file together. Two rewrites can each pass alone and fail together. In that case, keep the first one and reject the second one with the reason "rewrite conflicts with another rewrite".
