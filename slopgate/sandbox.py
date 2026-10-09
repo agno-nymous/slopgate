@@ -39,7 +39,9 @@ def commands(repo, ref) -> tuple[str | None, str]:
 
 
 def shell(cmd: str, cwd) -> tuple[int, str]:
-    env = {**os.environ, "PATH": os.path.dirname(sys.executable) + os.pathsep + os.environ["PATH"]}
+    # The code under test must not see the API key or the tracing endpoint: it can print them into a span or a prompt.
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("NEBIUS_", "PHOENIX_", "OTEL_", "GH_TOKEN", "GITHUB_TOKEN"))}
+    env["PATH"] = os.path.dirname(sys.executable) + os.pathsep + os.environ["PATH"]
     proc = subprocess.run(cmd, shell=True, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     return proc.returncode, proc.stdout
 
