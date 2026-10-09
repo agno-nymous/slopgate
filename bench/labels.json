@@ -1,0 +1,1015 @@
+{
+ "reviewed_by": "Drafted by Claude on 2026-10-09 (two Opus subagents and the main session; 16 subagent drafts spot-checked). The user accepted the drafts on 2026-10-09 without a review of each row.",
+ "injections": {
+  "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaration.__init__:nemotron:nesting": {
+   "valid": true,
+   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/transforms.py:BboxTransformTo.get_matrix:nemotron:nesting": {
+   "valid": true,
+   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+  },
+  "astropy/astropy:astropy/coordinates/builtin_frames/galactic_transforms.py:fk5_to_gal:nemotron:nesting": {
+   "valid": true,
+   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+  },
+  "pylint-dev/pylint:pylint/checkers/variables.py:_is_type_checking_import:nemotron:nesting": {
+   "valid": true,
+   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/axes/_axes.py:Axes.semilogx:nemotron:nesting": {
+   "valid": true,
+   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+  },
+  "pytest-dev/pytest:src/_pytest/warnings.py:pytest_collection:nemotron:nesting": {
+   "valid": true,
+   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+  },
+  "pytest-dev/pytest:src/_pytest/tmpdir.py:pytest_configure:nemotron:nesting": {
+   "valid": true,
+   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/axes/_axes.py:Axes._convert_dx:nemotron:nesting": {
+   "valid": true,
+   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/offsetbox.py:AnchoredOffsetbox.draw:nemotron:nesting": {
+   "valid": true,
+   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+  },
+  "django/django:django/core/checks/model_checks.py:check_all_models:nemotron:nesting": {
+   "valid": true,
+   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+  },
+  "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaratorNameParam.describe_signature:nemotron:redundant_check": {
+   "valid": true,
+   "reason": "Super changed `if self.param:` to `if self.param and self.param is not None:`; the truth test before `and` already guarantees that `self.param` is not None."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/projections/polar.py:PolarAxes._init_axis:nemotron:redundant_check": {
+   "valid": false,
+   "reason": "Super added `if hasattr(self, 'xaxis') and self.xaxis is not None: pass`. No earlier check guarantees it."
+  },
+  "pallets/flask:src/flask/sessions.py:SessionInterface.make_null_session:nemotron:redundant_check": {
+   "valid": false,
+   "reason": "Super added `if hasattr(self, 'null_session_class'): pass`. No earlier check guarantees it."
+  },
+  "astropy/astropy:astropy/coordinates/representation.py:PhysicsSphericalRepresentation.phi:nemotron:redundant_check": {
+   "valid": false,
+   "reason": "Super added `if hasattr(self, '_phi'): pass`. No earlier check guarantees it."
+  },
+  "astropy/astropy:astropy/modeling/powerlaws.py:ExponentialCutoffPowerLaw1D.fit_deriv:nemotron:redundant_check": {
+   "valid": true,
+   "reason": "Super added `if isinstance(amplitude, (int, float)) and amplitude is not None: pass`; the isinstance test before `and` already guarantees that `amplitude` is not None."
+  },
+  "astropy/astropy:astropy/coordinates/angle_formats.py:hours_to_hms:nemotron:redundant_check": {
+   "valid": false,
+   "reason": "Super added `if abs(h - int(h)) < 1e-10: pass`. No earlier check guarantees it."
+  },
+  "astropy/astropy:astropy/modeling/core.py:Model._supports_unit_fitting:nemotron:redundant_check": {
+   "valid": false,
+   "reason": "Super added `if hasattr(self, '_parameter_units_for_data_units'): pass`. The same test comes after it, not before it."
+  },
+  "astropy/astropy:astropy/cosmology/flrw.py:LambdaCDM._dS_comoving_distance_z1z2:nemotron:redundant_check": {
+   "valid": true,
+   "reason": "Super added `if z1.shape == z2.shape: pass` after the try block that raises ValueError when np.broadcast_arrays cannot give the two arrays one shape, so the test is always true."
+  },
+  "sympy/sympy:sympy/integrals/risch.py:splitfactor:nemotron:redundant_check": {
+   "valid": false,
+   "reason": "Super added `if hasattr(q_split := ..., '__len__') and len(q_split) >= 2: pass`. No earlier check guarantees it."
+  },
+  "sphinx-doc/sphinx:sphinx/transforms/post_transforms/code.py:setup:nemotron:swallowed_error": {
+   "valid": true,
+   "reason": "Ruff BLE001/E722/S110/S112 finds the injected kind; accept() checks this."
+  },
+  "sympy/sympy:sympy/polys/densearith.py:dmp_expand:nemotron:swallowed_error": {
+   "valid": true,
+   "reason": "Ruff BLE001/E722/S110/S112 finds the injected kind; accept() checks this."
+  },
+  "astropy/astropy:astropy/coordinates/baseframe.py:BaseCoordinateFrame.realize_frame:nemotron:swallowed_error": {
+   "valid": true,
+   "reason": "Ruff BLE001/E722/S110/S112 finds the injected kind; accept() checks this."
+  },
+  "sympy/sympy:sympy/polys/polytools.py:Poly.trunc:nemotron:swallowed_error": {
+   "valid": true,
+   "reason": "Ruff BLE001/E722/S110/S112 finds the injected kind; accept() checks this."
+  },
+  "sympy/sympy:sympy/plotting/pygletplot/managed_window.py:ManagedWindow.__init__:nemotron:swallowed_error": {
+   "valid": true,
+   "reason": "Ruff BLE001/E722/S110/S112 finds the injected kind; accept() checks this."
+  },
+  "sympy/sympy:sympy/geometry/plane.py:Plane.p1:nemotron:swallowed_error": {
+   "valid": true,
+   "reason": "Ruff BLE001/E722/S110/S112 finds the injected kind; accept() checks this."
+  },
+  "django/django:django/templatetags/l10n.py:localize:nemotron:swallowed_error": {
+   "valid": true,
+   "reason": "Ruff BLE001/E722/S110/S112 finds the injected kind; accept() checks this."
+  },
+  "django/django:django/utils/autoreload.py:WatchmanReloader.watched_roots:nemotron:swallowed_error": {
+   "valid": true,
+   "reason": "Ruff BLE001/E722/S110/S112 finds the injected kind; accept() checks this."
+  },
+  "matplotlib/matplotlib:tools/gh_api.py:get_milestones:nemotron:swallowed_error": {
+   "valid": true,
+   "reason": "Ruff BLE001/E722/S110/S112 finds the injected kind; accept() checks this."
+  },
+  "pylint-dev/pylint:pylint/checkers/utils.py:safe_infer:nemotron:swallowed_error": {
+   "valid": true,
+   "reason": "Ruff BLE001/E722/S110/S112 finds the injected kind; accept() checks this."
+  },
+  "django/django:django/forms/widgets.py:NullBooleanSelect.format_value:nemotron:lookup_table": {
+   "valid": true,
+   "reason": "Ruff SIM116 finds the injected kind; accept() checks this."
+  },
+  "sympy/sympy:sympy/ntheory/generate.py:prevprime:nemotron:lookup_table": {
+   "valid": true,
+   "reason": "Ruff SIM116 finds the injected kind; accept() checks this."
+  },
+  "matplotlib/matplotlib:tutorials/intermediate/imshow_extent.py:index_to_coordinate:nemotron:lookup_table": {
+   "valid": true,
+   "reason": "Ruff SIM116 finds the injected kind; accept() checks this."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/axis.py:YAxis.get_ticks_position:nemotron:lookup_table": {
+   "valid": true,
+   "reason": "Ruff SIM116 finds the injected kind; accept() checks this."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/axis.py:XAxis.get_ticks_position:nemotron:lookup_table": {
+   "valid": true,
+   "reason": "Ruff SIM116 finds the injected kind; accept() checks this."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/font_manager.py:get_fontext_synonyms:nemotron:lookup_table": {
+   "valid": true,
+   "reason": "Ruff SIM116 finds the injected kind; accept() checks this."
+  },
+  "pydata/xarray:xarray/coding/times.py:_netcdf_to_numpy_timeunit:nemotron:lookup_table": {
+   "valid": true,
+   "reason": "Ruff SIM116 finds the injected kind; accept() checks this."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/font_manager.py:findSystemFonts:nemotron:filler_comment": {
+   "valid": true,
+   "reason": "Super added comments such as `# This checks if fontpaths is None before proceeding` above `if fontpaths is None:`; they only repeat the next line."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/backends/backend_pgf.py:PdfPages._run_latex:nemotron:filler_comment": {
+   "valid": true,
+   "reason": "Super added comments such as `# Create a temporary directory for processing` that repeat the line before them, not the next line; they only restate the code."
+  },
+  "sphinx-doc/sphinx:sphinx/ext/graphviz.py:ClickableMapDefinition.parse:nemotron:filler_comment": {
+   "valid": true,
+   "reason": "Super added `# This checks if the href pattern matches the current line` above `if self.href_re.search(line):` and one more comment of the same type; they only repeat the next line."
+  },
+  "sympy/sympy:sympy/physics/quantum/shor.py:shor:nemotron:filler_comment": {
+   "valid": true,
+   "reason": "Super added comments such as `# Printing the value of N for debugging/tracing` above `print(\"N= \", N)`; they only repeat the next line."
+  },
+  "scikit-learn/scikit-learn:sklearn/linear_model/base.py:LinearRegression.fit:nemotron:filler_comment": {
+   "valid": true,
+   "reason": "Super replaced the why comment with `# Rescale X and y using sample weights` above `X, y = _rescale_data(X, y, sample_weight)`; it only repeats the next line."
+  },
+  "django/django:django/db/backends/mysql/base.py:DatabaseWrapper.check_constraints:nemotron:filler_comment": {
+   "valid": true,
+   "reason": "Super added comments such as `# Getting table names from introspection when none provided` above `table_names = self.introspection.table_names(cursor)`; they only repeat the next line."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/backends/backend_gtk3agg.py:FigureCanvasGTK3Agg.blit:nemotron:filler_comment": {
+   "valid": true,
+   "reason": "Super added end-of-line comments such as `# Calculate width of the region to blit` on `width = int(bbox.x1) - int(bbox.x0)`; most only restate their own line."
+  },
+  "pydata/xarray:xarray/core/dataarray.py:DataArray.thin:nemotron:filler_comment": {
+   "valid": true,
+   "reason": "Super added `# Convert this DataArray to a temporary dataset for thinning operation` above `ds = self._to_temp_dataset().thin(...)` and two more comments of the same type; they only restate the code."
+  },
+  "pydata/xarray:xarray/core/duck_array_ops.py:_create_nan_agg_method:nemotron:filler_comment": {
+   "valid": true,
+   "reason": "Super added comments such as `# Convert input to array using asarray` above `values = asarray(values)`; they only repeat the next line."
+  },
+  "django/django:django/db/models/options.py:Options.get_parent_list:nemotron:filler_comment": {
+   "valid": true,
+   "reason": "Super added comments such as `# Adding each found ancestor to the result set` above `result.add(ancestor)`; they only repeat the next line."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/axes/_base.py:_AxesBase.get_navigate:nemotron:dead": {
+   "valid": true,
+   "reason": "Ruff F841/RUF059 or vulture finds the injected kind; accept() checks this."
+  },
+  "astropy/astropy:astropy/coordinates/angles.py:Angle.dms:nemotron:dead": {
+   "valid": true,
+   "reason": "Ruff F841/RUF059 or vulture finds the injected kind; accept() checks this."
+  },
+  "astropy/astropy:astropy/io/misc/asdf/tags/coordinates/representation.py:RepresentationType.assert_equal:nemotron:dead": {
+   "valid": true,
+   "reason": "Ruff F841/RUF059 or vulture finds the injected kind; accept() checks this."
+  },
+  "sympy/sympy:sympy/strategies/rl.py:rebuild:nemotron:dead": {
+   "valid": true,
+   "reason": "Ruff F841/RUF059 or vulture finds the injected kind; accept() checks this."
+  },
+  "sympy/sympy:sympy/functions/special/elliptic_integrals.py:elliptic_pi.fdiff:nemotron:dead": {
+   "valid": true,
+   "reason": "Ruff F841/RUF059 or vulture finds the injected kind; accept() checks this."
+  },
+  "sympy/sympy:sympy/matrices/densetools.py:trace:nemotron:dead": {
+   "valid": true,
+   "reason": "Ruff F841/RUF059 or vulture finds the injected kind; accept() checks this."
+  },
+  "django/django:django/template/smartif.py:TokenBase.led:nemotron:dead": {
+   "valid": true,
+   "reason": "Ruff F841/RUF059 or vulture finds the injected kind; accept() checks this."
+  },
+  "sympy/sympy:sympy/polys/ring_series.py:rs_cos_sin:nemotron:dead": {
+   "valid": true,
+   "reason": "Ruff F841/RUF059 or vulture finds the injected kind; accept() checks this."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/afm.py:AFM.get_kern_dist_from_name:nemotron:dead": {
+   "valid": true,
+   "reason": "Ruff F841/RUF059 or vulture finds the injected kind; accept() checks this."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/blocking_input.py:BlockingKeyMouseInput.post_event:nemotron:dead": {
+   "valid": true,
+   "reason": "Ruff F841/RUF059 or vulture finds the injected kind; accept() checks this."
+  }
+ },
+ "labels": {
+  "astropy/astropy:astropy/coordinates/baseframe.py:BaseCoordinateFrame._get_representation_info": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"This exists as a class method only to support handling frame inputs\" explains why, and the other comments explain non-obvious steps."
+   },
+   "nesting": {
+    "decision": "slop",
+    "reason": "Depth 5: the outer cache-hash 'if' can be a guard that returns the cached value, and 'if c in comptomap' can be a 'continue'."
+   }
+  },
+  "astropy/astropy:astropy/coordinates/builtin_frames/galactic_transforms.py:fk5_to_gal": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"need precess to J2000 first\" states the required order of the transform, not only the call."
+   }
+  },
+  "astropy/astropy:astropy/coordinates/jparser.py:_sexagesimal": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"convert matched regex groups to sexigesimal array\" tells the input is regex groups, which the code does not show."
+   }
+  },
+  "astropy/astropy:astropy/coordinates/solar_system.py:get_body": {
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "'if location is not None' is needed because time.location can also be None."
+   }
+  },
+  "astropy/astropy:astropy/cosmology/units.py:redshift_temperature": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"get cosmology: None -> default and process str / class\" summarizes a three-line block and the non-obvious with-block step."
+   }
+  },
+  "astropy/astropy:astropy/io/fits/hdu/hdulist.py:HDUList.pop": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Make sure that HDUs are loaded before attempting to pop\" gives the reason for readall(), which is lazy loading."
+   }
+  },
+  "astropy/astropy:astropy/io/fits/util.py:_words_group": {
+   "filler_comment": {
+    "decision": "slop",
+    "reason": "\"# locations of the blanks\" only repeats the name blank_loc on the next line."
+   }
+  },
+  "astropy/astropy:astropy/modeling/fitting.py:model_to_fit_params": {
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 (if/for/if) in a short function; a guard return for the outer 'if any(...)' saves one level but is not clearly easier."
+   }
+  },
+  "astropy/astropy:astropy/samp/hub.py:SAMPHubServer._get_registered_clients": {
+   "nesting": {
+    "decision": "slop",
+    "reason": "Depth 3: 'if private_key in keys ... else: raise' should be a guard raise, and the for/if append is one list comprehension."
+   }
+  },
+  "astropy/astropy:astropy/samp/web_profile.py:WebProfileRequestHandler._serve_cross_domain_xml": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Adobe standard\" and \"Microsoft standard\" give the reference for each policy file."
+   }
+  },
+  "astropy/astropy:astropy/time/formats.py:TimeString.value": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"TODO: fix this ugly hack\" and \"Can't pre-allocate because length of output could change\" explain why."
+   }
+  },
+  "astropy/astropy:astropy/units/format/generic.py:Generic._format_unit_list": {
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 (for/if-else/if-else) where each branch picks a different output format; the flat form is no easier."
+   }
+  },
+  "astropy/astropy:astropy/utils/iers/iers.py:LeapSeconds.from_erfa": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"# reset to defaults\" tells what set(None) means, which the code does not show."
+   }
+  },
+  "astropy/astropy:astropy/wcs/utils.py:obsgeo_to_frame": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"If the cartesian coords are zero or have NaNs in them use the spherical ones\" tells that obsgeo[:3] is the cartesian part."
+   }
+  },
+  "django/django:django/contrib/gis/db/models/lookups.py:GISLookup.process_rhs": {
+   "filler_comment": {
+    "decision": "slop",
+    "reason": "\"If rhs is some Query, don't touch it.\" only repeats the isinstance check and the plain super() call."
+   }
+  },
+  "django/django:django/contrib/postgres/fields/ranges.py:RangeField.to_python": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Assume we're deserializing\" explains why value can be a string."
+   },
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 is a two-item 'for end in (lower, upper): if end in vals' inside a type branch; nothing to gain."
+   }
+  },
+  "django/django:django/db/backends/mysql/base.py:DatabaseWrapper.check_constraints": {
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "No earlier check fixes table_names or primary_key_column_name; each test is the first on its value."
+   },
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 4 (with cursor/for table/for key column/for bad row) where each block does real work and the code already uses 'continue'."
+   }
+  },
+  "django/django:django/db/backends/postgresql/base.py:DatabaseWrapper.get_connection_params": {
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "NAME can still be None after the == '' check, so \"or ''\" in the length test is needed."
+   }
+  },
+  "django/django:django/db/backends/postgresql/base.py:DatabaseWrapper.get_connection_params:transform:redundant_check": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"None may be used to connect to the default 'postgres' db\" explains why, it does not restate the code."
+   }
+  },
+  "django/django:django/db/migrations/executor.py:MigrationExecutor.migration_plan": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"If the target is (app_label, None), that means unmigrate everything\" explains what the tuple shape means."
+   },
+   "nesting": {
+    "decision": "slop",
+    "reason": "Depth 6: 'for root ... if root[0] == target[0]: for migration ... if migration in applied' can filter with comprehensions or 'continue'."
+   }
+  },
+  "django/django:django/db/models/base.py:Model.clean_fields": {
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "Each test reads a different fact (exclude, field name, blank value, errors); none is guaranteed earlier."
+   }
+  },
+  "django/django:django/db/models/base.py:Model.clean_fields:transform:nesting": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Skip validation for empty fields with blank=True. The developer ...\" explains why."
+   }
+  },
+  "django/django:django/db/models/query.py:QuerySet.__init__": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"# {rel_field: {pk: rel_obj}}\" documents the shape of the dict, which the code does not show."
+   }
+  },
+  "django/django:django/db/models/query.py:QuerySet._update": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Clear any annotations so that they won't be present in subqueries.\" explains why."
+   }
+  },
+  "django/django:django/db/models/sql/query.py:Query.table_alias": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"The first occurrence of a table uses the table name directly.\" explains the rule, and \"Create a new alias for this table.\" heads a block."
+   }
+  },
+  "django/django:django/forms/widgets.py:NullBooleanSelect.format_value:transform:lookup_table": {
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "Each branch of the if/elif chain compares value with a different constant; no earlier check decides a later one."
+   }
+  },
+  "django/django:django/template/base.py:Token.split_contents": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Handle translation-marked template pieces\" tells what the _(\" prefix means."
+   },
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 (for/if/while) where the while joins the translation tokens; the structure is needed."
+   }
+  },
+  "django/django:django/utils/numberformat.py:format": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Make the common case fast\" explains why, and \"# sign\", \"# decimal part\", \"# grouping\" label multi-line blocks."
+   },
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 4 is the digit-grouping loop (if use_grouping/for digit/if cnt/if intervals); the algorithm needs it and the function goes on after it."
+   }
+  },
+  "django/django:django/utils/numberformat.py:format:transform:dead": {
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "No quoted check is decided by an earlier one; `if use_grouping:` follows a new assignment of use_grouping."
+   }
+  },
+  "django/django:django/views/defaults.py:permission_denied": {
+   "filler_comment": {
+    "decision": "slop",
+    "reason": "\"Reraise if it's a missing custom template.\" only repeats the != default-name check and the raise below it."
+   }
+  },
+  "matplotlib/matplotlib:lib/matplotlib/axes/_axes.py:Axes._convert_dx:nemotron:nesting": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"x should be an array...\" and \"xconv has already been converted, but maybe empty...\" give context the code does not show."
+   }
+  },
+  "matplotlib/matplotlib:lib/matplotlib/figure.py:Figure.set_size_inches": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Got called with a single pair as argument.\" explains what h is None means."
+   },
+   "nesting": {
+    "decision": "slop",
+    "reason": "Depth 3 of plain None checks (if forward/if canvas is not None/if manager is not None) that fold into one condition on manager."
+   }
+  },
+  "matplotlib/matplotlib:lib/matplotlib/font_manager.py:findSystemFonts": {
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 is platform selection (fontpaths None/win32/darwin) with shared code in each branch; flat form is no easier."
+   }
+  },
+  "matplotlib/matplotlib:lib/matplotlib/offsetbox.py:AnchoredOffsetbox.draw": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"# docstring inherited\" is a convention marker, and \"update the location and size of the legend\" summarizes a block."
+   }
+  },
+  "matplotlib/matplotlib:lib/matplotlib/offsetbox.py:AnchoredOffsetbox.draw:nemotron:nesting": {
+   "redundant_check": {
+    "decision": "slop",
+    "reason": "`if renderer is not None:` is always true, because `renderer.points_to_pixels(...)` already ran on that path."
+   }
+  },
+  "matplotlib/matplotlib:lib/matplotlib/projections/polar.py:PolarAxes._init_axis": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"This is moved out of __init__ because non-separable axes don't use it\" explains why, and the rest is a reason plus commented-out code."
+   }
+  },
+  "matplotlib/matplotlib:lib/matplotlib/transforms.py:BboxTransformTo.get_matrix": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"# docstring inherited\" is a convention marker that points to the parent docstring, not a restatement."
+   }
+  },
+  "matplotlib/matplotlib:lib/matplotlib/tri/triangulation.py:Triangulation.__init__": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Copy, since we may correct triangle orientation.\" and \"not created until first needed\" explain why."
+   }
+  },
+  "pallets/flask:src/flask/app.py:Flask.handle_url_build_error": {
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 is for/try-except-else/if rv is not None, which the handler loop needs."
+   }
+  },
+  "pallets/flask:src/flask/app.py:Flask.test_cli_runner": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"# type: ignore\" is a type-checker pragma, not a prose comment that restates code."
+   }
+  },
+  "pallets/flask:src/flask/app.py:Flask.wsgi_app": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"# noqa: B001\" is a linter pragma, not a prose comment that restates code."
+   }
+  },
+  "pallets/flask:src/flask/ctx.py:RequestContext.auto_pop": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"# type: ignore\" is a type-checker pragma, not a prose comment that restates code."
+   }
+  },
+  "pallets/flask:src/flask/debughelpers.py:_dump_loader_info": {
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 in code that already uses 'continue' guards; the inner 'for item in value' does real work."
+   }
+  },
+  "pallets/flask:src/flask/sessions.py:SessionInterface.get_cookie_domain": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"chop off the port which is usually not supported by browsers\" and \"cache False to return none next time\" explain why."
+   }
+  },
+  "pallets/flask:src/flask/templating.py:DispatchingJinjaLoader._get_source_explained": {
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 is for/try/if trv is None, where the try is needed per loader."
+   }
+  },
+  "psf/requests:requests/adapters.py:HTTPAdapter.__setstate__": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Can't handle by adding 'proxy_manager' to self.__attrs__ because ... a lambda function, which isn't pickleable\" explains why."
+   }
+  },
+  "psf/requests:requests/cookies.py:MockRequest.get_full_url": {
+   "filler_comment": {
+    "decision": "slop",
+    "reason": "\"# Reconstruct the URL as we expect it\" only repeats the urlunparse call on the next line."
+   }
+  },
+  "psf/requests:requests/hooks.py:dispatch_hook": {
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 in a 10-line function; a guard for 'if key in hooks' saves one level but is not clearly easier."
+   }
+  },
+  "psf/requests:requests/models.py:RequestEncodingMixin._encode_files": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Don't call str() on bytestrings: in Py3 it all goes wrong.\" explains why."
+   },
+   "redundant_check": {
+    "decision": "slop",
+    "reason": "'files or {}' is always files, because 'if (not files): raise' already guarantees files is truthy."
+   },
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 4 from 'if v is not None' then 'if not isinstance(v, bytes)'; a 'continue' saves one level, and the len(v) branches are real."
+   }
+  },
+  "psf/requests:requests/models.py:Response.json": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"JSON RFC 4627 section 3 states we should expect UTF-8, -16 or -32\" gives a reference and the reason."
+   },
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 (if no encoding/if encoding found/try decode) where each level is a distinct fallback step."
+   }
+  },
+  "psf/requests:requests/packages/chardet/charsetgroupprober.py:CharSetGroupProber.get_confidence": {
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 is 'if not prober.active: if _debug: write' before 'continue'; already guard style."
+   }
+  },
+  "psf/requests:requests/packages/chardet/hebrewprober.py:HebrewProber.get_charset_name": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"If the final letter score distance is dominant enough, rely on it.\" explains the decision strategy, not the syntax."
+   },
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "At 'if finalsub < 0.0' finalsub lies strictly between -MIN and +MIN, so it can be either sign."
+   }
+  },
+  "psf/requests:requests/packages/chardet/sbcharsetprober.py:SingleByteCharSetProber.reset": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"# char order of last character\" tells what the cryptic field _mLastOrder holds."
+   }
+  },
+  "psf/requests:requests/packages/urllib3/connection.py:HTTPConnection._new_conn": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"# Python 2.6\" tells why the AttributeError branch exists."
+   }
+  },
+  "psf/requests:requests/utils.py:get_encoding_from_headers": {
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "The tests check different facts (header present, charset param, text type); none is implied earlier."
+   }
+  },
+  "pydata/xarray:xarray/backends/locks.py:_get_lock_maker:transform:lookup_table+filler_comment": {
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "Each branch of the if/elif chain compares scheduler with a different constant; no earlier check decides a later one."
+   }
+  },
+  "pydata/xarray:xarray/core/duck_array_ops.py:_create_nan_agg_method": {
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 in inner f (try/except AttributeError/if dask/try) is a retry fallback that needs each block."
+   }
+  },
+  "pylint-dev/pylint:pylint/checkers/base.py:BasicErrorChecker.visit_assign": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"# Check *a, *b = ...\" shows the source pattern that the check targets, which the AST code does not show."
+   }
+  },
+  "pylint-dev/pylint:pylint/checkers/base.py:ComparisonChecker._check_logical_tautology": {
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "'if left_operand == right_operand' is the purpose of the function and is not decided by the isinstance branches."
+   }
+  },
+  "pylint-dev/pylint:pylint/checkers/base.py:NamingStyle.get_regex:transform:lookup_table": {
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "Each branch of the if/elif chain compares name_type with a different constant; no earlier check decides a later one."
+   }
+  },
+  "pylint-dev/pylint:pylint/checkers/utils.py:safe_infer": {
+   "redundant_check": {
+    "decision": "slop",
+    "reason": "inferred_types gets at most one element (the loop only returns, never adds), so 'len(inferred_types) <= 1' is always true."
+   },
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 is try/for/if, where the try must wrap the inference generator loop."
+   }
+  },
+  "pytest-dev/pytest:src/_pytest/_py/path.py:LocalPath._ensuredirs": {
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "The second 'self.check(dir=0)' runs after EEXIST from a race, so the answer can differ from the first check."
+   },
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 is if/try/except-if, the race-condition re-check after EEXIST; structure is needed."
+   }
+  },
+  "pytest-dev/pytest:src/_pytest/fixtures.py:FixtureRequest._getnextfixturedef": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"We arrive here because of a dynamic call to getfixturevalue(argname)\" explains why, and the rest is a TODO."
+   },
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "getfixturedefs can return None (see the TODO), so 'fixturedefs is None' is not guaranteed false."
+   }
+  },
+  "pytest-dev/pytest:src/_pytest/mark/__init__.py:KeywordMatcher.from_item": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Add the markers to the keywords as we no longer handle them correctly.\" explains why, and the other lines head short blocks."
+   }
+  },
+  "pytest-dev/pytest:src/_pytest/reports.py:TestReport.__init__": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "The \"#:\" lines are Sphinx attribute docs such as \"The line number is 0-based.\", which state facts the code does not show."
+   }
+  },
+  "pytest-dev/pytest:src/_pytest/tmpdir.py:pytest_configure:nemotron:nesting": {
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "The nested checks test new facts (config, its attributes, the factory result); no earlier check decides them."
+   }
+  },
+  "pytest-dev/pytest:src/_pytest/unittest.py:UnitTestCase.collect": {
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 at the end of a generator (if not foundsomething/if runtest/if ut check); guards save one level but are not clearly easier."
+   }
+  },
+  "pytest-dev/pytest:src/_pytest/unittest.py:pytest_runtest_makereport": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"This is actually only needed for nose, which reuses unittest.SkipTest\" explains why the conversion exists."
+   },
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "call.excinfo is set only when item._excinfo is non-empty, so 'and call.excinfo' is not guaranteed."
+   },
+   "nesting": {
+    "decision": "slop",
+    "reason": "Depth 3: 'if isinstance(item, TestCaseFunction): if item._excinfo:' becomes one 'and' condition."
+   }
+  },
+  "scikit-learn/scikit-learn:sklearn/ensemble/gradient_boosting.py:GradientBoostingClassifier.staged_decision_function": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"no yield from in Python2.X\" explains why the loop is used instead of yield from."
+   }
+  },
+  "scikit-learn/scikit-learn:sklearn/externals/joblib/_parallel_backends.py:SafeFunction.__call__": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"multiprocessing does not interrupt processing for a KeyboardInterrupt\" explains why the exception is reraised as another type."
+   },
+   "swallowed_error": {
+    "decision": "false_positive",
+    "reason": "Worker wrapper: the bare except reads sys.exc_info() and re-raises it as TransportableException for the parent process."
+   }
+  },
+  "scikit-learn/scikit-learn:sklearn/externals/joblib/numpy_pickle.py:NumpyPickler.save": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Pickling doesn't work with memmapped arrays\" and the PEP 3154 framer note explain why."
+   }
+  },
+  "scikit-learn/scikit-learn:sklearn/feature_extraction/text.py:CountVectorizer.inverse_transform": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"We need CSR format for fast row manipulations.\" explains why."
+   }
+  },
+  "scikit-learn/scikit-learn:sklearn/linear_model/base.py:LinearRegression.fit": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"sparse_lstsq cannot handle y with shape (M, K)\" states a limit, and \"Sample weight can be implemented via a simple rescaling\" explains the method."
+   }
+  },
+  "scikit-learn/scikit-learn:sklearn/metrics/classification.py:_check_targets": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"No metrics support \"multiclass-multioutput\" format\" gives context for the check."
+   },
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 (binary or multiclass/if binary/if > 2 values) where the outer branch does reshaping first; flat form is no easier."
+   }
+  },
+  "scikit-learn/scikit-learn:sklearn/mixture/gaussian_mixture.py:GaussianMixture._set_parameters": {
+   "filler_comment": {
+    "decision": "slop",
+    "reason": "\"# Attributes computation\" is a vague header that adds nothing beyond the self.precisions_ assignments below it."
+   },
+   "dead": {
+    "decision": "slop",
+    "reason": "n_features from '_, n_features = self.means_.shape' is never used."
+   }
+  },
+  "scikit-learn/scikit-learn:sklearn/mixture/gmm.py:_log_multivariate_normal_density_full": {
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 is for/try/except-try, the regularised Cholesky retry; each block is needed."
+   }
+  },
+  "scikit-learn/scikit-learn:sklearn/model_selection/_split.py:check_cv": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"New style cv objects are passed without any modification\" tells that objects with split() are the new style, which the code does not say."
+   }
+  },
+  "scikit-learn/scikit-learn:sklearn/multioutput.py:MultiOutputRegressor.score": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"XXX remove in 0.19 when r2_score default for multioutput changes\" is a TODO with a reason."
+   }
+  },
+  "scikit-learn/scikit-learn:sklearn/neighbors/lof.py:LocalOutlierFactor._score_samples": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"# as bigger is better:\" explains why the mean is negated."
+   }
+  },
+  "scikit-learn/scikit-learn:sklearn/utils/_unittest_backport.py:TestCase.assertRaises": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"bpo-23890: manually break a reference cycle\" gives a bug reference and the reason."
+   }
+  },
+  "scikit-learn/scikit-learn:sklearn/utils/estimator_checks.py:check_estimators_dtypes": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Box-Cox requires positive, non-zero data\" explains why."
+   },
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 is for dtype/for method/if hasattr in a short test loop; nothing clearly easier."
+   }
+  },
+  "sphinx-doc/sphinx:sphinx/builders/html/__init__.py:StandaloneHTMLBuilder.gen_indices": {
+   "filler_comment": {
+    "decision": "slop",
+    "reason": "\"# the global domain-specific indices\" only repeats the call write_domain_indices() on the next line."
+   }
+  },
+  "sphinx-doc/sphinx:sphinx/builders/html/__init__.py:setup_resource_paths": {
+   "filler_comment": {
+    "decision": "slop",
+    "reason": "\"# favicon_url\" only repeats the key that the next lines assign."
+   }
+  },
+  "sphinx-doc/sphinx:sphinx/builders/xml.py:XMLBuilder.get_outdated_docs": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"source doesn't exist anymore\" tells what the OSError means here."
+   },
+   "swallowed_error": {
+    "decision": "slop",
+    "reason": "'except Exception: targetmtime = 0' around path.getmtime should be 'except OSError', as the second try in the same function does."
+   },
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 is for/try/if srcmtime > targetmtime, where the try catches a missing source; structure is needed."
+   }
+  },
+  "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaration.__init__": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"set by CObject._add_enumerator_to_parent\" gives a reference to where the field is set."
+   }
+  },
+  "sphinx-doc/sphinx:sphinx/domains/c.py:Symbol.__init__": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Remember to modify Symbol.remove if modifications to the parent change.\" and \"Do symbol addition after self._children has been initialised.\" explain constraints."
+   }
+  },
+  "sphinx-doc/sphinx:sphinx/domains/cpp.py:ASTFunctionParameter.get_id": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"this is not part of the normal name mangling in C++\" and \"the anchor will be our parent\" give context the code does not show."
+   }
+  },
+  "sphinx-doc/sphinx:sphinx/domains/cpp.py:CPPObject.run": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"The lookup keys assume that no nested scopes exists inside overloaded functions. (see also #5191)\" explains why, with a reference."
+   }
+  },
+  "sphinx-doc/sphinx:sphinx/domains/std.py:ProductionList.run": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Assign old styled node_id not to break old hyperlinks\" explains why, and the others give a reference and a removal note."
+   },
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 inside 'if subnode[tokenname]' where the inner ifs do real id and name work; flat form is no easier."
+   }
+  },
+  "sphinx-doc/sphinx:sphinx/environment/__init__.py:BuildEnvironment.setup": {
+   "filler_comment": {
+    "decision": "slop",
+    "reason": "\"# initialize config\" only repeats self._update_config(app.config) on the next line."
+   }
+  },
+  "sphinx-doc/sphinx:sphinx/ext/autodoc/mock.py:MockFinder.find_spec": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"check if fullname is (or is a descendant of) one of our targets\" explains what the startswith(modname + '.') test means."
+   }
+  },
+  "sphinx-doc/sphinx:sphinx/ext/graphviz.py:ClickableMapDefinition.parse": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"graphviz generates wrong ID if graph name not specified\" explains why and gives an issue link."
+   }
+  },
+  "sphinx-doc/sphinx:sphinx/ext/inheritance_diagram.py:InheritanceDiagram.run": {
+   "dead": {
+    "decision": "slop",
+    "reason": "x in 'refnodes, x = class_role(...)' is never used."
+   }
+  },
+  "sphinx-doc/sphinx:sphinx/ext/intersphinx.py:resolve_reference_detect_inventory": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"try splitting the target into 'inv_name:target'\" summarizes a multi-line block and names the format."
+   }
+  },
+  "sphinx-doc/sphinx:sphinx/util/images.py:parse_data_uri": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"data:[<MIME-type>][;charset=<encoding>][;base64],<data>\" gives the format the parser reads."
+   }
+  },
+  "sphinx-doc/sphinx:sphinx/util/nodes.py:process_index_entry": {
+   "nesting": {
+    "decision": "slop",
+    "reason": "Depth 4 with a for-else inside a for-else; returning on the first match removes both else blocks."
+   }
+  },
+  "sympy/sympy:sympy/assumptions/handlers/sets.py:AskIntegerHandler.Mul": {
+   "nesting": {
+    "decision": "slop",
+    "reason": "Depth 4: 'if not ask(Q.integer(arg))' can be 'if ask(...): continue', and the '_output' if-else nests further."
+   }
+  },
+  "sympy/sympy:sympy/calculus/util.py:AccumulationBounds.intersection": {
+   "nesting": {
+    "decision": "slop",
+    "reason": "Depth 3: 'if self.min <= other.min: if self.max <= other.max' should be one 'and' test, and the for/if is a comprehension."
+   }
+  },
+  "sympy/sympy:sympy/concrete/expr_with_limits.py:ExprWithLimits.free_symbols": {
+   "filler_comment": {
+    "decision": "slop",
+    "reason": "\"# add in the new symbols\" only repeats isyms.update(i.free_symbols) on the next lines."
+   }
+  },
+  "sympy/sympy:sympy/functions/combinatorial/numbers.py:genocchi._eval_is_negative": {
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "'n.is_odd' is not decided by 'n.is_integer and n.is_positive'."
+   }
+  },
+  "sympy/sympy:sympy/functions/special/elliptic_integrals.py:elliptic_pi.fdiff:nemotron:dead": {
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "`if len(self.args) == 3:` and `if argindex == 1:` are the first tests of their values."
+   }
+  },
+  "sympy/sympy:sympy/functions/special/spherical_harmonics.py:Ynm.fdiff": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"# Diff wrt n\" maps each argindex to its variable, which the branch code does not show."
+   }
+  },
+  "sympy/sympy:sympy/geometry/entity.py:GeometryEntity.__new__": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Points are sequences, but they should not be converted to Tuples\" explains why the helper exists."
+   }
+  },
+  "sympy/sympy:sympy/integrals/risch.py:splitfactor": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"XXX: Is this right?\" is an open question for maintainers, not a restatement."
+   },
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "Dp can be zero for a nonzero p that has t, so 'if not Dp.is_zero' is not guaranteed."
+   }
+  },
+  "sympy/sympy:sympy/ntheory/factor_.py:udivisors:transform:nesting": {
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "`if n != 1:` and `if n != 0:` are not decided by `not isprime(n)`, because 0 and 1 are not prime."
+   }
+  },
+  "sympy/sympy:sympy/ntheory/generate.py:prevprime": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"wrapping ceiling in int will raise an error if there was a problem\" explains why int(ceiling(n)) is used."
+   }
+  },
+  "sympy/sympy:sympy/physics/mechanics/kane.py:KanesMethod._initialize_kindiffeq_matrices": {
+   "filler_comment": {
+    "decision": "slop",
+    "reason": "\"Dictionaries setting things to zero\" only repeats the three dict((i, 0) ...) lines named *_zero below it."
+   }
+  },
+  "sympy/sympy:sympy/plotting/intervalmath/interval_arithmetic.py:interval.__pow__": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "\"Implements only power to an integer.\" states a limit."
+   },
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "'int(other) == other' and 'other < 0' are not fixed by the isinstance branches."
+   }
+  },
+  "sympy/sympy:sympy/plotting/pygletplot/managed_window.py:ManagedWindow.__init__": {
+   "filler_comment": {
+    "decision": "slop",
+    "reason": "\"check if this is run from the doctester\" only repeats the runfromdoctester check on the next line."
+   }
+  },
+  "sympy/sympy:sympy/polys/densebasic.py:dup_deflate": {
+   "redundant_check": {
+    "decision": "false_positive",
+    "reason": "Zero coefficients and the gcd value are not fixed by 'dup_degree(f) <= 0'."
+   }
+  },
+  "sympy/sympy:sympy/polys/densetools.py:_dup_decompose": {
+   "nesting": {
+    "decision": "false_positive",
+    "reason": "Depth 3 from 'if h is not None: if g is not None'; a second 'continue' saves one level in an already short loop."
+   }
+  },
+  "sympy/sympy:sympy/polys/polytools.py:Poly.trunc:nemotron:swallowed_error": {
+   "filler_comment": {
+    "decision": "false_positive",
+    "reason": "`# pragma: no cover` is a coverage pragma, not a comment that restates code."
+   }
+  },
+  "sympy/sympy:sympy/simplify/sqrtdenest.py:_sqrt_symbolic_denest": {
+   "nesting": {
+    "decision": "slop",
+    "reason": "Depth 4: 'if rb', 'if newa.degree() == 2' and 'if ...equals(0)' all wrap the rest and can be guard returns of None."
+   }
+  },
+  "sympy/sympy:sympy/strategies/rl.py:rebuild": {
+   "swallowed_error": {
+    "decision": "slop",
+    "reason": "'except Exception: return expr' is undocumented and hides any constructor error in the recursive rebuild, not only the atom case."
+   }
+  }
+ }
+}
