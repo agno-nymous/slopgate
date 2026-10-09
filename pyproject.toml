@@ -30,4 +30,5 @@ build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
 addopts = "-m 'not live'"
+pythonpath = ["."]
 markers = ["live: calls real Nebius Token Factory"]
