@@ -50,7 +50,7 @@ def test_same_file_wrapper_is_inlined_into_its_caller(make_repo, fake_llm, capsy
     assert result["followup"] == [
         {
             "function": "tax_for",
-            "kind": "wrapper",
+            "kinds": ["wrapper"],
             "reason": "`tax_for` only forwards to `compute_tax`; inlined into its single caller `invoice_total` in app/billing.py. "
             "2 characterization tests of the caller passed.",
             "files": {"app/billing.py": COMPUTE_TAX + INVOICE_TOTAL.replace("tax_for(", "compute_tax(")},

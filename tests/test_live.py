@@ -1,5 +1,6 @@
 import inspect
 import os
+import subprocess
 import time
 from pathlib import Path
 
@@ -7,11 +8,12 @@ import pytest
 from openai import OpenAI
 from test_duplicates import SLUGIFY
 from test_hook import SLUG_COPY, UNIQUE, indexed, write
-from test_review import FLAT, IS_NESTING, NESTED, SIMPLE, TESTS, fenced, review
+from test_review import FLAT, KINDS_SOURCE, NO_LINES, NESTED, SIMPLE, TESTS, fenced, review
 from test_wrappers import APPLY_DISCOUNT
 
 from slopgate import config, embed, live, llm
 from slopgate.functions import parse
+from slopgate.kinds import classify
 from slopgate.review import SAME_JOB_PROMPT, SameJob, called_code, characterize
 from slopgate.sandbox import Local
 
@@ -54,7 +56,8 @@ def test_nested_fixture_gives_same_json_in_contree_and_local(make_repo, fake_llm
         {"app/perms.py": NESTED + "\n\n" + SIMPLE},
     )
     fake_llm.replies += 2 * [
-        IS_NESTING,
+        NO_LINES,
+        NO_LINES,
         "```python\n" + TESTS.format(name="can_edit", call="can_edit") + "```",
         "Here is the rewrite:\n```python\n" + FLAT + "```",
     ]
@@ -69,7 +72,7 @@ def test_nested_fixture_gives_same_json_in_contree_and_local(make_repo, fake_llm
 @pytest.mark.parametrize("manifest", [{"pyproject.toml": PYPROJECT}, {"requirements.txt": "attrs\n"}], ids=["pyproject", "requirements"])
 def test_detected_install_provides_dependency(make_repo, fake_llm, capsys, manifest):
     repo = make_repo({"app/__init__.py": "", **manifest}, {"app/perms.py": "import attrs\n\n\n" + NESTED})
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
 
     result = review(capsys, repo, "contree")
 
@@ -125,7 +128,7 @@ def test_super_tests_reply_is_proven_or_cannot_test(make_repo, monkeypatch, path
     [function] = [f for f in parse(path, head[path]) if f.qualname == qualname]
     replies = []
     complete = llm.complete
-    monkeypatch.setattr(llm, "complete", lambda model, prompt, json=False: replies.append(complete(model, prompt, json)) or replies[-1])
+    monkeypatch.setattr(llm, "complete", lambda model, prompt: replies.append(complete(model, prompt)) or replies[-1])
     sandbox = Local()
     test_path = "tests/test_slopgate_0.py"
 
@@ -141,6 +144,46 @@ def test_super_tests_reply_is_proven_or_cannot_test(make_repo, monkeypatch, path
         assert failure is None and tests, failure
     else:
         assert failure.startswith("model cannot test: ") and len(replies) == 1, failure
+
+
+PR_20_HEAD = "70c27da340aeaadec60bfb22a711c84acdb0cabd"
+PR_20_NOTES = {
+    "tests/test_duplicates.py": ["test_copy_with_other_error_on_none"],
+    "tests/test_github.py": [
+        "test_inline_suggestions_are_posted_as_one_comment_review",
+        "test_pr_flag_fetches_the_pull_request_reviews_it_and_posts_to_it",
+        "test_followup_changes_open_one_pull_request_on_the_author_branch",
+        "test_followup_pull_request_failure_still_posts_the_review",
+    ],
+    "tests/test_live.py": ["test_super_tests_reply_is_proven_or_cannot_test"],
+    "tests/test_review.py": [
+        "test_rewrite_that_changes_behavior_is_rejected",
+        "test_each_in_place_kind_gets_a_suggestion_naming_it",
+        "test_tests_that_fail_on_original_get_one_retry_with_the_failure",
+        "test_calls_that_do_not_evaluate_get_one_retry_with_the_error",
+        "test_empty_block_gets_one_retry_that_names_the_error",
+        "test_method_prompt_has_no_calls_form_and_bare_calls_run_as_a_test_file",
+    ],
+}
+
+
+def test_classify_finds_no_kind_in_the_pr_20_test_functions():
+    root = Path(__file__).parent.parent
+    found = {}
+    for path, names in PR_20_NOTES.items():
+        text = subprocess.run(["git", "show", f"{PR_20_HEAD}:{path}"], cwd=root, check=True, capture_output=True, text=True).stdout
+        found |= {function.qualname: classify(function, text) for function in parse(path, text) if function.qualname in names}
+
+    assert len(found) == 12
+    assert found == dict.fromkeys(found, {}), found
+
+
+def test_classify_finds_filler_comments_in_clamp_all():
+    [function] = [f for f in parse("app/perms.py", KINDS_SOURCE) if f.qualname == "clamp_all"]
+
+    kinds = classify(function, KINDS_SOURCE)
+
+    assert "filler_comment" in kinds, kinds
 
 
 def test_int8_model_matches_torch():

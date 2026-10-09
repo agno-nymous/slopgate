@@ -4,7 +4,7 @@
 
 **Blocked by:** 18, 21, 36 (the design of 36 decides the input of `classify`, which this ticket changes)
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## Context
 
@@ -75,3 +75,7 @@ Tradeoff: one rewrite is proven once and makes one suggestion. When the proof fa
 - [ ] `uv run pytest -q` passes.
 
 ## Comments
+
+### 2026-10-09 — done in ticket 36
+
+Ticket 36 built this ticket in its stage 2. The design changed: the `SlopKinds` list in step 1 gave 868 false kinds in the measurement of ticket 36 (Lightning names every kind). So `classify` sends one `Check` tool call for each model kind, and Ruff, vulture, and `nesting()` measure the other kinds. Steps 3 to 6 are built as written: one list of kinds for each function, one rewrite with a numbered list of fixes, the suggestion names every kind, and the entries have a field `kinds`. The acceptance boxes above refer to `SlopKinds`. The tests of ticket 36 stage 2 replace them.

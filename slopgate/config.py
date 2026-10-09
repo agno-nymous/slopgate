@@ -1,6 +1,5 @@
 BASE_URL = "https://api.tokenfactory.nebius.com/v1/"
 
-COMPLEXITY = 6
 NESTING = 2
 DUPLICATE_SCORE = 0.30
 FLAG = 0.8

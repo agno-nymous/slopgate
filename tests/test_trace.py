@@ -174,10 +174,10 @@ def test_traced_review_matches_untraced_review(make_repo, fake_llm, capsys, monk
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import SimpleSpanProcessor
     from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-    from test_review import FLAT, IS_NESTING, NESTED, TESTS, fenced, review
+    from test_review import FLAT, NO_LINES, NESTED, TESTS, fenced, review
 
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    replies = [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    replies = [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
     fake_llm.replies += replies
     untraced = review(capsys, repo)
     exporter = InMemorySpanExporter()
@@ -189,4 +189,4 @@ def test_traced_review_matches_untraced_review(make_repo, fake_llm, capsys, monk
 
     assert review(capsys, repo) == untraced
     function = next(span for span in exporter.get_finished_spans() if span.name == "gate.function")
-    assert json.loads(function.attributes["metadata"])["slop_kind"] == "nesting"
+    assert json.loads(function.attributes["metadata"])["slop_kinds"] == ["nesting"]

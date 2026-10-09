@@ -3,7 +3,7 @@ import subprocess
 import sys
 
 import pytest
-from test_review import FLAT, IS_NESTING, NESTED, SIMPLE, TESTS, fenced, models, review
+from test_review import FLAT, NO_LINES, NESTED, SIMPLE, TESTS, fenced, models, review
 
 from slopgate import embed
 from slopgate.cli import main
@@ -120,7 +120,7 @@ def test_renamed_exact_copy_is_replaced_by_the_helper_without_llm(make_repo, fak
     assert fake_llm.calls == []
     assert result["suggestions"] == [] and result["rejected"] == []
     [followup] = result["followup"]
-    assert followup["function"] == "make_slug" and followup["kind"] == "duplicate"
+    assert followup["function"] == "make_slug" and followup["kinds"] == ["duplicate"]
     assert "`slugify` in app/text.py" in followup["reason"]
     assert followup["files"] == {
         "app/posts.py": 'from app.text import slugify\ndef post_path(heading):\n    return "posts/" + slugify(heading) + ".html"\n',
@@ -166,7 +166,7 @@ def test_candidate_without_a_verdict_is_skipped(make_repo, fake_llm, capsys):
 
 
 def test_unrelated_helper_below_floor_costs_no_llm_call(make_repo, fake_llm, fake_embed, capsys):
-    repo = make_repo({"app/text.py": SLUGIFY}, {"app/ship.py": SIMPLE})
+    repo = make_repo({"app/text.py": SLUGIFY}, {"app/ship.py": FLAT})
 
     assert review(capsys, repo) == EMPTY
     assert fake_llm.calls == []
@@ -197,7 +197,7 @@ def test_copy_is_found_when_the_embedding_model_fails(make_repo, fake_llm, capsy
     ids=["head-method", "base-method"],
 )
 def test_methods_are_never_duplicates(make_repo, fake_llm, capsys, base, head):
-    repo = make_repo({"app/text.py": base}, {"app/posts.py": head, "app/ship.py": SIMPLE})
+    repo = make_repo({"app/text.py": base}, {"app/posts.py": head, "app/ship.py": FLAT})
 
     assert review(capsys, repo) == EMPTY
     assert fake_llm.calls == []
@@ -205,13 +205,13 @@ def test_methods_are_never_duplicates(make_repo, fake_llm, capsys, base, head):
 
 def test_partly_changed_function_lands_in_followup_with_full_file(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": "", "app/perms.py": NESTED}, {"app/perms.py": NESTED.replace("return True", "return bool(1)")})
-    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
 
     result = review(capsys, repo)
 
     assert result["suggestions"] == [] and result["rejected"] == []
     [followup] = result["followup"]
-    assert (followup["function"], followup["kind"]) == ("can_edit", "nesting")
+    assert (followup["function"], followup["kinds"]) == ("can_edit", ["nesting"])
     assert "nesting 4 -> 0" in followup["reason"]
     assert followup["files"] == {"app/perms.py": FLAT}
 
@@ -284,7 +284,7 @@ def test_copied_test_function_gets_a_duplicate_note(make_repo, fake_llm, capsys)
         "**duplicate** (not proven): `test_unique_write` does the same job as `test_non_python_change` in tests/test_hook.py. "
         "Consider one parametrized test. Not proven: Slopgate does not change test files."
     )
-    assert result == EMPTY | {"notes": [{"path": "tests/test_hook.py", "function": "test_unique_write", "kind": "duplicate", "line": 8, "body": body}]}
+    assert result == EMPTY | {"notes": [{"path": "tests/test_hook.py", "function": "test_unique_write", "kinds": ["duplicate"], "line": 8, "body": body}]}
 
 
 def test_test_function_copying_a_production_function_says_to_call_it(make_repo, fake_llm, capsys):
@@ -297,7 +297,7 @@ def test_test_function_copying_a_production_function_says_to_call_it(make_repo, 
         "**duplicate** (not proven): `make_slug` does the same job as `slugify` in app/text.py. "
         "Call it instead. Not proven: Slopgate does not change test files."
     )
-    assert result == EMPTY | {"notes": [{"path": "tests/conftest.py", "function": "make_slug", "kind": "duplicate", "line": 5, "body": body}]}
+    assert result == EMPTY | {"notes": [{"path": "tests/conftest.py", "function": "make_slug", "kinds": ["duplicate"], "line": 5, "body": body}]}
 
 
 def test_function_changed_in_the_same_pr_is_not_a_helper(make_repo, fake_llm, capsys):
@@ -314,7 +314,7 @@ def test_function_changed_in_the_same_pr_is_not_a_helper(make_repo, fake_llm, ca
 def test_helper_moved_in_the_same_pr_is_not_a_helper(make_repo, fake_llm, capsys):
     repo = make_repo(
         {"app/__init__.py": "", "app/text.py": SLUGIFY},
-        {"app/text.py": None, "app/words.py": SLUGIFY + "\n\n" + SIMPLE},
+        {"app/text.py": None, "app/words.py": SLUGIFY + "\n\n" + FLAT},
     )
 
     assert review(capsys, repo) == EMPTY
