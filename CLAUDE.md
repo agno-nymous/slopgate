@@ -13,6 +13,7 @@ Slopgate finds slop in Python code that coding agents write. It has two parts:
 - The tickets are in `issues/`, one file each. **`issues/ROADMAP.md` gives the next ticket and the order.** `docs/agents/issue-tracker.md` gives the ticket format and the status values.
 - Do one ticket on one branch, and finish it with a pull request to `main`.
 - The Slopgate workflow runs on a self-hosted runner on the user's Mac (ticket 27). It starts when a pull request opens. If the runner is offline, the job waits in the queue. Then run `uv run --env-file .env slopgate review --pr <number>` by hand.
+- **The Slopgate workflow is disabled since 2026-10-08** (`gh workflow disable Slopgate`). The user turned it off until the design of ticket 36 is done, because the gate posted wrong slop kinds on PR #20. Pull requests get no `slopgate` check now: verify a gate change with a local dry run on the PR head. Turn it on again only when the user says so: `gh workflow enable Slopgate`.
 - Ask the user before every commit and every push.
 - Start each commit message with the ticket number: `ticket-<NN>: type(scope): message`, for example `ticket-18: feat(llm): add decide`.
 - When a ticket's code is done, run a code review with the `pstack:thermo-nuclear-code-quality-review` skill before the commit (`/start-dev` step 4).

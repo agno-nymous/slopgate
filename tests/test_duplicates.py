@@ -138,7 +138,7 @@ def test_renamed_exact_copy_is_replaced_by_the_helper_without_llm(make_repo, fak
 )
 def test_copy_with_other_error_on_none(make_repo, fake_llm, capsys, difference, outcome):
     repo = make_repo({"app/__init__.py": "", "app/text.py": SLUGIFY}, {"app/posts.py": TYPE_ERROR_COPY})
-    fake_llm.replies += [SameJob(difference=difference, same_job=True), SLUG_TESTS]
+    fake_llm.replies += [SameJob(difference=difference, same_job=True), fenced(SLUG_TESTS)]
 
     result = review(capsys, repo)
 
@@ -155,7 +155,7 @@ def test_copy_with_other_error_on_none(make_repo, fake_llm, capsys, difference, 
 
 def test_candidate_without_a_verdict_is_skipped(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": "", "app/a.py": SLUGIFY, "app/b.py": SLUGIFY}, {"app/posts.py": TYPE_ERROR_COPY})
-    fake_llm.replies += [None, SameJob(difference="raises TypeError", same_job=True), SLUG_TESTS]
+    fake_llm.replies += [None, SameJob(difference="raises TypeError", same_job=True), fenced(SLUG_TESTS)]
 
     result = review(capsys, repo)
 
@@ -179,7 +179,7 @@ def test_copy_is_found_when_the_embedding_model_fails(make_repo, fake_llm, capsy
 
     monkeypatch.setattr(embed, "encode", encode)
     repo = make_repo({"app/__init__.py": "", "app/text.py": SLUGIFY}, {"app/posts.py": TYPE_ERROR_COPY})
-    fake_llm.replies += [SameJob(difference="raises TypeError instead of ValueError on None", same_job=True), SLUG_TESTS]
+    fake_llm.replies += [SameJob(difference="raises TypeError instead of ValueError on None", same_job=True), fenced(SLUG_TESTS)]
 
     result = review(capsys, repo)
 
@@ -205,7 +205,7 @@ def test_methods_are_never_duplicates(make_repo, fake_llm, capsys, base, head):
 
 def test_partly_changed_function_lands_in_followup_with_full_file(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": "", "app/perms.py": NESTED}, {"app/perms.py": NESTED.replace("return True", "return bool(1)")})
-    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT)]
+    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
 
     result = review(capsys, repo)
 
@@ -251,7 +251,7 @@ def test_restructured_copy_is_found_by_keyword_search(make_repo, fake_llm, capsy
     )
     fake_llm.replies += [
         SameJob(difference="returns an empty string for None where the helper raises", same_job=True),
-        RESTRUCTURED_TESTS,
+        fenced(RESTRUCTURED_TESTS),
     ]
 
     result = review(capsys, repo)

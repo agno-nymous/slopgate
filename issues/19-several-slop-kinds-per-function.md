@@ -2,7 +2,7 @@
 
 **What to build:** Lightning returns a list of slop kinds for a function, not one kind. The gate fixes all kinds of a function in one rewrite, proven once, and posted as one suggestion.
 
-**Blocked by:** 18, 21
+**Blocked by:** 18, 21, 36 (the design of 36 decides the input of `classify`, which this ticket changes)
 
 **Status:** ready-for-agent
 

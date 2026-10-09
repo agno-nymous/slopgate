@@ -85,7 +85,7 @@ def branch_file(origin, path):
 def test_inline_suggestions_are_posted_as_one_comment_review(github, fake_llm, capsys):
     make, calls = github
     repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT), SUMMARY]
+    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), SUMMARY]
 
     post(repo)
 
@@ -119,7 +119,7 @@ def test_pr_flag_fetches_the_pull_request_reviews_it_and_posts_to_it(github, fak
     pr_file.write_text(json.dumps(pr))
     monkeypatch.setenv("GH_PR", str(pr_file))
     monkeypatch.delenv("GITHUB_EVENT_PATH")
-    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT), SUMMARY]
+    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), SUMMARY]
 
     assert main(["review", "--repo", clone, "--pr", "7", "--sandbox", "local"]) is None
 
@@ -145,7 +145,7 @@ WRAPPER_HEAD = {"app/billing.py": COMPUTE_TAX + TAX_FOR + INVOICE_TOTAL}
 def test_followup_changes_open_one_pull_request_on_the_author_branch(github, fake_llm, capsys):
     make, calls = github
     repo, origin = make(WRAPPER_BASE, WRAPPER_HEAD)
-    fake_llm.replies += [OTHER_JOB, INVOICE_TESTS, SUMMARY]
+    fake_llm.replies += [OTHER_JOB, fenced(INVOICE_TESTS), SUMMARY]
 
     post(repo)
 
@@ -170,7 +170,7 @@ def test_existing_followup_pull_request_is_updated_not_duplicated(github, fake_l
     subprocess.run(["git", "commit", "-q", "--allow-empty", "-m", "earlier review"], cwd=repo, check=True)
     subprocess.run(["git", "push", "-q", "origin", "HEAD:refs/heads/slopgate/feature"], cwd=repo, check=True)
     subprocess.run(["git", "reset", "-q", "--hard", "HEAD~1"], cwd=repo, check=True)
-    fake_llm.replies += [OTHER_JOB, INVOICE_TESTS, SUMMARY]
+    fake_llm.replies += [OTHER_JOB, fenced(INVOICE_TESTS), SUMMARY]
 
     post(repo)
 
@@ -182,7 +182,7 @@ def test_existing_followup_pull_request_is_updated_not_duplicated(github, fake_l
 def test_fork_pull_request_gets_no_followup_branch(github, fake_llm, capsys):
     make, calls = github
     repo, origin = make(WRAPPER_BASE, WRAPPER_HEAD, fork=True)
-    fake_llm.replies += [OTHER_JOB, INVOICE_TESTS, SUMMARY]
+    fake_llm.replies += [OTHER_JOB, fenced(INVOICE_TESTS), SUMMARY]
 
     post(repo)
 
@@ -250,7 +250,7 @@ def test_install_failure_still_posts_the_notes_as_a_review(github, fake_llm, cap
 def test_rejections_are_listed_under_the_summary(github, fake_llm, capsys):
     make, calls = github
     repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    weak = TESTS.format(name="can_edit", call="can_edit").replace(
+    weak = fenced(TESTS.format(name="can_edit", call="can_edit")).replace(
         "def test_locked_cannot_edit():\n    assert can_edit(True, True, True, False) is False\n", ""
     )
     fake_llm.replies += [IS_NESTING, weak, SUMMARY]
@@ -265,7 +265,7 @@ def test_rejections_are_listed_under_the_summary(github, fake_llm, capsys):
 def test_summary_failure_still_posts_the_results(github, fake_llm, capsys):
     make, calls = github
     repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT)]
+    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
 
     post(repo)
 
@@ -290,7 +290,7 @@ def test_followups_that_edit_the_same_file_open_only_the_first(github, fake_llm,
     make, calls = github
     repo, origin = make(WRAPPER_BASE, {"app/billing.py": COMPUTE_TAX + TAX_FOR + INVOICE_TOTAL + FEE_FOR})
     fee_tests = "from app.billing import fee_total\n\n\ndef test_fee():\n    assert fee_total(100) == 110.0\n"
-    fake_llm.replies += [OTHER_JOB, OTHER_JOB, INVOICE_TESTS, fee_tests, SUMMARY]
+    fake_llm.replies += [OTHER_JOB, OTHER_JOB, fenced(INVOICE_TESTS), fenced(fee_tests), SUMMARY]
 
     post(repo)
 
@@ -304,7 +304,7 @@ def test_followup_pull_request_failure_still_posts_the_review(github, fake_llm, 
     make, calls = github
     repo, origin = make(WRAPPER_BASE, {"app/billing.py": COMPUTE_TAX + TAX_FOR + INVOICE_TOTAL, "app/perms.py": NESTED})
     monkeypatch.setenv("GH_CREATE_ERROR", "GitHub Actions is not permitted to create or approve pull requests")
-    fake_llm.replies += [OTHER_JOB, IS_NESTING, INVOICE_TESTS, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT), SUMMARY]
+    fake_llm.replies += [OTHER_JOB, IS_NESTING, fenced(INVOICE_TESTS), fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), SUMMARY]
 
     post(repo)
 
@@ -323,7 +323,7 @@ def test_followup_push_failure_still_posts_the_review(github, fake_llm, capsys):
     make, calls = github
     repo, _ = make(WRAPPER_BASE, WRAPPER_HEAD)
     subprocess.run(["git", "remote", "set-url", "origin", "/nonexistent/origin.git"], cwd=repo, check=True)
-    fake_llm.replies += [OTHER_JOB, INVOICE_TESTS, SUMMARY]
+    fake_llm.replies += [OTHER_JOB, fenced(INVOICE_TESTS), SUMMARY]
 
     post(repo)
 
@@ -350,7 +350,7 @@ def test_github_server_errors_are_retried(github, fake_llm, capsys, outages):
     set_count, sleeps = outages
     repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
     set_count(2)
-    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT), SUMMARY]
+    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), SUMMARY]
 
     post(repo)
 
@@ -365,7 +365,7 @@ def test_github_server_errors_give_up_after_three_tries(github, fake_llm, capsys
     set_count, _ = outages
     repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
     set_count(3)
-    fake_llm.replies += [IS_NESTING, TESTS.format(name="can_edit", call="can_edit"), fenced(FLAT), SUMMARY]
+    fake_llm.replies += [IS_NESTING, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), SUMMARY]
 
     post(repo)
 
