@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**37 — Detection benchmark on SWE-bench code with injected slop (stage 1 of ticket 10).**
+**39 — Design: better detection for `redundant_check` and `nesting`; remove `filler_comment`.** Ticket 37 measured 21.7% of clean function runs with a false kind.
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -20,7 +20,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 6 | [18 — Model decisions through pydantic tool calls](18-decisions-through-pydantic-tool-calls.md) | done | — | Adds `decide`. Ticket 19 needs it. |
 | 7 | [32 — Trace every model request in Arize Phoenix](32-phoenix-tracing.md) | done | — | The user set it next on 2026-10-08. Each prompt and reply becomes visible, so a failed proof can be explained from the real run. Starts with a design stage for the span names. |
 | 8 | [36 — Design: how the gate picks a slop kind, and what input the model gets](36-design-slop-kind-input.md) | done | — | Design ticket. On PR #20, all 12 notes were wrong by the gate's own checks: complexity counts asserts, and the model's kind is not checked. |
-| 9 | [37 — Detection benchmark on SWE-bench code with injected slop](37-detection-benchmark.md) | ready-for-agent | 36 | The user set it next on 2026-10-09. It measures the detection of ticket 36 on code that nobody on the project wrote, with no sandbox. |
+| 9 | [37 — Detection benchmark on SWE-bench code with injected slop](37-detection-benchmark.md) | done | 36 | The user set it next on 2026-10-09. It measures the detection of ticket 36 on code that nobody on the project wrote, with no sandbox. |
 | 10 | [30 — Give the test writer the constants the target reads](30-constants-in-callee-context.md) | ready-for-agent | — | Super guessed `DUPLICATE_SCORE` on PR #17. No extra model call. |
 | 11 | [35 — Tell the test writer that the tests run without network and keys](35-tests-run-without-network.md) | ready-for-agent | 30 | `characterize` on PR #20: the tests called the real model client and patched a parameter by name. Needs a live measurement. |
 | 12 | [29 — Keep the passing characterization tests](29-keep-passing-characterization-tests.md) | ready-for-agent | 20 | One failing test rejects the whole file now. No extra model call. |
@@ -42,6 +42,10 @@ Added after the order was set:
 |---|---|---|
 | [26 — Review a pull request on the local machine](26-review-a-pr-locally.md) | done | Adds `slopgate review --pr <number>`. |
 | [27 — Run the gate automatically on a self-hosted runner](27-gate-on-self-hosted-runner.md) | needs-live-check | The workflow runs on the user's Mac. It needs the runner to be registered. |
+| [38 — A comment at column 0 inside a method crashes `classify`](38-column-zero-comment-crash.md) | ready-for-agent | Found by ticket 37. 34 functions in the 12 SWE-bench Lite repos. Do it before ticket 10. |
+| [39 — Design: better detection for `redundant_check` and `nesting`; remove `filler_comment`](39-detection-precision.md) | ready-for-agent | Found by ticket 37. Next ticket: the gate gives a false kind on 21.7% of clean function runs. |
+| [40 — Limit the output tokens of `decide`](40-limit-decide-output.md) | ready-for-agent | Found by ticket 37. 5 of 1,407 `classify` runs took 60 s to 110 s. |
+| [41 — Characterization tests by an agent in a ConTree sandbox](41-characterization-agent-in-contree.md) | ready-for-agent | The user set it on 2026-10-09. Do it after 39 and before 30, 35, 29, and 31: its result can make those tickets unnecessary. |
 
 Tickets 01 to 07, 12 to 22, 26, 28, 32, and 36 are done. Ticket 24 is wontfix.
 
@@ -51,7 +55,8 @@ Tickets 01 to 07, 12 to 22, 26, 28, 32, and 36 are done. Ticket 24 is wontfix.
 2. Tickets 17, 19, 20, 21, 22, 29, 30, and 31 all edit `slopgate/review.py`. Do them one at a time, in the order above, to prevent merge conflicts.
 3. Ticket 24 edits only `action.yml`, the workflow, and `README.md`. It can run in parallel with any other ticket.
 4. If a ticket is blocked, take the next open row whose blockers are all done.
-5. Before the submission (ticket 11), make the `slopgate` and `slopgate-demo` repos public. They stay private until then.
+5. Ticket 41 comes before tickets 30, 35, 29, and 31. Its comparison decides whether an agent in the sandbox replaces their fixes.
+6. Before the submission (ticket 11), make the `slopgate` and `slopgate-demo` repos public. They stay private until then.
 
 ## How to do a ticket
 

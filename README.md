@@ -134,3 +134,17 @@ uv run --env-file .env pytest -m live -q -k test_super_tests_reply
 ```
 
 To turn tracing off, remove the `PHOENIX_COLLECTOR_ENDPOINT` line from `.env` and from `.claude/settings.local.json`.
+
+## Detection benchmark (development of this repo only)
+
+The detection benchmark measures how well the gate finds slop kinds (`classify` in `slopgate/kinds.py`) on code from 12 SWE-bench Lite repos. It runs no sandbox and writes no rewrite. It uses 200 clean functions, and copies of other functions with injected slop: code transforms and Nemotron Super injections.
+
+Run it with one command:
+
+```sh
+uv run --env-file .env python -m bench.detect
+```
+
+The command clones the repos into `~/.cache/slopgate/bench/` and skips each stage that is already done. To run one stage only, add `sample`, `inject`, `run`, or `report`. A person records a decision for each kind that the gate finds on a clean function in `bench/labels.json`. The same file records whether each Nemotron injection contains its kind. The report leaves out the invalid injections.
+
+The results are in [`bench/results/detection.md`](bench/results/detection.md) and [`bench/results/detection.json`](bench/results/detection.json). Ticket 37 explains them.
