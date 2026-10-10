@@ -49,6 +49,7 @@ Added after the order was set:
 | [41 — Characterization tests by an agent in a ConTree sandbox](41-characterization-agent-in-contree.md) | done | A plain tool loop (design D) proved 24 of 36 functions; the old flow proved 7. `characterize` uses it now. Tickets 29, 30, 31, and 35 are wontfix. |
 | [43 — The gate cannot prove a `redundant_check` rewrite](43-dead-branch-of-redundant-check.md) | ready-for-agent | Found by ticket 39. The never-run branch of a repeated check fails the branch coverage rule. |
 | [44 — The import line is wrong for a repo with a `src/` layout](44-src-layout-import-line.md) | ready-for-agent | Found by ticket 41. All 6 pytest functions failed in every design. |
+| [45 — The test agent cannot characterize large functions](45-characterize-large-functions.md) | ready-for-agent | Found by ticket 41. The agent proved no function of complexity 17 or more; `review` (complexity 65) stopped at the token limit. |
 
 Tickets 01 to 07, 12 to 22, 26, 28, 32, 36, 37, 39, and 41 are done. Tickets 24, 29, 30, 31, and 35 are wontfix.
 
