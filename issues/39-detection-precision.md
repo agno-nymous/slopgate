@@ -3,7 +3,7 @@
 ## Summary
 
 - **Goal:** Remove the `filler_comment` kind from the gate. Make the detection of `redundant_check` and `nesting` more accurate on real code. Example: in `isatty` (astropy), Lightning missed a repeated `hasattr(file, 'isatty')` check in all 3 runs.
-- **Checkable finish condition:** `filler_comment` is gone from the gate, the benchmark, and the tests. Each design question has an answer with a measurement on the ticket 37 benchmark. The false-positive rate on clean functions goes down. The recall on injected items does not fall by more than the measured noise (stability is 0.80 across 3 runs). `bench/results/detection.md` holds the new numbers.
+- **Checkable finish condition:** `filler_comment` is gone from the gate, the benchmark, and the tests. Each design question has an answer with a measurement on the ticket 37 benchmark. On the held-out set, the false-positive rate on clean functions goes down, and the 95% range of that difference is above 0. The recall on injected items does not fall by more than its range. `bench/results/detection.md` holds the new numbers.
 - **Evidence:** Before (ticket 37): 21.7% of clean function runs got a false kind. Precision was 0.593 for `nesting`, 0.456 for `filler_comment`, and 0.462 for `redundant_check`. First live check in Comments: Super with thinking on gave precision 0.89 and recall 0.78 for `redundant_check`, against 0.46 and 0.50 for the gate now. After: the updated `bench/results/detection.md` (not done yet).
 - **Constraints:** The user decided on 2026-10-09 to remove `filler_comment` and keep `redundant_check`. Blocked by ticket 37. The first measurements used the same labels that chose the checks, so confirm each result on new labelled functions before you build it. This ticket is a design first, then a build.
 
@@ -67,12 +67,23 @@ So design question 2 is closed. The change removes `filler_comment` from `KINDS`
 3. `redundant_check`: accept only evidence of one line? Give the model the earlier check and the repeated check as two fields? Ticket 36 design F tried two-line evidence with Lightning and did not get better results. Measure again on this benchmark.
 4. Does Super do better than Lightning on these 3 kinds, at what cost?
 
+## How to measure
+
+Ticket 42 gives the context (the evals guide). These 3 rules apply to every answer above.
+
+1. **Held-out set.** Before you try any change, split the ticket 37 items into a tuning set (60%) and a held-out set (40%), by function, with seed 39. An injected item goes to the same set as its source function. Choose the checks and the prompts only on the tuning set. Report the final numbers on the held-out set. Do not change a check after you see the held-out numbers. Label each new flag on the held-out set before you look at its score.
+2. **A range for each number.** Report a 95% range for precision, recall, and the false-positive rate. Use a bootstrap over functions: resample whole functions, with their 3 runs together, 1,000 times, with a fixed seed. To compare the gate now with a new check, resample the same functions for both, and report the range of the difference. A change is an improvement only when that range is above 0.
+3. **Model errors apart.** A Lightning or Super check that fails (no tool call, a cut-off reply, a request error) is a check error, not "kind not found". `classify` must report it as an error. The benchmark counts check errors for each kind, apart from the misses.
+
 ## Acceptance
 
 - [ ] `filler_comment` is removed from the gate, the benchmark, and the tests.
 - [ ] Each design question has an answer with a measurement on the ticket 37 benchmark.
 - [ ] The false-positive rate on clean functions goes down, and the recall on injected items does not fall by more than the measured noise (stability is 0.80 across 3 runs).
 - [ ] `bench/results/detection.md` is updated with the new numbers.
+- [ ] The final numbers come from the held-out set, and each number has a 95% range from a bootstrap over functions.
+- [ ] Each claimed improvement has a range of the difference that is above 0.
+- [ ] `classify` reports a failed model check as an error, and `detection.md` counts the errors for each kind.
 
 ## Comments
 

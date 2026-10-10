@@ -45,6 +45,7 @@ Added after the order was set:
 | [38 — A comment at column 0 inside a method crashes `classify`](38-column-zero-comment-crash.md) | ready-for-agent | Found by ticket 37. 34 functions in the 12 SWE-bench Lite repos. Do it before ticket 10. |
 | [39 — Design: better detection for `redundant_check` and `nesting`; remove `filler_comment`](39-detection-precision.md) | ready-for-agent | Found by ticket 37. Next ticket: the gate gives a false kind on 21.7% of clean function runs. |
 | [40 — Limit the output tokens of `decide`](40-limit-decide-output.md) | ready-for-agent | Found by ticket 37. 5 of 1,407 `classify` runs took 60 s to 110 s. |
+| [42 — Benchmark statistics: label agreement, run metadata, and pass@k](42-benchmark-statistics.md) | ready-for-agent | The user set it on 2026-10-10. Do it before ticket 10. Ticket 39 does the other 3 checks of the evals guide (held-out set, ranges, errors apart). |
 | [41 — Characterization tests by an agent in a ConTree sandbox](41-characterization-agent-in-contree.md) | ready-for-agent | The user set it on 2026-10-09. Do it after 39 and before 30, 35, 29, and 31: its result can make those tickets unnecessary. |
 
 Tickets 01 to 07, 12 to 22, 26, 28, 32, and 36 are done. Ticket 24 is wontfix.
