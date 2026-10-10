@@ -358,6 +358,14 @@ def test_pytest_errors_are_not_counted_as_failed_tests(fake_llm):
     assert "in slopgate/review.py: The rewrite failed repo tests.\n" in body
 
 
+@pytest.mark.parametrize("stop", ["step limit", "agent error: RuntimeError('a: b')"])
+def test_stop_reason_of_the_test_agent_goes_into_the_sentence(fake_llm, stop):
+    body = rejected(f"{stop}: characterization tests fail on original: {PYTEST_TAIL}")
+
+    sentence = f"9 of 10 generated tests failed on the unchanged code, so the gate could not check a rewrite (the test agent stopped: {stop})."
+    assert f"in slopgate/review.py: {sentence}\n\n  ```\n" in body
+
+
 def test_multi_line_reason_with_an_unknown_prefix_still_gets_a_code_block(fake_llm):
     body = rejected("new check fails: line one\n>   line two")
 

@@ -85,16 +85,23 @@ SENTENCES = {
 
 def rejection(r) -> str:
     item = f"- `{r['function']}` ({', '.join(r['kinds'])}) in {r['path']}:"
-    head, _, output = r["reason"].partition(": ")
-    # a multi-line reason holds tool output even when its prefix is not in SENTENCES
-    if not output or (head not in SENTENCES and "\n" not in output):
-        return f"{item} {r['reason']}"
-    last = next((line for line in reversed(output.splitlines()) if re.search(r"\d+ (failed|passed|error).* in [\d.]+s", line)), "")
-    # pytest errors are files or fixtures that broke, not tests, so they stay out of the counts
-    n = {word: int(count) for count, word in re.findall(r"(\d+) (failed|passed)", last)}
-    failed = n.get("failed", 0)
-    counts = f"{failed} of {failed + n.get('passed', 0)} " if failed else ""
-    sentence = SENTENCES[head].format(counts=counts) if head in SENTENCES else f"{head}."
+    # characterize puts the test agent's stop reason, such as "step limit", before the reason
+    known = re.match(rf"(?:([^\n]*?): )?({'|'.join(map(re.escape, SENTENCES))}): (.+)", r["reason"], re.S)
+    if known:
+        stop, head, output = known.groups()
+        last = next((line for line in reversed(output.splitlines()) if re.search(r"\d+ (failed|passed|error).* in [\d.]+s", line)), "")
+        # pytest errors are files or fixtures that broke, not tests, so they stay out of the counts
+        n = {word: int(count) for count, word in re.findall(r"(\d+) (failed|passed)", last)}
+        failed = n.get("failed", 0)
+        sentence = SENTENCES[head].format(counts=f"{failed} of {failed + n.get('passed', 0)} " if failed else "")
+        if stop:
+            sentence = f"{sentence[:-1]} (the test agent stopped: {stop})."
+    else:
+        head, _, output = r["reason"].partition(": ")
+        # a multi-line reason holds tool output even when its prefix is not in SENTENCES
+        if "\n" not in output:
+            return f"{item} {r['reason']}"
+        sentence = f"{head}."
     # a longer fence than any backtick run in the output keeps the output from closing it early
     fence = "`" * max(3, max(map(len, re.findall(r"`+", output)), default=0) + 1)
     block = textwrap.indent(f"{fence}\n{output}\n{fence}", "  ")
