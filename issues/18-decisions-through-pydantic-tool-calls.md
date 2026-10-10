@@ -1,6 +1,11 @@
 # 18 — Model decisions through pydantic tool calls
 
-**What to build:** A new model call, `decide`, sends a prompt with one tool whose parameters are a pydantic model. It forces the model to call that tool, and it returns the arguments as a parsed pydantic object. The gate's duplicate check uses it with a `SameJob` model.
+## Summary
+
+- **Goal:** Get model decisions (a kind, a yes/no verdict, a reason) as a forced tool call that parses into a pydantic object. Example: the duplicate check returns `SameJob(difference='', same_job=True)` for a renamed copy of `apply_discount`.
+- **Checkable finish condition:** `uv run pytest -q` passes. The live test `test_decide_finds_a_renamed_copy_of_apply_discount` passes for Super and for Lightning, and each returns `same_job=True`. `decide` returns `None` for a reply with no tool call or with a missing field.
+- **Evidence:** Done. Before, decisions used JSON mode, which checks that the reply is valid JSON but not that it has the right fields. On 2026-10-04, a JSON schema in `response_format` proved 2 of 15 and 3 of 15 runs, and a forced tool call proved 15 of 15. After: the live test passed with Super in 1.31 s and 1.84 s and Lightning in 0.67 s and 0.78 s. The offline suite gave 144 passed.
+- **Constraints:** Decisions use a tool call. Code stays in a ```` ```python ```` block in markdown, never inside JSON. Thinking is off for `decide`. `classify` stays on `complete(..., json=True)` until ticket 19. `slopgate/llm.py` has no runtime pydantic import, because the hook imports it.
 
 **Blocked by:** None — can start immediately.
 

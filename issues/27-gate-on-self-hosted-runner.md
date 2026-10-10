@@ -1,6 +1,11 @@
 # 27 — Run the gate automatically on a self-hosted runner
 
-**What to build:** The Slopgate workflow starts again when a pull request opens on this repo. The job runs on a self-hosted GitHub runner on the user's Mac, not on a GitHub runner.
+## Summary
+
+- **Goal:** Start the Slopgate gate again when a pull request opens, on a self-hosted GitHub runner on the user's Mac. Example: a new pull request starts the `slopgate` job, and the job posts its result.
+- **Checkable finish condition:** A new pull request starts the `slopgate` job on the Mac runner, the job posts its result, and the job takes less than 10 min.
+- **Evidence:** Before: the gate took 33 min 57 s on a GitHub runner for PR #9 and ran only by hand after ticket 26. On the Mac, `--pr 11 --dry-run` took 2 min 51 s and 3 min 10 s. Two boxes are done: the workflow uses `runs-on: self-hosted` and not `actions/setup-python`. The live check is still open.
+- **Constraints:** The job does not use `uses: ./`, because `actions/setup-python` fails on a self-hosted Mac. `ci.yml` stays on `ubuntu-latest`. Before the repo is public (2026-10-30), set `runs-on: ubuntu-latest` again and remove the runner.
 
 **Blocked by:** 26 (done)
 

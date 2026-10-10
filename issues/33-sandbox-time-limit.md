@@ -1,6 +1,11 @@
 # 33 — Add a time limit to each sandbox run
 
-**What to build:** Each sandbox run stops after a time limit. A run that waits for input or loops forever then fails with a clear reason, and the gate goes on to the next function.
+## Summary
+
+- **Goal:** Each sandbox run stops after a time limit. A run that waits for input or loops forever then fails with a clear reason, and the gate goes on to the next function. Example: a model-written call `f(input())` blocks the run today.
+- **Checkable finish condition:** A Local sandbox run of `python -c "while True: pass"` returns after the limit with "timed out after <n> s". A run of `python -c "input()"` returns at once with a failure. `uv run pytest -q` passes.
+- **Evidence:** Before: `shell` in `slopgate/sandbox.py` has no `timeout`, and during ticket 20 one offline test run stalled for about 10 minutes. After: the tests above pass, a live Contree run of `sleep <limit + 5>` stops at the limit, and the slowest normal run time is in the Comments next to the chosen limit.
+- **Constraints:** Set `SANDBOX_TIMEOUT` in `slopgate/config.py` well above the slowest normal run, and measure that run first. Pass `stdin=subprocess.DEVNULL` and return `(124, "timed out after <n> s")`. If the Contree client has no timeout option, stop and tell the user.
 
 **Blocked by:** None — can start immediately.
 

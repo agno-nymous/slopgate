@@ -1,6 +1,11 @@
 # 40 — Limit the output tokens of `decide`
 
-**What to build:** Give `llm.decide` an output limit, so that a long Lightning reply cannot slow a gate run for 1 to 2 minutes.
+## Summary
+
+- **Goal:** Stop a long Lightning reply from slowing a gate run for 1 to 2 minutes. Example: `_create_nan_agg_method` in xarray wrote 8,253 output tokens in 109.9 s.
+- **Checkable finish condition:** `decide` sends `max_tokens`, and a cut-off reply returns `None`. A rerun of `uv run --env-file .env python -m bench.detect run` has no run longer than 30 s.
+- **Evidence:** Before: in ticket 37, 5 of 1,407 `classify` runs wrote 8,000 or more tokens and took 60 s to 110 s. The median run took 1.6 s. After: the rerun has no run longer than 30 s, and the precision and the recall change by no more than the measured noise.
+- **Constraints:** Take the limit from a new constant `DECIDE_OUTPUT_TOKENS` in `slopgate/config.py`, for example 2,048. When `finish_reason` is `"length"`, record the cut-off in the trace. Remove `bench/results/runs.json` before the rerun.
 
 **Blocked by:** —
 

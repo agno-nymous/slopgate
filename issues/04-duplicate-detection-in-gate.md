@@ -1,21 +1,26 @@
 # 04 — Duplicate detection in the gate
 
-**What to build:** The gate finds a new module-level function that does the same job as a function that is already in the repo. The gate replaces the new function with a call to the existing helper.
+## Summary
+
+- **Goal:** Find a new function that does the same job as a function that is already in the repo, and replace it with a call to the existing one. Example: a new `make_slug` that copies the existing `slugify`.
+- **Checkable finish condition:** The gate finds a renamed exact copy of `slugify` with zero model calls. Vector search finds a restructured copy under the `live` marker. The accepted result is in `followup`, and the repo tests pass on it.
+- **Evidence:** Built on 2026-10-03. 34 offline tests passed. 16 planted bugs each failed at least one test. 5 live tests passed. A real renamed copy scored 0.686, below the first floor of 0.75, so the user lowered the floor to 0.6. After that, the gate found both restructured copies (scores 0.79 and 0.62).
+- **Constraints:** Build the index at the base ref, so the pull request cannot match its own code. Check the exact structure hash first, with no model. Nemotron Super decides whether two functions do the same job. Never treat methods as duplicates. Put the rewrite in `followup`, because it changes more than the diff. Use the query prefix for queries, and no prefix for indexed functions.
+
+**Blocked by:** 01
+
+**Status:** done
+
+## Details
 
 The command `slopgate index` builds a function index at a git ref. For each function, the index stores the structure hash and a CodeRankEmbed vector. The gate computes both on the local CPU. The index lives in `.slopgate/`.
 
-At review time, the gate builds the index at the base ref. The pull request cannot match its own code. The steps are:
+At review time, the gate builds the index at the base ref. The steps are:
 1. An exact structure-hash match needs no model call.
 2. Otherwise, vector search returns the top 5 functions above a score of 0.75.
 3. Nemotron Super checks whether each candidate does the same job. Nemotron Super states any difference in behavior.
 4. The proof is a differential test. The characterization tests of the new function run against the existing helper.
 5. The rewrite deletes the new function. The rewrite changes the callers of the new function to call the helper.
-
-The rewrite changes more than the diff. For this reason, the rewrite goes into `followup`.
-
-**Blocked by:** 01
-
-**Status:** done
 
 - [x] The command `slopgate index --ref <ref>` writes the index to `.slopgate/`. A second load returns the same functions and vectors.
 - [x] The gate finds a renamed exact copy of an existing helper with zero LLM calls.

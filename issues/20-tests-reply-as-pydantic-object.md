@@ -1,6 +1,11 @@
 # 20 — Tests reply as one pydantic object, sent as markdown
 
-**What to build:** The request for characterization tests has three reply forms: calls, a test file, or "cannot test". The model writes its reply as markdown. The gate parses the reply into one pydantic object and checks it before it uses it. Prose can no longer become a test file. When the calls miss branches, the gate asks once for a test file instead of rejecting the function.
+## Summary
+
+- **Goal:** Make the gate read the test reply of the model as one of three checked forms: calls, a test file, or "cannot test". Prose can no longer become a test file. Example: on PR #9, Super answered with prose for `fake_llm`, and the gate saved it as a test file that failed with `SyntaxError`.
+- **Checkable finish condition:** A reply of prose with no code block retries once and then rejects with "tests reply is not python". `CANNOT_TEST: fixture` rejects with "model cannot test: fixture" and makes no retry. `uv run pytest -q` passes.
+- **Evidence:** Before: 2 of 3 replies were prose in a reproduction. After (2026-10-08): `uv run pytest -q` gave 216 passed. In live runs, `apply_discount` and `broken_rule` were proven 4 of 4, and `fake_llm` gave `CannotTest` 4 of 4. In the fair run, markdown proved 45 of 54 and a forced tool call proved 41 of 54.
+- **Constraints:** The model replies in markdown, not in a tool call or JSON schema. Thinking stays off. The model never sees the pydantic classes. Do not offer "cannot test" as an optional tool. Make at most 2 model requests for each function. Ticket 21 comes first.
 
 **Blocked by:** 21 (it changes `strip_fence` and turns thinking off in `complete`; this ticket uses both)
 

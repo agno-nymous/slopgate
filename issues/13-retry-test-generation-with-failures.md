@@ -1,10 +1,19 @@
 # 13 — Retry the characterization tests once with the failing output
 
-**What to build:** Nemotron Super writes characterization tests but does not run the code. Sometimes it predicts an exact value incorrectly (for example `round(0.005, 2)`). These tests fail on the original code. The gate then loses the candidate, although the rewrite can be correct. When the characterization tests fail on the original, ask Super one more time. Give Super the failing pytest output. Super then corrects the expected values to the values that the code returns. Apply the same checks to the second attempt (double run, branch coverage).
+## Summary
+
+- **Goal:** The gate asks Super one more time for characterization tests (tests that record what the old code does) when the first test file fails on the original code. Example: Super predicted `round(0.005, 2)` wrongly. The retry gets the failing output and corrects the expected value.
+- **Checkable finish condition:** When the first test file fails on the original, the gate makes exactly one more Super call, and its prompt holds the failing assertion output. The ticket 12 demo succeeds in at least 9 of 10 live runs.
+- **Evidence:** Before: in ticket 12, the gate accepted 6 of 9 real runs. After: 10 of 10 live runs gave the wrapper followup. Two new offline tests pass (retry succeeds, and two failures reject the candidate). Each of 3 planted bugs makes one test fail.
+- **Constraints:** The retry applies the same checks as the first attempt (double run, branch coverage). It happens once. It does not happen for nondeterministic tests or for tests that miss a branch. It uses Super, not Ultra, because the task is to copy observed values. After two failures the reason is "characterization tests fail on original".
 
 **Blocked by:** 12
 
 **Status:** done
+
+## Details
+
+Nemotron Super writes characterization tests but does not run the code. Sometimes it predicts an exact value incorrectly (for example `round(0.005, 2)`). These tests fail on the original code. The gate then loses the candidate, although the rewrite can be correct. When the tests fail on the original, the gate gives Super the failing pytest output. Super then corrects the expected values to the values that the code returns.
 
 - [x] The first test file fails on the original. Then the gate makes exactly one more SUPER call. The prompt of that call contains the failing assertion output.
 - [x] The second test file passes. Then the proof continues as normal. The second test file also fails. Then the gate rejects the candidate with "characterization tests fail on original".

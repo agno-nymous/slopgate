@@ -1,10 +1,11 @@
 # 21 — Code replies: one Python block, thinking off, and reject a rewrite with no change
 
-**What to build:** Three changes to the requests that return code:
+## Summary
 
-1. `complete` turns thinking off and rejects a reply that was cut off.
-2. The rewrite prompt asks for exactly one ```` ```python ```` block. The gate takes the code with a strict extractor and rejects a reply that has no such block.
-3. The gate rejects a rewrite that is the same code as the original.
+- **Goal:** The gate takes model-written code safely. Thinking is off, the rewrite arrives as one Python block, and a rewrite with no change is rejected. Example: on PR #9 the gate posted a suggestion for `onnx_model` in `slopgate/embed.py` that was identical to the original.
+- **Checkable finish condition:** A fake reply with prose and no Python block gives a `rejected` entry with the reason "rewrite reply is not a python block". An unchanged rewrite gives "rewrite makes no change". A reply with `finish_reason: "length"` gives "reply cut off". `uv run pytest -q` passes.
+- **Evidence:** Before: with thinking on, 2 of 3 replies for `forwarded` hit the 8,192-token limit, and each took 20 to 37 s. After: 134 tests passed, 12 deselected, and the 10 live tests passed. The new live test fails with thinking on. Three gate runs on a scratch repo had 0 cut-off replies and rejected `can_edit` as "rewrite makes no change".
+- **Constraints:** Code never goes inside JSON or tool-call arguments. The block ends at the first later line that is only three backticks. "No change" means the same AST and the same comments, so a rewrite that only removes a comment is not rejected. These rejections run no sandbox and no Ultra retry.
 
 **Blocked by:** None — can start immediately.
 

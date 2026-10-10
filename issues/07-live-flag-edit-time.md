@@ -1,19 +1,28 @@
 # 07 — Live duplicate flag at edit time
 
-**What to build:** A coding agent works in Claude Code. A hook checks every file that the agent writes or edits. A new function can duplicate an existing function. In this case, the hook adds a note to the context of the agent. The note names the existing function and its file. The note also gives a confidence score. The hook never blocks the write.
+## Summary
+
+- **Goal:** Warn the coding agent when it writes a copy of a function that already exists. Example: the agent writes `price_text` in `shop/report.py`, and the hook adds a note that it duplicates `format_total` in `shop/checkout.py`.
+- **Checkable finish condition:** `slopgate hook` reads a recorded `PostToolUse` payload and prints the note with the helper, its file, and the confidence. It prints nothing below confidence 0.8, and it always exits 0.
+- **Evidence:** Built on 2026-10-04. 13 offline tests and 3 live tests passed, and the full suite had 106 passed tests. 13 of 15 planted bugs failed a test. A live run on the demo repo gave the `price_text` note at confidence 0.95 in 2.08 s.
+- **Constraints:** The hook never blocks the write. It uses Nemotron Lightning with a one-token yes/no answer, and the flag threshold is 0.8. A write with no candidate makes no network call.
+
+**Blocked by:** 04
+
+**Status:** done
+
+## Details
+
+A coding agent works in Claude Code. A hook checks every file that the agent writes or edits. The note names the existing function and its file. The note also gives a confidence score.
 
 The hook does these steps in order:
 1. It parses the new functions.
 2. It checks the structure hash.
 3. It runs a local keyword and vector search.
 
-The hook calls the classifier only when a candidate passes the score floor. The classifier is Nemotron Lightning. It is limited to a one-token yes/no answer. The log-probability of the token is the confidence. The flag threshold is 0.8.
+The hook calls the classifier only when a candidate passes the score floor. The log-probability of the token is the confidence.
 
 The hook puts each new function into the index when the agent writes it. For this reason, the hook also checks the earlier functions of the agent. The ticket also documents how to install the hook in the Claude Code settings of a project.
-
-**Blocked by:** 04
-
-**Status:** done
 
 - [x] The command that runs the hook (`slopgate hook`) reads a recorded `PostToolUse` payload for `Write` or `Edit` from stdin. It prints a note in the format that Claude Code accepts as added context.
 - [x] A write duplicates an existing helper. In this case, the hook produces a note. The note names that helper, its file, and the confidence.

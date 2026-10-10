@@ -1,6 +1,11 @@
 # 32 — Trace every model request in Arize Phoenix
 
-**What to build:** Send a trace of each gate run, each hook run, and each live test to Arize Phoenix. In Phoenix, the user sees each request to Lightning, Super, and Ultra: the full prompt, the full reply, the model, the token counts, and the time. Each request sits under the gate step that sent it, so the user can see which prompt belongs to which function and which retry. The ticket has two stages. Stage 1 designs the span tree and the names. The user approves the design before stage 2 writes code.
+## Summary
+
+- **Goal:** Send a trace of each gate run, hook run, and live test to Arize Phoenix. The user then sees each request to Lightning, Super, and Ultra with its full prompt, reply, model, token counts, and time. Example: on PR #20, the user opens the trace and reads the `TESTS_PROMPT` and the Super reply for `characterize`.
+- **Checkable finish condition:** A dry run of the gate (`slopgate review --repo . --base <ref> --head <ref> --dry-run`) gives one trace. In it, each model request sits under the step that sent it. With tracing off, `uv run pytest -q` passes, `slopgate --help` takes 0.05 s or less, and no OpenTelemetry module is imported.
+- **Evidence:** Before: to see a prompt on PR #20, the user had to rebuild it by hand in a scratch script. After (2026-10-09): a dry run on the PR #20 range gave one trace with 279 spans and 121 model requests. `uv run pytest -q` gave 221 passed. `slopgate --help` took 0.032 s. The key `NEBIUS_API_KEY` was in 0 of 538 spans.
+- **Constraints:** Write the design first, and get the approval of the user before any code. Tracing is on only when `PHOENIX_COLLECTOR_ENDPOINT` is a local address. Only a local Phoenix gets traces. Put the setup in one module, `slopgate/trace.py`, and the packages in an optional `trace` extra. No span holds a secret. The hook exits 0 and makes no network call when there is no candidate.
 
 **Blocked by:** None — can start immediately.
 

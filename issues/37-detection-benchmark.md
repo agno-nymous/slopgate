@@ -1,6 +1,11 @@
 # 37 — Detection benchmark on SWE-bench code with injected slop (stage 1 of ticket 10)
 
-**What to build:** A benchmark that measures only the detection step of the gate (`classify` in `slopgate/kinds.py`) on real code from SWE-bench repos. It runs no sandbox and writes no rewrite. It reports the precision and the recall for each slop kind, and the false-positive rate on clean code.
+## Summary
+
+- **Goal:** Measure how well the detection step of the gate (`classify`) finds slop on real code. Example: `_words_group` in `astropy/io/fits/util.py` is clean code, and the benchmark shows whether `classify` flags it.
+- **Checkable finish condition:** One command, `uv run --env-file .env python -m bench.detect`, writes `bench/results/detection.json` and `bench/results/detection.md`. They give the precision, the recall, and the false-positive rate for each kind and in total, with at least 200 clean functions from at least 6 repos and at least 10 injected functions for each of the 6 kinds.
+- **Evidence:** Done. The run covered 469 items, 3 runs each, with 0 run errors. Total precision was 0.675, total recall 0.913, and the false-positive rate on clean functions 0.217. `nesting` (precision 0.593), `filler_comment` (0.456), and `redundant_check` (0.462) were below 0.8. This led to tickets 38 to 40.
+- **Constraints:** Run only the detection step, with no sandbox and no rewrite. Write the ground truth to a file before `classify` runs. Use a fixed seed (37) and run each function 3 times. The script is in `bench/`, and the README gives the command.
 
 **Blocked by:** 36
 

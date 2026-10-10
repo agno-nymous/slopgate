@@ -1,6 +1,11 @@
 # 22 — Dead-code check ignores unused parameters of nested functions and lambdas
 
-**What to build:** The dead-code check stops flagging a function because a nested function or a lambda inside it has an unused parameter.
+## Summary
+
+- **Goal:** Stop the dead-code check from flagging a function because a nested function or a lambda inside it has an unused parameter. Example: `onnx_model` in `slopgate/embed.py` has `lambda texts, normalize_embeddings: ...`, and callers must pass that parameter.
+- **Checkable finish condition:** `has_dead_code` returns false for a function with `lambda texts, unused: texts` and for a function with a nested `def inner(a, unused)`. It still returns true for an unused local `x = 1` and for code after a `return`. `uv run pytest -q` passes.
+- **Evidence:** Done. Before, `has_dead_code` called `onnx_model` and `fake_llm` (in `tests/conftest.py`) dead on main. After, it calls neither dead. The new test has 4 parameter sets. Before the fix, 2 failed and 2 passed. After, all 4 pass. The offline suite gave 110 passed. A live dry run gave one suggestion for `total` and none for `encoder`.
+- **Constraints:** Collect the parameter names of every function and lambda in the AST with `ast.walk`, not only of the top-level function. The rest of `has_dead_code` stays the same. Known limit: a local variable with the same name as a nested parameter is also ignored. This can only miss a `dead` finding.
 
 **Blocked by:** None — can start immediately.
 

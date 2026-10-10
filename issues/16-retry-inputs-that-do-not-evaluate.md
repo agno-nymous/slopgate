@@ -1,10 +1,19 @@
 # 16 — Retry once when the proposed inputs do not evaluate
 
-**What to build:** In the inputs form (ticket 14), the recorder evaluates each proposed item as `capture(<item>)`. A real run with Nemotron Super on `is_public(name, module, exported, private_prefix)` got `{"inputs": ["\"\" , False , [] , _", ...]}`. The reply has a bare `_` where the string `"_"` was meant. The recorder stopped with `NameError: name '_' is not defined`. The gate rejected the candidate at once with "could not record calls". A failing test gets one retry with the failure (ticket 13). A failed recording got no retry. Give a failed recording the same single retry. Ask Super one more time. Send the original request, the earlier reply of Super, and the error output of the recorder. Tell Super that each input must evaluate as Python with only literals and builtins. The reply can use either form. It goes through the same checks as a first reply. A candidate gets one retry in total, whichever failure came first.
+## Summary
+
+- **Goal:** When the inputs that Super proposes do not run, ask Super once more instead of rejecting the function. Example: for `is_public(name, module, exported, private_prefix)`, Super wrote a bare `_` where the string `"_"` was meant.
+- **Checkable finish condition:** After a failed recording, the gate makes exactly one more Super call. That call holds the original request, the earlier reply, and the recorder error. A candidate gets at most one retry in total. The tests of tickets 13 and 14 pass.
+- **Evidence:** Before: the bare `_` caused `NameError: name '_' is not defined`, and the gate rejected the candidate at once with "could not record calls". After (2026-10-03): 4 new offline tests passed. 9 planted bugs each failed at least one test. One ticket 14 test changed its contract and now expects a rejection after two Super calls.
+- **Constraints:** A candidate gets one retry in total, whichever failure came first. The retry reply goes through the same checks as a first reply. Do not change the first tests prompt.
 
 **Blocked by:** 14
 
 **Status:** done
+
+## Details
+
+In the inputs form (ticket 14), the recorder evaluates each proposed item as `capture(<item>)`. A failing test already gets one retry with the failure (ticket 13). A failed recording got no retry. Give a failed recording the same single retry. Send the original request, the earlier reply of Super, and the error output of the recorder. Tell Super that each input must evaluate as Python with only literals and builtins. The reply can use either form.
 
 - [x] The recording fails. Then the gate makes exactly one more SUPER call. The prompt of that call starts with the original request. It contains the earlier reply and the recorder error (`NameError`).
 - [x] The retry reply records and passes. Then the proof continues as normal.

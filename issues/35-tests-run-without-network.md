@@ -1,6 +1,11 @@
 # 35 — Tell the test writer that the tests run without network and keys
 
-**What to build:** The tests prompt tells Super that the tests run with no network and no API keys, and that a parameter is passed in, not patched. The "Code it calls" section also shows the module calls of the target, such as `llm.complete`.
+## Summary
+
+- **Goal:** Tell the test writer that the tests run with no network and no API keys. Example: on PR #20, the generated tests for `characterize` called the real `llm.complete` and failed with `KeyError` on `NEBIUS_API_KEY`.
+- **Checkable finish condition:** The rendered tests prompt of `characterize` shows `from slopgate import llm` and the signature of `llm.complete`. `uv run pytest -q` passes.
+- **Evidence:** Before: 9 of 10 generated tests failed on the original code for `characterize`. After: counts from 8 Super tries for each of `characterize`, `find_duplicate`, and `apply_discount`, with and without the new rule, are in the Comments. A live test proves `characterize`, or the Comments give the reason why not.
+- **Constraints:** Keep the prompt rule only if the counts improve. `apply_discount` must still get the calls form. This ticket waits for ticket 30, because both change the "Code it calls" section.
 
 **Blocked by:** 30 (both change the "Code it calls" section of the tests prompt)
 

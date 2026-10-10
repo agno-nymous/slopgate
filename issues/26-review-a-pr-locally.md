@@ -1,6 +1,11 @@
 # 26 — Review a pull request on the local machine
 
-**What to build:** `slopgate review --pr <number>` runs the gate on the local machine for one pull request. It posts the review to the GitHub pull request page. The Slopgate workflow on this repo is removed.
+## Summary
+
+- **Goal:** Run the gate on the local machine for one pull request, and post the review to GitHub. Example: `slopgate review --pr 11`.
+- **Checkable finish condition:** `slopgate review --pr 7` reviews the base and head commits of the pull request and posts to it (offline test with a fake `gh`). `slopgate review --pr 11 --dry-run` posts nothing. `.github/workflows/slopgate.yml` is deleted. `uv run pytest -q` passes.
+- **Evidence:** Done. Before, the GitHub run took 33 min 57 s on PR #9 and more than 10 min on PR #11. After, `--pr 11 --dry-run` took 2 min 51 s, gave 0 suggestions, and posted nothing (PR #11 had 0 comments). The offline suite gave 110 passed. The run also found and fixed a crash: `embed.load` used the ONNX model when `onnxruntime` was not installed.
+- **Constraints:** Without `--pr`, the behavior does not change. The parser stops with an error when it gets no `--pr` and not both `--base` and `--head`. With `--pr`, the gate fetches the base and head commits itself and does not read `GITHUB_EVENT_PATH`. Keep `action.yml`, the workflow example in `README.md`, and `.github/workflows/ci.yml`. Document the command in `README.md` and `CLAUDE.md`.
 
 **Blocked by:** None — can start immediately.
 

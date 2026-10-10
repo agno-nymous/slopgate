@@ -1,6 +1,11 @@
 # 24 — Save the embedding model cache on the default branch
 
-**What to build:** A push to the default branch fills the GitHub cache with the CodeRankEmbed model. Each new pull request then restores the model from the cache and does not download it.
+## Summary
+
+- **Goal:** Make each new pull request restore the embedding model from the GitHub cache and not download it again. Example: the log of a new pull request shows "Cache restored from key: slopgate-coderankembed-v1".
+- **Checkable finish condition:** A push to `main` runs the workflow, downloads the model, saves the cache, and posts nothing. The next new pull request restores the cache and does not download the model.
+- **Evidence:** Not built. Before: the workflow runs only on `pull_request`, so no run saves the cache on `main`, and each pull request downloads the 506 MB model. On 2026-10-08 the ticket became `wontfix`, because ticket 28 removed the embedding model from the gate.
+- **Constraints:** Do not change the cache key. If it must change later, change `v1` to `v2`. Keep the setup, cache, and install steps for both events. Skip the review step on `push`.
 
 **Blocked by:** None — can start immediately.
 

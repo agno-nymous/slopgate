@@ -1,6 +1,11 @@
 # 19 — Several slop kinds per function
 
-**What to build:** Lightning returns a list of slop kinds for a function, not one kind. The gate fixes all kinds of a function in one rewrite, proven once, and posted as one suggestion.
+## Summary
+
+- **Goal:** Let the gate fix all slop kinds of one function in one rewrite. Example: a function with deep nesting and a filler comment gets one suggestion that names `nesting` and `filler_comment`.
+- **Checkable finish condition:** One function with several kinds gives one rewrite request with a numbered list of fixes, one proof, and one suggestion that names every kind. `uv run pytest -q` passes.
+- **Evidence:** Before: the gate gave each function exactly one kind. After: ticket 36 built this in its stage 2 on 2026-10-09, with tests that replace the boxes in this ticket. The `SlopKinds` list gave 868 false kinds in the measurement of ticket 36, so `classify` now sends one `Check` call for each model kind.
+- **Constraints:** Keep the `wrapper` and `duplicate` paths as they are. Send one rewrite with all instructions as a numbered list. The Ultra retry gets the same list. Entries in `rejected` and follow-ups hold a `kinds` field.
 
 **Blocked by:** 18, 21, 36 (the design of 36 decides the input of `classify`, which this ticket changes)
 

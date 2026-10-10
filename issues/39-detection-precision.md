@@ -1,6 +1,11 @@
 # 39 — Design: better detection for `redundant_check` and `nesting`; remove `filler_comment`
 
-**What to build:** Remove the `filler_comment` kind from the gate. Make the detection of `redundant_check` and `nesting` more accurate on real code. Measure each change with the benchmark of ticket 37.
+## Summary
+
+- **Goal:** Remove the `filler_comment` kind from the gate. Make the detection of `redundant_check` and `nesting` more accurate on real code. Example: in `isatty` (astropy), Lightning missed a repeated `hasattr(file, 'isatty')` check in all 3 runs.
+- **Checkable finish condition:** `filler_comment` is gone from the gate, the benchmark, and the tests. Each design question has an answer with a measurement on the ticket 37 benchmark. The false-positive rate on clean functions goes down. The recall on injected items does not fall by more than the measured noise (stability is 0.80 across 3 runs). `bench/results/detection.md` holds the new numbers.
+- **Evidence:** Before (ticket 37): 21.7% of clean function runs got a false kind. Precision was 0.593 for `nesting`, 0.456 for `filler_comment`, and 0.462 for `redundant_check`. First live check in Comments: Super with thinking on gave precision 0.89 and recall 0.78 for `redundant_check`, against 0.46 and 0.50 for the gate now. After: the updated `bench/results/detection.md` (not done yet).
+- **Constraints:** The user decided on 2026-10-09 to remove `filler_comment` and keep `redundant_check`. Blocked by ticket 37. The first measurements used the same labels that chose the checks, so confirm each result on new labelled functions before you build it. This ticket is a design first, then a build.
 
 **Blocked by:** 37
 
@@ -14,11 +19,11 @@ Ticket 37 measured the detection on 200 clean functions and 134 injected functio
 
 | Kind | Precision | Recall | False-positive rate on clean functions |
 |---|---|---|---|
-| `nesting` | 0.559 | 1.0 | 0.090 |
-| `filler_comment` | 0.401 | 0.880 | 0.135 |
-| `redundant_check` | 0.416 | 0.508 | 0.023 |
+| `nesting` | 0.593 | 1.0 | 0.090 |
+| `filler_comment` | 0.456 | 0.892 | 0.135 |
+| `redundant_check` | 0.462 | 0.476 | 0.023 |
 
-The other 3 kinds (`swallowed_error`, `lookup_table`, `dead`) have a precision of 0.968 or more and a recall of 1.0.
+The other 3 kinds (`swallowed_error`, `lookup_table`, `dead`) have a precision of 0.967 or more and a recall of 1.0.
 
 `bench/results/detection.md` lists each false positive and each false negative. `bench/labels.json` gives the reason for each decision on real code.
 

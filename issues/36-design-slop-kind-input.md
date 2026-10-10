@@ -1,6 +1,11 @@
 # 36 — Design: how the gate picks a slop kind, and what input the model gets
 
-**What to build:** A design, not code. Find out why the gate names wrong slop kinds, and design the correct input to the model and the correct checks around it. The user approves the design. Then a later ticket (or stage 2 of this ticket) builds it.
+## Summary
+
+- **Goal:** Find out why the gate names wrong slop kinds, and design the correct input and checks. Example: on PR #20, the gate named `test_followup_pull_request_failure_still_posts_the_review` as "dead" code, although vulture found no dead code in it.
+- **Checkable finish condition:** The `## Design` section answers the 7 design questions, and the user approved it. After the build, the 12 PR #20 functions get no note with the real `classify` (live test), and `uv run pytest -q` passes.
+- **Evidence:** Before: the gate posted 12 notes on each of 2 runs of PR #20, and 4 of 12 functions changed kind between the runs. After (2026-10-09): a dry run on the PR #20 range gave 0 notes on those functions. 2 live tests passed. `uv run pytest -q` gave 238 passed.
+- **Constraints:** Measure before you choose a design. Use Ruff, vulture, and `nesting()` for the kinds that code can measure, with no model. Use Lightning only for `redundant_check` and `filler_comment`. The model gives its reason before its verdict. Remove the complexity trigger. Reject a rewrite that leaves the slop.
 
 **Blocked by:** None — can start immediately.
 

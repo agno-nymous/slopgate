@@ -1,12 +1,21 @@
 # 12 — Give the test writer the code the target calls
 
-**What to build:** The prompt that asks Nemotron Super for characterization tests shows only the source of the target function. Sometimes the result of the target depends on another repo function. Then Super has to guess the behavior of that function, and its tests fail on the original code. The gate correctly rejects such tests, but the candidate is lost.
+## Summary
 
-Add the source of every repo function that the target calls directly to the tests prompt. Resolve names one level deep, in the same way as the wrapper rewrites and the duplicate rewrites. Put this source under a heading such as "Code it calls". For a wrapper candidate, this source includes the wrapper and its inner function.
+- **Goal:** Give the model that writes tests the code that the target function calls, so its tests do not fail on a wrong guess. Example: for `cart_total`, which calls `discounted`, the prompt now shows `discounted`.
+- **Checkable finish condition:** The tests prompt for a function that calls a repo helper contains the source of the helper, and a offline test checks the recorded prompt. A function with no repo callees gets the same prompt as before.
+- **Evidence:** Before: on the demo repo, Super wrote tests for `cart_total` with `percent = -50`, and 2 of 4 failed on the original code. The first two real runs failed. After: 2 new offline tests and 48 offline tests passed. 4 planted bugs each failed one test. In live runs, 6 of 9 produced the wrapper followup. The remaining failure was a wrong exact value that ticket 13 covers.
+- **Constraints:** Resolve names in the same way as the wrapper rewrites and the duplicate rewrites. Add a "Code it calls" section only when the list is not empty. For a wrapper candidate, include the wrapper and its inner function.
 
 **Blocked by:** 05
 
 **Status:** done
+
+## Details
+
+The prompt that asks Nemotron Super for characterization tests showed only the source of the target function. Sometimes the result of the target depends on another repo function. Then Super had to guess the behavior of that function, and its tests failed on the original code. The gate correctly rejected such tests, but the candidate was lost.
+
+Add the source of every repo function that the target calls directly to the tests prompt. Resolve names one level deep. Put this source under a heading such as "Code it calls".
 
 - [x] The tests prompt for a function that calls a repo helper contains the source of the helper. A seam test checks the recorded prompt.
 - [x] A function with no repo callees gets the same prompt as before.

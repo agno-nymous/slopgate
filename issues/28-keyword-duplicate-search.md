@@ -1,6 +1,11 @@
 # 28 — Keyword duplicate search in the gate
 
-**What to build:** The gate finds duplicate candidates with token Jaccard, not with CodeRankEmbed vectors. The gate then loads no embedding model and installs no torch. The exact structure-hash match stays the first step. The Super same-job check stays the final decision. The hook does not change: it keeps the hybrid score of ticket 07.
+## Summary
+
+- **Goal:** Find duplicate candidates in the gate with keyword search, so the gate loads no embedding model and installs no torch. Example: the copy `make_slug` still finds `slugify`.
+- **Checkable finish condition:** `python -c "import slopgate.review, slopgate.index, sys; assert 'slopgate.embed' not in sys.modules"` passes. For each of the 16 copies, `index.search` returns the original in the top 5 at or above 0.30, on pool A and on pool B. `uv run pytest -q` passes.
+- **Evidence:** Before: the gate found 11 of 16 copies at the floor 0.6, and embedding 2,856 functions took 261 s. After (2026-10-08): 16 of 16 copies found on both pools. The original ranked first for 16 of 16 on pool A and 15 of 16 on pool B. Super made 3.58 same-job calls for each new function with no copy. The live dry run took 311 s with 88 MB peak memory (ticket 21: 320 s, 397 MB). 186 tests passed.
+- **Constraints:** Keep the exact structure-hash match as the first step, and the Super same-job check as the final decision. Do not change the hook: it keeps the hybrid score of ticket 07. Use token Jaccard with the tokens of `live.tokens`, no stop list, and the floor 0.30. Ticket 18 also edits `find_duplicate`, so do not do the two tickets at the same time.
 
 **Blocked by:** None — can start immediately. Ticket 18 also edits `find_duplicate`. Do not do the two tickets at the same time.
 
