@@ -1,14 +1,19 @@
 # 02 — Real Nebius sandbox with checkpoint
 
-**What to build:** The gate proves rewrites in a real Nebius Token Factory Sandbox (ConTree). The local fake is not the only sandbox. The gate uploads the repo at the head ref once for each pull request. The gate installs the repo on `python:3.12-slim`. The gate keeps the installed state as a checkpoint. Every trial (original tests, rewrite tests) starts from the checkpoint. A trial never changes the checkpoint. At most 8 trials run at the same time.
+## Summary
 
-The install and test commands come from `.slopgate.toml` if the file exists. Otherwise they come from `pyproject.toml`, and then from `requirements*.txt`. When the install fails, the gate reports the failure and stops. The gate proves nothing in that case.
-
-Start with a short spike. Confirm which ConTree SDK call starts a new run from a saved session state. Record the answer in the Comments of this ticket.
+- **Goal:** Let the gate prove rewrites in a real Nebius sandbox (ConTree), not only in the local fake. Example: the repo of a pull request installs once, and every test run then starts from that saved install.
+- **Checkable finish condition:** `uv run --env-file .env pytest -m live -q` passes. The nested-function fixture from ticket 01 gives the same JSON in the real sandbox as in the local fake. A count of install runs shows one install for each review.
+- **Evidence:** Done. The spike result is in Comments. On commit 20af887, 4 live tests passed in 45 s. The install took 6.6 s. Two parallel trials plus one more from the same saved install took 2.4 s. A file that one trial wrote was absent in the other trials. 10 offline tests pass, and 7 planted bugs each fail at least one test.
+- **Constraints:** Install once for each review on `python:3.12-slim`, and save the result as a checkpoint. Every trial starts from the checkpoint and never changes it. At most 8 trials run at the same time. Take the install and test commands from `.slopgate.toml`, then `pyproject.toml`, then `requirements*.txt`. Keep the shape `checkpoint(repo, ref)` and `run(checkpoint, files, cmd)`. If the install fails, report "could not build test environment", prove nothing, and exit 0.
 
 **Blocked by:** 01
 
 **Status:** done
+
+## Details
+
+The gate uploads the repo at the head ref once for each pull request. It installs the repo and keeps the installed state as the checkpoint. A trial is one test run, either the original tests or the rewrite tests. When the install fails, the gate reports the failure and stops. Start with a short spike: find which ConTree SDK call starts a new run from a saved session state, and record the answer in the Comments of this ticket.
 
 - [x] The spike result is written under `## Comments` in this ticket.
 - [x] The nested-function fixture from ticket 01 passes under the `live` marker with the real sandbox. The JSON result is the same as the result from the fake.

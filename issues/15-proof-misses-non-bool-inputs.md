@@ -1,6 +1,19 @@
 # 15 — Proof misses behavior on inputs that the tests never try
 
-**What to build:** Characterization tests prove a rewrite only on the inputs that they try. The demo pull request is at https://github.com/agno-nymous/slopgate-demo/pull/1. On that pull request, Slopgate accepted this rewrite of `can_checkout`:
+## Summary
+
+- **Goal:** Stop the gate from accepting a rewrite that returns other values than the original. Example: on demo PR #1, the rewrite `return user_active and has_items and address_ok and paid` gave `None` for `can_checkout(None, True, True, True)`, and the original gave `False`.
+- **Checkable finish condition:** The gate rejects the `can_checkout` demo rewrite, or the rewrite uses `bool(...)`. The gate still accepts `return bool(a and b)`.
+- **Evidence:** Before: the recorded tests passed because Super tried only `True` and `False`. After: a static rule rejects the rewrite, 5 new offline tests passed, and 7 planted bugs each failed one test. 3 live runs on the demo PR head gave `bool(...)` and 0 rejected.
+- **Constraints:** The fix compared two options: ask for non-bool test inputs, or add a static rule check. The built fix is the static rule in `broken_rule` in `slopgate/review.py`. It makes no model call.
+
+**Blocked by:** 14
+
+**Status:** done
+
+## Details
+
+Characterization tests (tests that record what the old code does) prove a rewrite only on the inputs that they try. The demo pull request is at https://github.com/agno-nymous/slopgate-demo/pull/1. On that pull request, Slopgate accepted this rewrite of `can_checkout`:
 
 ```python
 def can_checkout(user_active, has_items, address_ok, paid):
@@ -10,10 +23,6 @@ def can_checkout(user_active, has_items, address_ok, paid):
 The original version has nested `if` statements. It always returns `True` or `False`. The rewrite returns its first falsy argument. `can_checkout(None, True, True, True)` returns `None`. The original returns `False`. `can_checkout(True, True, True, 1)` returns `1`. The original returns `True`. The recorded tests passed because Super proposed only `True` and `False` inputs.
 
 Make the proof cover this class of change. Compare these options. Option 1: for each parameter that only a boolean test uses, ask for at least one non-bool truthy value and one non-bool falsy value. Option 2: add a static rule check. The check rejects a rewrite when the return expressions change from bool constants to a bare `and`/`or` chain.
-
-**Blocked by:** 14
-
-**Status:** done
 
 - [x] The gate rejects the `can_checkout` demo rewrite above, or the rewrite returns the same values (for example with `bool(...)`).
 - [x] The gate still accepts a rewrite that keeps bool results (for example `return bool(a and b)`).

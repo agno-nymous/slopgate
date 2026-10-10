@@ -1,6 +1,11 @@
 # 41 — Characterization tests by an agent in a ConTree sandbox
 
-**What to build:** Measure whether an agent that works in the sandbox writes better characterization tests than the current flow. The agent writes tests, runs them, reads the errors and the missed branches, reads other files of the repo, and tries again. Stage 1 compares 3 designs. Stage 2 builds the best design into `characterize`.
+## Summary
+
+- **Goal:** Find out whether an agent that works in the ConTree sandbox writes better characterization tests (tests that record what the old code does) than the current flow. Then build the best design into `characterize`. Example: the agent can run `grep` to find the value of `DUPLICATE_SCORE`, which Super guessed on PR #17.
+- **Checkable finish condition:** Stage 1: `bench/characterize.py` runs designs A, B, and C on the same functions with one command, and prints one table. Stage 2: `characterize` uses the design that the user chose, `uv run pytest -q` passes, and a dry run on demo PR #1 proves at least as many rewrites as before.
+- **Evidence:** Not measured yet. Before: tickets 29, 30, 31, and 35 each record one test failure of the current flow on PR #17 or PR #20. After: the table gives, for each design, the proof rate, the failure reasons, the time, the cost, and for C the steps and the broken file writes.
+- **Constraints:** The agent loop runs on the runner, outside the sandbox, and the sandbox gets no API key. Use Super, with thinking off. Do not use the broken mini-swe-agent adapter. Limit the agent to 15 steps and 120 s. The agent writes files with `execute` and a heredoc. The median time must stay below 60 s for each function. The user chooses the design for stage 2.
 
 **Blocked by:** —
 

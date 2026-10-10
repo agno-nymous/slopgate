@@ -1,8 +1,13 @@
 # 23 — Log the time of each gate step
 
-Ticket 32 (Phoenix tracing) gives the time of each step when tracing is on. So this ticket adds only the `Slowest:` line, for runs without tracing. The parts that the spans cover are removed below.
+## Summary
 
-**What to build:** The summary comment on the pull request shows the 3 slowest steps of a review. The gate records the time of each step in the result, and the summary reads them.
+- **Goal:** Show the 3 slowest steps of a review in the summary comment on the pull request. Example: "Slowest: sandbox setup 6m 10s, index 4m 2s, repo suite money 2m 1s."
+- **Checkable finish condition:** `result["timings"]` holds the steps with seconds as numbers, and the summary has a "Slowest:" line with at most 3 steps. `uv run pytest -q` passes.
+- **Evidence:** Before: the review of PR #9 took 33 min 53 s, but the log had no time for each step, so the cause is not known. After: a test pull request on the demo repo shows the "Slowest:" line, and the numbers go into the Comments of ticket 25.
+- **Constraints:** Ticket 32 covers the time of each step when tracing is on, so this ticket adds only the `Slowest:` line for runs without tracing. A result with only `timings` is still empty, so no comment is posted. Use the existing `duration` helper in `slopgate/github.py`.
+
+Ticket 32 (Phoenix tracing) gives the time of each step when tracing is on. So this ticket adds only the `Slowest:` line, for runs without tracing. The parts that the spans cover are removed below.
 
 **Blocked by:** None — can start immediately.
 

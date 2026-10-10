@@ -1,6 +1,11 @@
 # 29 — Keep the passing characterization tests
 
-**What to build:** When a test file from Super fails on the original code, the gate removes the failing test functions and keeps the passing ones. If the remaining tests pass in both runs and cover every branch, the gate uses them. This step makes no model call. If it does not give a good file, the gate continues with the retry from ticket 13, as now.
+## Summary
+
+- **Goal:** When a test file from Super fails on the original code, the gate removes the failing tests and keeps the passing ones. Example: for `find_duplicate` in `slopgate/review.py`, 4 tests failed and 1 passed on PR #17. The gate rejected the whole file.
+- **Checkable finish condition:** A test file with 1 failing and 2 passing tests that cover every branch gives the 2 passing tests, and the fake LLM gets no second tests request. `uv run pytest -q` passes.
+- **Evidence:** Before: on PR #17, `build` (2 failed, 2 passed), `find_duplicate` (4 failed, 1 passed), and one test function (1 error, 1 passed) were all rejected. After: run `characterize` on `build`, `seed`, `matches`, `find_duplicate`, and `characterize` at commit b2a2ad0, 4 runs each, before and after. Record the proven count for each function in the Comments.
+- **Constraints:** The removal makes no model call. The branch coverage check stays, and the reduced file runs with both seeds. If no test can be removed, or the reduced file fails, the gate goes on to the retry from ticket 13 with the output of the full file. Wait for ticket 20.
 
 **Blocked by:** 20 (it changes the reply parsing in `characterize`; this ticket changes the same loop)
 

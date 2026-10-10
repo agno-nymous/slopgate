@@ -1,17 +1,26 @@
 # 14 — Record real outputs for proposed calls
 
-**What to build:** Nemotron Super writes characterization tests. It predicts the expected value of each call. A wrong prediction makes the tests fail on the original code (ticket 13 retries one time). Easy functions do not need prediction. Super can propose the calls only. The sandbox then runs the calls on the original code. The sandbox records what each call returns or raises. The recorded outcomes become the test file. The expected values are correct by construction.
+## Summary
+
+- **Goal:** Make the tests for easy functions correct by construction. Super proposes only the calls. The sandbox runs them on the original code and records the results. Example: for `grade`, which can raise, Super proposes arguments and the test asserts the recorded exception.
+- **Checkable finish condition:** A calls reply gives one test for each call, with outcomes from the original code. The recorded tests reject a rewrite that changes a return value, the result type (`1` for `True`), the exception type, the exception message, or an argument. A recorder run with no results rejects the candidate with "could not record calls". A test file reply works as before.
+- **Evidence:** Done. Before, Super predicted each expected value, and a wrong prediction failed the tests on the original code. The first version checked only the result, so a rewrite of `Cart.add` that dropped the append passed. After: 8 new offline tests, and each of 8 planted bugs fails at least one test. Live with real Super and a real sandbox: 21 runs, 21 accepted. The ticket 12 wrapper demo had 10 of 10, `grade` 5 of 5, `add_tag` 3 of 3, and `Cart.add` 3 of 3 in the file form.
+- **Constraints:** Only module-level functions get the calls form, because the object of a method is not an argument. The recorder runs with `PYTHONHASHSEED=1`. It records `repr` of the result (or the exception type and message) and `repr` of the arguments after the call. The generated file goes through the same checks as a written file: the double run, branch coverage, and the retry of ticket 13.
+
+**Blocked by:** 13
+
+**Status:** done
+
+## Details
+
+Nemotron Super writes characterization tests (tests that record what the old code does). It predicts the expected value of each call. A wrong prediction makes the tests fail on the original code (ticket 13 retries one time). Easy functions do not need prediction. The recorded outcomes become the test file.
 
 The tests prompt offers two reply forms. Super picks one form for each function:
 
 1. Calls form. Use it for functions with plain-value arguments, when the return value or the raised exception shows the full behavior. The reply is JSON `{"inputs": ["<arguments>", ...]}`. Each item is the text between the parentheses of one call.
 2. Test file form. Use it for everything else (objects, setup, side effects). The reply is one pytest file, as before, with the ticket 13 retry.
 
-In the calls form, a recorder script runs each call in the sandbox (with `PYTHONHASHSEED=1`). The script records `repr` of the result, or the exception type and message. It also records `repr` of the arguments after the call. Each call becomes one test that asserts the same values. Only module-level functions get the inputs form. The test file then goes through the same checks as a written file: the double run and branch coverage.
-
-**Blocked by:** 13
-
-**Status:** done
+In the calls form, a recorder script runs each call in the sandbox. Each call becomes one test that asserts the recorded values.
 
 - [x] A calls reply produces one test for each call. The outcomes come from the original code. The proof continues as normal.
 - [x] The recorded tests reject a rewrite that changes one of these items: a return value, the result type (`1` for `True`), the exception type, the exception message, or an argument.

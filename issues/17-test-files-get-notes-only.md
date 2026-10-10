@@ -1,6 +1,11 @@
 # 17 — Test files get review notes only
 
-**What to build:** The gate makes no code changes in test files. For a function in a test file, the gate posts a review note that names the finding and how to fix it. The note has no suggested change, no sandbox proof, and no follow-up pull request. The hook uses the same rule to find test files.
+## Summary
+
+- **Goal:** The gate stops rewriting test code. It posts a review note instead. Example: the nested function `reply_for` in `tests/conftest.py` gets a note, with no suggested change and no sandbox run.
+- **Checkable finish condition:** A dry run on a branch that adds a nested function to `tests/conftest.py` lists the function in `notes` only, and not in `suggestions`, `followup`, or `rejected`. `uv run pytest -q` passes.
+- **Evidence:** Before: on PR #9 the gate examined the fixture `fake_llm` and saved prose as a test file, and pytest failed with `SyntaxError`. After: 201 tests passed, 12 deselected. A live dry run gave 2 notes (`reply_for` as `dead`, and a renamed copy of a test as `duplicate`) and started no sandbox. With `is_test_file` forced to `False`, 11 tests fail.
+- **Constraints:** One shared function finds test files, and the gate and the hook both call it. A test file is found by its file name: `test_*.py`, `*_test.py`, `conftest.py`, or the `python_files` patterns of the repo. A note has no suggestion block and no sandbox proof. The hook keeps the check that drops methods.
 
 **Blocked by:** None — can start immediately.
 

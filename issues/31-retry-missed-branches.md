@@ -1,6 +1,11 @@
 # 31 — Retry once for missed branches, with 3 attempts in total
 
-**What to build:** When the characterization tests pass but miss branches, the gate asks Super once more. The request names each missed branch by its line. Also, `characterize` gets 3 Super attempts in total instead of 2, so that one retry does not use up the attempt that another retry needs.
+## Summary
+
+- **Goal:** Ask Super once more when the characterization tests (tests that record what the old code does) pass but miss branches. Example: on PR #17, the tests for `characterize` passed but missed 20 branches, and the gate rejected the function at once.
+- **Checkable finish condition:** Tests that miss a branch get exactly one more Super call, and `characterize` makes at most 3 Super calls. `uv run pytest -q` passes.
+- **Evidence:** Before: PR #17 had 20 missed branches and no retry. After: a offline test proves a function in 3 calls, and a live measurement on `characterize` and `matches` at commit b2a2ad0 (4 runs each, before and after) goes into the Comments.
+- **Constraints:** The new retry asks for more tests only and never asks to change an expected value. The retry names each missed branch by its line. This ticket waits for ticket 29, because both change the loop in `characterize`.
 
 **Blocked by:** 29 (both change the loop in `characterize`)
 

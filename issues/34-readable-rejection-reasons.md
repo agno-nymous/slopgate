@@ -1,6 +1,11 @@
 # 34 — Readable rejection reasons in the review comment
 
-**What to build:** Each rejection in the review comment starts with one plain sentence that says why the gate skipped the function. The raw pytest output follows in a fenced code block.
+## Summary
+
+- **Goal:** Start each rejection in the review comment with one plain sentence that says why the gate skipped the function. The raw pytest output follows in a code block. Example: on PR #20, the rejection of `characterize` showed raw pytest output, and markdown turned a line that starts with `>` into a quote.
+- **Checkable finish condition:** A test checks the markdown that `github.py` builds: a rejection with pytest output gives one summary line plus a fenced block, and the summary holds the counts of failed and passed tests. A rejection with no tool output has no code block. `uv run pytest -q` passes. The posted comment on one real pull request shows no quote lines and keeps the indentation.
+- **Evidence:** Not built yet. Before: the user read the PR #20 comment as a crash of the gate, but the rejection was the normal result (the tests that Super wrote failed on the unchanged code). After: the test above and a comment on one real pull request.
+- **Constraints:** Keep the full reason in the JSON output of `--dry-run`, so existing tests and scripts still see it. Take the counts from the pytest summary line when it is there. The summary is one sentence.
 
 **Blocked by:** None — can start immediately.
 

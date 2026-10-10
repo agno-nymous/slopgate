@@ -1,16 +1,23 @@
 # 03 — All in-place slop kinds and proof hardening
 
-**What to build:** The gate handles every slop kind that is fixed inside one function. The gate refuses to trust weak proof.
+## Summary
 
-Nemotron Lightning is the classifier. It classifies each statically flagged function as one of `nesting`, `redundant_check`, `swallowed_error`, `lookup_table`, `filler_comment`, `dead` (from a `vulture` hit), or "none". Bad JSON or an unknown kind counts as "none".
-
-A rule check runs before the gate spends any sandbox time. The rule check rejects a rewrite that does not parse. It also rejects a rewrite that changes the signature, adds a class, or adds a function. When a rewrite fails its tests, Nemotron Ultra retries once. Nemotron Ultra gets the failing output.
-
-The proof rejects two kinds of characterization tests. The first kind gives different results on two runs of the original function. The second kind misses a branch of the original function. The gate rewrites methods in place. A rewritten method keeps its indentation.
+- **Goal:** Make the gate fix every slop kind that lives inside one function, and make it refuse weak proof. Example: a fixture with a nested function, a swallowed error, and a filler comment gives one suggestion for each kind.
+- **Checkable finish condition:** The seven boxes below pass as tests. For example, a rewrite that changes the signature appears in `rejected` and runs no sandbox trial.
+- **Evidence:** Built on 2026-10-03. 24 offline tests passed. 8 planted bugs each failed at least one test. 4 live tests passed against the real sandbox.
+- **Constraints:** Nemotron Lightning classifies each flagged function. Bad JSON or an unknown kind counts as "none". A rule check runs before the sandbox. A failed rewrite gets one retry from Nemotron Ultra. A rewritten method keeps its indentation.
 
 **Blocked by:** 01
 
 **Status:** done
+
+## Details
+
+Nemotron Lightning is the classifier. It classifies each statically flagged function as one of `nesting`, `redundant_check`, `swallowed_error`, `lookup_table`, `filler_comment`, `dead` (from a `vulture` hit), or "none".
+
+A rule check runs before the gate spends any sandbox time. The rule check rejects a rewrite that does not parse. It also rejects a rewrite that changes the signature, adds a class, or adds a function. When a rewrite fails its tests, Nemotron Ultra retries once. Nemotron Ultra gets the failing output.
+
+The proof rejects two kinds of characterization tests (tests that record what the old code does). The first kind gives different results on two runs of the original function. The second kind misses a branch of the original function. The gate rewrites methods in place. A rewritten method keeps its indentation.
 
 - [x] A fixture with one function for each in-place kind produces one suggestion for each kind. Each body names its kind.
 - [x] A rewrite that changes the signature, adds a class, adds a function, or does not parse appears in `rejected` with the rule it broke. No sandbox trial runs for it.

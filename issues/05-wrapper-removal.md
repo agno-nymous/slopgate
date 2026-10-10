@@ -1,10 +1,19 @@
 # 05 — Wrapper removal
 
-**What to build:** The gate removes a one-use wrapper function. A one-use wrapper is a module-level function that has one caller. It only passes its arguments on to another call. The characterization tests target the single caller of the wrapper. The behavior of the caller must not change. The rewrite deletes the wrapper. The rewrite also changes the caller to make the inner call directly. The edit can change two files. For this reason, the edit goes into the list of results for the follow-up pull request (`followup`).
+## Summary
+
+- **Goal:** The gate removes a function that only passes its arguments on to another call and has one caller. Example: a wrapper `f(a, b)` whose body is `return g(a, b)`. The gate deletes `f` and changes its caller to call `g` directly.
+- **Checkable finish condition:** On the wrapper fixture, `followup` holds edits that delete the wrapper and update its caller. The characterization tests of the caller (tests that record what the old code does) pass on the result. A wrapper with two or more callers, or with a method as its caller, gets no edit.
+- **Evidence:** Done. There are 11 wrapper tests. In total, 45 offline tests and 6 live tests passed. Each of 12 planted bugs makes at least one test fail. When a planted bug skips the deletion, the result is `rule: wrapper not deleted`.
+- **Constraints:** Detection is static and uses no LLM. The behavior of the caller must not change. The rewrite adds no other function or class. Methods are out of scope. The edit can change two files, so it goes into `followup`.
 
 **Blocked by:** 01
 
 **Status:** done
+
+## Details
+
+A one-use wrapper is a module-level function that has one caller. It only passes its arguments on to another call. The characterization tests target the single caller of the wrapper. The rewrite deletes the wrapper and changes the caller to make the inner call directly. The edit can change two files. For this reason, the edit goes into the list of results for the follow-up pull request (`followup`).
 
 - [x] A fixture contains a one-use wrapper. On this fixture, `followup` holds edits that delete the wrapper and update its caller. The characterization tests of the caller pass on the result.
 - [x] The gate does not remove a wrapper that has two or more callers.

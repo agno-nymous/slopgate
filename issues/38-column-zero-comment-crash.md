@@ -1,6 +1,11 @@
 # 38 — A comment at column 0 inside a method crashes `classify`
 
-**What to build:** The gate must handle a method that has a comment at column 0. Now `classify` raises `IndentationError` on it.
+## Summary
+
+- **Goal:** Stop the gate from crashing on a method that has a comment at the start of a line. Example: the commented-out line `#            self.best = None` inside `get_name`.
+- **Checkable finish condition:** `classify` returns a result for that example, with no `IndentationError`. All 34 such functions from ticket 37 parse.
+- **Evidence:** Before: the example raises `IndentationError: unexpected indent`. After: a new test passes on the example and on a method with a multi-line string, and `uv run pytest -q` passes.
+- **Constraints:** Fix it once, with one helper in `slopgate/functions.py`, and use the helper everywhere the code dedents a function before it parses it. Do not change the text inside multi-line strings.
 
 **Blocked by:** —
 

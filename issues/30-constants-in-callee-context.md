@@ -1,6 +1,11 @@
 # 30 — Give the test writer the constants the target reads
 
-**What to build:** The "Code it calls" section of the tests prompt (ticket 12) shows the functions that the target calls. It does not show the module-level constants that the target reads. Then Super guesses their values, and its tests fail on the original code. Add the assignment of each repo constant that the target or one of its callees reads to the same section.
+## Summary
+
+- **Goal:** Show the test writer the constants that the function reads. Example: `find_duplicate` reads `DUPLICATE_SCORE = 0.30`. Super did not see the value, guessed `0.8`, and 4 of 5 tests failed on PR #17.
+- **Checkable finish condition:** An offline test with a fake model checks the recorded prompt: for a function that reads the imported constant `LIMIT`, the "Code it calls" section holds `LIMIT = 30`. `uv run pytest -q` passes. A live measurement on `find_duplicate` at commit b2a2ad0 (8 runs before and 8 after) records how many runs assert `0.8` and how many give proven tests.
+- **Evidence:** Not built yet. Before: on PR #17 (2026-10-08), the same error came back in two gate runs. After: the live measurement of 8 runs before and 8 after the change.
+- **Constraints:** Extend `called_code` in `slopgate/review.py`. Add a name only when it is a module-level assignment with a plain name target, found in the same file or through `from <repo module> import <name>`. Do not add functions, classes, parameters, or local variables. Add each constant once, under the `# <path>` heading of its file. Show an assignment of more than 20 lines as `NAME = ...  # <n> lines, not shown`. A function that reads no constant gets the same prompt as before.
 
 **Blocked by:** None — can start immediately.
 

@@ -1,6 +1,11 @@
 # 25 — Faster proof: candidates in parallel, and one repo suite run
 
-**What to build:** The gate proves candidates in parallel. It runs the full repo test suite once for all accepted rewrites, not once for each rewrite.
+## Summary
+
+- **Goal:** The gate reviews a pull request faster. It proves candidates in parallel, and it runs the full repo test suite once for all accepted rewrites. Example: the review of PR #9 took 33 min.
+- **Checkable finish condition:** With 3 candidates and a fake sandbox that sleeps 1 s for each run, the review takes less than half the time it takes today. With 3 accepted rewrites and a passing repo suite, the suite runs once. `uv run pytest -q` passes.
+- **Evidence:** Before: the review of PR #9 took 33 min, and Phoenix span times (ticket 32) must show that the proof steps are the slow part. After: the review time of a demo pull request, before and after, is in the Comments.
+- **Constraints:** Wait for ticket 32. If the sandbox setup or the index build is the slow part, record that in the Comments and stop. Use a `ThreadPoolExecutor(8)`, wrap the worker with `trace.bind`, and keep the result order the same. Reject a rewrite that fails alone with "rewrite fails repo tests".
 
 **Blocked by:** 32. Phoenix span times show where the review time goes, so this ticket waits for them.
 

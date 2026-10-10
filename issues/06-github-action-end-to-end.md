@@ -1,6 +1,17 @@
 # 06 — GitHub Action end to end
 
-**What to build:** A maintainer adds one workflow file and one API key. Then every pull request gets a Slopgate review.
+## Summary
+
+- **Goal:** A maintainer adds one workflow file and one API key. Then every pull request gets a Slopgate review. Example: pull request #1 of `slopgate-demo` got one review with 2 suggested changes.
+- **Checkable finish condition:** On the public demo repo, a pull request that adds slop gets at least 2 suggestions. When a maintainer applies one suggestion, CI stays green. The summary comment shows the token cost.
+- **Evidence:** Done. Pull request #1 of `agno-nymous/slopgate-demo` got one `COMMENT` review with 2 suggested changes (`can_checkout` nesting from 4 to 0, `shipping_label` complexity from 7 to 1). The Ultra summary said "Token cost: $0.0061 (8,518 tokens)". Follow-up pull request #2 held 2 more changes. Commit `1c2ce85` applied the `shipping_label` suggestion, and CI stayed green. Seam tests in `tests/test_github.py` cover the action, and each of 12 planted bugs fails one test.
+- **Constraints:** The review event is always `COMMENT`, never `REQUEST_CHANGES`. The action never fails CI. It posts a rewrite inline only when the rewrite edits one file and every replaced line is an added line of the diff. It sends all other rewrites to a follow-up pull request on `slopgate/<head branch>`, aimed at the branch of the author. It opens no follow-up when none is needed. Nemotron Ultra writes the summary. The action caches the CodeRankEmbed model.
+
+**Blocked by:** 02, 03
+
+**Status:** done
+
+## Details
 
 The action does these things:
 - It posts the inline results as one review with GitHub suggested changes. The review uses event `COMMENT` and never uses `REQUEST_CHANGES`.
@@ -10,10 +21,6 @@ The action does these things:
 - It caches the CodeRankEmbed model between runs.
 
 The ticket ends with a public demo repo. The demo repo shows a real review on a real pull request.
-
-**Blocked by:** 02, 03
-
-**Status:** done
 
 - [x] The action takes the Nebius API key as an input. The action uses the GitHub token of the workflow. The README states that checkout needs full history.
 - [x] The action posts a rewrite inline only when both conditions are true. The rewrite edits one file. Every replaced line is in the added lines of the diff. The action sends all other rewrites to the follow-up pull request.

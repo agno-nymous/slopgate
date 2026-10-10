@@ -1,12 +1,21 @@
 # 01 — Tracer bullet: the gate fixes one nested function
 
-**What to build:** The first end-to-end path of the pull request gate. A user runs the review command (`slopgate review --dry-run`) on a local git repo. The user gives a base ref and a head ref. The head commit adds a function with 4 levels of nested `if`. The gate finds the function. The gate asks Nemotron Super for characterization tests and a rewrite. The gate proves the tests and the rewrite in the local sandbox fake. The gate prints one suggestion as JSON. The suggestion shows the cyclomatic complexity and the nesting depth before and after the rewrite. The suggestion also shows the number of tests.
+## Summary
 
-This ticket also sets up the project. It creates the package layout, the MIT license, the dependencies, the Token Factory client, the config module with all four thresholds, and the `live` pytest marker.
+- **Goal:** A user can run `slopgate review --dry-run` on a local git repo and get one proven fix for a deeply nested function. Example: the head commit adds `can_edit`, which has 4 levels of nested `if`. The gate prints a flat rewrite of `can_edit` as a suggestion.
+- **Checkable finish condition:** `slopgate review --base <ref> --head <ref> --dry-run` on the fixture repo prints JSON with the keys `suggestions`, `followup`, and `rejected`. `suggestions` holds exactly one entry, with nesting before `4` and nesting after `<= 2`. The process exits with code 0.
+- **Evidence:** Done. `uv run pytest -q` passes 5 seam tests (tests that check one step, with a fake model). The live check found all three model IDs in the Token Factory list. Radon measured `can_edit` at complexity 5 and nesting 4, and the flat rewrite at complexity 4 and nesting 0. Each of 14 one-line defects makes at least one test fail.
+- **Constraints:** The LLM client is the only path to Token Factory, and tests replace it with a scripted fake. The gate flags only functions with complexity `>= 6` or nesting `> 2`. A pull request with only non-Python changes makes no LLM call. The command always exits 0, so the gate never fails CI.
 
 **Blocked by:** None — can start immediately.
 
 **Status:** done
+
+## Details
+
+The first end-to-end path of the pull request gate. The user gives a base ref and a head ref. The gate finds the new function. It asks Nemotron Super for characterization tests (tests that record what the old code does) and for a rewrite. It proves both in the local sandbox fake. It prints one suggestion as JSON. The suggestion shows the cyclomatic complexity and the nesting depth before and after the rewrite. It also shows the number of tests.
+
+This ticket also sets up the project. It creates the package layout, the MIT license, the dependencies, the Token Factory client, the config module with all four thresholds, and the `live` pytest marker.
 
 - [x] The command `slopgate review --base <ref> --head <ref> --dry-run` prints JSON with the keys `suggestions`, `followup`, and `rejected`.
 - [x] The nested-function fixture repo gives exactly one entry in `suggestions`, for that function. The entry has nesting before `4` and nesting after `<= 2`. The complexity after the rewrite is lower than the complexity before.

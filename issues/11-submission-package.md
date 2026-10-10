@@ -1,15 +1,23 @@
 # 11 — Hackathon submission package
 
-**What to build:** Everything that the Devpost submission needs, so that a judge can understand, run, and score the project:
-- A README with setup steps. The README describes how the project uses Nemotron, Token Factory, Sandboxes, and Serverless Jobs. It links to the benchmark results and the comparison results.
-- A feedback section on Token Factory, Sandboxes, and the NVIDIA models.
-- The MIT license, visible at the top of the repo page.
-- A script for the demo video. The video is 3 minutes long at most.
-- The Devpost project text.
+## Summary
+
+- **Goal:** Give a judge everything that the Devpost submission needs, so that the judge can understand, run, and score the project. Example: a README that a fresh clone can follow to install the gate and the hook.
+- **Checkable finish condition:** The seven boxes below are checked. For example, the video script fits in 3 minutes, and the Devpost text names the Coding and Agentic Engineering track.
+- **Evidence:** A fresh clone that follows the README installs and runs the gate and the hook. The README links the benchmark results of ticket 10.
+- **Constraints:** The repo has the MIT license, visible at the top of the repo page. The video is 3 minutes long at most. Keep the total spend under about $50 (see Comments).
 
 **Blocked by:** 06, 08, 10
 
 **Status:** ready-for-agent
+
+## Details
+
+The README describes how the project uses Nemotron, Token Factory, Sandboxes, and Serverless Jobs. It links to the benchmark results and the comparison results. The submission also has:
+- A feedback section on Token Factory, Sandboxes, and the NVIDIA models.
+- The MIT license, visible at the top of the repo page.
+- A script for the demo video.
+- The Devpost project text.
 
 - [ ] The README covers the install, the Action workflow file, the hook setup, and `slopgate index` (the command that builds the index of the repo). A fresh clone works when the user follows the README.
 - [ ] The README has a table that shows which Nemotron model does which job, and why.
