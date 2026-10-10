@@ -9,7 +9,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** wontfix
 
 ## Context
 
@@ -42,3 +42,9 @@ CoverUp gives the model a tool that returns the definition of any name in the ex
 2. Check that the output contains `DUPLICATE_SCORE = 0.30`.
 
 ## Comments
+
+### 2026-10-10 — wontfix: replaced by ticket 41
+
+Ticket 41 replaced the Super call in `characterize` with an agent loop in a sandbox session. The agent can read any file of the repo with `cat` or `grep`, so it can find a constant without help. `called_code` is deleted.
+
+Measured in ticket 41: the agent proved `find_duplicate` at b2a2ad0 (the example of this ticket) in 2 of 3 runs. The old flow did not prove it in run 2. Design B of ticket 41 built the design of this ticket (constants in the prompt) and proved 8 of 36 functions in run 2, against 24 of 36 for the agent.

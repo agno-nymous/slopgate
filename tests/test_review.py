@@ -1,18 +1,21 @@
 import ast
 import json
 import re
+import shlex
 import textwrap
+import time
 from types import SimpleNamespace
 
 import pytest
+from contree_sdk.sdk.exceptions import NotFoundError
 
-from slopgate import kinds, llm
+from slopgate import kinds, llm, sandbox
 from slopgate.cli import main
-from slopgate.config import SUPER, ULTRA
+from slopgate.config import AGENT_SECONDS, AGENT_STEPS, SUPER, ULTRA
 from slopgate.functions import is_test_file, parse, pytest_patterns
 from slopgate.kinds import KINDS, classify, flattenable, has_dead_code, leftover, problems, repeated_checks
-from slopgate.review import MISSED_RETRY, NOT_PYTHON_RETRY, RECORDER_PATH, Calls, parse_tests_reply, same_code, strip_fence
-from slopgate.sandbox import Local
+from slopgate.review import EXECUTE, characterize, same_code, strip_fence
+from slopgate.sandbox import ContreeSession, Local, LocalSession
 
 NESTED = '''\
 def can_edit(user_active, is_owner, locked, archived):
@@ -112,7 +115,7 @@ def test_nested_function_gets_one_proven_suggestion(make_repo, fake_llm, capsys)
     result = review(capsys, repo)
 
     assert result["followup"] == [] and result["rejected"] == []
-    assert models(fake_llm) == [SUPER, SUPER]
+    assert models(fake_llm) == [SUPER, SUPER, SUPER]
     [suggestion] = result["suggestions"]
     assert suggestion["path"] == "app/perms.py"
     assert suggestion["side"] == "RIGHT"
@@ -179,7 +182,7 @@ def test_rewrite_that_changes_behavior_is_rejected(make_repo, fake_llm, capsys):
     assert (rejected["function"], rejected["path"]) == ("can_edit", "app/perms.py")
     assert rejected["reason"].startswith("rewrite fails characterization tests")
     assert "test_locked_cannot_edit" in rejected["reason"]
-    assert models(fake_llm) == [SUPER, SUPER, ULTRA]
+    assert models(fake_llm) == [SUPER, SUPER, SUPER, ULTRA]
 
 
 def test_failed_rewrite_gets_one_ultra_retry(make_repo, fake_llm, capsys):
@@ -191,7 +194,7 @@ def test_failed_rewrite_gets_one_ultra_retry(make_repo, fake_llm, capsys):
     assert result["rejected"] == []
     [suggestion] = result["suggestions"]
     assert suggested_code(suggestion["body"]) == FLAT
-    assert models(fake_llm) == [SUPER, SUPER, ULTRA]
+    assert models(fake_llm) == [SUPER, SUPER, SUPER, ULTRA]
 
 
 def test_non_python_change_prints_empty_result_without_llm(make_repo, fake_llm, capsys):
@@ -463,7 +466,7 @@ def test_each_in_place_kind_gets_a_suggestion_naming_it(make_repo, fake_llm, cap
     assert result["rejected"] == []
     named = [re.match(r"Slopgate \((.*?)\) rewrite", suggestion["body"])[1] for suggestion in result["suggestions"]]
     assert named == ["`nesting`", "`nesting`", "`swallowed_error`", "`lookup_table`", "`dead`"]
-    assert models(fake_llm) == [SUPER] * 10
+    assert models(fake_llm) == [SUPER] * 15
 
 
 REPEATED = SIGNATURE + """\
@@ -590,7 +593,7 @@ def test_rule_breaking_rewrite_is_rejected_without_a_trial(make_repo, fake_llm, 
     assert result["suggestions"] == []
     assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": f"rule: {rule}"}]
     assert len(trials) == 2
-    assert models(fake_llm) == [SUPER, SUPER]
+    assert models(fake_llm) == [SUPER, SUPER, SUPER]
 
 
 def test_function_using_random_is_rejected_as_nondeterministic(make_repo, fake_llm, capsys):
@@ -641,7 +644,7 @@ def test_tests_that_miss_a_branch_are_rejected_with_the_count(make_repo, fake_ll
     assert result["rejected"] == [
         {"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": "characterization tests miss branches: 1"}
     ]
-    assert models(fake_llm) == [SUPER]
+    assert models(fake_llm) == [SUPER, SUPER]
 
 
 def test_ruff_failure_rejects_the_function_and_the_review_goes_on(make_repo, fake_llm, monkeypatch, capsys):
@@ -673,8 +676,7 @@ def test_tests_that_differ_across_two_runs_are_rejected(make_repo, fake_llm, cap
 
     result = review(capsys, repo)
 
-    assert models(fake_llm) == [SUPER]
-
+    assert models(fake_llm) == [SUPER, SUPER]
     assert result["suggestions"] == []
     assert result["rejected"] == [
         {
@@ -824,285 +826,13 @@ def test_deep_loops_that_do_real_work_are_not_nesting(source):
     assert classify(function, source) == {}
 
 
-def test_tests_prompt_without_repo_callees_has_no_context_section(make_repo, fake_llm, capsys):
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
-
-    review(capsys, repo)
-
-    tests_prompt = fake_llm.calls[0][1]
-    assert tests_prompt.endswith("```python\n" + NESTED + "\n```")
-    assert "Code it calls" not in tests_prompt
-
-
-WRONG_TESTS = TESTS.format(name="can_edit", call="can_edit").replace(
-    "assert can_edit(True, True, False, True) is False", "assert can_edit(True, True, False, True) is True"
-)
-
-
-def test_tests_that_fail_on_original_get_one_retry_with_the_failure(make_repo, fake_llm, capsys):
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [fenced(WRONG_TESTS), fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
-
-    result = review(capsys, repo)
-
-    assert result["rejected"] == []
-    [suggestion] = result["suggestions"]
-    assert "5 characterization tests passed" in suggestion["body"]
-    assert models(fake_llm) == [SUPER, SUPER, SUPER]
-    retry_prompt = fake_llm.calls[1][1]
-    assert "Earlier test file:\n\n```python\n" + WRONG_TESTS + "\n```" in retry_prompt
-    assert "assert False is True" in retry_prompt
-
-
-def test_tests_that_fail_on_original_twice_are_rejected(make_repo, fake_llm, capsys):
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [fenced(WRONG_TESTS), fenced(WRONG_TESTS)]
-
-    result = review(capsys, repo)
-
-    [rejected] = result["rejected"]
-    assert rejected["reason"].startswith("characterization tests fail on original")
-    assert models(fake_llm) == [SUPER, SUPER]
-
-
-EDIT_CALLS = fenced(
-    "can_edit(False, True, False, False)\n"
-    "can_edit(True, False, False, False)\n"
-    "can_edit(True, True, True, False)\n"
-    "can_edit(True, True, False, True)\n"
-    "can_edit(True, True, False, False)\n"
-)
-
-
-def test_proposed_calls_are_recorded_on_the_original(make_repo, fake_llm, capsys):
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [EDIT_CALLS, fenced(FLAT)]
-
-    result = review(capsys, repo)
-
-    assert result["rejected"] == []
-    [suggestion] = result["suggestions"]
-    assert "5 characterization tests passed" in suggestion["body"]
-    assert models(fake_llm) == [SUPER, SUPER]
-
-
-@pytest.mark.parametrize(
-    ("rewrite", "failing"),
-    [
-        (DROPS_LOCKED, "capture(True, True, True, False)"),
-    ],
-    ids=["value"],
-)
-def test_recorded_calls_reject_a_rewrite_that_changes_the_result(make_repo, fake_llm, capsys, rewrite, failing):
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [EDIT_CALLS, fenced(rewrite), fenced(rewrite)]
-
-    [rejected] = review(capsys, repo)["rejected"]
-
-    assert rejected["reason"].startswith("rewrite fails characterization tests")
-    assert failing in rejected["reason"]
-
-
-GRADE = '''\
-def grade(score):
-    if score is not None:
-        if score >= 0:
-            if score >= 50:
-                return "pass"
-            return "fail"
-    raise ValueError(f"bad score: {score}")
-'''
-
-GRADE_FLAT = '''\
-def grade(score):
-    if score is None or score < 0:
-        raise {error}(f"bad {noun}: {{score}}")
-    return "pass" if score >= 50 else "fail"
-'''
-
-
-@pytest.mark.parametrize(
-    ("error", "noun", "accepted"),
-    [("ValueError", "score", True), ("ValueError", "value", False), ("TypeError", "score", False)],
-    ids=["same", "message", "type"],
-)
-def test_recorded_exceptions_check_type_and_message(make_repo, fake_llm, capsys, error, noun, accepted):
-    repo = make_repo({"app/__init__.py": ""}, {"app/grades.py": GRADE})
-    rewrite = GRADE_FLAT.format(error=error, noun=noun)
-    calls = fenced("grade(70)\ngrade(10)\ngrade(-1)\ngrade(None)\n")
-    fake_llm.replies += [calls, fenced(rewrite), fenced(rewrite)]
-
-    result = review(capsys, repo)
-
-    assert len(result["suggestions"]) == accepted
-    assert len(result["rejected"]) == (not accepted)
-
-
-BARE_NAME_CALLS = fenced("can_edit(*1)\n")
-
-
-def test_calls_that_do_not_evaluate_get_one_retry_with_the_error(make_repo, fake_llm, capsys):
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [BARE_NAME_CALLS, EDIT_CALLS, fenced(FLAT)]
-
-    result = review(capsys, repo)
-
-    assert result["rejected"] == []
-    [suggestion] = result["suggestions"]
-    assert "5 characterization tests passed" in suggestion["body"]
-    assert models(fake_llm) == [SUPER, SUPER, SUPER]
-    retry_prompt = fake_llm.calls[1][1]
-    assert retry_prompt.startswith(fake_llm.calls[0][1])
-    assert "Earlier calls:\n\n```python\ncan_edit(*1)\n```" in retry_prompt
-    assert "must be an iterable, not int" in retry_prompt
-
-
-def test_empty_block_gets_one_retry_that_names_the_error(make_repo, fake_llm, capsys, trials):
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [fenced(""), fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
-
-    result = review(capsys, repo)
-
-    assert result["rejected"] == []
-    [suggestion] = result["suggestions"]
-    assert "5 characterization tests passed" in suggestion["body"]
-    assert models(fake_llm) == [SUPER, SUPER, SUPER]
-    assert fake_llm.calls[1][1] == fake_llm.calls[0][1] + NOT_PYTHON_RETRY.format(error="the block holds no call to `can_edit` with plain-value arguments")
-    assert not any(RECORDER_PATH in cmd for cmd in trials)
-
-
-def test_empty_block_twice_is_rejected_without_a_sandbox_run(make_repo, fake_llm, capsys, trials):
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [fenced(""), fenced("")]
-
-    result = review(capsys, repo)
-
-    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": "tests reply is not python"}]
-    assert models(fake_llm) == [SUPER, SUPER]
-    assert trials == []
-
-
-def test_recorder_that_ends_without_results_twice_is_rejected(make_repo, fake_llm, capsys):
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [fenced("can_edit(*1)\n"), BARE_NAME_CALLS]
-
-    [rejected] = review(capsys, repo)["rejected"]
-
-    assert rejected["reason"].startswith("could not record calls")
-    assert "TypeError" in rejected["reason"]
-    assert models(fake_llm) == [SUPER, SUPER]
-
-
-@pytest.mark.parametrize(
-    ("first", "second", "reason"),
-    [
-        (BARE_NAME_CALLS, fenced(WRONG_TESTS), "characterization tests fail on original"),
-        (fenced(WRONG_TESTS), BARE_NAME_CALLS, "could not record calls"),
-    ],
-    ids=["calls-then-tests", "tests-then-calls"],
-)
-def test_one_retry_covers_either_failure(make_repo, fake_llm, capsys, first, second, reason):
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [first, second]
-
-    [rejected] = review(capsys, repo)["rejected"]
-
-    assert rejected["reason"].startswith(reason)
-    assert models(fake_llm) == [SUPER, SUPER]
-
-
-ADD_TAG = """\
-def add_tag(tags, tag):
-    if tag:
-        if tag not in tags:
-            if len(tags) < 3:
-                tags.append(tag)
-                return True
-    return False
-"""
-
-ADD_TAG_FLAT = """\
-def add_tag(tags, tag):
-    if not tag or tag in tags or len(tags) >= 3:
-        return False
-    tags.append(tag)
-    return True
-"""
-
-
-@pytest.mark.parametrize(
-    ("rewrite", "accepted"),
-    [(ADD_TAG_FLAT, True), (ADD_TAG_FLAT.replace("    tags.append(tag)\n", ""), False)],
-    ids=["keeps-append", "drops-append"],
-)
-def test_recorded_calls_check_the_arguments_after_the_call(make_repo, fake_llm, capsys, rewrite, accepted):
-    repo = make_repo({"app/__init__.py": ""}, {"app/tags.py": ADD_TAG})
-    calls = fenced('add_tag(["a"], "")\nadd_tag(["a"], "a")\nadd_tag(["a", "b", "c"], "d")\nadd_tag(["a"], "b")\n')
-    fake_llm.replies += [calls, fenced(rewrite), fenced(rewrite)]
-
-    result = review(capsys, repo)
-
-    assert len(result["suggestions"]) == accepted
-    assert len(result["rejected"]) == (not accepted)
-
-
-def test_method_prompt_has_no_calls_form_and_bare_calls_run_as_a_test_file(make_repo, fake_llm, capsys, trials):
-    method = "class Policy:\n" + textwrap.indent("@staticmethod\n" + NESTED, "    ")
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED + "\n\n" + method})
-    fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
-    bare_calls = fenced("Policy.can_edit(True, True, False, False)\nPolicy.can_edit(False, True, False, False)\n")
-    fake_llm.replies += [bare_calls, fenced(TESTS.format(name="Policy", call="Policy.can_edit")), fenced("@staticmethod\n" + FLAT)]
-
-    result = review(capsys, repo)
-
-    function_prompt, method_prompt, method_retry = [prompt for _, prompt in fake_llm.calls if prompt.startswith("Write characterization")]
-    assert "\n1. Calls. " in function_prompt and "\n2. Test file. " in function_prompt and "\n3. Cannot test. " in function_prompt
-    assert "Calls." not in method_prompt
-    assert "\n1. Test file. " in method_prompt and "\n2. Cannot test. " in method_prompt
-    assert "Your earlier test file failed on the unchanged code above" in method_retry
-    assert not any(RECORDER_PATH in cmd for cmd in trials)
-    assert result["rejected"] == [] and len(result["suggestions"]) == 2
-
-
-LOG_VALUE = '''\
-def log_value(log, value):
-    log.append(value)
-    if value is not None:
-        if value >= 0:
-            if value < 10:
-                return value
-    raise ValueError("out of range")
-'''
-
-CHECKS_FIRST = '''\
-def log_value(log, value):
-    if value is None or not 0 <= value < 10:
-        raise ValueError("out of range")
-    log.append(value)
-    return value
-'''
-
-LOG_CALLS = fenced("log_value([], 5)\nlog_value([], 50)\nlog_value([], -1)\nlog_value([], None)\n")
-
-
-def test_recorded_calls_check_the_arguments_after_an_exception(make_repo, fake_llm, capsys):
-    repo = make_repo({"app/__init__.py": ""}, {"app/log.py": LOG_VALUE})
-    fake_llm.replies += [LOG_CALLS, fenced(CHECKS_FIRST), fenced(CHECKS_FIRST)]
-
-    [rejected] = review(capsys, repo)["rejected"]
-
-    assert rejected["reason"].startswith("rewrite fails characterization tests")
-    assert "test_call_1" in rejected["reason"]
-
-
 def test_rewrite_prompt_states_the_bool_rule(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
     fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
 
     review(capsys, repo)
 
-    assert "If every return gives True or False, keep it that way" in fake_llm.calls[1][1]
+    assert "If every return gives True or False, keep it that way" in fake_llm.calls[-1][1]
 
 
 @pytest.mark.parametrize(
@@ -1124,18 +854,240 @@ def test_bool_expressions_pass_the_bool_rule(make_repo, fake_llm, capsys, trials
     assert len(trials) > 2
 
 
-def test_recorded_calls_reject_a_changed_result_type(make_repo, fake_llm, capsys):
-    repo = make_repo({"app/__init__.py": ""}, {"app/log.py": LOG_VALUE})
-    as_float = (
-        "def log_value(log, value):\n    log.append(value)\n"
-        '    if value is None or not 0 <= value < 10:\n        raise ValueError("out of range")\n    return float(value)\n'
-    )
-    fake_llm.replies += [LOG_CALLS, fenced(as_float), fenced(as_float)]
+WRONG_TESTS = TESTS.format(name="can_edit", call="can_edit").replace(
+    "assert can_edit(True, True, False, True) is False", "assert can_edit(True, True, False, True) is True"
+)
+TEST_PATH = "tests/test_slopgate_0.py"
+CMD = f"python -m coverage run --branch -m pytest -q {TEST_PATH}"
+
+
+def test_tests_that_fail_on_original_are_rejected(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    fake_llm.replies += [fenced(WRONG_TESTS)]
 
     [rejected] = review(capsys, repo)["rejected"]
 
-    assert rejected["reason"].startswith("rewrite fails characterization tests")
-    assert "5.0" in rejected["reason"]
+    assert rejected["reason"].startswith("characterization tests fail on original")
+    assert "assert False is True" in rejected["reason"]
+    assert models(fake_llm) == [SUPER, SUPER]
+
+
+def tool_call(arguments):
+    return SimpleNamespace(id="call_0", function=SimpleNamespace(name="execute", arguments=arguments))
+
+
+def agent_reply(*calls):
+    return SimpleNamespace(content="", tool_calls=list(calls) or None)
+
+
+def write_command(path, text):
+    return json.dumps({"command": f"mkdir -p {path.rpartition('/')[0] or '.'} && printf %s {shlex.quote(text)} > {path}"})
+
+
+def perms(make_repo):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    [function] = parse("app/perms.py", NESTED)
+    sandbox = Local()
+    return sandbox, sandbox.prepare(repo, "HEAD", None), function
+
+
+def test_agent_file_that_passes_the_check_is_returned(make_repo, fake_llm):
+    sandbox, checkpoint, function = perms(make_repo)
+    fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit"))]
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (TESTS.format(name="can_edit", call="can_edit"), None)
+    assert models(fake_llm) == [SUPER, SUPER]
+    assert "Import the target with exactly this line: from app.perms import can_edit\n" in fake_llm.calls[0][1]
+
+
+def test_agent_that_stops_without_a_file_is_rejected(make_repo, fake_llm):
+    sandbox, checkpoint, function = perms(make_repo)
+    fake_llm.replies += [agent_reply()]
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (None, "no test file: agent stopped (no tool call)")
+    assert models(fake_llm) == [SUPER]
+
+
+PASSING = TESTS.format(name="can_edit", call="can_edit")
+WEAK = PASSING.replace("def test_locked_cannot_edit():\n    assert can_edit(True, True, True, False) is False\n", "")
+
+
+def scripted(monkeypatch, replies) -> list[str]:
+    steps = []
+
+    def step(model, messages, tools):
+        steps.append(model)
+        llm.usage.append((model, 1000, 100))
+        reply = replies[min(len(steps), len(replies)) - 1]
+        return reply() if callable(reply) else reply
+
+    monkeypatch.setattr(llm, "step", step)
+    monkeypatch.setattr(llm, "usage", [])
+    return steps
+
+
+def writes(text):
+    return agent_reply(tool_call(write_command(TEST_PATH, text)))
+
+
+def test_agent_stops_at_the_step_limit_and_the_check_judges_its_file(make_repo, monkeypatch):
+    sandbox, checkpoint, function = perms(make_repo)
+    steps = scripted(monkeypatch, [writes(WEAK)])
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (None, "step limit: characterization tests miss branches: 1")
+    assert steps == [SUPER] * AGENT_STEPS
+
+
+def test_the_last_reply_before_the_step_limit_still_runs_its_tool_calls(make_repo, monkeypatch):
+    sandbox, checkpoint, function = perms(make_repo)
+    monkeypatch.setattr("slopgate.review.AGENT_STEPS", 2)
+    steps = scripted(monkeypatch, [writes(WEAK), writes(PASSING)])
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (PASSING, None)
+    assert len(steps) == 2
+
+
+def test_agent_stops_before_a_command_when_the_time_budget_is_gone(make_repo, monkeypatch):
+    sandbox, checkpoint, function = perms(make_repo)
+    clock = [0.0]
+    monkeypatch.setattr("slopgate.review.time", SimpleNamespace(perf_counter=lambda: clock[0]))
+    timeouts = []
+    execute = LocalSession.execute
+    monkeypatch.setattr(LocalSession, "execute", lambda self, command, timeout: timeouts.append(timeout) or execute(self, command, timeout))
+
+    def at(seconds, text):
+        def reply():
+            clock[0] = seconds
+            return writes(text)
+
+        return reply
+
+    scripted(monkeypatch, [at(AGENT_SECONDS - 30.2, WEAK), at(AGENT_SECONDS + 1, PASSING)])
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (None, "time limit: characterization tests miss branches: 1")
+    assert timeouts == [31]
+
+
+def test_a_cut_off_reply_ends_the_agent_and_its_file_is_still_judged(make_repo, monkeypatch):
+    sandbox, checkpoint, function = perms(make_repo)
+
+    def cut_off():
+        raise llm.CutOff("reply cut off")
+
+    scripted(monkeypatch, [writes(PASSING), cut_off])
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (PASSING, None)
+
+
+def test_a_failed_command_ends_the_agent_and_its_file_is_still_judged(make_repo, monkeypatch):
+    sandbox, checkpoint, function = perms(make_repo)
+    commands = []
+    execute = LocalSession.execute
+
+    def fails_second(self, command, timeout):
+        commands.append(command)
+        if len(commands) == 2:
+            raise RuntimeError("session failed")
+        return execute(self, command, timeout)
+
+    monkeypatch.setattr(LocalSession, "execute", fails_second)
+    scripted(monkeypatch, [writes(WEAK), writes(PASSING)])
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (
+        None,
+        "agent error: RuntimeError('session failed'): characterization tests miss branches: 1",
+    )
+
+
+def test_a_failed_read_rejects_the_function_with_the_stop_reason(make_repo, monkeypatch):
+    sandbox, checkpoint, function = perms(make_repo)
+    def fails(self, path):
+        raise RuntimeError("session failed")
+
+    monkeypatch.setattr(LocalSession, "read", fails)
+    scripted(monkeypatch, [agent_reply()])
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (
+        None,
+        "no test file: agent stopped (no tool call), read failed: RuntimeError('session failed')",
+    )
+
+
+def test_tool_call_arguments_that_are_not_json_get_an_error_message(make_repo, monkeypatch):
+    sandbox, checkpoint, function = perms(make_repo)
+    seen = []
+
+    def step(model, messages, tools):
+        seen.append(messages[-1])
+        llm.usage.append((model, 1000, 100))
+        return agent_reply(tool_call('{"command": "cat > t.py <<EOF')) if len(seen) == 1 else agent_reply()
+
+    monkeypatch.setattr(llm, "step", step)
+    monkeypatch.setattr(llm, "usage", [])
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (None, "no test file: agent stopped (no tool call)")
+    assert seen[1]["role"] == "tool"
+    assert seen[1]["content"].startswith("Error: invalid arguments for execute: JSONDecodeError(")
+
+
+def test_check_runs_on_the_original_code_and_not_in_the_agent_session(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+    breaks_target = json.loads(write_command("app/perms.py", SIGNATURE + "    return False\n"))["command"]
+    writes_tests = json.loads(write_command(TEST_PATH, TESTS.format(name="can_edit", call="can_edit")))["command"]
+    command = json.dumps({"command": f"{breaks_target} && {writes_tests}"})
+    fake_llm.replies += [agent_reply(tool_call(command)), fenced(FLAT)]
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == []
+    [suggestion] = result["suggestions"]
+    assert "5 characterization tests passed in sandbox" in suggestion["body"]
+
+
+def test_local_session_keeps_files_between_commands_and_leaves_the_checkpoint_alone(tmp_path):
+    session = Local().session(tmp_path)
+
+    assert session.execute("echo hi > a.txt", 10) == (0, "")
+    assert session.execute("cat a.txt", 10) == (0, "hi\n")
+    assert (session.read("a.txt"), session.read("b.txt")) == ("hi\n", None)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_local_session_kills_a_command_and_its_children_at_the_time_limit(tmp_path):
+    session = Local().session(tmp_path)
+    start = time.perf_counter()
+
+    assert session.execute("echo started; sleep 30 & sleep 30", 1) == (124, "started\n\ntimed out after 1 s")
+    assert time.perf_counter() - start < 10
+
+
+def test_shell_returns_at_the_time_limit_when_a_child_left_the_process_group(tmp_path):
+    start = time.perf_counter()
+
+    escaped = 'python -c "import os, time; os.setsid(); time.sleep(8)" &'
+    assert sandbox.shell(f"echo started; {escaped} sleep 30", tmp_path, 1) == (124, "started\n\ntimed out after 1 s")
+    assert time.perf_counter() - start < 8
+
+
+def test_contree_session_bounds_each_command_in_the_sandbox_and_reads_a_missing_file_as_none():
+    runs, reads = [], []
+
+    def run(**kwargs):
+        runs.append(kwargs)
+        return SimpleNamespace(wait=lambda: SimpleNamespace(exit_code=124, stdout="partial", stderr="", result=SimpleNamespace(truncated=True)))
+
+    def read(path):
+        reads.append(path)
+        raise NotFoundError()
+
+    session = ContreeSession(SimpleNamespace(session=lambda: SimpleNamespace(run=run, read=read)))
+
+    assert session.execute("sleep 30", 3) == (124, "partial\n[Output was truncated due to size limits]")
+    assert runs == [
+        {"shell": "timeout -k 5 3 sh -c 'sleep 30'", "cwd": "/repo", "timeout": 63, "disposable": False, "truncate_output_at": 10 * 1024 * 1024}
+    ]
+    assert session.read("tests/test_x.py") is None
+    assert reads == ["/repo/tests/test_x.py"]
 
 
 def fake_client(monkeypatch, replies):
@@ -1167,14 +1119,34 @@ def test_complete_turns_thinking_off(monkeypatch):
     assert requests[0]["max_tokens"] == 32768
 
 
+def test_step_offers_the_tools_with_thinking_off(monkeypatch):
+    requests = fake_client(monkeypatch, [("stop", "ok")])
+    messages = [{"role": "user", "content": "task"}]
+
+    assert llm.step(SUPER, messages, [EXECUTE]).content == "ok"
+    [request] = requests
+    assert (request["messages"], request["tools"], request["tool_choice"]) == (messages, [EXECUTE], "auto")
+    assert request["extra_body"] == {"chat_template_kwargs": {"enable_thinking": False}}
+    assert request["max_tokens"] == 32768
+    assert llm.usage == [(SUPER, 1, 1)]
+
+
+@pytest.mark.parametrize("call", [lambda: llm.complete(SUPER, "hi"), lambda: llm.step(SUPER, [], [EXECUTE])], ids=["complete", "step"])
+def test_reply_that_reaches_the_token_limit_raises_cut_off(monkeypatch, call):
+    fake_client(monkeypatch, [("length", "```python\ndef")])
+
+    with pytest.raises(llm.CutOff):
+        call()
+
+
 def test_unexpected_error_in_one_candidate_keeps_the_others(make_repo, fake_llm, monkeypatch, capsys):
     repo = two_nested_functions(make_repo, "")
-    fake_llm.replies += [fenced(TESTS.format(name="can_view", call="can_view")), fenced(FLAT_VIEW)]
-    complete = llm.complete
+    fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(TESTS.format(name="can_view", call="can_view")), fenced(FLAT_VIEW)]
+    calls, complete = [], llm.complete
 
     def broken_first_call(model, prompt):
-        if not fake_llm.calls:
-            fake_llm.calls.append((model, prompt))
+        calls.append(prompt)
+        if len(calls) == 1:
             raise RuntimeError("boom")
         return complete(model, prompt)
 
@@ -1187,17 +1159,26 @@ def test_unexpected_error_in_one_candidate_keeps_the_others(make_repo, fake_llm,
     assert suggested_code(suggestion["body"]) == FLAT_VIEW
 
 
-@pytest.mark.parametrize("cut", ["tests", "rewrite"])
-def test_cut_off_reply_rejects_the_candidate_and_the_next_one_runs(make_repo, monkeypatch, capsys, cut):
+@pytest.mark.parametrize("cut", ["step", "complete"], ids=["tests", "rewrite"])
+def test_cut_off_reply_rejects_the_candidate_and_the_next_one_runs(make_repo, fake_llm, monkeypatch, capsys, cut):
     repo = two_nested_functions(make_repo, "")
-    edit_tests = fenced(TESTS.format(name="can_edit", call="can_edit"))
-    edit_replies = [("length", edit_tests[:40])] if cut == "tests" else [("stop", edit_tests), ("length", "```python\ndef")]
-    view_replies = [("stop", fenced(TESTS.format(name="can_view", call="can_view"))), ("stop", fenced(FLAT_VIEW))]
-    fake_client(monkeypatch, [*edit_replies, *view_replies])
+    if cut == "complete":
+        fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit"))]
+    fake_llm.replies += [fenced(TESTS.format(name="can_view", call="can_view")), fenced(FLAT_VIEW)]
+    calls, call = [], getattr(llm, cut)
+
+    def cut_first(*args):
+        calls.append(args)
+        if len(calls) == 1:
+            raise llm.CutOff("reply cut off")
+        return call(*args)
+
+    monkeypatch.setattr(llm, cut, cut_first)
 
     result = review(capsys, repo)
 
-    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": "reply cut off"}]
+    reason = "no test file: agent stopped (reply cut off)" if cut == "step" else "reply cut off"
+    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": reason}]
     [suggestion] = result["suggestions"]
     assert suggested_code(suggestion["body"]) == FLAT_VIEW
 
@@ -1210,7 +1191,7 @@ def test_prose_rewrite_reply_is_rejected_without_a_trial(make_repo, fake_llm, ca
 
     assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": "rewrite reply is not a python block"}]
     assert len(trials) == 2
-    assert models(fake_llm) == [SUPER, SUPER]
+    assert models(fake_llm) == [SUPER, SUPER, SUPER]
 
 
 FENCE_IN_STRING = '''\
@@ -1253,7 +1234,7 @@ def test_unchanged_rewrite_is_rejected_without_a_trial_or_ultra(make_repo, fake_
 
     assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": "rewrite makes no change"}]
     assert len(trials) == 2
-    assert models(fake_llm) == [SUPER, SUPER]
+    assert models(fake_llm) == [SUPER, SUPER, SUPER]
 
 
 CLAMP = KINDS_SOURCE[KINDS_SOURCE.index("def clamp_all") : KINDS_SOURCE.index("def describe")].rstrip() + "\n"
@@ -1281,7 +1262,7 @@ def test_rewrite_and_retry_prompts_hold_code_in_python_blocks(make_repo, fake_ll
 
     review(capsys, repo)
 
-    rewrite_prompt, retry_prompt = fake_llm.calls[1][1], fake_llm.calls[2][1]
+    rewrite_prompt, retry_prompt = fake_llm.calls[2][1], fake_llm.calls[3][1]
     assert "```python\n" + NESTED + "\n```" in rewrite_prompt
     assert retry_prompt.startswith(rewrite_prompt)
     assert "This earlier rewrite failed:\n\n```python\n" + DROPS_LOCKED + "\n```" in retry_prompt
@@ -1306,178 +1287,3 @@ def test_cut_off_duplicate_verdict_skips_the_helper_and_the_review_goes_on(make_
 
     assert result == {"suggestions": [], "followup": [], "rejected": [], "notes": []}
     assert len(requests) == 1
-
-
-def test_prose_tests_reply_retries_once_and_is_rejected_without_a_sandbox_run(make_repo, fake_llm, capsys, trials):
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    prose = "I'm unable to write characterization tests without seeing the function’s helpers."
-    fake_llm.replies += [prose, prose]
-
-    result = review(capsys, repo)
-
-    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": "tests reply is not python"}]
-    assert models(fake_llm) == [SUPER, SUPER]
-    assert fake_llm.calls[1][1] == fake_llm.calls[0][1] + NOT_PYTHON_RETRY.format(error="no ```python block")
-    assert trials == []
-
-
-def test_block_that_does_not_parse_retries_with_the_syntax_error(make_repo, fake_llm, capsys):
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [fenced("can_edit(True, True, False, False]\n"), EDIT_CALLS, fenced(FLAT)]
-
-    result = review(capsys, repo)
-
-    assert result["rejected"] == []
-    assert "closing parenthesis ']' does not match opening parenthesis '('" in fake_llm.calls[1][1]
-    assert models(fake_llm) == [SUPER, SUPER, SUPER]
-
-
-def test_cannot_test_reply_is_rejected_with_its_reason_and_no_retry(make_repo, fake_llm, capsys, trials):
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += ["CANNOT_TEST: fixture\n"]
-
-    result = review(capsys, repo)
-
-    assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": "model cannot test: fixture"}]
-    assert models(fake_llm) == [SUPER]
-    assert trials == []
-
-
-
-
-def test_block_of_three_calls_records_three_tests_with_the_argument_text(make_repo, fake_llm, capsys):
-    repo = make_repo({"app/__init__.py": ""}, {"app/flags.py": ALL_SET})
-    calls = fenced("all_set(True, True, True, True, True, True)\nall_set(True, False, True, True, True, True)\nall_set(\n    0, 1, 1, 1, 1, f=1\n)\n")
-    as_bool = fenced("def all_set(a, b, c, d, e, f): return all((a, b, c, d, e, f))\n")
-    fake_llm.replies += [calls, as_bool, as_bool]
-
-    [rejected] = review(capsys, repo)["rejected"]
-
-    assert rejected["reason"].startswith("rewrite fails characterization tests")
-    assert "FAILED tests/test_slopgate_0.py::test_call_2" in rejected["reason"]
-    assert "1 failed, 2 passed" in rejected["reason"]
-    assert models(fake_llm) == [SUPER, SUPER, ULTRA]
-
-
-def test_script_reply_is_recorded_as_calls_whatever_values_it_predicts(make_repo, fake_llm, capsys, trials):
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    script = fenced(
-        "from app.perms import can_edit\n\n"
-        "assert can_edit(True, True, False, False) == 'wrong guess'\n"
-        "assert can_edit(False, True, False, False) == 'wrong guess'\n"
-        "assert can_edit(True, False, False, False) == 'wrong guess'\n"
-        "try:\n    can_edit(True, True, True, False)\nexcept ValueError:\n    pass\n"
-        "print(can_edit(True, True, False, True))\n"
-    )
-    fake_llm.replies += [script, fenced(FLAT)]
-
-    result = review(capsys, repo)
-
-    [suggestion] = result["suggestions"]
-    assert "5 characterization tests passed" in suggestion["body"]
-    assert any(RECORDER_PATH in cmd for cmd in trials)
-
-
-def test_block_with_test_functions_is_used_as_the_test_file(make_repo, fake_llm, capsys, trials):
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
-
-    result = review(capsys, repo)
-
-    [suggestion] = result["suggestions"]
-    assert "5 characterization tests passed" in suggestion["body"]
-    assert not any(RECORDER_PATH in cmd for cmd in trials)
-
-
-GRADE_TESTS = '''\
-import pytest
-
-from app.grades import grade
-
-
-def test_pass():
-    assert grade(70) == "pass"
-
-
-def test_fail():
-    assert grade(10) == "fail"
-
-
-@pytest.mark.parametrize("score", [-1, None])
-def test_bad_score(score):
-    with pytest.raises(ValueError):
-        grade(score)
-'''
-
-GRADE_CALLS_WITHOUT_NONE = fenced("grade(70)\ngrade(10)\ngrade(-1)\n")
-
-
-def test_calls_that_miss_a_branch_get_one_retry_for_a_test_file(make_repo, fake_llm, capsys):
-    repo = make_repo({"app/__init__.py": ""}, {"app/grades.py": GRADE})
-    rewrite = fenced(GRADE_FLAT.format(error="ValueError", noun="score"))
-    fake_llm.replies += [GRADE_CALLS_WITHOUT_NONE, fenced(GRADE_TESTS), rewrite]
-
-    result = review(capsys, repo)
-
-    assert result["rejected"] == []
-    [suggestion] = result["suggestions"]
-    assert "4 characterization tests passed" in suggestion["body"]
-    assert models(fake_llm) == [SUPER, SUPER, SUPER]
-    assert fake_llm.calls[1][1] == fake_llm.calls[0][1] + MISSED_RETRY.format(missed=1, module="app.grades", name="grade")
-
-
-def test_calls_that_miss_a_branch_twice_are_rejected_with_the_count(make_repo, fake_llm, capsys):
-    repo = make_repo({"app/__init__.py": ""}, {"app/grades.py": GRADE})
-    fake_llm.replies += [GRADE_CALLS_WITHOUT_NONE, GRADE_CALLS_WITHOUT_NONE]
-
-    result = review(capsys, repo)
-
-    assert result["rejected"] == [{"function": "grade", "path": "app/grades.py", "kinds": ["nesting"], "reason": "characterization tests miss branches: 1"}]
-    assert models(fake_llm) == [SUPER, SUPER]
-
-
-def test_tests_prompt_says_helpers_and_imports_are_not_needed(make_repo, fake_llm, capsys):
-    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
-
-    review(capsys, repo)
-
-    assert "The tests run the real code, so you do not need to see helpers or imports." in fake_llm.calls[0][1]
-
-
-PARSE_SOURCE = "def f(a, b=0):\n    return a\n"
-
-
-@pytest.mark.parametrize(
-    "block, expected",
-    [
-        ("f (1, 2)", ["1, 2"]),
-        ("f(\n    1,\n    b=2,\n)", ["1, b=2"]),
-        ("f(*[1, 2], **{'b': 3})", ["*[1, 2], **{'b': 3}"]),
-        ("f(1,)", ["1"]),
-        ("(f)(1)", ["1"]),
-        ("x = 5\nf(x)\nf(2)", ["2"]),
-        ("f(f(1))", ["f(1)", "1"]),
-    ],
-)
-def test_parse_tests_reply_takes_argument_text_from_the_call_nodes(block, expected):
-    [function] = parse("app/m.py", PARSE_SOURCE)
-
-    reply = parse_tests_reply(f"```python\n{block}\n```", function, True)
-
-    assert reply == Calls(form="calls", calls=expected)
-
-
-def test_parse_tests_reply_reads_a_def_block_as_a_test_file():
-    [function] = parse("app/m.py", PARSE_SOURCE)
-
-    reply = parse_tests_reply("```python\ndef test_a():\n    f(1)\n```", function, True)
-
-    assert reply.form == "test_file"
-
-
-def test_parse_tests_reply_rejects_a_script_whose_calls_use_script_names():
-    [function] = parse("app/m.py", PARSE_SOURCE)
-
-    with pytest.raises(ValueError, match="no call to `f` with plain-value arguments"):
-        parse_tests_reply("```python\nx = 5\nf(x)\n```", function, True)

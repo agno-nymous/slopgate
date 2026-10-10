@@ -9,7 +9,7 @@
 
 **Blocked by:** 29 (both change the loop in `characterize`)
 
-**Status:** ready-for-agent
+**Status:** wontfix
 
 ## Context
 
@@ -46,3 +46,9 @@ A retry for coverage asks for more tests only. It does not ask Super to change a
 2. Check that no rejection says "characterization tests miss branches" after only one or two Super calls for that function.
 
 ## Comments
+
+### 2026-10-10 — wontfix: replaced by ticket 41
+
+Ticket 41 replaced the Super call and its retries in `characterize` with an agent loop in a sandbox session. The task gives the agent the command that shows the missed branches as `[from, to]` pairs. The agent runs it and adds tests until no branch is missed, within 15 model calls.
+
+Design B of ticket 41 built the retry of this ticket (each missed branch named by its line, up to 4 calls) and proved 8 of 36 functions in run 2. The agent proved 24 of 36.

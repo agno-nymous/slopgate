@@ -1,15 +1,15 @@
 import ast
-import builtins
 import json
+import math
 import re
 import shlex
 import textwrap
-from typing import Annotated, Literal
+import time
 
 from pydantic import BaseModel, Field
 
 from slopgate import diff, index, llm, trace
-from slopgate.config import DUPLICATE_SCORE, SUPER, ULTRA
+from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, DUPLICATE_SCORE, SUPER, ULTRA
 from slopgate.functions import complexity, is_test_file, nesting, parse, pytest_patterns, structure_hash
 from slopgate.kinds import KINDS, classify, comments, leftover, problems
 from slopgate.sandbox import InstallError, commands, tail
@@ -19,114 +19,42 @@ DEFS = (ast.FunctionDef, ast.AsyncFunctionDef)
 BOOL_CALLS = {"bool", "isinstance", "issubclass", "callable", "hasattr", "all", "any"}
 COVERAGE = "--slopgate-coverage--"
 MISSED = "import json, sys; print(json.dumps(json.load(sys.stdin)['files'][sys.argv[1]]['missing_branches'], separators=(',', ':')))"
-RECORDED = "--slopgate-recorded--"
-RECORDER_PATH = "slopgate_record.py"
 
-TESTS_PROMPT = """Write characterization tests for the Python function below. The tests must record what the code does now, bugs included.
+AGENT_RULES = """You write characterization tests in a sandbox. Commands run in the root of the repository, and its dependencies are installed.
 
-Reply in one of these forms:
+Rules:
+- Write files only with the execute tool and a heredoc, for example: mkdir -p tests && cat > {test_path} <<'EOF' ... EOF
+- Do not change any file except {test_path}.
+- The tests get no network and no API keys. Do not call real network services or models: patch them.
+- You can read files and run commands (grep, cat, python) in the repository.
+- Stop when the tests pass twice and cover every branch of the target."""
 
-{forms}
-
-For the calls form or the test file form, reply with one ```python block and no other text. For the cannot test form, reply with one line: CANNOT_TEST: <reason>
-
-File: {path}
+AGENT_TASK = """Write characterization tests for the Python function `{qualname}` in {path}. The tests must record what the code does now, bugs included.
 
 ```python
 {source}
-```"""
-
-TESTS_FORMS = [
-    "Calls. Use this form if calls with plain-value arguments (literals and builtins only) cover every branch. "
-    "Write one call to `{qualname}` per statement, for example `apply_discount([10], 50)`. "
-    "Do not predict results: each call runs on the code, and its return value or exception is recorded.",
-    "Test file. Use this form for all other functions. Write one pytest file. "
-    "Import the target with exactly this line: from {module} import {name}. Call the function as `{qualname}`. Cover every branch.",
-    "Cannot test. The tests run the real code, so you do not need to see helpers or imports. "
-    "Use this form only when no test can call the function, for example a pytest fixture.",
-]
-
-CAPTURE = """
-
-def capture(*args, **kwargs):
-    return list(args), kwargs
-"""
-
-RECORDER = """import json
-
-from {module} import {name}
-""" + CAPTURE + """
-
-results = []
-for inputs in {inputs!r}:
-    args, kwargs = eval("capture(" + inputs + ")")
-    try:
-        outcome = ["returns", repr({name}(*args, **kwargs))]
-    except Exception as error:
-        outcome = ["raises", type(error).__name__ + ": " + str(error)]
-    results.append([*outcome, repr((args, kwargs))])
-print({marker!r} + json.dumps(results))
-"""
-
-RETURNS_TEST = """
-
-def test_call_{n}():
-    args, kwargs = capture({inputs})
-    assert repr({name}(*args, **kwargs)) == {value!r}
-    assert repr((args, kwargs)) == {state!r}
-"""
-
-RAISES_TEST = """
-
-def test_call_{n}():
-    args, kwargs = capture({inputs})
-    with pytest.raises(Exception) as error:
-        {name}(*args, **kwargs)
-    assert type(error.value).__name__ + ": " + str(error.value) == {value!r}
-    assert repr((args, kwargs)) == {state!r}
-"""
-
-TESTS_RETRY = """
-
-Your earlier test file failed on the unchanged code above, so some expected values are wrong. Reply with the corrected file in one ```python block: keep the inputs where you can, and change each expected value to what the code actually returns or raises.
-
-Earlier test file:
-
-```python
-{tests}
 ```
 
-Failure:
+Write the tests to {test_path}. Import the target with exactly this line: from {module} import {name}
 
-{failure}"""
+Goal: the test file passes twice on the original code, once with PYTHONHASHSEED=1 and once with PYTHONHASHSEED=2, and it covers every branch of `{qualname}` (lines {start} to {end} of {path}).
 
-INPUTS_RETRY = """
+Run the tests with coverage:
 
-Your calls could not run on the unchanged code above. Each argument must be a literal or a builtin: quote every string, and use no bare names. Reply again with one ```python block of calls.
+PYTHONHASHSEED=1 {cmd}
 
-Earlier calls:
+Then show the missed branches of {path} as [from line, to line] pairs (a negative target means the function exits there):
 
-```python
-{calls}
-```
+python -m coverage json -q -o - | python -c "{missed}" {path}"""
 
-Failure:
-
-{failure}"""
-
-NOT_PYTHON_RETRY = """
-
-Your reply had no ```python block, or the block did not parse: {error}. Reply again in one of the forms above."""
-
-MISSED_RETRY = """
-
-Your calls miss {missed} branches of the function. Write a test file instead: reply with one ```python block that holds one pytest file. Import the target with exactly this line: from {module} import {name}. Cover every branch."""
-
-CALLEES = """
-
-Code it calls (context only; test the function above, through its behavior):
-
-{code}"""
+EXECUTE = {
+    "type": "function",
+    "function": {
+        "name": "execute",
+        "description": "Run a shell command in the sandbox and return its output and exit code.",
+        "parameters": {"type": "object", "properties": {"command": {"type": "string"}}, "required": ["command"]},
+    },
+}
 
 REWRITE_PROMPT = """Rewrite the Python function below. Fix these problems:
 
@@ -180,24 +108,6 @@ class SameJob(BaseModel):
 
     difference: str = Field(description="The behavior difference between the two functions, or an empty string when they behave the same.")
     same_job: bool = Field(description="True if callers of the new function could call the existing helper instead and get the same behavior.")
-
-
-class Calls(BaseModel):
-    form: Literal["calls"]
-    calls: list[str]
-
-
-class TestFile(BaseModel):
-    form: Literal["test_file"]
-    code: str
-
-
-class CannotTest(BaseModel):
-    form: Literal["cannot_test"]
-    reason: str
-
-
-TestsReply = Annotated[Calls | TestFile | CannotTest, Field(discriminator="form")]
 
 
 def module_of(path: str) -> str:
@@ -502,141 +412,106 @@ def replace_calls(repo, head, function, helper) -> dict[str, str]:
     return files
 
 
-def called_code(repo, head, function, depth=2) -> str:
-    paths = set(diff.git(repo, "ls-tree", "-r", "--name-only", head).splitlines())
-    texts = {}
-
-    def module_functions(path):
-        if path not in texts:
-            texts[path] = diff.git(repo, "show", f"{head}:{path}")
-        return {f.qualname: f for f in parse(path, texts[path]) if "." not in f.qualname}
-
-    seen, found, frontier = {(function.path, function.qualname)}, [], [function]
-    # ponytail: follows plain-name calls only; `module.func()` and `self.method()` callees are not resolved
-    for _ in range(depth):
-        following = []
-        for caller in frontier:
-            local = module_functions(caller.path)
-            imported = {
-                alias.asname or alias.name: (node.module, alias.name)
-                for node in ast.parse(texts[caller.path]).body
-                if isinstance(node, ast.ImportFrom) and node.level == 0
-                for alias in node.names
-            }
-            for call in ast.walk(ast.parse(textwrap.dedent(caller.source))):
-                if not (isinstance(call, ast.Call) and isinstance(call.func, ast.Name)):
-                    continue
-                target = local.get(call.func.id)
-                if target is None and call.func.id in imported:
-                    module, name = imported[call.func.id]
-                    path = next((p for p in (f"{module.replace('.', '/')}.py", f"{module.replace('.', '/')}/__init__.py") if p in paths), None)
-                    target = path and module_functions(path).get(name)
-                if target and (target.path, target.qualname) not in seen:
-                    seen.add((target.path, target.qualname))
-                    found.append(target)
-                    following.append(target)
-        frontier = following
-    return "\n\n".join(f"# {f.path}\n{textwrap.dedent(f.source)}" for f in found)
-
-
-def record(sandbox, checkpoint, function, inputs) -> tuple[str | None, str | None]:
-    module, name = module_of(function.path), function.qualname
-    script = RECORDER.format(module=module, name=name, inputs=inputs, marker=RECORDED)
-    _, output = sandbox.run(checkpoint, {RECORDER_PATH: script}, f"PYTHONHASHSEED=1 python {RECORDER_PATH}")
-    if RECORDED not in output:
-        return None, f"could not record calls: {tail(output)}"
-    outcomes = json.loads(output.split(RECORDED)[-1])
-    tests = f"import pytest\n\nfrom {module} import {name}\n" + CAPTURE
-    for n, (text, (outcome, value, state)) in enumerate(zip(inputs, outcomes)):
-        template = RETURNS_TEST if outcome == "returns" else RAISES_TEST
-        tests += template.format(n=n, name=name, inputs=text, value=value, state=state)
-    return tests, None
-
-
-def parse_tests_reply(text: str, function, calls_allowed: bool) -> TestsReply:
-    reply = text.strip()
-    if reply.startswith("CANNOT_TEST:"):
-        return CannotTest(form="cannot_test", reason=reply.removeprefix("CANNOT_TEST:").partition("\n")[0].strip())
-    code = strip_fence(text)
-    if code is None:
-        raise ValueError("no ```python block")
+def check(sandbox, checkpoint, function, test_path, cmd, tests) -> str | None:
+    _, output = sandbox.run(
+        checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o - | python -c \"{MISSED}\" {shlex.quote(function.path)}"
+    )
+    second, _ = sandbox.run(checkpoint, {test_path: tests}, f"PYTHONHASHSEED=2 {cmd}")
+    passed = COVERAGE in output
+    if passed != (not second):
+        return "nondeterministic: characterization tests differ across two runs"
+    if not passed:
+        return f"characterization tests fail on original: {tail(output)}"
     try:
-        tree = ast.parse(code)
-    except SyntaxError as error:
-        raise ValueError(str(error)) from None
-    if calls_allowed and not any(isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) for stmt in tree.body):
-        allowed = {*vars(builtins), function.qualname}
-        calls = []
-        for call in sorted(
-            (node for node in ast.walk(tree) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == function.qualname),
-            key=lambda node: (node.lineno, node.col_offset),
-        ):
-            arguments = sorted([*call.args, *call.keywords], key=lambda node: (node.lineno, node.col_offset))
-            if all(name.id in allowed for argument in arguments for name in ast.walk(argument) if isinstance(name, ast.Name)):
-                calls.append(", ".join(ast.get_source_segment(code, argument) for argument in arguments))
-        if not calls:
-            raise ValueError(f"the block holds no call to `{function.qualname}` with plain-value arguments")
-        return Calls(form="calls", calls=calls)
-    return TestFile(form="test_file", code=code)
+        branches = json.loads(output.split(COVERAGE)[1].strip().splitlines()[0])
+    except (ValueError, IndexError):
+        return f"coverage has no data for {function.path}"
+    missed = [branch for branch in branches if function.start <= branch[0] <= function.end]
+    return f"characterization tests miss branches: {len(missed)}" if missed else None
 
 
-def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> tuple[str | None, str | None]:
-    name = nondeterministic(textwrap.dedent(function.source))
+def shown(code: int, output: str) -> str:
+    # Stage 1 of ticket 41 measured the agent with the output form of Deep Agents: past 80,000 characters, only 5 head and 5 tail lines.
+    if len(output) > 80_000:
+        lines = output.splitlines()
+        output = "\n".join([*lines[:5], f"... [{len(lines) - 10} lines truncated] ...", *lines[-5:]])
+    return output + f"\n[Command {'succeeded' if code == 0 else 'failed'} with exit code {code}]"
+
+
+def limit(steps: int, began: float, tokens: int) -> str | None:
+    if steps >= AGENT_STEPS:
+        return "step limit"
+    if time.perf_counter() - began > AGENT_SECONDS:
+        return "time limit"
+    return "token limit" if tokens > AGENT_TOKENS else None
+
+
+def characterize(sandbox, checkpoint, function, test_path, cmd) -> tuple[str | None, str | None]:
+    source = textwrap.dedent(function.source)
+    name = nondeterministic(source)
     if name:
         return None, f"nondeterministic: uses {name}"
-    fields = {"module": module_of(function.path), "name": function.qualname.split(".")[0], "qualname": function.qualname}
-    # the recorder sees only the arguments, so a method's effect on its object would go unchecked
-    calls_allowed = "." not in function.qualname
-    forms = TESTS_FORMS if calls_allowed else TESTS_FORMS[1:]
-    prompt = TESTS_PROMPT.format(
-        forms="\n".join(f"{n}. {form.format(**fields)}" for n, form in enumerate(forms, 1)), path=function.path, source=function.source
+    session = sandbox.session(checkpoint)
+    task = AGENT_TASK.format(
+        qualname=function.qualname,
+        path=function.path,
+        source=source,
+        test_path=test_path,
+        module=module_of(function.path),
+        name=function.qualname.split(".")[0],
+        start=function.start,
+        end=function.end,
+        cmd=cmd,
+        missed=MISSED,
     )
-    request = prompt + (CALLEES.format(code=context) if context else "")
-    retry, template = "", "TESTS_PROMPT"
-    for attempt in (1, 2):
-        with trace.span("gate.tests", attempt=attempt, prompt=template):
-            try:
-                reply = parse_tests_reply(llm.complete(SUPER, request + retry), function, calls_allowed)
-            except ValueError as exc:
-                reply, error = None, exc
-            match reply:
-                case CannotTest():
-                    return None, f"model cannot test: {reply.reason}"
-                case None:
-                    tests, failure, retry, template = None, "tests reply is not python", NOT_PYTHON_RETRY.format(error=error), "NOT_PYTHON_RETRY"
-                case Calls():
-                    missed_retry = MISSED_RETRY
-                    tests, failure = record(sandbox, checkpoint, function, reply.calls)
-                    if failure:
-                        calls = "\n".join(f"{function.qualname}({call})" for call in reply.calls)
-                        retry, template = INPUTS_RETRY.format(calls=calls, failure=failure), "INPUTS_RETRY"
-                case TestFile():
-                    tests, failure, missed_retry = reply.code, None, None
-            if tests is not None:
-                code, output = sandbox.run(
-                    checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o - | python -c \"{MISSED}\" {shlex.quote(function.path)}"
-                )
-                second, _ = sandbox.run(checkpoint, {test_path: tests}, f"PYTHONHASHSEED=2 {cmd}")
-                passed = COVERAGE in output
-                if passed != (not second):
-                    return None, "nondeterministic: characterization tests differ across two runs"
-                if passed:
-                    try:
-                        branches = json.loads(output.split(COVERAGE)[1].strip().splitlines()[0])
-                    except (ValueError, IndexError):
-                        return None, f"coverage has no data for {function.path}"
-                    missed = sum(function.start <= line <= function.end for line, _ in branches)
-                    if not missed:
-                        return tests, None
-                    failure = f"characterization tests miss branches: {missed}"
-                    if missed_retry is None:
-                        return None, failure
-                    retry, template = missed_retry.format(missed=missed, **fields), "MISSED_RETRY"
+    messages = [{"role": "system", "content": AGENT_RULES.format(test_path=test_path)}, {"role": "user", "content": task}]
+    steps = tokens = 0
+    began = time.perf_counter()
+    # A failed reply or command ends the agent, but the file it already wrote still goes to the check.
+    try:
+        while not (stop := limit(steps, began, tokens)):
+            steps += 1
+            with trace.span("gate.agent", step=steps):
+                message = llm.step(SUPER, messages, [EXECUTE])
+            tokens += llm.usage[-1][1]
+            calls = message.tool_calls or []
+            if not calls:
+                break
+            messages.append(
+                {
+                    "role": "assistant",
+                    "content": message.content,
+                    "tool_calls": [{"id": c.id, "type": "function", "function": {"name": c.function.name, "arguments": c.function.arguments}} for c in calls],
+                }
+            )
+            for call in calls:
+                remaining = AGENT_SECONDS - (time.perf_counter() - began)
+                if remaining <= 0:
+                    stop = "time limit"
+                    break
+                try:
+                    command = str(json.loads(call.function.arguments)["command"])
+                except (ValueError, KeyError, TypeError) as error:
+                    content = f"Error: invalid arguments for execute: {error!r}"
                 else:
-                    failure = f"characterization tests fail on original: {tail(output)}"
-                    retry, template = TESTS_RETRY.format(tests=tests, failure="\n".join(output.strip().splitlines()[-60:])), "TESTS_RETRY"
-            trace.output(failure)
-    return None, failure
+                    content = shown(*session.execute(command, max(1, math.ceil(remaining))))
+                messages.append({"role": "tool", "tool_call_id": call.id, "content": content})
+            if stop:
+                break
+    except llm.CutOff:
+        stop = "reply cut off"
+    except Exception as error:
+        stop = f"agent error: {error!r}"
+    try:
+        tests = session.read(test_path)
+    except Exception as error:
+        return None, f"no test file: agent stopped ({stop or 'no tool call'}), read failed: {error!r}"
+    if tests is None:
+        return None, f"no test file: agent stopped ({stop or 'no tool call'})"
+    failure = check(sandbox, checkpoint, function, test_path, cmd, tests)
+    if failure is None:
+        return tests, None
+    return None, f"{stop}: {failure}" if stop else failure
 
 
 def deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, test_path, cmd) -> tuple[dict | None, str | None]:
@@ -754,7 +629,7 @@ def review(repo, base, head, sandbox) -> dict:
                 if not (match and match["exact"]):
                     target = plan["caller"] if plan else function
                     with trace.span("gate.characterize"):
-                        tests, failure = characterize(sandbox, checkpoint, target, test_path, cmd, called_code(repo, head, target))
+                        tests, failure = characterize(sandbox, checkpoint, target, test_path, cmd)
                         trace.output(failure or "passed")
                     if failure:
                         result["rejected"].append({**rejected, "reason": failure})

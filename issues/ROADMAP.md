@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**41 — Characterization tests by an agent in a ConTree sandbox.** Rule 5: it comes before tickets 30, 35, 29, and 31.
+**33 — Add a time limit to each sandbox run.** Ticket 41 made tickets 30, 35, 29, and 31 unnecessary (wontfix). Ticket 41 put a time limit on the commands of the test agent only. The judge, the rewrite proof, and the repo tests still have no limit.
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -21,10 +21,10 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 7 | [32 — Trace every model request in Arize Phoenix](32-phoenix-tracing.md) | done | — | The user set it next on 2026-10-08. Each prompt and reply becomes visible, so a failed proof can be explained from the real run. Starts with a design stage for the span names. |
 | 8 | [36 — Design: how the gate picks a slop kind, and what input the model gets](36-design-slop-kind-input.md) | done | — | Design ticket. On PR #20, all 12 notes were wrong by the gate's own checks: complexity counts asserts, and the model's kind is not checked. |
 | 9 | [37 — Detection benchmark on SWE-bench code with injected slop](37-detection-benchmark.md) | done | 36 | The user set it next on 2026-10-09. It measures the detection of ticket 36 on code that nobody on the project wrote, with no sandbox. |
-| 10 | [30 — Give the test writer the constants the target reads](30-constants-in-callee-context.md) | ready-for-agent | — | Super guessed `DUPLICATE_SCORE` on PR #17. No extra model call. |
-| 11 | [35 — Tell the test writer that the tests run without network and keys](35-tests-run-without-network.md) | ready-for-agent | 30 | `characterize` on PR #20: the tests called the real model client and patched a parameter by name. Needs a live measurement. |
-| 12 | [29 — Keep the passing characterization tests](29-keep-passing-characterization-tests.md) | ready-for-agent | 20 | One failing test rejects the whole file now. No extra model call. |
-| 13 | [31 — Retry once for missed branches, with 3 attempts in total](31-retry-missed-branches.md) | ready-for-agent | 29 | Missed branches reject at once now. Costs one Super call. |
+| 10 | [30 — Give the test writer the constants the target reads](30-constants-in-callee-context.md) | wontfix | — | Replaced by ticket 41: the test agent reads the constants itself. |
+| 11 | [35 — Tell the test writer that the tests run without network and keys](35-tests-run-without-network.md) | wontfix | 30 | Replaced by ticket 41: the rule is in the agent's system prompt, and the agent runs the tests. |
+| 12 | [29 — Keep the passing characterization tests](29-keep-passing-characterization-tests.md) | wontfix | 20 | Replaced by ticket 41: the agent fixes or removes a failing test itself. |
+| 13 | [31 — Retry once for missed branches, with 3 attempts in total](31-retry-missed-branches.md) | wontfix | 29 | Replaced by ticket 41: the agent sees the missed branches and adds tests. |
 | 14 | [33 — Add a time limit to each sandbox run](33-sandbox-time-limit.md) | ready-for-agent | — | A model-written call such as `input()` blocks the gate with no end. |
 | 15 | [34 — Readable rejection reasons in the review comment](34-readable-rejection-reasons.md) | ready-for-agent | — | The raw pytest output on PR #20 looked like a crash of the gate. |
 | 16 | [19 — Several slop kinds per function](19-several-slop-kinds-per-function.md) | done | 18, 21, 36 | Fixes all problems of a function in one suggestion. Built in ticket 36, stage 2. |
@@ -32,7 +32,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 18 | [24 — Save the embedding model cache on main](24-model-cache-on-main.md) | wontfix | — | Ticket 28 removes the embedding model from the gate. |
 | 19 | [25 — Faster proof](25-faster-proof.md) | ready-for-agent | 32 | Needs the step times from one traced review first. |
 | 20 | [08 — Live duplicate flag at plan time](08-live-flag-plan-time.md) | ready-for-agent | 07 (done) | The second half of the live flag in the spec. Ticket 11 needs it. |
-| 21 | [10 — Benchmark on SWE-bench with injected slop](10-benchmark.md) | ready-for-agent | 37, 30, 35 | Stage 2: the full gate. The results go into the submission. Ticket 11 needs it. |
+| 21 | [10 — Benchmark on SWE-bench with injected slop](10-benchmark.md) | ready-for-agent | 37, 41 | Stage 2: the full gate. The results go into the submission. Ticket 11 needs it. |
 | 22 | [09 — Jev classifier backend and comparison](09-jev-backend-and-comparison.md) | ready-for-agent | 07 (done) | Lowest priority. Skip it if time runs short. |
 | 23 | [11 — Hackathon submission package](11-submission-package.md) | ready-for-agent | 06, 08, 10 | Last. It describes the finished project. Before the repo is public, set the Slopgate workflow back to `ubuntu-latest` (ticket 27). |
 
@@ -46,10 +46,12 @@ Added after the order was set:
 | [39 — Design: better detection for `redundant_check` and `nesting`; remove `filler_comment`](39-detection-precision.md) | done | Found by ticket 37. On the held-out set, the false-kind rate on clean function runs fell from 0.117 to 0.013. |
 | [40 — Limit the output tokens of `decide`](40-limit-decide-output.md) | ready-for-agent | Found by ticket 37. 5 of 1,407 `classify` runs took 60 s to 110 s. Since ticket 39, `classify` makes no model call; the limit still applies to the duplicate verdict. |
 | [42 — Benchmark statistics: label agreement, run metadata, and pass@k](42-benchmark-statistics.md) | ready-for-agent | The user set it on 2026-10-10. Do it before ticket 10. Ticket 39 does the other 3 checks of the evals guide (held-out set, ranges, errors apart). |
-| [41 — Characterization tests by an agent in a ConTree sandbox](41-characterization-agent-in-contree.md) | ready-for-agent | The user set it on 2026-10-09. Do it after 39 and before 30, 35, 29, and 31: its result can make those tickets unnecessary. Next ticket. |
+| [41 — Characterization tests by an agent in a ConTree sandbox](41-characterization-agent-in-contree.md) | done | A plain tool loop (design D) proved 24 of 36 functions; the old flow proved 7. `characterize` uses it now. Tickets 29, 30, 31, and 35 are wontfix. |
 | [43 — The gate cannot prove a `redundant_check` rewrite](43-dead-branch-of-redundant-check.md) | ready-for-agent | Found by ticket 39. The never-run branch of a repeated check fails the branch coverage rule. |
+| [44 — The import line is wrong for a repo with a `src/` layout](44-src-layout-import-line.md) | ready-for-agent | Found by ticket 41. All 6 pytest functions failed in every design. |
+| [45 — The test agent cannot characterize large functions](45-characterize-large-functions.md) | ready-for-agent | Found by ticket 41. The agent proved no function of complexity 17 or more; `review` (complexity 65) stopped at the token limit. |
 
-Tickets 01 to 07, 12 to 22, 26, 28, 32, 36, 37, and 39 are done. Ticket 24 is wontfix.
+Tickets 01 to 07, 12 to 22, 26, 28, 32, 36, 37, 39, and 41 are done. Tickets 24, 29, 30, 31, and 35 are wontfix.
 
 ## Rules for the order
 

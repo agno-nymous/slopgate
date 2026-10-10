@@ -42,3 +42,13 @@ During ticket 20, one offline test run stalled for about 10 minutes while a new 
 - [ ] `uv run pytest -q` passes.
 
 ## Comments
+
+### 2026-10-10 — Part of the work is done in ticket 41
+
+Ticket 41 added a time limit for the commands of the test agent only:
+
+- `shell` in `slopgate/sandbox.py` takes a `timeout`. It starts the command in its own process group, passes `stdin=subprocess.DEVNULL`, kills the whole group at the limit, and returns `(124, "<output>\ntimed out after <n> s")`. `LocalSession.execute` uses it.
+- `ContreeSession.execute` runs each command as `timeout -k 5 <n> sh -c <command>`, and gives the ConTree client a wait of `<n> + 60` s. A hung command then returns exit 124 before the client gives up.
+- The limit is the time that is left of the agent's 120 s (`AGENT_SECONDS` in `slopgate/config.py`).
+
+Still open in this ticket: `Local.run` and `Contree.run` have no limit. These runs are the judge (`check`), the rewrite proof, and the repo tests. Use the same `shell(..., timeout)` and the same `timeout -k 5` wrapper there.

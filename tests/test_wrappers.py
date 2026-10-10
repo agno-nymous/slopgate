@@ -44,8 +44,8 @@ def test_same_file_wrapper_is_inlined_into_its_caller(make_repo, fake_llm, capsy
 
     result = review(capsys, repo)
 
-    assert models(fake_llm) == [SUPER, SUPER]
-    assert "Call the function as `invoice_total`" in fake_llm.calls[1][1]
+    assert models(fake_llm) == [SUPER, SUPER, SUPER]
+    assert "Write characterization tests for the Python function `invoice_total`" in fake_llm.calls[1][1]
     assert result["suggestions"] == [] and result["rejected"] == []
     assert result["followup"] == [
         {
@@ -107,7 +107,7 @@ def test_cross_file_wrapper_edits_both_files(make_repo, fake_llm, capsys, base, 
 
     result = review(capsys, repo)
 
-    assert models(fake_llm) == [SUPER, SUPER]
+    assert models(fake_llm) == [SUPER, SUPER, SUPER]
     assert result["rejected"] == []
     [followup] = result["followup"]
     assert followup["reason"].startswith("`tax_for` only forwards to `compute_tax`; inlined into its single caller `invoice_total` in app/views.py.")
@@ -179,24 +179,6 @@ def test_inlining_that_would_change_evaluation_is_left_alone(make_repo, fake_llm
 
     assert review(capsys, repo) == EMPTY
     assert models(fake_llm) == [SUPER]
-
-
-def test_tests_prompt_shows_the_code_the_target_calls(make_repo, fake_llm, capsys):
-    repo = make_repo(
-        {"app/__init__.py": "", "app/tax.py": COMPUTE_TAX},
-        {
-            "app/billing.py": "from app.tax import compute_tax\n" + TAX_FOR + INVOICE_TOTAL,
-        },
-    )
-    fake_llm.replies += [OTHER_JOB, fenced(INVOICE_TESTS)]
-
-    review(capsys, repo)
-
-    [_, (_, prompt)] = fake_llm.calls
-    context = prompt.split("Code it calls")[1]
-    assert "# app/billing.py\n" + TAX_FOR.strip() in context
-    assert "# app/tax.py\n" + COMPUTE_TAX.strip() in context
-    assert "def invoice_total" not in context
 
 
 APPLY_DISCOUNT = '''\
