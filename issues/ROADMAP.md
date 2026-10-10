@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**39 — Design: better detection for `redundant_check` and `nesting`; remove `filler_comment`.** Ticket 37 measured 21.7% of clean function runs with a false kind.
+**41 — Characterization tests by an agent in a ConTree sandbox.** Rule 5: it comes before tickets 30, 35, 29, and 31.
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -43,12 +43,13 @@ Added after the order was set:
 | [26 — Review a pull request on the local machine](26-review-a-pr-locally.md) | done | Adds `slopgate review --pr <number>`. |
 | [27 — Run the gate automatically on a self-hosted runner](27-gate-on-self-hosted-runner.md) | needs-live-check | The workflow runs on the user's Mac. It needs the runner to be registered. |
 | [38 — A comment at column 0 inside a method crashes `classify`](38-column-zero-comment-crash.md) | ready-for-agent | Found by ticket 37. 34 functions in the 12 SWE-bench Lite repos. Do it before ticket 10. |
-| [39 — Design: better detection for `redundant_check` and `nesting`; remove `filler_comment`](39-detection-precision.md) | ready-for-agent | Found by ticket 37. Next ticket: the gate gives a false kind on 21.7% of clean function runs. |
-| [40 — Limit the output tokens of `decide`](40-limit-decide-output.md) | ready-for-agent | Found by ticket 37. 5 of 1,407 `classify` runs took 60 s to 110 s. |
+| [39 — Design: better detection for `redundant_check` and `nesting`; remove `filler_comment`](39-detection-precision.md) | done | Found by ticket 37. On the held-out set, the false-kind rate on clean function runs fell from 0.117 to 0.013. |
+| [40 — Limit the output tokens of `decide`](40-limit-decide-output.md) | ready-for-agent | Found by ticket 37. 5 of 1,407 `classify` runs took 60 s to 110 s. Since ticket 39, `classify` makes no model call; the limit still applies to the duplicate verdict. |
 | [42 — Benchmark statistics: label agreement, run metadata, and pass@k](42-benchmark-statistics.md) | ready-for-agent | The user set it on 2026-10-10. Do it before ticket 10. Ticket 39 does the other 3 checks of the evals guide (held-out set, ranges, errors apart). |
-| [41 — Characterization tests by an agent in a ConTree sandbox](41-characterization-agent-in-contree.md) | ready-for-agent | The user set it on 2026-10-09. Do it after 39 and before 30, 35, 29, and 31: its result can make those tickets unnecessary. |
+| [41 — Characterization tests by an agent in a ConTree sandbox](41-characterization-agent-in-contree.md) | ready-for-agent | The user set it on 2026-10-09. Do it after 39 and before 30, 35, 29, and 31: its result can make those tickets unnecessary. Next ticket. |
+| [43 — The gate cannot prove a `redundant_check` rewrite](43-dead-branch-of-redundant-check.md) | ready-for-agent | Found by ticket 39. The never-run branch of a repeated check fails the branch coverage rule. |
 
-Tickets 01 to 07, 12 to 22, 26, 28, 32, and 36 are done. Ticket 24 is wontfix.
+Tickets 01 to 07, 12 to 22, 26, 28, 32, 36, 37, and 39 are done. Ticket 24 is wontfix.
 
 ## Rules for the order
 

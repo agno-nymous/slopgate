@@ -905,6 +905,10 @@
    "nesting": {
     "decision": "slop",
     "reason": "Depth 3: 'if self.min <= other.min: if self.max <= other.max' should be one 'and' test, and the for/if is a comprehension."
+   },
+   "redundant_check": {
+    "decision": "slop",
+    "reason": "'if self.max > other.max:' is always true, because 'if self.max <= other.max: return' comes directly before it."
    }
   },
   "sympy/sympy:sympy/concrete/expr_with_limits.py:ExprWithLimits.free_symbols": {
