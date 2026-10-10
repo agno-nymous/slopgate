@@ -9,7 +9,7 @@
 
 **Blocked by:** 30 (both change the "Code it calls" section of the tests prompt)
 
-**Status:** ready-for-agent
+**Status:** wontfix
 
 ## Context
 
@@ -33,3 +33,9 @@ On PR #20 (2026-10-08), the gate rejected `characterize` in `slopgate/review.py`
 - [ ] `uv run pytest -q` passes.
 
 ## Comments
+
+### 2026-10-10 — wontfix: replaced by ticket 41
+
+Ticket 41 replaced the Super call in `characterize` with an agent loop in a sandbox session. The rule of this ticket is in the agent's system prompt (`AGENT_RULES`): "The tests get no network and no API keys. Do not call real network services or models: patch them." The agent can also run the tests, so it sees a `KeyError` on `NEBIUS_API_KEY` and patches the call.
+
+Measured in ticket 41: the agent's proved test files for `find_duplicate` patch `slopgate.review.llm.decide`. `characterize` at 70c27da (the example of this ticket) is still not proved: in all 6 agent runs of run 2 (designs C and D, 3 each), it stopped at the step limit or the token limit. That limit is recorded in ticket 41.

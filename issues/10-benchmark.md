@@ -5,9 +5,9 @@
 - **Goal:** Measure how well the whole gate works on real repos. Example: inject a redundant check into a real SWE-bench commit, run the gate, and see whether it finds and fixes the check.
 - **Checkable finish condition:** One run on 30 to 50 SWE-bench instances saves a results file with four numbers (detection recall, complexity change, acceptance rate, silent-break rate), for the whole run and for each slop kind. A run of 10 instances costs less than $5. The README links the file and holds the job command.
 - **Evidence:** Not started. Today the gate has no such numbers on real repos. Ticket 37 only measures detection. After this ticket, the results file holds all four numbers and the total token spend.
-- **Constraints:** Use the preloaded sandbox image of each instance, with no fresh install. The injection writes the ground truth (kind, function, file) before the gate runs. The hidden SWE-bench tests run on every accepted rewrite, and the gate never sees them. The run starts as a Nebius Serverless Job. Blocked by 02, 03, 04, 37 (stage 1: detection only), 30, and 35.
+- **Constraints:** Use the preloaded sandbox image of each instance, with no fresh install. The injection writes the ground truth (kind, function, file) before the gate runs. The hidden SWE-bench tests run on every accepted rewrite, and the gate never sees them. The run starts as a Nebius Serverless Job. Blocked by 02, 03, 04, 37 (stage 1: detection only), and 41 (it replaces 30 and 35).
 
-**Blocked by:** 02, 03, 04 (done), 37 (stage 1: detection only), 30, 35
+**Blocked by:** 02, 03, 04 (done), 37 (stage 1: detection only), 41 (replaces 30 and 35)
 
 **Status:** ready-for-agent
 

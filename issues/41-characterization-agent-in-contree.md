@@ -9,7 +9,7 @@
 
 **Blocked by:** —
 
-**Status:** in-progress
+**Status:** done
 
 **Type:** measurement, then build.
 
@@ -88,10 +88,10 @@ Choose by the proof rate, then by the cost and the time. The gate runs `characte
 
 ### Stage 2
 
-- [ ] `characterize` uses the chosen design.
-- [ ] `uv run pytest -q` passes, and the live tests that the change touches pass.
-- [ ] A dry run on demo PR #1 proves at least as many rewrites as before.
-- [ ] Tickets 29, 30, 31, and 35 are updated: done, wontfix, or still needed.
+- [x] `characterize` uses the chosen design.
+- [x] `uv run pytest -q` passes, and the live tests that the change touches pass.
+- [x] A dry run on demo PR #1 proves at least as many rewrites as before.
+- [x] Tickets 29, 30, 31, and 35 are updated: done, wontfix, or still needed.
 
 ## Comments
 
@@ -168,9 +168,67 @@ Other tests in the same file patch `slopgate.review.llm.decide`, so no test call
 **Known limits.**
 
 - The 6 pytest functions failed in all designs. The gate makes the import line from the file path (`src._pytest...`), and pytest measures itself. Ticket 44 records the `src/` layout problem.
-- `characterize` itself failed in all designs. C and D stopped at the time limit or the token limit.
+- `characterize` itself failed in all designs. In run 2, all 12 agent runs (C and D, both versions, 3 runs each) stopped at the step limit or the token limit.
 - The agent designs reach the 15-step limit in at least half of the runs. A higher limit can prove more, but it costs more. This was not measured.
 - Each design ran once per function in each run. With 36 functions, a difference of about 5 functions is near the run-to-run variance (B gave 13 in run 1 and 8 in run 2).
 - The mutation check unparses the function, so it can miss a docstring change. The control run rejects such a file.
 
 **Decision.** The user chose D for stage 2 on 2026-10-10.
+
+### 2026-10-10 — Stage 2: design D in `characterize`
+
+**What was built.** `characterize` in `slopgate/review.py` is now design D, a plain tool loop:
+
+- Super gets the system prompt `AGENT_RULES`, the task `AGENT_TASK`, and one tool, `execute(command)`. The prompts are the stage 1 texts, with the paths made relative to the repo root.
+- The commands run in a sandbox session that starts from the checkpoint and keeps files between commands: `Local.session` (a copy in a temporary folder) or `Contree.session` (a ConTree session, `disposable=False`). The agent loop runs on the runner. The session gets no API key.
+- `llm.step` sends one step of the loop, with thinking off.
+- The loop stops when a reply has no tool call, or at `AGENT_STEPS = 15` model calls, `AGENT_SECONDS = 120` s, or `AGENT_TOKENS = 150,000` input tokens (`slopgate/config.py`).
+- Each command gets the time that is left of the 120 s. ConTree runs it as `timeout -k 5 <n> sh -c <command>`, so a hung command returns exit 124.
+- A cut-off reply or an error ends the loop, but the file that the agent already wrote is still judged.
+- `check` judges the test file on the original checkpoint, never in the session. It returns the rejection text, or `None` when the tests prove.
+
+The old flow is deleted: the tests prompt, the calls form and the recorder, `CANNOT_TEST`, the retry prompts, the reply parser, and `called_code`. `bench/characterize.py` now measures only the gate's `characterize`, with the mutation check. The stage 1 bench (designs A to D) is in commit a834fac. The `bench` extra (deepagents, langchain-openai) is removed.
+
+**Changes after the code review.** An Opus review found 14 points. These were applied:
+
+- A ConTree command at the time limit raised `OperationTimedOutError` and lost the agent's work. Now the `timeout -k 5` wrapper ends it in the sandbox first.
+- An error late in the loop rejected a file that could pass. Now the file is still judged.
+- The limit check is now before each model call. So each of the 15 paid replies runs its tool calls (in stage 1, the 15th reply was dropped).
+- `check` returns a text, and the `Check` type is deleted.
+- `shell` passes `stdin=subprocess.DEVNULL` and cannot block after a kill.
+- The recall fixture for `shell` is a copy with a different approach (`subprocess.run(timeout=...)`). The search still finds it.
+
+Not applied, with the reason:
+
+- A context manager for the session. CPython frees the temporary folder when `characterize` returns.
+- Merging `llm.complete` into `llm.step`. No current defect needs it.
+
+**Worked example.** Demo PR #1 (agno-nymous/slopgate-demo, 0584a3a to fc03fcc), dry run:
+
+| Result | Before (old flow) | After (design D) |
+|---|---|---|
+| Suggestions | 0 | 0 |
+| Follow-ups | 2 | 2 |
+| Rejected | 0 | 0 |
+
+- `format_total` is an exact copy of `money`, so it needs no characterization.
+- `discounted` is a wrapper. Its caller `promo_total` got 9 proven tests before. With the agent, it got 7 proven tests in one run and 6 in another.
+
+**Measured results.**
+
+- `uv run pytest -q`: 277 passed, 16 deselected, in 3 min 36 s. Before stage 2, there were 302 tests in 9 min 41 s. The tests of the deleted flow are gone.
+- Live tests (`-m live`), 6 passed:
+  - `test_contree_session_hides_the_api_key_and_ends_a_hung_command`: `env` shows no `NEBIUS_` name, and `sleep 30` with a limit of 3 s returns exit 124.
+  - `test_agent_proves_characterization_tests`: real Super proves `apply_discount` and `broken_rule`.
+  - The wrapper, Contree-against-Local, and install tests.
+- Live bench row before the review fixes: `base36_to_int` proved in 26.9 s, 7 model calls, 10,828 input tokens, $0.005. The tests killed 5 of 5 mutants.
+
+**Known limits.**
+
+- There is no cheap "cannot test" exit now. An untestable function costs up to 15 calls and 150,000 input tokens, about $0.05.
+- The gate characterizes one function at a time. With a median of about 55 s for each function, a pull request with 10 candidates takes about 10 min.
+- `characterize` itself is still not proved (step limit or token limit).
+- The judge, the rewrite proof, and the repo tests still have no time limit. Ticket 33 has this work.
+- With `--sandbox local`, the agent's commands run on the host, in a copy of the repo, with the secrets removed from the environment. Pull request code already ran on the host in this mode.
+
+**Tickets 29, 30, 31, and 35.** All are wontfix, and each has a Comments entry with the reason. Ticket 10 is now blocked by 41 instead of 30 and 35.

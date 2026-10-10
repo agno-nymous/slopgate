@@ -9,7 +9,7 @@
 
 **Blocked by:** 20 (it changes the reply parsing in `characterize`; this ticket changes the same loop)
 
-**Status:** ready-for-agent
+**Status:** wontfix
 
 ## Context
 
@@ -51,3 +51,9 @@ The branch coverage check stays. It prevents a file that is too small after the 
 2. Count the rejections with "characterization tests fail on original". Compare the count with the PR #17 comment.
 
 ## Comments
+
+### 2026-10-10 — wontfix: replaced by ticket 41
+
+Ticket 41 replaced the Super call and its retries in `characterize` with an agent loop in a sandbox session. The agent runs the tests itself. When a test fails on the original code, the agent sees the failure and changes or removes that test. The removal step of this ticket has no place in the new flow.
+
+Measured in ticket 41 (run 2, 36 functions): the agent proved 24 functions, and the old flow proved 7. In the old flow, "fail on original" was the most frequent failure (20 of 36).
