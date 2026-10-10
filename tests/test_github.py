@@ -9,7 +9,7 @@ from test_review import FLAT, NESTED, TESTS, fenced
 from test_wrappers import COMPUTE_TAX, INVOICE_TESTS, INVOICE_TOTAL, TAX_FOR
 
 from slopgate.cli import main
-from slopgate.github import duration
+from slopgate.github import duration, summary
 from slopgate.config import ULTRA
 from slopgate.kinds import KINDS
 
@@ -310,6 +310,58 @@ def test_rejections_are_listed_under_the_summary(github, fake_llm, capsys):
     body = calls()[0]["args"][-1]
     assert "Accepted: 0 inline suggestions, 0 follow-up changes. Rejected: 1." in body
     assert "- `can_edit` (nesting) in app/perms.py: characterization tests miss branches: 1" in body
+
+
+PYTEST_TAIL = """    def test_x():
+>           result = getattr(result, p)
+E   AttributeError: 'int' object has no attribute 'a'
+=========== 9 failed, 1 passed in 0.31s ==========="""
+
+
+def rejected(reason):
+    entry = {"function": "characterize", "kinds": ["duplicate"], "path": "slopgate/review.py", "reason": reason}
+    return summary({"suggestions": [], "notes": [], "rejected": [entry]}, "0 follow-up changes", 1)
+
+
+def test_pytest_output_in_a_rejection_stays_inside_a_code_block(fake_llm):
+    body = rejected("characterization tests fail on original: " + PYTEST_TAIL)
+
+    lines = body.splitlines()
+    assert "- `characterize` (duplicate) in slopgate/review.py: 9 of 10 generated tests failed on the unchanged code, so the gate could not check a rewrite." in lines
+    assert "  >           result = getattr(result, p)" in lines
+    opening = lines.index("  ```")
+    closing = lines.index("  ```", opening + 1)
+    assert opening < lines.index("  >           result = getattr(result, p)") < closing
+    assert not [line for line in lines[:opening] + lines[closing:] if line.startswith(">")]
+
+
+def test_rejection_without_pytest_output_has_no_code_block(fake_llm):
+    assert "```" not in rejected("rewrite makes no change")
+
+
+def test_backticks_in_the_output_cannot_close_the_fence(fake_llm):
+    body = rejected("rewrite fails characterization tests: E   assert '```' == 1\n1 failed, 2 passed in 0.1s")
+
+    assert "  ````\n" in body
+    assert "The rewrite failed 1 of 3 characterization tests." in body
+
+
+def test_time_out_sentence_has_no_counts(fake_llm):
+    body = rejected("characterization tests time out: running...")
+
+    assert "in slopgate/review.py: The generated tests ran past the time limit of the sandbox.\n" in body
+
+
+def test_pytest_errors_are_not_counted_as_failed_tests(fake_llm):
+    body = rejected("rewrite fails repo tests: ERROR collecting tests/test_app.py\n2 errors in 0.2s")
+
+    assert "in slopgate/review.py: The rewrite failed repo tests.\n" in body
+
+
+def test_multi_line_reason_with_an_unknown_prefix_still_gets_a_code_block(fake_llm):
+    body = rejected("new check fails: line one\n>   line two")
+
+    assert "in slopgate/review.py: New check fails.\n\n  ```\n  line one\n  >   line two\n  ```" in body
 
 
 def test_summary_failure_still_posts_the_results(github, fake_llm, capsys):
