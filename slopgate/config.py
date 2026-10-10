@@ -15,3 +15,8 @@ MAX_OUTPUT_TOKENS = 32768
 
 # USD per million tokens (input, output)
 PRICES = {LIGHTNING: (0.06, 0.24), SUPER: (0.30, 0.90), ULTRA: (1.0, 3.0)}
+
+# Limits of the characterization agent for each function, as measured in ticket 41 (tokens: cumulative input tokens).
+AGENT_STEPS = 15
+AGENT_SECONDS = 120
+AGENT_TOKENS = 150_000

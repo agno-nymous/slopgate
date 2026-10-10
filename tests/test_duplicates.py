@@ -142,7 +142,7 @@ def test_copy_with_other_error_on_none(make_repo, fake_llm, capsys, difference, 
 
     result = review(capsys, repo)
 
-    assert models(fake_llm) == [SUPER, SUPER]
+    assert models(fake_llm) == [SUPER, SUPER, SUPER]
     [entry] = result[outcome]
     if outcome == "followup":
         assert "`slugify` in app/text.py" in entry["reason"]
@@ -159,7 +159,7 @@ def test_candidate_without_a_verdict_is_skipped(make_repo, fake_llm, capsys):
 
     result = review(capsys, repo)
 
-    assert models(fake_llm) == [SUPER, SUPER, SUPER]
+    assert models(fake_llm) == [SUPER] * 4
     [helper] = [path for path in ("app/a.py", "app/b.py") if f"Existing helper, in {path}:" in fake_llm.calls[1][1]]
     [entry] = result["followup"]
     assert f"`slugify` in {helper}" in entry["reason"] and "raises TypeError" in entry["reason"]
@@ -258,7 +258,7 @@ def test_restructured_copy_is_found_by_keyword_search(make_repo, fake_llm, capsy
 
     [followup] = result["followup"]
     assert followup["files"] == {"app/posts.py": ""}
-    assert models(fake_llm) == [SUPER, SUPER]
+    assert models(fake_llm) == [SUPER, SUPER, SUPER]
 
 
 ORIGINAL_TEST = '''\

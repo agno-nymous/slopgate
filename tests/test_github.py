@@ -2,7 +2,6 @@ import json
 import re
 import subprocess
 import sys
-import textwrap
 
 import pytest
 from test_duplicates import OTHER_JOB
@@ -101,8 +100,8 @@ def test_inline_suggestions_are_posted_as_one_comment_review(github, fake_llm, c
     assert "```suggestion\n" + FLAT in comment["body"]
     assert review["body"].startswith(SUMMARY)
     assert "Accepted: 1 inline suggestion, 0 follow-up changes. Rejected: 0." in review["body"]
-    # fake usage is 1000 prompt + 100 completion tokens per call: Super, Super, Ultra
-    assert re.search(r"Token cost: \$0\.0021 \(3,300 tokens\)\. Time: \d+ s\.", review["body"])
+    # fake usage is 1000 prompt + 100 completion tokens per call: Super twice (agent), Super (rewrite), Ultra
+    assert re.search(r"Token cost: \$0\.0025 \(4,400 tokens\)\. Time: \d+ s\.", review["body"])
     assert fake_llm.calls[-1][0] == ULTRA
 
 

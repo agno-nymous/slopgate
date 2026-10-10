@@ -1,5 +1,8 @@
+import json
 import math
+import os
 import re
+import shlex
 import subprocess
 import threading
 import time
@@ -9,6 +12,7 @@ from types import SimpleNamespace
 import pytest
 
 from slopgate import embed, llm, trace
+from slopgate.review import strip_fence
 
 STARTED = time.strftime("%Y-%m-%d %H:%M:%S")
 trace.start("slopgate-tests")
@@ -68,7 +72,24 @@ def fake_llm(monkeypatch):
             llm.usage.append((model, 1000, 100))
             return fake.replies.pop(0)
 
+    def step(model, messages, tools):
+        task = messages[1]["content"]
+        fake.calls.append((model, task))
+        llm.usage.append((model, 1000, 100))
+        if messages[-1]["role"] == "tool":
+            return SimpleNamespace(content="Done.", tool_calls=None)
+        reply = fake.replies.pop(0)
+        if not isinstance(reply, str):
+            return reply
+        # a str reply is the test file that the agent writes
+        tests = strip_fence(reply)
+        path = re.search(r"Write the tests to (\S+)\. ", task)[1]
+        command = f"mkdir -p {os.path.dirname(path)} && printf %s {shlex.quote(reply if tests is None else tests)} > {path}"
+        call = SimpleNamespace(id="call_0", function=SimpleNamespace(name="execute", arguments=json.dumps({"command": command})))
+        return SimpleNamespace(content="", tool_calls=[call])
+
     monkeypatch.setattr(llm, "complete", complete)
+    monkeypatch.setattr(llm, "step", step)
     monkeypatch.setattr(llm, "decide", decide)
     monkeypatch.setattr(llm, "yes_probability", yes_probability)
     monkeypatch.setattr(llm, "usage", [])

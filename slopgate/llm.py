@@ -34,6 +34,22 @@ def complete(model: str, prompt: str) -> str:
     return reply.choices[0].message.content
 
 
+def step(model: str, messages: list[dict], tools: list[dict]):
+    reply = client().chat.completions.create(
+        model=model,
+        messages=messages,
+        tools=tools,
+        tool_choice="auto",
+        temperature=0,
+        max_tokens=MAX_OUTPUT_TOKENS,
+        extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+    )
+    usage.append((model, reply.usage.prompt_tokens, reply.usage.completion_tokens))
+    if reply.choices[0].finish_reason == "length":
+        raise CutOff("reply cut off")
+    return reply.choices[0].message
+
+
 def yes_probability(model: str, prompt: str) -> float:
     reply = client().chat.completions.create(
         model=model,

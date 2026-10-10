@@ -95,14 +95,15 @@ def word_set(code: str) -> frozenset[str]:
 '''
 
 SHELL_COPY = '''\
-def run_command(command: str, workdir) -> tuple[int, str]:
-    env = dict(os.environ)
-    env["PATH"] = os.pathsep.join([os.path.dirname(sys.executable), env["PATH"]])
+def run_in_dir(cmd: str, folder, seconds: float | None = None) -> tuple[int, str]:
+    hidden = ("NEBIUS_", "PHOENIX_", "OTEL_", "GH_TOKEN", "GITHUB_TOKEN")
+    clean = {name: value for name, value in os.environ.items() if not name.startswith(hidden)}
+    clean["PATH"] = f"{Path(sys.executable).parent}{os.pathsep}{clean.get('PATH', '')}"
     try:
-        out = subprocess.check_output(command, shell=True, cwd=workdir, env=env, stderr=subprocess.STDOUT, text=True)
-        return 0, out
-    except subprocess.CalledProcessError as error:
-        return error.returncode, error.output
+        done = subprocess.run(cmd, shell=True, cwd=folder, env=clean, capture_output=True, text=True, timeout=seconds)
+    except subprocess.TimeoutExpired as late:
+        return 124, (late.stdout or b"").decode() + f"\\ntimed out after {seconds} s"
+    return done.returncode, done.stdout + done.stderr
 '''
 
 GIT_COPY = '''\

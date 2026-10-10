@@ -14,8 +14,8 @@ from test_wrappers import APPLY_DISCOUNT
 from slopgate import config, embed, live, llm
 from slopgate.functions import parse
 from slopgate.kinds import classify
-from slopgate.review import SAME_JOB_PROMPT, SameJob, called_code, characterize
-from slopgate.sandbox import Local
+from slopgate.review import SAME_JOB_PROMPT, SameJob, characterize
+from slopgate.sandbox import Contree, Local
 
 pytestmark = [
     pytest.mark.live,
@@ -78,6 +78,23 @@ def test_detected_install_provides_dependency(make_repo, fake_llm, capsys, manif
     assert len(result["suggestions"]) == 1
 
 
+@needs_sandbox
+def test_contree_session_hides_the_api_key_and_ends_a_hung_command(make_repo):
+    repo = make_repo({"README.md": "demo\n"}, {"app/__init__.py": ""})
+    box = Contree()
+    session = box.session(box.prepare(repo, "HEAD", None))
+
+    code, output = session.execute("env", 60)
+    start = time.perf_counter()
+    hung = session.execute("echo started; sleep 30", 3)
+    seconds = time.perf_counter() - start
+    print(f"hung command: {hung!r} after {seconds:.1f} s")
+
+    assert code == 0 and "PATH=" in output and "NEBIUS_" not in output
+    assert hung == (124, "started\n") and seconds < 20
+    assert session.read("missing.txt") is None
+
+
 @pytest.mark.parametrize("model", [config.SUPER, config.ULTRA])
 def test_complete_replies_without_reasoning(monkeypatch, model):
     openai = llm.client()
@@ -114,34 +131,29 @@ def test_decide_finds_a_renamed_copy_of_apply_discount(model):
 
 
 @pytest.mark.parametrize(
-    ("path", "qualname", "proven"),
-    [("app/pricing.py", "apply_discount", True), ("slopgate/review.py", "broken_rule", True), ("tests/conftest.py", "fake_llm", False)],
-    ids=["apply_discount", "broken_rule", "fake_llm"],
+    ("path", "qualname"),
+    [("app/pricing.py", "apply_discount"), ("slopgate/review.py", "broken_rule")],
+    ids=["apply_discount", "broken_rule"],
 )
-def test_super_tests_reply_is_proven_or_cannot_test(make_repo, monkeypatch, path, qualname, proven):
+def test_agent_proves_characterization_tests(make_repo, monkeypatch, path, qualname):
     root = Path(__file__).parent.parent
     package = {f"slopgate/{p.name}": p.read_text() for p in (root / "slopgate").glob("*.py")}
-    head = {"app/__init__.py": "", "app/pricing.py": APPLY_DISCOUNT, "tests/conftest.py": (root / "tests/conftest.py").read_text(), **package}
+    head = {"app/__init__.py": "", "app/pricing.py": APPLY_DISCOUNT, **package}
     repo = make_repo({"README.md": "demo\n"}, head)
     [function] = [f for f in parse(path, head[path]) if f.qualname == qualname]
     replies = []
-    complete = llm.complete
-    monkeypatch.setattr(llm, "complete", lambda model, prompt: replies.append(complete(model, prompt)) or replies[-1])
+    step = llm.step
+    monkeypatch.setattr(llm, "step", lambda model, messages, tools: replies.append(step(model, messages, tools)) or replies[-1])
     sandbox = Local()
     test_path = "tests/test_slopgate_0.py"
 
     start = time.perf_counter()
-    tests, failure = characterize(
-        sandbox, sandbox.prepare(repo, "HEAD", None), function, test_path, f"python -m coverage run --branch -m pytest -q {test_path}", called_code(repo, "HEAD", function)
-    )
-    print(f"{qualname}: {time.perf_counter() - start:.1f} s, {len(replies)} replies, failure {failure!r}")
+    tests, failure = characterize(sandbox, sandbox.prepare(repo, "HEAD", None), function, test_path, f"python -m coverage run --branch -m pytest -q {test_path}")
+    print(f"{qualname}: {time.perf_counter() - start:.1f} s, {len(replies)} steps, failure {failure!r}")
     for reply in replies:
-        print(reply)
+        print(reply.content, [call.function.arguments for call in reply.tool_calls or []])
 
-    if proven:
-        assert failure is None and tests, failure
-    else:
-        assert failure.startswith("model cannot test: ") and len(replies) == 1, failure
+    assert failure is None and tests, failure
 
 
 PR_20_HEAD = "70c27da340aeaadec60bfb22a711c84acdb0cabd"

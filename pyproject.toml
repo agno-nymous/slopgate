@@ -17,7 +17,6 @@ dependencies = [
 [project.optional-dependencies]
 hook = ["numpy", "onnx", "onnxruntime", "sentence-transformers<6", "transformers<5", "einops>=0.8.2"]
 trace = ["arize-phoenix-otel>=0.17.2", "openinference-instrumentation-openai>=0.1.64"]
-bench = ["deepagents>=0.7.23", "langchain-openai>=1.7"]
 
 [dependency-groups]
 dev = ["numpy", "slopgate[trace]"]
