@@ -13,11 +13,11 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
 
 ## 1. Read before you plan
 
-1. Read `CLAUDE.md` in full. It holds the commands, the code map, the secrets rule, and the model rules.
-2. Read `issues/ROADMAP.md`. Find the ticket to work. Do not take tickets by number order.
-3. Read the whole ticket file. Each ticket has its context, design, prompt texts, and acceptance boxes.
-4. Check the `Blocked by:` line. Every listed ticket must have `Status: done`. If one does not, tell the user, and propose the next open ticket in the ROADMAP.md table whose blockers are all done. Then stop and wait for the user.
-5. Run `git fetch origin`. The ticket starts from `origin/main`. Do not switch the branch of the main checkout: other sessions may work there.
+1. Run `git pull --ff-only` in the main checkout before you read any file. Do it before `EnterWorktree`: after it, the session refuses git commands on the main checkout. Another session may have merged a ticket since the last pull. A stale checkout shows an old ROADMAP.md: on 2026-10-10 it still named ticket 41 as next after PR #27 had merged it. If the pull fails (local changes, or the main checkout is not on `main`), tell the user, run `git fetch origin`, and read each file with `git show origin/main:<path>`. Do not switch the branch of the main checkout: other sessions may work there. The ticket starts from `origin/main`.
+2. Read `CLAUDE.md` in full. It holds the commands, the code map, the secrets rule, and the model rules.
+3. Read `issues/ROADMAP.md`. Find the ticket to work. Do not take tickets by number order.
+4. Read the whole ticket file. Each ticket has its context, design, prompt texts, and acceptance boxes.
+5. Check the `Blocked by:` line. Every listed ticket must have `Status: done`. If one does not, tell the user, and propose the next open ticket in the ROADMAP.md table whose blockers are all done. Then stop and wait for the user.
 6. Make sure that the self-hosted CI runner runs on this Mac. The `slopgate` check of every pull request runs on it (ticket 27).
    - Run `make runner-status`. It must show `Started:` with a process number.
    - Run `gh api repos/agno-nymous/slopgate/actions/runners -q '.runners[] | .name + " " + .status'`. The runner must be `online`.
