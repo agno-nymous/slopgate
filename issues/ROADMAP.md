@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**23 — Log the time of each gate step.** It adds the `Slowest:` line to the pull request comment. Ticket 34 is built: each rejection with pytest output now starts with one plain sentence, and the output is in a code block. Ticket 34 needs one posted comment on a real pull request.
+**23 — Log the time of each gate step.** It adds the `Slowest:` line to the pull request comment. Ticket 34 is done: each rejection with pytest output now starts with one plain sentence, and the output is in a code block.
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -26,7 +26,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 12 | [29 — Keep the passing characterization tests](29-keep-passing-characterization-tests.md) | wontfix | 20 | Replaced by ticket 41: the agent fixes or removes a failing test itself. |
 | 13 | [31 — Retry once for missed branches, with 3 attempts in total](31-retry-missed-branches.md) | wontfix | 29 | Replaced by ticket 41: the agent sees the missed branches and adds tests. |
 | 14 | [33 — Add a time limit to each sandbox run](33-sandbox-time-limit.md) | done | — | A model-written call such as `input()` blocks the gate with no end. |
-| 15 | [34 — Readable rejection reasons in the review comment](34-readable-rejection-reasons.md) | needs-live-check | — | The raw pytest output on PR #20 looked like a crash of the gate. |
+| 15 | [34 — Readable rejection reasons in the review comment](34-readable-rejection-reasons.md) | done | — | The raw pytest output on PR #20 looked like a crash of the gate. |
 | 16 | [19 — Several slop kinds per function](19-several-slop-kinds-per-function.md) | done | 18, 21, 36 | Fixes all problems of a function in one suggestion. Built in ticket 36, stage 2. |
 | 17 | [23 — Log the time of each gate step](23-log-time-per-gate-step.md) | ready-for-agent | — | Reduced on 2026-10-08 to the `Slowest:` line in the pull request comment. The Phoenix spans of ticket 32 give the time of each step. |
 | 18 | [24 — Save the embedding model cache on main](24-model-cache-on-main.md) | wontfix | — | Ticket 28 removes the embedding model from the gate. |
@@ -51,7 +51,7 @@ Added after the order was set:
 | [44 — The import line is wrong for a repo with a `src/` layout](44-src-layout-import-line.md) | ready-for-agent | Found by ticket 41. All 6 pytest functions failed in every design. |
 | [45 — The test agent cannot characterize large functions](45-characterize-large-functions.md) | ready-for-agent | Found by ticket 41. The agent proved no function of complexity 17 or more; `review` (complexity 65) stopped at the token limit. |
 
-Tickets 01 to 07, 12 to 22, 26, 28, 32, 33, 36, 37, 39, and 41 are done. Tickets 24, 29, 30, 31, and 35 are wontfix.
+Tickets 01 to 07, 12 to 22, 26, 28, 32, 33, 34, 36, 37, 39, and 41 are done. Tickets 24, 29, 30, 31, and 35 are wontfix.
 
 ## Rules for the order
 

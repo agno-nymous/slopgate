@@ -9,7 +9,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** needs-live-check
+**Status:** done
 
 ## Context
 
@@ -42,7 +42,7 @@ The reason is a fixed text plus the last 20 lines of pytest output (`tail` in `s
 - [x] A rejection with pytest output renders as one summary line plus a fenced block. A test checks the markdown that `github.py` builds.
 - [x] The summary of "characterization tests fail on original" gives the counts of failed and passed tests.
 - [x] A rejection with no tool output (for example "rewrite makes no change") has no code block.
-- [ ] The posted comment on one real pull request shows no quote lines and keeps the indentation of the output.
+- [x] The posted comment on one real pull request shows no quote lines and keeps the indentation of the output.
 - [x] `uv run pytest -q` passes.
 
 ## Comments
@@ -102,3 +102,9 @@ The GitHub markdown API (`gh api markdown -f mode=gfm`) rendered this body. The 
 - The sentences do not start with "Skipped:", as in the Design examples. The list is under the "Rejected" heading, so the word is not necessary.
 - `characterization tests miss branches: N` stays as before. It holds no tool output, so step 2 of the Design does not apply to it.
 - The `SENTENCES` keys must match the reason prefixes in `review.py`. A changed prefix falls back to the prefix as the sentence, with the code block.
+
+### 2026-10-10: posted comment on a real pull request
+
+The Slopgate workflow is disabled, so the gate posts no review now. To check box 4, `summary()` built one comment from a real pytest run: 3 characterization tests of a `resolve` function, 2 of which fail with `AttributeError`. The comment is on PR #29: https://github.com/agno-nymous/slopgate/pull/29#issuecomment-6103059744
+
+The HTML that GitHub rendered for the posted comment (`gh api ... -H "Accept: application/vnd.github.html+json"`) has 0 `<blockquote>` elements. The line `>           result = getattr(result, p)` is in the `<pre>` block with its indentation. The item reads: "`resolve` (nesting) in app/review.py: 2 of 3 generated tests failed on the unchanged code, so the gate could not check a rewrite." The item "rewrite makes no change" has no code block.
