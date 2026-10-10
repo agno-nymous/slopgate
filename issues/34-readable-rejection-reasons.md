@@ -61,6 +61,8 @@ The reason is a fixed text plus the last 20 lines of pytest output (`tail` in `s
 
 The pytest output goes under the sentence in a fenced block. The block is indented by 2 spaces, so it stays in the list item. The fence is longer than each run of backticks in the output. F and T come from the last pytest summary line. F counts only `failed`. Pytest `errors` are files or fixtures that broke, not tests, so they stay out of the counts. With no summary line or no failed test, the sentence has no counts.
 
+`characterize` can put the stop reason of the test agent before the reason, for example `step limit: characterization tests fail on original: ...`. The stop reason then goes into the sentence: "... so the gate could not check a rewrite (the test agent stopped: step limit)."
+
 A one-line reason that is not in the table stays as before, with no code block. A multi-line reason that is not in the table gets its prefix as the sentence and a code block. Thus a new reason with tool output in `review.py` cannot bring back the quote lines.
 
 `slopgate/review.py` did not change. The `--dry-run` JSON keeps the full reason.
@@ -86,9 +88,15 @@ A one-line reason that is not in the table stays as before, with no code block. 
 The GitHub markdown API (`gh api markdown -f mode=gfm`) rendered this body. The `>` line is in a `<pre><code>` block, the indentation is kept, and the HTML has no `<blockquote>`.
 
 **Measured results.**
-- `uv run pytest -q`: 287 passed, 17 deselected. The 6 new tests are in `tests/test_github.py`.
+- `uv run pytest -q`: 289 passed, 17 deselected. The 8 new tests are in `tests/test_github.py`.
 - On the old `github.py`, 3 of the new tests fail (the code block, the backtick fence, and the time-out sentence). The "no code block" test passes on the old code too, because it checks an absence that the old code also gave.
 - The code review (thermo-nuclear, Opus) gave 6 findings. Applied: errors are not counted as failed tests; a multi-line reason with an unknown prefix gets a code block; an empty output gives no empty block. Not applied: a time-out during the rewrite run reads as "the rewrite failed characterization tests" (old behavior of `review.py`; the code block shows the time-out), and the capitalization of the sentence (correct as it is).
+
+**Gate dry run on the ticket commits** (`--base origin/main --head HEAD`): 0 suggestions, 1 rejection. The gate flagged `summary` in `slopgate/github.py` as `swallowed_error` (the old `except Exception`). The test agent stopped at the step limit, and 1 of its 5 tests failed on the unchanged code: the test expected `Time: 0 min 1 s.`, but the code gives `Time: 2 s.` This is the normal result, not a defect of this ticket. The dry run also found that the first version of `rejection()` used `Step limit.` as the sentence for this reason. The fix is above, and a test covers it. With the fix, the item reads:
+
+```
+- `summary` (swallowed_error) in slopgate/github.py: 1 of 5 generated tests failed on the unchanged code, so the gate could not check a rewrite (the test agent stopped: step limit).
+```
 
 **Known limits.**
 - The sentences do not start with "Skipped:", as in the Design examples. The list is under the "Rejected" heading, so the word is not necessary.
