@@ -2,6 +2,7 @@ import pytest
 from test_duplicates import EMPTY, OTHER_JOB
 from test_review import fenced, models, review
 
+import slopgate.review
 from slopgate.config import SUPER
 
 COMPUTE_TAX = '''\
@@ -72,6 +73,32 @@ def test_caller_tests_run_on_the_rewrite(make_repo, fake_llm, capsys):
     assert (rejected["function"], rejected["path"]) == ("tax_for", "app/billing.py")
     assert rejected["reason"].startswith("rewrite fails characterization tests")
     assert "test_wrapper_exists" in rejected["reason"]
+    [note] = result["notes"]
+    assert (note["path"], note["line"]) == ("app/billing.py", 7)
+    assert note["body"].startswith("**wrapper** (not rewritten): `tax_for` only forwards to `compute_tax`. Inline it into its single caller.")
+
+
+def test_wrapper_that_breaks_a_rule_gets_a_note_naming_the_inner_function(make_repo, fake_llm, capsys, monkeypatch):
+    monkeypatch.setattr(slopgate.review, "wrapper_rule", lambda trees, files, function: "adds a function or class")
+    repo = make_repo(
+        {"app/__init__.py": "", "app/billing.py": COMPUTE_TAX},
+        {"app/billing.py": COMPUTE_TAX + TAX_FOR + INVOICE_TOTAL},
+    )
+    fake_llm.replies += [OTHER_JOB]
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == [{"function": "tax_for", "path": "app/billing.py", "kinds": ["wrapper"], "reason": "rule: adds a function or class"}]
+    assert result["notes"] == [
+        {
+            "path": "app/billing.py",
+            "function": "tax_for",
+            "kinds": ["wrapper"],
+            "line": 7,
+            "body": "**wrapper** (not rewritten): `tax_for` only forwards to `compute_tax`. Inline it into its single caller. "
+            "Slopgate could not prove a rewrite of this function, so it changed nothing.",
+        }
+    ]
 
 
 VIEWS = '''\

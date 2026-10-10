@@ -16,7 +16,7 @@ from slopgate.cli import main
 from slopgate.config import AGENT_SECONDS, AGENT_STEPS, SUPER, ULTRA
 from slopgate.functions import is_test_file, parse, pytest_patterns
 from slopgate.kinds import KINDS, classify, flattenable, has_dead_code, leftover, problems, repeated_checks
-from slopgate.review import EXECUTE, characterize, same_code, strip_fence
+from slopgate.review import EXECUTE, NO_ENVIRONMENT, REJECTED, characterize, same_code, strip_fence
 from slopgate.sandbox import Contree, ContreeSession, Local, LocalSession
 
 NESTED = '''\
@@ -173,6 +173,16 @@ def test_one_line_function_has_no_start_line(make_repo, fake_llm, capsys):
     assert "complexity 6 -> 1" in suggestion["body"]
 
 
+REJECTED_NOTE = {
+    "path": "app/perms.py",
+    "function": "can_edit",
+    "kinds": ["nesting"],
+    "line": 14,
+    "body": f"**nesting** (not rewritten): `can_edit`: {KINDS['nesting']} Slopgate could not prove a rewrite of this function, "
+    "so it changed nothing.",
+}
+
+
 def test_rewrite_that_changes_behavior_is_rejected(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
     fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(DROPS_LOCKED), fenced(DROPS_LOCKED)]
@@ -185,6 +195,7 @@ def test_rewrite_that_changes_behavior_is_rejected(make_repo, fake_llm, capsys):
     assert rejected["reason"].startswith("rewrite fails characterization tests")
     assert "test_locked_cannot_edit" in rejected["reason"]
     assert models(fake_llm) == [SUPER, SUPER, SUPER, ULTRA]
+    assert result["notes"] == [REJECTED_NOTE]
 
 
 def test_failed_rewrite_gets_one_ultra_retry(make_repo, fake_llm, capsys):
@@ -234,7 +245,7 @@ def test_slop_in_a_test_file_gets_a_note_and_no_proof(make_repo, fake_llm, capsy
     result = review(capsys, repo)
 
     assert fake_llm.calls == []
-    body = f"**nesting** (not proven): `can_edit`: {KINDS['nesting']} Not proven: Slopgate does not change test files."
+    body = f"**nesting** (not rewritten): `can_edit`: {KINDS['nesting']} Slopgate does not change test files."
     assert result == {
         "suggestions": [],
         "followup": [],
@@ -323,8 +334,9 @@ def test_install_failure_is_one_notice_with_last_20_lines(make_repo, fake_llm, c
         "suggestions": [],
         "followup": [],
         "rejected": [{"reason": f"could not build test environment\n{tail}"}],
-        "notes": [],
+        "notes": [{**REJECTED_NOTE, "body": REJECTED_NOTE["body"].replace(REJECTED, NO_ENVIRONMENT)}],
     }
+    assert NO_ENVIRONMENT in result["notes"][0]["body"]
     assert fake_llm.calls == []
 
 
@@ -666,6 +678,7 @@ def test_ruff_failure_rejects_the_function_and_the_review_goes_on(make_repo, fak
     assert result["rejected"] == [
         {"function": "one", "path": "app/broken.py", "kinds": [], "reason": "internal error: RuntimeError('ruff failed on app/broken.py')"}
     ]
+    assert result["notes"] == []
     [suggestion] = result["suggestions"]
     assert suggestion["path"] == "app/perms.py"
 
@@ -867,11 +880,13 @@ def test_tests_that_fail_on_original_are_rejected(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
     fake_llm.replies += [fenced(WRONG_TESTS)]
 
-    [rejected] = review(capsys, repo)["rejected"]
+    result = review(capsys, repo)
+    [rejected] = result["rejected"]
 
     assert rejected["reason"].startswith("characterization tests fail on original")
     assert "assert False is True" in rejected["reason"]
     assert models(fake_llm) == [SUPER, SUPER]
+    assert result["notes"] == [REJECTED_NOTE]
 
 
 def tool_call(arguments):
@@ -1215,6 +1230,9 @@ def test_unexpected_error_in_one_candidate_keeps_the_others(make_repo, fake_llm,
     result = review(capsys, repo)
 
     assert result["rejected"] == [{"function": "can_edit", "path": "app/perms.py", "kinds": ["nesting"], "reason": "internal error: RuntimeError('boom')"}]
+    [note] = result["notes"]
+    assert (note["path"], note["function"]) == ("app/perms.py", "can_edit")
+    assert note["body"].endswith(REJECTED)
     [suggestion] = result["suggestions"]
     assert suggested_code(suggestion["body"]) == FLAT_VIEW
 

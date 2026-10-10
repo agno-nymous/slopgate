@@ -34,7 +34,8 @@ To let Slopgate open follow-up pull requests, turn on **Settings > Actions > Gen
 
 - One review with event `COMMENT`. Each rewrite that edits only lines the pull request added is a suggested change, with its slop kinds, complexity and nesting before and after, and the number of characterization tests that passed.
 - One follow-up pull request on branch `slopgate/<head branch>` for every other proven rewrite. It targets the author's branch. Pull requests from forks get no follow-up branch, because the workflow token cannot push to a fork.
-- A short summary by Nemotron Ultra with the accepted and rejected counts and the token cost.
+- An inline note on each function with slop that Slopgate did not rewrite. The note gives the slop kinds and the fix, and says that Slopgate changed nothing.
+- A short summary by Nemotron Ultra with the counts of suggestions, follow-up changes and notes, and the token cost.
 
 Slopgate never fails CI. A pull request without findings gets no comment. If the sandbox cannot install the repo, the pull request gets one notice comment.
 

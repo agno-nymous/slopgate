@@ -3,7 +3,6 @@ import os
 import re
 import subprocess
 import tempfile
-import textwrap
 from time import sleep
 
 from slopgate import llm, trace
@@ -74,55 +73,17 @@ def open_followup(repo, followups, pr, target, files) -> str:
     return f"in {url}"
 
 
-SENTENCES = {
-    "characterization tests fail on original": "{counts}generated tests failed on the unchanged code, so the gate could not check a rewrite.",
-    "characterization tests time out": "the generated tests ran past the time limit of the sandbox.",
-    "rewrite fails characterization tests": "the rewrite failed {counts}characterization tests.",
-    "rewrite fails repo tests": "the rewrite failed {counts}repo tests.",
-    "differential tests fail on helper": "the existing helper failed {counts}generated tests.",
-}
-
-
-def rejection(r) -> str:
-    item = f"- `{r['function']}` ({', '.join(r['kinds'])}) in {r['path']}:"
-    # characterize puts the test agent's stop reason, such as "step limit", before the reason
-    known = re.match(rf"(?:([^\n]*?): )?({'|'.join(map(re.escape, SENTENCES))}): (.+)", r["reason"], re.S)
-    if known:
-        stop, head, output = known.groups()
-        last = next((line for line in reversed(output.splitlines()) if re.search(r"\d+ (failed|passed|error).* in [\d.]+s", line)), "")
-        # pytest errors are files or fixtures that broke, not tests, so they stay out of the counts
-        n = {word: int(count) for count, word in re.findall(r"(\d+) (failed|passed)", last)}
-        failed = n.get("failed", 0)
-        sentence = SENTENCES[head].format(counts=f"{failed} of {failed + n.get('passed', 0)} " if failed else "")
-        if stop:
-            sentence = f"{sentence[:-1]} (the test agent stopped: {stop})."
-    else:
-        head, _, output = r["reason"].partition(": ")
-        # a multi-line reason holds tool output even when its prefix is not in SENTENCES
-        if "\n" not in output:
-            return f"{item} {r['reason']}"
-        sentence = f"{head}."
-    # a longer fence than any backtick run in the output keeps the output from closing it early
-    fence = "`" * max(3, max(map(len, re.findall(r"`+", output)), default=0) + 1)
-    block = textwrap.indent(f"{fence}\n{output}\n{fence}", "  ")
-    return f"{item} {sentence[0].upper()}{sentence[1:]}\n\n{block}\n"
-
-
 def summary(result, followup_line, seconds) -> str:
     try:
         with trace.span("gate.summary", prompt="SUMMARY_PROMPT"):
-            text = llm.complete(ULTRA, SUMMARY_PROMPT.format(results=json.dumps(result, indent=1)[:20000])).strip() + "\n\n"
+            text = llm.complete(ULTRA, SUMMARY_PROMPT.format(results=json.dumps({k: v for k, v in result.items() if k != "rejected"}, indent=1)[:20000])).strip() + "\n\n"
     except Exception:
         text = ""
-    rejected = result["rejected"]
     lines = [
-        f"Accepted: {plural(len(result['suggestions']), 'inline suggestion')}, {followup_line}. Rejected: {len(rejected)}."
-        + (f" Notes on test files: {len(result['notes'])}." if result["notes"] else ""),
+        f"Accepted: {plural(len(result['suggestions']), 'inline suggestion')}, {followup_line}."
+        + (f" Notes: {len(result['notes'])}." if result["notes"] else ""),
         f"{cost()} Time: {duration(seconds)}.",
     ]
-    if rejected:
-        reasons = "\n".join(rejection(r) for r in rejected)
-        lines.append(f"<details><summary>Rejected</summary>\n\n{reasons}\n\n</details>")
     return text + "\n\n".join(lines)
 
 
