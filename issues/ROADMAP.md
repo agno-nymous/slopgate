@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**33 — Add a time limit to each sandbox run.** Ticket 41 made tickets 30, 35, 29, and 31 unnecessary (wontfix). Ticket 41 put a time limit on the commands of the test agent only. The judge, the rewrite proof, and the repo tests still have no limit.
+**34 — Readable rejection reasons in the review comment.** The raw pytest output on PR #20 looked like a crash of the gate. Ticket 33 is done: each test run in the sandbox now stops after `SANDBOX_TIMEOUT` (600 s).
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -25,7 +25,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 11 | [35 — Tell the test writer that the tests run without network and keys](35-tests-run-without-network.md) | wontfix | 30 | Replaced by ticket 41: the rule is in the agent's system prompt, and the agent runs the tests. |
 | 12 | [29 — Keep the passing characterization tests](29-keep-passing-characterization-tests.md) | wontfix | 20 | Replaced by ticket 41: the agent fixes or removes a failing test itself. |
 | 13 | [31 — Retry once for missed branches, with 3 attempts in total](31-retry-missed-branches.md) | wontfix | 29 | Replaced by ticket 41: the agent sees the missed branches and adds tests. |
-| 14 | [33 — Add a time limit to each sandbox run](33-sandbox-time-limit.md) | ready-for-agent | — | A model-written call such as `input()` blocks the gate with no end. |
+| 14 | [33 — Add a time limit to each sandbox run](33-sandbox-time-limit.md) | done | — | A model-written call such as `input()` blocks the gate with no end. |
 | 15 | [34 — Readable rejection reasons in the review comment](34-readable-rejection-reasons.md) | ready-for-agent | — | The raw pytest output on PR #20 looked like a crash of the gate. |
 | 16 | [19 — Several slop kinds per function](19-several-slop-kinds-per-function.md) | done | 18, 21, 36 | Fixes all problems of a function in one suggestion. Built in ticket 36, stage 2. |
 | 17 | [23 — Log the time of each gate step](23-log-time-per-gate-step.md) | ready-for-agent | — | Reduced on 2026-10-08 to the `Slowest:` line in the pull request comment. The Phoenix spans of ticket 32 give the time of each step. |
@@ -51,7 +51,7 @@ Added after the order was set:
 | [44 — The import line is wrong for a repo with a `src/` layout](44-src-layout-import-line.md) | ready-for-agent | Found by ticket 41. All 6 pytest functions failed in every design. |
 | [45 — The test agent cannot characterize large functions](45-characterize-large-functions.md) | ready-for-agent | Found by ticket 41. The agent proved no function of complexity 17 or more; `review` (complexity 65) stopped at the token limit. |
 
-Tickets 01 to 07, 12 to 22, 26, 28, 32, 36, 37, 39, and 41 are done. Tickets 24, 29, 30, 31, and 35 are wontfix.
+Tickets 01 to 07, 12 to 22, 26, 28, 32, 33, 36, 37, 39, and 41 are done. Tickets 24, 29, 30, 31, and 35 are wontfix.
 
 ## Rules for the order
 
