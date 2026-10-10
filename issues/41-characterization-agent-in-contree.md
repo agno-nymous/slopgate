@@ -9,7 +9,7 @@
 
 **Blocked by:** —
 
-**Status:** ready-for-agent
+**Status:** in-progress
 
 **Type:** measurement, then build.
 
@@ -80,11 +80,11 @@ Choose by the proof rate, then by the cost and the time. The gate runs `characte
 
 ### Stage 1
 
-- [ ] `bench/characterize.py` runs designs A, B, and C on the same functions with one command.
-- [ ] The dataset has the failed functions of PRs #17 and #20 and at least 30 functions from at least 4 SWE-bench repos.
-- [ ] A table gives the proof rate, the failure reasons, the time, the cost, and (for C) the steps and broken writes, for each design.
-- [ ] The agent loop runs outside the sandbox, and the sandbox gets no API key (checked with `env` in the sandbox).
-- [ ] The user chooses the design for stage 2.
+- [x] `bench/characterize.py` runs designs A, B, and C on the same functions with one command.
+- [x] The dataset has the failed functions of PRs #17 and #20 and at least 30 functions from at least 4 SWE-bench repos.
+- [x] A table gives the proof rate, the failure reasons, the time, the cost, and (for C) the steps and broken writes, for each design.
+- [x] The agent loop runs outside the sandbox, and the sandbox gets no API key (checked with `env` in the sandbox).
+- [x] The user chooses the design for stage 2.
 
 ### Stage 2
 
@@ -94,3 +94,83 @@ Choose by the proof rate, then by the cost and the time. The gate runs `characte
 - [ ] Tickets 29, 30, 31, and 35 are updated: done, wontfix, or still needed.
 
 ## Comments
+
+### 2026-10-10 — Stage 1: the comparison of designs A, B, C, and D
+
+**What was built.** `bench/characterize.py` runs each design on the same functions with one command, and writes one JSON row for each result. The command is `uv run --extra bench --env-file <main checkout>/.env python -m bench.characterize --designs A,B,C,D --repeat 10`. The `bench` extra installs `deepagents` and `langchain-openai`. The gate does not need them.
+
+All designs use the same judge: `review.check` in `slopgate/review.py`. It was extracted from `characterize` without a change in behavior. The tests pass with `PYTHONHASHSEED=1` and `PYTHONHASHSEED=2`, and coverage shows no missed branch inside the target. The judge always runs on the original checkpoint, never in the agent's session.
+
+The user asked for design D on 2026-10-10. D tests whether the Deep Agents framework adds anything to C.
+
+**The four designs.**
+
+- **A: the gate now.** `review.characterize`, unchanged. Super gets the function and the code that it calls. Super replies with calls or a test file. There are 2 attempts.
+- **B: a plain retry loop.** The same prompts as A, with up to 4 Super calls. The context also holds the module-level constants that the target and its callees read (the design of ticket 30). A retry for missed branches names each branch by its line, for example `- line 42: if not pool: never goes to line 45`.
+- **C: Deep Agents with `ContreeSandbox`.** The design in detail:
+  - The agent loop runs on the runner. Only its commands run in ConTree.
+  - The backend is `contree_sdk.langchain.sandbox.ContreeSandbox(checkpoint.session())`. The session starts from the gate's checkpoint, so the repo is installed. Files stay between commands.
+  - The model is `ChatOpenAI(model=SUPER, base_url=BASE_URL, temperature=0, extra_body={"chat_template_kwargs": {"enable_thinking": False}})`. The agent is `create_deep_agent(model, backend, system_prompt, middleware)`.
+  - In a probe, Super did not follow the prompt rule to write with a heredoc. It called `write_file`. `permissions=[FilesystemPermission(...)]` raises `NotImplementedError` with a sandbox backend. So C uses the private `deepagents.middleware._tool_exclusion._ToolExclusionMiddleware(excluded={"write_file", "edit_file", "task"})`. Without `task`, no subagent can hide its steps and tokens from the limits.
+  - The tools that remain are `execute`, `ls`, `read_file`, `glob`, `grep`, and `write_todos`.
+  - The system prompt (`RULES`) says: write files only with `execute` and a heredoc; change no file except the test file; the tests get no network and no API keys, so patch them; stop when the tests pass twice and cover every branch.
+  - The task (`TASK`) gives the function source, the test path, the exact import line, the goal, the command that runs the tests with coverage, and the command that shows the missed branches as `[from, to]` pairs.
+  - The limits are 15 model calls, 120 s, and 150,000 cumulative input tokens. The loop checks them between the stream updates. Each `execute` call has a 120 s timeout.
+  - A heredoc write of a `.py` file that does not parse counts as a broken write. A tool call that does not parse also counts.
+- **D: a plain tool loop, no framework.** The same `RULES` (without the sentence about the tools that are off) and the same `TASK` as C. The OpenAI client of `llm.client()` gets one tool, `execute(command)`, on the same `ContreeSandbox` session. The loop stops when a reply has no tool call, or at the same limits as C. The tool output has the same form as in Deep Agents. C and D share all code except the loop.
+
+**The dataset.** 36 functions:
+
+- 6 slopgate functions that failed on PRs #17 and #20: `build`, `seed`, `matches`, `find_duplicate`, and `characterize` at b2a2ad0, and `characterize` at 70c27da. The image is `python:3.12-slim`.
+- 30 functions from the ticket 37 pool, with `random.Random(41)`, 6 from each of 5 SWE-bench repos: django, pytest, requests, sympy, and flask. The image is `python:3.9-slim` (imported into ConTree with `images.oci`). On 3.12, the old commits of requests, sympy, and flask do not import.
+- Astropy, scikit-learn, and sphinx were not used. They need C builds or old pins.
+
+**The mutation check.** The judge does not check that the tests assert anything. An agent loop that runs until the judge passes could write weak tests. So each proved test file also runs against up to 8 mutants of the target: a comparison swap, `and`/`or`, a number plus 1, `return None`, or `if not`. A control run with the unchanged, unparsed function must pass first. The kill rate is the share of mutants that make the tests fail.
+
+**Measured results.** Run 2, each design once on each function (`bench/results/characterize/table.md`):
+
+| Design | Proved | Median s | p90 s | Input tokens per function | Cost per function | Kill rate | Median asserts |
+|---|---|---|---|---|---|---|---|
+| A | 7 of 36 (19%) | 19 | 31 | 2.1k | $0.002 | 97% (29/30) | 10 |
+| B | 8 of 36 (22%) | 35 | 68 | 5.8k | $0.005 | 97% (30/31) | 12 |
+| C | 19 of 36 (53%) | 56 | 89 | 95k | $0.031 | 87% (71/82) | 7 |
+| D | 24 of 36 (67%) | 55 | 100 | 80k | $0.027 | 86% (88/102) | 4.5 |
+
+- Run 1 (`runs-1.json`, no mutation check) gave A 7, B 13, and C 24.
+- D proved each function that C proved in run 2, and 5 more.
+- On the 5 functions that all 4 designs proved, the kill rates are A 100%, B 100%, C 94%, and D 94%. The agent tests are almost as strong as the tests of A.
+- Variance, over the first 10 functions with 3 runs each: D proved 6 in 3 of 3 runs, 1 in 2 of 3, and 3 in 0 of 3. C proved 1 in 3 of 3, 3 in 2 of 3, 2 in 1 of 3, and 4 in 0 of 3.
+- Broken writes: C 0 of 70, D 2 of 80.
+- Without the slopgate and pytest functions: A 6, B 7, C 17, and D 21 of 24.
+- The sandbox has no API key. `--env-check` printed `GPG_KEY LANG PATH PS1 PWD PYTHON_SHA256 PYTHON_VERSION SHELL TERM`.
+
+**Worked example.** `find_duplicate` at b2a2ad0 is the case of ticket 30: Super guessed `DUPLICATE_SCORE`. In run 2, D proved it in 2 of 3 runs (13 calls, about 152,000 input tokens, 55 s to 65 s). The third run stopped at the token limit. The proved file starts like this:
+
+```python
+from unittest.mock import Mock, patch
+from slopgate.review import find_duplicate
+
+def test_exact_match_found():
+    function = Mock()
+    function.source = "def foo(): pass"
+    pool = [
+        {"hash": "hash1", "path": "helper1.py", "source": "def helper(): pass"},
+        {"hash": "hash2", "path": "helper2.py", "source": "def foo(): pass"}
+    ]
+    with patch('slopgate.review.structure_hash') as mock_hash:
+        mock_hash.return_value = "hash2"
+        result = find_duplicate(function, pool)
+        assert result["exact"] is True
+```
+
+Other tests in the same file patch `slopgate.review.llm.decide`, so no test calls the model. The file killed 6 of 7 mutants.
+
+**Known limits.**
+
+- The 6 pytest functions failed in all designs. The gate makes the import line from the file path (`src._pytest...`), and pytest measures itself. Ticket 44 records the `src/` layout problem.
+- `characterize` itself failed in all designs. C and D stopped at the time limit or the token limit.
+- The agent designs reach the 15-step limit in at least half of the runs. A higher limit can prove more, but it costs more. This was not measured.
+- Each design ran once per function in each run. With 36 functions, a difference of about 5 functions is near the run-to-run variance (B gave 13 in run 1 and 8 in run 2).
+- The mutation check unparses the function, so it can miss a docstring change. The control run rejects such a file.
+
+**Decision.** The user chose D for stage 2 on 2026-10-10.

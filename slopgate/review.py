@@ -4,7 +4,7 @@ import json
 import re
 import shlex
 import textwrap
-from typing import Annotated, Literal
+from typing import Annotated, Literal, NamedTuple
 
 from pydantic import BaseModel, Field
 
@@ -502,7 +502,7 @@ def replace_calls(repo, head, function, helper) -> dict[str, str]:
     return files
 
 
-def called_code(repo, head, function, depth=2) -> str:
+def callees(repo, head, function, depth=2) -> list:
     paths = set(diff.git(repo, "ls-tree", "-r", "--name-only", head).splitlines())
     texts = {}
 
@@ -536,7 +536,11 @@ def called_code(repo, head, function, depth=2) -> str:
                     found.append(target)
                     following.append(target)
         frontier = following
-    return "\n\n".join(f"# {f.path}\n{textwrap.dedent(f.source)}" for f in found)
+    return found
+
+
+def called_code(repo, head, function) -> str:
+    return "\n\n".join(f"# {f.path}\n{textwrap.dedent(f.source)}" for f in callees(repo, head, function))
 
 
 def record(sandbox, checkpoint, function, inputs) -> tuple[str | None, str | None]:
@@ -580,6 +584,30 @@ def parse_tests_reply(text: str, function, calls_allowed: bool) -> TestsReply:
     return TestFile(form="test_file", code=code)
 
 
+class Check(NamedTuple):
+    verdict: Literal["proved", "fails", "missed", "nondeterministic", "no coverage"]
+    missed: list[list[int]]
+    output: str
+
+
+def check(sandbox, checkpoint, function, test_path, cmd, tests) -> Check:
+    _, output = sandbox.run(
+        checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o - | python -c \"{MISSED}\" {shlex.quote(function.path)}"
+    )
+    second, _ = sandbox.run(checkpoint, {test_path: tests}, f"PYTHONHASHSEED=2 {cmd}")
+    passed = COVERAGE in output
+    if passed != (not second):
+        return Check("nondeterministic", [], output)
+    if not passed:
+        return Check("fails", [], output)
+    try:
+        branches = json.loads(output.split(COVERAGE)[1].strip().splitlines()[0])
+    except (ValueError, IndexError):
+        return Check("no coverage", [], output)
+    missed = [branch for branch in branches if function.start <= branch[0] <= function.end]
+    return Check("missed" if missed else "proved", missed, output)
+
+
 def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> tuple[str | None, str | None]:
     name = nondeterministic(textwrap.dedent(function.source))
     if name:
@@ -613,28 +641,22 @@ def characterize(sandbox, checkpoint, function, test_path, cmd, context="") -> t
                 case TestFile():
                     tests, failure, missed_retry = reply.code, None, None
             if tests is not None:
-                code, output = sandbox.run(
-                    checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o - | python -c \"{MISSED}\" {shlex.quote(function.path)}"
-                )
-                second, _ = sandbox.run(checkpoint, {test_path: tests}, f"PYTHONHASHSEED=2 {cmd}")
-                passed = COVERAGE in output
-                if passed != (not second):
-                    return None, "nondeterministic: characterization tests differ across two runs"
-                if passed:
-                    try:
-                        branches = json.loads(output.split(COVERAGE)[1].strip().splitlines()[0])
-                    except (ValueError, IndexError):
-                        return None, f"coverage has no data for {function.path}"
-                    missed = sum(function.start <= line <= function.end for line, _ in branches)
-                    if not missed:
+                result = check(sandbox, checkpoint, function, test_path, cmd, tests)
+                match result.verdict:
+                    case "proved":
                         return tests, None
-                    failure = f"characterization tests miss branches: {missed}"
-                    if missed_retry is None:
-                        return None, failure
-                    retry, template = missed_retry.format(missed=missed, **fields), "MISSED_RETRY"
-                else:
-                    failure = f"characterization tests fail on original: {tail(output)}"
-                    retry, template = TESTS_RETRY.format(tests=tests, failure="\n".join(output.strip().splitlines()[-60:])), "TESTS_RETRY"
+                    case "nondeterministic":
+                        return None, "nondeterministic: characterization tests differ across two runs"
+                    case "no coverage":
+                        return None, f"coverage has no data for {function.path}"
+                    case "missed":
+                        failure = f"characterization tests miss branches: {len(result.missed)}"
+                        if missed_retry is None:
+                            return None, failure
+                        retry, template = missed_retry.format(missed=len(result.missed), **fields), "MISSED_RETRY"
+                    case "fails":
+                        failure = f"characterization tests fail on original: {tail(result.output)}"
+                        retry, template = TESTS_RETRY.format(tests=tests, failure="\n".join(result.output.strip().splitlines()[-60:])), "TESTS_RETRY"
             trace.output(failure)
     return None, failure
 

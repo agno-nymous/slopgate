@@ -70,13 +70,14 @@ class Local:
 
 
 class Contree:
-    def __init__(self):
+    def __init__(self, image="python:3.12-slim"):
         self.client = ContreeSync()
+        self.image = image
 
     def prepare(self, repo, ref, setup: str | None):
         script = "mkdir -p /repo && tar -x -f /tmp/repo.tar -C /repo && cd /repo && pip install -q pytest coverage || exit\n"
         result = (
-            self.client.images.use("python:3.12-slim")
+            self.client.images.use(self.image)
             .run(shell=script + (setup or ""), files={"/tmp/repo.tar": archive(repo, ref)}, disposable=False)
             .wait()
         )
