@@ -16,10 +16,10 @@ from dataclasses import asdict, dataclass, field, replace
 from difflib import SequenceMatcher
 from pathlib import Path
 
-from bench.score import MEASURED, WORKERS, cost, markdown, score
+from bench.score import WORKERS, compare, cost, markdown, score, split
 from bench.transforms import TRANSFORMS, indent_of, transform
 from slopgate import kinds, llm
-from slopgate.config import LIGHTNING, SUPER
+from slopgate.config import SUPER
 from slopgate.functions import Function, is_test_file, parse
 from slopgate.review import strip_fence
 
@@ -65,7 +65,6 @@ INJECT = {
         "Turn the dict lookup into an if/elif chain that compares the key with each constant of the dict "
         "and returns the matching value in each branch."
     ),
-    "filler_comment": "Add two or three comments that only repeat what the next line of code does.",
     "dead": "Add a local variable that is never used, or a statement after a return that can never run.",
 }
 
@@ -213,7 +212,7 @@ def accept(source: Item, text: str, new: str | None, injected: list[str], origin
     before = measured(source.path, source.start, source.source, text)
     after = measured(source.path, source.start, new, spliced)
     # the ground truth must stay exact: no measured kind may appear that was not injected
-    if after - before - set(injected) or any(kind in before or kind not in after for kind in MEASURED & set(injected)):
+    if after - before - set(injected) or any(kind in before or kind not in after for kind in injected):
         return None
     lines = changed(source.source, new)
     if not lines:
@@ -245,7 +244,7 @@ def from_reply(source: Item, reply: str | None, kind: str) -> str | None:
         return None
     # Super labels its slop ("# Slop: unused variable", `unused_slop_variable = 42`); a label gives the answer to the checker
     added = set(kinds.comments(code)) - set(kinds.comments(source.source))
-    if ("slop" in code.lower() and "slop" not in source.source.lower()) or (added and kind != "filler_comment"):
+    if ("slop" in code.lower() and "slop" not in source.source.lower()) or added:
         return None
     body = ast.parse(textwrap.dedent(code)).body
     if len(body) != 1 or not isinstance(body[0], (ast.FunctionDef, ast.AsyncFunctionDef)) or body[0].name != source.qualname.rsplit(".", 1)[-1]:
@@ -331,56 +330,61 @@ def classify_item(item: Item) -> tuple[str, list[dict]]:
     runs = []
     for _ in range(RUNS_PER_ITEM):
         kinds.ruff.cache_clear()
-        used = len(llm.usage)
         began = time.perf_counter()
         try:
             run = {"kinds": kinds.classify(function(item, item.source), text)}
         except Exception as error:
             run = {"error": repr(error)}
-        calls = llm.usage[used:]
-        runs.append(
-            run
-            | {
-                "seconds": round(time.perf_counter() - began, 3),
-                "input_tokens": sum(c[1] for c in calls),
-                "output_tokens": sum(c[2] for c in calls),
-                "source_sha": source_sha(item),
-            }
-        )
+        runs.append(run | {"seconds": round(time.perf_counter() - began, 3), "source_sha": source_sha(item)})
     return item.id, runs
 
 
-def run() -> None:
-    items = load_items(json.loads(GROUNDTRUTH.read_text())["items"])
-    runs = json.loads(RUNS.read_text()) if RUNS.exists() else {}
+def chosen(items: list[Item], subset: str) -> list[Item]:
+    if subset not in ("tuning", "held_out", "all"):
+        raise SystemExit(f"unknown set {subset!r}: use tuning, held_out, or all")
+    sets = split(items)
+    return [item for item in items if subset in ("all", sets[item.id])]
+
+
+def runs_path(name: str | None) -> Path:
+    return RUNS if name is None else RESULTS / f"runs-{name}.json"
+
+
+def run(name: str | None = None, subset: str = "all") -> None:
+    path = runs_path(name)
+    items = chosen(load_items(json.loads(GROUNDTRUTH.read_text())["items"]), subset)
+    runs = json.loads(path.read_text()) if path.exists() else {}
     todo = [item for item in items if len(current(item, runs)) < RUNS_PER_ITEM]
     with ProcessPoolExecutor(WORKERS) as workers:
         for done, future in enumerate(as_completed([workers.submit(classify_item, item) for item in todo]), 1):
             item_id, item_runs = future.result()
             runs[item_id] = item_runs
-            write(RUNS, runs)
+            write(path, runs)
             print(f"{done}/{len(todo)} {item_id}", file=sys.stderr)
 
 
-def report() -> None:
+def report(name: str | None = None, subset: str = "all") -> None:
     groundtruth = json.loads(GROUNDTRUTH.read_text())
-    items = load_items(groundtruth["items"])
-    stored = json.loads(RUNS.read_text())
+    items = chosen(load_items(groundtruth["items"]), subset)
+    review = json.loads(LABELS.read_text())
+    stored = json.loads(runs_path(name).read_text())
     runs = {item.id: current(item, stored) for item in items}
-    result = score(items, runs, json.loads(LABELS.read_text()))
-    all_runs = [run for item_runs in runs.values() for run in item_runs]
-    lightning = {key: sum(run[key] for run in all_runs) for key in ("input_tokens", "output_tokens")}
+    result = {"runs": runs_path(name).name + (" (gate before ticket 39)" if name is None else ""), "set": subset} | score(items, runs, review)
+    if name is not None:
+        base = json.loads(RUNS.read_text())
+        result["change"] = compare(items, review, {item.id: current(item, base) for item in items}, runs)
     injection = groundtruth["super_usage"]
-    result["tokens"] = [
-        {"model": LIGHTNING, "use": "classify"} | lightning | {"usd": cost(LIGHTNING, lightning)},
-        {"model": SUPER, "use": "injection"} | {k: injection[k] for k in ("input_tokens", "output_tokens")} | {"usd": cost(SUPER, injection)},
-    ]
-    write(DETECTION.with_suffix(".json"), result)
-    DETECTION.with_suffix(".md").write_text(markdown(result))
+    result["tokens"] = [{"model": SUPER, "use": "injection"} | {k: injection[k] for k in ("input_tokens", "output_tokens")} | {"usd": cost(SUPER, injection)}]
+    detection = DETECTION if name is None else RESULTS / f"detection-{name}"
+    write(detection.with_suffix(".json"), result)
+    detection.with_suffix(".md").write_text(markdown(result))
 
 
 STAGES = {"sample": sample, "inject": inject, "run": run, "report": report}
 
 if __name__ == "__main__":
-    for name in sys.argv[1:2] or STAGES:
-        STAGES[name]()
+    if sys.argv[1:]:
+        STAGES[sys.argv[1]](*sys.argv[2:])
+    else:
+        for stage in STAGES.values():
+            stage()

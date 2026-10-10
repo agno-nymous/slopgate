@@ -6,14 +6,11 @@ import subprocess
 import sys
 import textwrap
 import tokenize
-from concurrent.futures import ThreadPoolExecutor
 
 import vulture
-from pydantic import BaseModel, Field
 
-from slopgate import llm, trace
-from slopgate.config import LIGHTNING, NESTING
-from slopgate.functions import Function, nesting
+from slopgate.config import NESTING
+from slopgate.functions import BLOCKS, Function
 
 KINDS = {
     "nesting": "It nests blocks deeply. Flatten it with guard clauses or a single boolean expression.",
@@ -24,21 +21,8 @@ KINDS = {
         "and remove try blocks around code that cannot raise. Every input must still give the same result."
     ),
     "lookup_table": "It maps values to results with a long if/elif chain. Replace the chain with a dict lookup.",
-    "filler_comment": "It has comments that only restate the code. Remove them and keep comments that explain why.",
     "dead": "It has unreachable code or unused variables. Remove them.",
 }
-RULES = {
-    "redundant_check": (
-        "A condition tests a fact that an earlier condition in the same function already guarantees, "
-        "so at that point the test is always true or always false. "
-        "Example: `if price > 0:` in a branch that runs only after `if price <= 0: return 0`."
-    ),
-    "filler_comment": (
-        "A comment only repeats in words what the code on the next line says, for example `# loop over the values` above `for value in values:`. "
-        "A comment that explains why, states a limit, or gives a reference is not slop. A function with no `#` comment never has this kind."
-    ),
-}
-GUARDS = {"if", "elif", "while", "and", "or", "assert"}
 RUFF = {
     "SIM116": "lookup_table",
     "BLE001": "swallowed_error",
@@ -49,27 +33,22 @@ RUFF = {
     "RUF059": "dead",
 }
 DEAD = {"unreachable_code", "variable"}
-
-CHECK_PROMPT = """Check the Python function below for one kind of slop: {kind}.
-
-Rule: {rule}
-
-Report a line only when it matches the rule. Most functions have no such line.
-
-Reply by calling the tool `Check`.
-
-File: {path}
-
-{fence}python
-{source}
-{fence}"""
-
-
-class Check(BaseModel):
-    """Report the lines of the function that match the rule."""
-
-    reason: str = Field(description="What you checked, and why each reported line matches the rule, or why no line matches.")
-    lines: list[str] = Field(description="Each line of the function that matches the rule, copied exactly. An empty list when no line matches.")
+EXITS = (ast.Return, ast.Raise, ast.Continue, ast.Break)
+LOOPS = (ast.For, ast.AsyncFor, ast.While)
+SCOPES = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)
+PURE = {"isinstance", "hasattr", "callable", "len", "type", "any", "all"}
+FLIP = {
+    ast.Is: ast.IsNot,
+    ast.IsNot: ast.Is,
+    ast.Eq: ast.NotEq,
+    ast.NotEq: ast.Eq,
+    ast.In: ast.NotIn,
+    ast.NotIn: ast.In,
+    ast.Lt: ast.GtE,
+    ast.GtE: ast.Lt,
+    ast.Gt: ast.LtE,
+    ast.LtE: ast.Gt,
+}
 
 
 def comments(code: str) -> list[str]:
@@ -116,71 +95,151 @@ def ruff(path: str, text: str) -> tuple[tuple[int, str], ...]:
     )
 
 
-def measured(function, text: str) -> set[str]:
-    kinds = {kind for row, kind in ruff(function.path, text) if function.start <= row <= function.end}
-    if nesting(function.source) > NESTING:
-        kinds.add("nesting")
+def key(test: ast.expr) -> str:
+    return ast.dump(test, annotate_fields=False)
+
+
+def negation(test: ast.expr) -> str:
+    if isinstance(test, ast.UnaryOp) and isinstance(test.op, ast.Not):
+        return key(test.operand)
+    if isinstance(test, ast.Compare) and len(test.ops) == 1 and type(test.ops[0]) in FLIP:
+        return key(ast.Compare(test.left, [FLIP[type(test.ops[0])]()], test.comparators))
+    return key(ast.UnaryOp(ast.Not(), test))
+
+
+def outer(node: ast.AST):
+    for child in ast.iter_child_nodes(node):
+        if not isinstance(child, SCOPES):
+            yield child
+            yield from outer(child)
+
+
+def effects(nodes) -> tuple[set[str], bool]:
+    found = [d for node in nodes for d in ([node] if isinstance(node, SCOPES) else [node, *outer(node)])]
+    # a comprehension target lives in the comprehension's own scope
+    local = {id(n) for c in found if isinstance(c, ast.comprehension) for n in ast.walk(c.target)}
+    names = set()
+    for n in found:
+        match n:
+            case ast.Name(ctx=ast.Store() | ast.Del()) if id(n) not in local:
+                names.add(n.id)
+            case ast.Attribute(ctx=ast.Store() | ast.Del()) | ast.Subscript(ctx=ast.Store() | ast.Del()):
+                names |= {m.id for m in ast.walk(n) if isinstance(m, ast.Name)}
+            case ast.FunctionDef() | ast.AsyncFunctionDef() | ast.ClassDef() | ast.ExceptHandler(name=str()) | ast.MatchAs(name=str()) | ast.MatchStar(name=str()):
+                names.add(n.name)
+            case ast.MatchMapping(rest=str()):
+                names.add(n.rest)
+            case ast.alias():
+                names.add((n.asname or n.name).split(".")[0])
+            case ast.Global() | ast.Nonlocal():
+                names.update(n.names)
+    called = any(isinstance(n, ast.Call) and not (isinstance(n.func, ast.Name) and n.func.id in PURE) for n in found)
+    return names, called
+
+
+def kept(facts: dict, nodes) -> dict:
+    changed, called = effects(nodes)
+    # a call can change any state a fact reads: a global, a nonlocal, an attribute, or the object a name holds
+    return {} if called else {fact: read for fact, read in facts.items() if not read & changed}
+
+
+def repeated_checks(source: str) -> list[str]:
+    source = textwrap.dedent(source)
+    lines = source.splitlines()
+    found = []
+
+    def walk(stmts, facts):
+        for stmt in stmts:
+            if isinstance(stmt, ast.If):
+                test, opposite = key(stmt.test), negation(stmt.test)
+                facts = kept(facts, [stmt.test])
+                if test in facts or opposite in facts:
+                    found.append(lines[stmt.lineno - 1].strip())
+                names = {n.id for n in ast.walk(stmt.test) if isinstance(n, ast.Name)}
+                walk(stmt.body, facts | {test: names})
+                walk(stmt.orelse, facts | {opposite: names})
+                if not stmt.orelse and isinstance(stmt.body[-1], EXITS):
+                    facts[opposite] = names
+                else:
+                    facts = kept(facts, stmt.body + stmt.orelse)
+                continue
+            if isinstance(stmt, (ast.Try, ast.TryStar)):
+                walk(stmt.body, facts)
+                walk(stmt.orelse, kept(facts, stmt.body))
+                walk(stmt.finalbody, kept(facts, stmt.body + stmt.handlers + stmt.orelse))
+            elif isinstance(stmt, (ast.With, ast.AsyncWith)):
+                walk(stmt.body, kept(facts, stmt.items))
+            else:
+                walk(getattr(stmt, "body", []), {})
+                walk(getattr(stmt, "orelse", []), {})
+            # a handler runs after its try body stopped part way, and a case pattern can bind names, so both start with no facts
+            for part in [*getattr(stmt, "handlers", []), *getattr(stmt, "cases", [])]:
+                walk(part.body, {})
+            facts = kept(facts, [stmt])
+
+    walk(ast.parse(source).body[0].body, {})
+    return list(dict.fromkeys(found))
+
+
+def flattenable(source: str) -> bool:
+    function = ast.parse(textwrap.dedent(source)).body[0]
+
+    def rest(node):
+        return [] if len(node.orelse) == 1 and isinstance(node.orelse[0], ast.Pass) else node.orelse
+
+    def exits(stmts):
+        return bool(stmts) and isinstance(stmts[-1], EXITS)
+
+    def has_block(stmts):
+        return any(isinstance(n, BLOCKS) for stmt in stmts for n in ast.walk(stmt))
+
+    bodies = [function.body, *(n.body for n in ast.walk(function) if isinstance(n, LOOPS))]
+    last = {id(body[-1]) for body in bodies}
+
+    def shape(node):
+        other = rest(node)
+        chain = len(other) == 1 and isinstance(other[0], ast.If)
+        return (
+            (node.orelse and not other)
+            or (other and not chain and (exits(node.body) and has_block(other) or exits(other) and has_block(node.body)))
+            or (not node.orelse and id(node) in last and has_block(node.body))
+            or (not other and len(node.body) == 1 and isinstance(node.body[0], ast.If) and not rest(node.body[0]))
+        )
+
+    # only an if on a chain of blocks deeper than NESTING: an ancestor of a deep block, or inside one
+    deep = set()
+
+    def visit(node, depth, path, is_elif=False):
+        depth += isinstance(node, BLOCKS) and not is_elif
+        if isinstance(node, BLOCKS) and depth > NESTING:
+            deep.update(map(id, path), map(id, ast.walk(node)))
+        for child in ast.iter_child_nodes(node):
+            visit(child, depth, [*path, node], isinstance(node, ast.If) and isinstance(child, ast.If) and node.orelse == [child])
+
+    visit(function, 0, [])
+    return any(shape(n) for n in ast.walk(function) if isinstance(n, ast.If) and id(n) in deep)
+
+
+def measured(function, text: str) -> dict[str, list[str]]:
+    found = {kind: [] for row, kind in ruff(function.path, text) if function.start <= row <= function.end}
+    if flattenable(function.source):
+        found["nesting"] = []
+    if lines := repeated_checks(function.source):
+        found["redundant_check"] = lines
     if has_dead_code(function, text):
-        kinds.add("dead")
-    return kinds
-
-
-def conditions(source: str) -> int:
-    tree = ast.parse(source)
-    return sum(isinstance(n, (ast.If, ast.IfExp, ast.While, ast.BoolOp)) for n in ast.walk(tree)) + sum(
-        len(n.ifs) for n in ast.walk(tree) if isinstance(n, ast.comprehension)
-    )
-
-
-def in_source(evidence: str, source: str) -> bool:
-    lines = {line.strip() for line in source.splitlines()}
-    parts = [part.strip() for part in evidence.splitlines() if part.strip()]
-    return bool(parts) and all(part in lines for part in parts)
-
-
-def grounded_line(kind: str, evidence: str, source: str) -> bool:
-    if not in_source(evidence, source):
-        return False
-    code = "\n".join(part.strip() for part in evidence.splitlines())
-    try:
-        if kind == "filler_comment":
-            return bool(comments(code))
-        names = {t.string for t in tokenize.generate_tokens(io.StringIO(code).readline) if t.type == tokenize.NAME}
-    except (tokenize.TokenError, IndentationError):
-        return False
-    return bool(names & GUARDS)
+        found["dead"] = []
+    return found
 
 
 def classify(function, text: str) -> dict[str, list[str]]:
-    source = textwrap.dedent(function.source)
-    asked = [kind for kind, ask in (("redundant_check", conditions(source) >= 2), ("filler_comment", bool(comments(source)))) if ask]
-    fence = "````" if "```" in source else "```"
-
-    def check(kind):
-        prompt = CHECK_PROMPT.format(kind=kind, rule=RULES[kind], path=function.path, source=source, fence=fence)
-        with trace.span("gate.check", slop_kind=kind, prompt="CHECK_PROMPT"):
-            try:
-                reply = llm.decide(LIGHTNING, prompt, Check)
-            except Exception as error:
-                trace.output(f"internal error: {error!r}")
-                return kind, []
-            lines = [line.strip() for line in reply.lines if grounded_line(kind, line, source)] if reply else []
-            trace.output(lines)
-        return kind, lines
-
-    with ThreadPoolExecutor() as threads:
-        found = {kind: lines for kind, lines in threads.map(trace.bind(check), asked) if lines}
-    found |= dict.fromkeys(measured(function, text), [])
+    found = measured(function, text)
     return {kind: found[kind] for kind in KINDS if kind in found}
 
 
 def leftover(kinds, function, suggested: str, spliced: str) -> str | None:
     new = Function(function.qualname, function.path, function.start, function.start + suggested.count("\n") - 1, suggested)
     found = measured(new, spliced)
-    for kind, evidence in kinds.items():
-        if kind in found or (evidence and all(in_source(line, suggested) for line in evidence)):
-            return f"rewrite leaves the slop: {kind}"
-    return None
+    return next((f"rewrite leaves the slop: {kind}" for kind in kinds if kind in found), None)
 
 
 def problems(kinds) -> str:

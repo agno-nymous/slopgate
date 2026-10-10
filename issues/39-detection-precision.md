@@ -9,7 +9,7 @@
 
 **Blocked by:** 37
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Type:** design, then build.
 
@@ -77,13 +77,13 @@ Ticket 42 gives the context (the evals guide). These 3 rules apply to every answ
 
 ## Acceptance
 
-- [ ] `filler_comment` is removed from the gate, the benchmark, and the tests.
-- [ ] Each design question has an answer with a measurement on the ticket 37 benchmark.
-- [ ] The false-positive rate on clean functions goes down, and the recall on injected items does not fall by more than the measured noise (stability is 0.80 across 3 runs).
-- [ ] `bench/results/detection.md` is updated with the new numbers.
-- [ ] The final numbers come from the held-out set, and each number has a 95% range from a bootstrap over functions.
-- [ ] Each claimed improvement has a range of the difference that is above 0.
-- [ ] `classify` reports a failed model check as an error, and `detection.md` counts the errors for each kind.
+- [x] `filler_comment` is removed from the gate, the benchmark, and the tests.
+- [x] Each design question has an answer with a measurement on the ticket 37 benchmark.
+- [x] The false-positive rate on clean functions goes down, and the recall on injected items does not fall by more than the measured noise (stability is 0.80 across 3 runs).
+- [x] `bench/results/detection.md` is updated with the new numbers. The new held-out numbers are in `bench/results/detection-t39.md`. `detection.md` is the gate before ticket 39, scored again without `filler_comment`.
+- [x] The final numbers come from the held-out set, and each number has a 95% range from a bootstrap over functions.
+- [x] Each claimed improvement has a range of the difference that is above 0.
+- [x] ~~`classify` reports a failed model check as an error, and `detection.md` counts the errors for each kind.~~ Not applicable: `classify` makes no model call now. `detection.md` lists the run errors (0 on the held-out set).
 
 ## Comments
 
@@ -128,3 +128,68 @@ The same `CHECK_PROMPT` and `Check` tool as the gate, on 41 labelled functions (
 - Super removes most false kinds and finds more real ones. The difference between Super with thinking off and on (6 against 4 false kinds) is small for 2 tries.
 - Lightning with thinking on is better than with thinking off, but it is 8 times slower and was cut off 3 times.
 - Limits: only 3 positives are real code; the other 17 are injected, and most have one shape. The 21 negatives are the cases that Lightning got wrong, so they are hard on purpose.
+
+### 2026-10-10 — built: AST checks for `redundant_check` and `nesting`, `filler_comment` removed
+
+**What was built.**
+
+- `filler_comment` is removed from `slopgate/kinds.py`, `bench/transforms.py`, the Nemotron injection, the tests, `spec.md`, and `README.md`. `bench/score.py` ignores the old `filler_comment` data in the stored ground truth and runs.
+- `redundant_check` is an AST check now: `repeated_checks` in `slopgate/kinds.py`. It reports an `if` whose test, or the negation of its test, is already known. A fact becomes known inside an `if` body, inside its `else`, and after an `if` that ends with `return`, `raise`, `continue`, or `break`. A fact is dropped when a statement assigns a name that it reads, or calls a function that is not `isinstance`, `hasattr`, `callable`, `len`, `type`, `any`, or `all`. Loop bodies, `except` handlers, and `match` cases start with no facts.
+- `nesting` needs a depth of more than 2 and an `if` on the deep chain that a guard clause or a merged condition can make flat (`flattenable`). The 4 shapes: an `if`/`else` where one branch exits and the other holds a block; an `if` at the end of a function or loop body that holds a block; an `if` whose body is only another `if`; an `else: pass`.
+- `classify` makes no model call now. Lightning runs only the hook's yes/no check.
+- `leftover` rejects a rewrite only when the check still finds the kind in the rewrite.
+- `bench/score.py`: `split` (60% tuning and 40% held-out, by function, seed 39), `compare` (a paired bootstrap over functions, 1,000 draws, seed 39). A kind found on the source of an injected item is scored on the source only.
+- `python -m bench.detect run <name> <set>` and `report <name> <set>` write `runs-<name>.json` and `detection-<name>.md`.
+
+**Answers to the design questions** (tuning set: 197 functions, 3 runs; real code means clean and source functions).
+
+1. `nesting`: depth more than 2 and a flattenable `if`.
+
+   | Check | Real slop kept (of 5) | Real false positives kept (of 13) | Injected found (of 16) |
+   |---|---|---|---|
+   | Now: all blocks, depth > 2 | 5 | 13 | 16 |
+   | Depth > 3 | 2 | 2 | 6 |
+   | Only `if` blocks, depth > 2 | 3 | 2 | 9 |
+   | Depth > 2 and a flattenable `if` (chosen) | 3 | 2 | 16 |
+
+2. `filler_comment`: removed (decision of 2026-10-09).
+3. `redundant_check`: an AST check, with no model call. One-line evidence does not change Super (all its evidence has one line). With Lightning, it loses 3 true flags. Two fields (the earlier check and the repeated check) give precision 1.0 and recall 0.31 with Super.
+
+   | Variant | TP | FP | FN | Precision | Recall | Real code: true / false flags |
+   |---|---|---|---|---|---|---|
+   | Lightning, thinking off (gate before) | 24 | 22 | 18 | 0.52 | 0.57 | 5 / 16 |
+   | Super, thinking off | 31 | 11 | 9 | 0.74 | 0.78 | 2 / 9 |
+   | Super, two fields | 13 | 0 | 29 | 1.0 | 0.31 | 0 / 0 |
+   | AST check (chosen) | 33 | 0 | 9 | 1.0 | 0.79 | 3 / 0 |
+   | AST check or Super | 34 | 11 | 6 | 0.76 | 0.85 | 3 / 9 |
+
+   The user chose the AST check alone on 2026-10-10.
+4. Super against Lightning: Super has fewer false flags (11 against 22) and more true flags (31 against 24). But on real code, Super gave 2 true and 9 false flags. Most of its true flags were on injected items. Super had 2 errors (no tool call after 38 s) in 366 calls. Cost of 366 Super calls: 298,014 input and 39,241 output tokens, 93 s with 8 threads.
+
+**Held-out results** (`bench/results/detection-t39.md`: 132 functions, 188 items, 3 runs). The base is the gate before ticket 39 (`runs.json`, Lightning), without `filler_comment`. Each range is the 95% range of 1,000 bootstrap draws of whole functions.
+
+| Kind | Precision: base, new, difference | Recall: base, new, difference | Clean FP rate: base, new, difference |
+|---|---|---|---|
+| `nesting` | 0.56, 0.923, +0.363 [0.174, 0.556] | 1.0, 0.857, -0.143 [-0.364, 0.0] | 0.113, 0.013, -0.1 [-0.169, -0.039] |
+| `redundant_check` | 0.316, 1.0, +0.684 [0.333, 0.95] | 0.25, 0.625, +0.375 [0.0, 0.778] | 0.004, 0.0, -0.004 [-0.014, 0.0] |
+| total | 0.746, 0.979, +0.233 [0.138, 0.342] | 0.882, 0.902, +0.02 [-0.078, 0.109] | 0.117, 0.013, -0.104 [-0.174, -0.042] |
+
+- The clean FP rate falls from 0.117 to 0.013. The range of the difference does not include 0. Total precision goes up, and its range does not include 0.
+- The total recall does not fall: +0.02 [-0.078, 0.109].
+- The `nesting` recall falls by 0.143. The upper end of its range is 0.0, so the fall is at the edge of the noise. The 2 missed items are Nemotron injections (`AnchoredOffsetbox.draw`, `ASTDeclaration.__init__`) whose deep chain has no flattenable `if`.
+- The held-out run gave no unlabelled flag, so no new label was needed. It gave 0 errors.
+- The checks are deterministic: stability is 1.0 (it was 0.80). The median time for each function is 0.08 s, with no model call.
+- A code review found false flags of `repeated_checks` on synthetic code (a call or a subscript store between the two checks). The fix was made after the first held-out run. The held-out numbers before and after the fix are the same.
+
+**Worked example** (real output of `classify` on benchmark functions):
+
+- `AccumulationBounds.intersection` (sympy): `if self.max <= other.max: return AccumBounds(other.min, self.max)` comes directly before `if self.max > other.max:`. `classify` gives `{'nesting': [], 'redundant_check': ['if self.max > other.max:']}`. The gate before gave only `nesting`.
+- `DatabaseWrapper.check_constraints` (django, `with cursor` / `for table` / `for column` / `for row`): depth 4, no flattenable `if`. `classify` gives `{}`. The gate before gave `nesting`, which a person labelled as a false positive.
+
+**Known limits.**
+
+- The AST check finds only a repeated or negated test. It misses semantic repeats, for example `isinstance(x, (int, float)) and x is not None`. On the held-out set, it found 0 of 3 Nemotron `redundant_check` items. All 5 transform items are found, but the transform makes the shape that the check looks for.
+- A call between the two checks drops all facts. So `if not uri.startswith('data:')` after a guard with a log call is not found.
+- The gate cannot prove a `redundant_check` rewrite: the never-run branch fails the branch coverage rule. Ticket 43 holds this.
+- Few positives are real code: 4 real `redundant_check` slop functions and 9 real `nesting` slop functions in the whole benchmark. The ranges are wide.
+- Ticket 40 (limit the output tokens of `decide`) no longer applies to `classify`. It still applies to the duplicate verdict.

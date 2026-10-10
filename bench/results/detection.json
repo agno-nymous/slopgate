@@ -1,4 +1,6 @@
 {
+ "runs": "runs.json (gate before ticket 39)",
+ "set": "all",
  "groups": {
   "all": {
    "nesting": {
@@ -10,12 +12,12 @@
     "recall": 1.0
    },
    "redundant_check": {
-    "items": 42,
+    "items": 43,
     "tp": 30,
     "fp": 35,
-    "fn": 33,
+    "fn": 36,
     "precision": 0.462,
-    "recall": 0.476
+    "recall": 0.455
    },
    "swallowed_error": {
     "items": 30,
@@ -33,14 +35,6 @@
     "precision": 1.0,
     "recall": 1.0
    },
-   "filler_comment": {
-    "items": 103,
-    "tp": 99,
-    "fp": 118,
-    "fn": 12,
-    "precision": 0.456,
-    "recall": 0.892
-   },
    "dead": {
     "items": 28,
     "tp": 84,
@@ -50,12 +44,12 @@
     "recall": 1.0
    },
    "total": {
-    "items": 236,
-    "tp": 474,
-    "fp": 228,
-    "fn": 45,
-    "precision": 0.675,
-    "recall": 0.913
+    "items": 160,
+    "tp": 375,
+    "fp": 110,
+    "fn": 36,
+    "precision": 0.773,
+    "recall": 0.912
    }
   },
   "transform": {
@@ -91,14 +85,6 @@
     "precision": 1.0,
     "recall": 1.0
    },
-   "filler_comment": {
-    "items": 18,
-    "tp": 47,
-    "fp": 2,
-    "fn": 1,
-    "precision": 0.959,
-    "recall": 0.979
-   },
    "dead": {
     "items": 16,
     "tp": 48,
@@ -108,12 +94,12 @@
     "recall": 1.0
    },
    "total": {
-    "items": 84,
-    "tp": 266,
-    "fp": 11,
-    "fn": 22,
-    "precision": 0.96,
-    "recall": 0.924
+    "items": 72,
+    "tp": 219,
+    "fp": 9,
+    "fn": 21,
+    "precision": 0.961,
+    "recall": 0.912
    }
   },
   "nemotron": {
@@ -149,14 +135,6 @@
     "precision": 1.0,
     "recall": 1.0
    },
-   "filler_comment": {
-    "items": 12,
-    "tp": 24,
-    "fp": 3,
-    "fn": 6,
-    "precision": 0.889,
-    "recall": 0.8
-   },
    "dead": {
     "items": 10,
     "tp": 30,
@@ -166,40 +144,32 @@
     "recall": 1.0
    },
    "total": {
-    "items": 50,
-    "tp": 136,
-    "fp": 6,
-    "fn": 17,
-    "precision": 0.958,
-    "recall": 0.889
+    "items": 40,
+    "tp": 112,
+    "fp": 3,
+    "fn": 11,
+    "precision": 0.974,
+    "recall": 0.911
    }
   },
   "two_kinds": {
    "nesting": {
-    "items": 4,
-    "tp": 12,
+    "items": 3,
+    "tp": 9,
     "fp": 0,
     "fn": 0,
     "precision": 1.0,
     "recall": 1.0
    },
    "redundant_check": {
-    "items": 4,
+    "items": 2,
     "tp": 5,
-    "fp": 2,
-    "fn": 4,
-    "precision": 0.714,
-    "recall": 0.556
+    "fp": 0,
+    "fn": 1,
+    "precision": 1.0,
+    "recall": 0.833
    },
    "swallowed_error": {
-    "items": 5,
-    "tp": 15,
-    "fp": 0,
-    "fn": 0,
-    "precision": 1.0,
-    "recall": 1.0
-   },
-   "lookup_table": {
     "items": 4,
     "tp": 12,
     "fp": 0,
@@ -207,13 +177,13 @@
     "precision": 1.0,
     "recall": 1.0
    },
-   "filler_comment": {
-    "items": 4,
-    "tp": 11,
+   "lookup_table": {
+    "items": 3,
+    "tp": 9,
     "fp": 0,
-    "fn": 1,
+    "fn": 0,
     "precision": 1.0,
-    "recall": 0.917
+    "recall": 1.0
    },
    "dead": {
     "items": 4,
@@ -224,12 +194,12 @@
     "recall": 1.0
    },
    "total": {
-    "items": 12,
-    "tp": 67,
-    "fp": 2,
-    "fn": 5,
-    "precision": 0.971,
-    "recall": 0.931
+    "items": 8,
+    "tp": 47,
+    "fp": 0,
+    "fn": 1,
+    "precision": 1.0,
+    "recall": 0.979
    }
   }
  },
@@ -243,33 +213,8 @@
  },
  "false_positives": [
   {
-   "id": "astropy/astropy:astropy/coordinates/baseframe.py:BaseCoordinateFrame._get_representation_info",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "astropy/astropy:astropy/coordinates/builtin_frames/galactic_transforms.py:fk5_to_gal",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "astropy/astropy:astropy/coordinates/jparser.py:_sexagesimal",
-   "kind": "filler_comment",
-   "runs": 3
-  },
-  {
    "id": "astropy/astropy:astropy/coordinates/solar_system.py:get_body",
    "kind": "redundant_check",
-   "runs": 3
-  },
-  {
-   "id": "astropy/astropy:astropy/cosmology/units.py:redshift_temperature",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
-   "id": "astropy/astropy:astropy/io/fits/hdu/hdulist.py:HDUList.pop",
-   "kind": "filler_comment",
    "runs": 3
   },
   {
@@ -278,33 +223,8 @@
    "runs": 3
   },
   {
-   "id": "astropy/astropy:astropy/samp/web_profile.py:WebProfileRequestHandler._serve_cross_domain_xml",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
-   "id": "astropy/astropy:astropy/time/formats.py:TimeString.value",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
    "id": "astropy/astropy:astropy/units/format/generic.py:Generic._format_unit_list",
    "kind": "nesting",
-   "runs": 3
-  },
-  {
-   "id": "astropy/astropy:astropy/utils/iers/iers.py:LeapSeconds.from_erfa",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "astropy/astropy:astropy/wcs/utils.py:obsgeo_to_frame",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
-   "id": "django/django:django/contrib/postgres/fields/ranges.py:RangeField.to_python",
-   "kind": "filler_comment",
    "runs": 3
   },
   {
@@ -328,38 +248,8 @@
    "runs": 1
   },
   {
-   "id": "django/django:django/db/backends/postgresql/base.py:DatabaseWrapper.get_connection_params:transform:redundant_check",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "django/django:django/db/migrations/executor.py:MigrationExecutor.migration_plan",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
    "id": "django/django:django/db/models/base.py:Model.clean_fields",
    "kind": "redundant_check",
-   "runs": 1
-  },
-  {
-   "id": "django/django:django/db/models/base.py:Model.clean_fields:transform:nesting",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "django/django:django/db/models/query.py:QuerySet.__init__",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
-   "id": "django/django:django/db/models/query.py:QuerySet._update",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "django/django:django/db/models/sql/query.py:Query.table_alias",
-   "kind": "filler_comment",
    "runs": 1
   },
   {
@@ -369,18 +259,8 @@
   },
   {
    "id": "django/django:django/template/base.py:Token.split_contents",
-   "kind": "filler_comment",
-   "runs": 3
-  },
-  {
-   "id": "django/django:django/template/base.py:Token.split_contents",
    "kind": "nesting",
    "runs": 3
-  },
-  {
-   "id": "django/django:django/utils/numberformat.py:format",
-   "kind": "filler_comment",
-   "runs": 1
   },
   {
    "id": "django/django:django/utils/numberformat.py:format",
@@ -393,39 +273,9 @@
    "runs": 1
   },
   {
-   "id": "matplotlib/matplotlib:lib/matplotlib/axes/_axes.py:Axes._convert_dx:nemotron:nesting",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "matplotlib/matplotlib:lib/matplotlib/figure.py:Figure.set_size_inches",
-   "kind": "filler_comment",
-   "runs": 3
-  },
-  {
    "id": "matplotlib/matplotlib:lib/matplotlib/font_manager.py:findSystemFonts",
    "kind": "nesting",
    "runs": 3
-  },
-  {
-   "id": "matplotlib/matplotlib:lib/matplotlib/offsetbox.py:AnchoredOffsetbox.draw",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "matplotlib/matplotlib:lib/matplotlib/projections/polar.py:PolarAxes._init_axis",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "matplotlib/matplotlib:lib/matplotlib/transforms.py:BboxTransformTo.get_matrix",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "matplotlib/matplotlib:lib/matplotlib/tri/triangulation.py:Triangulation.__init__",
-   "kind": "filler_comment",
-   "runs": 1
   },
   {
    "id": "pallets/flask:src/flask/app.py:Flask.handle_url_build_error",
@@ -433,28 +283,8 @@
    "runs": 3
   },
   {
-   "id": "pallets/flask:src/flask/app.py:Flask.test_cli_runner",
-   "kind": "filler_comment",
-   "runs": 3
-  },
-  {
-   "id": "pallets/flask:src/flask/app.py:Flask.wsgi_app",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "pallets/flask:src/flask/ctx.py:RequestContext.auto_pop",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
    "id": "pallets/flask:src/flask/debughelpers.py:_dump_loader_info",
    "kind": "nesting",
-   "runs": 3
-  },
-  {
-   "id": "pallets/flask:src/flask/sessions.py:SessionInterface.get_cookie_domain",
-   "kind": "filler_comment",
    "runs": 3
   },
   {
@@ -463,29 +293,14 @@
    "runs": 3
   },
   {
-   "id": "psf/requests:requests/adapters.py:HTTPAdapter.__setstate__",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
    "id": "psf/requests:requests/hooks.py:dispatch_hook",
    "kind": "nesting",
    "runs": 3
   },
   {
    "id": "psf/requests:requests/models.py:RequestEncodingMixin._encode_files",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
-   "id": "psf/requests:requests/models.py:RequestEncodingMixin._encode_files",
    "kind": "nesting",
    "runs": 3
-  },
-  {
-   "id": "psf/requests:requests/models.py:Response.json",
-   "kind": "filler_comment",
-   "runs": 1
   },
   {
    "id": "psf/requests:requests/models.py:Response.json",
@@ -499,23 +314,8 @@
   },
   {
    "id": "psf/requests:requests/packages/chardet/hebrewprober.py:HebrewProber.get_charset_name",
-   "kind": "filler_comment",
-   "runs": 3
-  },
-  {
-   "id": "psf/requests:requests/packages/chardet/hebrewprober.py:HebrewProber.get_charset_name",
    "kind": "redundant_check",
    "runs": 3
-  },
-  {
-   "id": "psf/requests:requests/packages/chardet/sbcharsetprober.py:SingleByteCharSetProber.reset",
-   "kind": "filler_comment",
-   "runs": 3
-  },
-  {
-   "id": "psf/requests:requests/packages/urllib3/connection.py:HTTPConnection._new_conn",
-   "kind": "filler_comment",
-   "runs": 1
   },
   {
    "id": "psf/requests:requests/utils.py:get_encoding_from_headers",
@@ -531,11 +331,6 @@
    "id": "pydata/xarray:xarray/core/duck_array_ops.py:_create_nan_agg_method",
    "kind": "nesting",
    "runs": 3
-  },
-  {
-   "id": "pylint-dev/pylint:pylint/checkers/base.py:BasicErrorChecker.visit_assign",
-   "kind": "filler_comment",
-   "runs": 2
   },
   {
    "id": "pylint-dev/pylint:pylint/checkers/base.py:ComparisonChecker._check_logical_tautology",
@@ -564,23 +359,8 @@
   },
   {
    "id": "pytest-dev/pytest:src/_pytest/fixtures.py:FixtureRequest._getnextfixturedef",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "pytest-dev/pytest:src/_pytest/fixtures.py:FixtureRequest._getnextfixturedef",
    "kind": "redundant_check",
    "runs": 1
-  },
-  {
-   "id": "pytest-dev/pytest:src/_pytest/mark/__init__.py:KeywordMatcher.from_item",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
-   "id": "pytest-dev/pytest:src/_pytest/reports.py:TestReport.__init__",
-   "kind": "filler_comment",
-   "runs": 3
   },
   {
    "id": "pytest-dev/pytest:src/_pytest/tmpdir.py:pytest_configure:nemotron:nesting",
@@ -594,47 +374,12 @@
   },
   {
    "id": "pytest-dev/pytest:src/_pytest/unittest.py:pytest_runtest_makereport",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "pytest-dev/pytest:src/_pytest/unittest.py:pytest_runtest_makereport",
    "kind": "redundant_check",
-   "runs": 1
-  },
-  {
-   "id": "scikit-learn/scikit-learn:sklearn/ensemble/gradient_boosting.py:GradientBoostingClassifier.staged_decision_function",
-   "kind": "filler_comment",
-   "runs": 3
-  },
-  {
-   "id": "scikit-learn/scikit-learn:sklearn/externals/joblib/_parallel_backends.py:SafeFunction.__call__",
-   "kind": "filler_comment",
    "runs": 1
   },
   {
    "id": "scikit-learn/scikit-learn:sklearn/externals/joblib/_parallel_backends.py:SafeFunction.__call__",
    "kind": "swallowed_error",
-   "runs": 3
-  },
-  {
-   "id": "scikit-learn/scikit-learn:sklearn/externals/joblib/numpy_pickle.py:NumpyPickler.save",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
-   "id": "scikit-learn/scikit-learn:sklearn/feature_extraction/text.py:CountVectorizer.inverse_transform",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
-   "id": "scikit-learn/scikit-learn:sklearn/linear_model/base.py:LinearRegression.fit",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
-   "id": "scikit-learn/scikit-learn:sklearn/metrics/classification.py:_check_targets",
-   "kind": "filler_comment",
    "runs": 3
   },
   {
@@ -648,94 +393,19 @@
    "runs": 3
   },
   {
-   "id": "scikit-learn/scikit-learn:sklearn/model_selection/_split.py:check_cv",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "scikit-learn/scikit-learn:sklearn/multioutput.py:MultiOutputRegressor.score",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
-   "id": "scikit-learn/scikit-learn:sklearn/neighbors/lof.py:LocalOutlierFactor._score_samples",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
-   "id": "scikit-learn/scikit-learn:sklearn/utils/_unittest_backport.py:TestCase.assertRaises",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "scikit-learn/scikit-learn:sklearn/utils/estimator_checks.py:check_estimators_dtypes",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
    "id": "scikit-learn/scikit-learn:sklearn/utils/estimator_checks.py:check_estimators_dtypes",
    "kind": "nesting",
    "runs": 3
   },
   {
    "id": "sphinx-doc/sphinx:sphinx/builders/xml.py:XMLBuilder.get_outdated_docs",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "sphinx-doc/sphinx:sphinx/builders/xml.py:XMLBuilder.get_outdated_docs",
    "kind": "nesting",
    "runs": 3
-  },
-  {
-   "id": "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaration.__init__",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "sphinx-doc/sphinx:sphinx/domains/c.py:Symbol.__init__",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
-   "id": "sphinx-doc/sphinx:sphinx/domains/cpp.py:ASTFunctionParameter.get_id",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "sphinx-doc/sphinx:sphinx/domains/cpp.py:CPPObject.run",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
-   "id": "sphinx-doc/sphinx:sphinx/domains/std.py:ProductionList.run",
-   "kind": "filler_comment",
-   "runs": 2
   },
   {
    "id": "sphinx-doc/sphinx:sphinx/domains/std.py:ProductionList.run",
    "kind": "nesting",
    "runs": 3
-  },
-  {
-   "id": "sphinx-doc/sphinx:sphinx/ext/autodoc/mock.py:MockFinder.find_spec",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
-   "id": "sphinx-doc/sphinx:sphinx/ext/graphviz.py:ClickableMapDefinition.parse",
-   "kind": "filler_comment",
-   "runs": 3
-  },
-  {
-   "id": "sphinx-doc/sphinx:sphinx/ext/intersphinx.py:resolve_reference_detect_inventory",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
-   "id": "sphinx-doc/sphinx:sphinx/util/images.py:parse_data_uri",
-   "kind": "filler_comment",
-   "runs": 2
   },
   {
    "id": "sympy/sympy:sympy/functions/combinatorial/numbers.py:genocchi._eval_is_negative",
@@ -748,21 +418,6 @@
    "runs": 1
   },
   {
-   "id": "sympy/sympy:sympy/functions/special/spherical_harmonics.py:Ynm.fdiff",
-   "kind": "filler_comment",
-   "runs": 3
-  },
-  {
-   "id": "sympy/sympy:sympy/geometry/entity.py:GeometryEntity.__new__",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
-   "id": "sympy/sympy:sympy/integrals/risch.py:splitfactor",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
    "id": "sympy/sympy:sympy/integrals/risch.py:splitfactor",
    "kind": "redundant_check",
    "runs": 3
@@ -771,16 +426,6 @@
    "id": "sympy/sympy:sympy/ntheory/factor_.py:udivisors:transform:nesting",
    "kind": "redundant_check",
    "runs": 2
-  },
-  {
-   "id": "sympy/sympy:sympy/ntheory/generate.py:prevprime",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "sympy/sympy:sympy/plotting/intervalmath/interval_arithmetic.py:interval.__pow__",
-   "kind": "filler_comment",
-   "runs": 3
   },
   {
    "id": "sympy/sympy:sympy/plotting/intervalmath/interval_arithmetic.py:interval.__pow__",
@@ -796,11 +441,6 @@
    "id": "sympy/sympy:sympy/polys/densetools.py:_dup_decompose",
    "kind": "nesting",
    "runs": 3
-  },
-  {
-   "id": "sympy/sympy:sympy/polys/polytools.py:Poly.trunc:nemotron:swallowed_error",
-   "kind": "filler_comment",
-   "runs": 2
   }
  ],
  "false_negatives": [
@@ -815,11 +455,6 @@
    "runs": 3
   },
   {
-   "id": "astropy/astropy:astropy/io/fits/util.py:_words_group",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
    "id": "astropy/astropy:astropy/modeling/powerlaws.py:ExponentialCutoffPowerLaw1D.fit_deriv:nemotron:redundant_check",
    "kind": "redundant_check",
    "runs": 3
@@ -828,16 +463,6 @@
    "id": "astropy/astropy:astropy/utils/console.py:isatty:transform:redundant_check",
    "kind": "redundant_check",
    "runs": 3
-  },
-  {
-   "id": "django/django:django/contrib/gis/db/models/lookups.py:GISLookup.process_rhs",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "django/django:django/db/backends/mysql/base.py:DatabaseWrapper.check_constraints:nemotron:filler_comment",
-   "kind": "filler_comment",
-   "runs": 2
   },
   {
    "id": "django/django:django/db/backends/postgresql/base.py:DatabaseWrapper.get_connection_params:transform:redundant_check",
@@ -857,16 +482,6 @@
   {
    "id": "matplotlib/matplotlib:lib/matplotlib/tri/triangulation.py:Triangulation.__init__:transform:redundant_check",
    "kind": "redundant_check",
-   "runs": 2
-  },
-  {
-   "id": "psf/requests:requests/cookies.py:MockRequest.get_full_url",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "pydata/xarray:xarray/core/duck_array_ops.py:_create_nan_agg_method:nemotron:filler_comment",
-   "kind": "filler_comment",
    "runs": 2
   },
   {
@@ -890,11 +505,6 @@
    "runs": 3
   },
   {
-   "id": "scikit-learn/scikit-learn:sklearn/mixture/gaussian_mixture.py:GaussianMixture._set_parameters",
-   "kind": "filler_comment",
-   "runs": 2
-  },
-  {
    "id": "scikit-learn/scikit-learn:sklearn/model_selection/_split.py:check_cv:transform:redundant_check",
    "kind": "redundant_check",
    "runs": 3
@@ -905,24 +515,14 @@
    "runs": 3
   },
   {
-   "id": "sphinx-doc/sphinx:sphinx/ext/graphviz.py:ClickableMapDefinition.parse:nemotron:filler_comment",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
    "id": "sphinx-doc/sphinx:sphinx/transforms/post_transforms/__init__.py:SphinxPostTransform.is_supported:transform:redundant_check+dead",
    "kind": "redundant_check",
    "runs": 1
   },
   {
-   "id": "sympy/sympy:sympy/physics/quantum/shor.py:shor:nemotron:filler_comment",
-   "kind": "filler_comment",
-   "runs": 1
-  },
-  {
-   "id": "sympy/sympy:sympy/polys/sqfreetools.py:dup_sqf_norm:transform:nesting+filler_comment",
-   "kind": "filler_comment",
-   "runs": 1
+   "id": "sympy/sympy:sympy/calculus/util.py:AccumulationBounds.intersection",
+   "kind": "redundant_check",
+   "runs": 3
   }
  ],
  "unlabelled": [],
@@ -933,56 +533,48 @@
    "redundant_check": 0.023,
    "swallowed_error": 0.005,
    "lookup_table": 0.0,
-   "filler_comment": 0.135,
    "dead": 0.0,
-   "total": 0.217
+   "total": 0.115
   },
-  "any_kind_rate": 0.288
+  "any_kind_rate": 0.153
  },
  "seconds": {
-  "mean": 2.266,
-  "median": 1.618,
-  "p95": 6.122,
+  "mean": 2.073,
+  "median": 1.491,
+  "p95": 5.513,
   "max": 109.93
  },
  "errors": [],
  "stability": {
-  "all": 0.808,
-  "clean": 0.825,
-  "source": 0.806,
-  "transform": 0.786,
-  "nemotron": 0.78
+  "all": 0.943,
+  "clean": 0.98,
+  "source": 0.946,
+  "transform": 0.847,
+  "nemotron": 0.925
  },
  "counts": {
   "origin": {
    "clean": 200,
    "source": 129,
-   "transform": 84,
-   "nemotron": 50
+   "transform": 72,
+   "nemotron": 40
   },
   "repo": {
-   "django/django": 68,
-   "sympy/sympy": 78,
+   "django/django": 64,
+   "sympy/sympy": 74,
    "psf/requests": 27,
    "pallets/flask": 26,
    "astropy/astropy": 56,
-   "scikit-learn/scikit-learn": 39,
-   "sphinx-doc/sphinx": 55,
+   "scikit-learn/scikit-learn": 37,
+   "sphinx-doc/sphinx": 50,
    "pytest-dev/pytest": 29,
    "pylint-dev/pylint": 19,
-   "matplotlib/matplotlib": 50,
-   "pydata/xarray": 14,
-   "mwaskom/seaborn": 2
+   "matplotlib/matplotlib": 46,
+   "pydata/xarray": 12,
+   "mwaskom/seaborn": 1
   }
  },
  "tokens": [
-  {
-   "model": "nvidia/Nemotron-3_5-Lightning",
-   "use": "classify",
-   "input_tokens": 846069,
-   "output_tokens": 241400,
-   "usd": 0.1087
-  },
   {
    "model": "nvidia/nemotron-3-super-120b-a12b",
    "use": "injection",

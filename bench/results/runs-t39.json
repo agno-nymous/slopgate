@@ -1,0 +1,3504 @@
+{
+ "django/django:django/contrib/postgres/fields/ranges.py:RangeField.to_python": [
+  {
+   "kinds": {},
+   "seconds": 0.107,
+   "source_sha": "659cfc8e31c7"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.064,
+   "source_sha": "659cfc8e31c7"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.059,
+   "source_sha": "659cfc8e31c7"
+  }
+ ],
+ "django/django:django/contrib/gis/db/backends/base/operations.py:BaseSpatialOperations.get_db_converters": [
+  {
+   "kinds": {},
+   "seconds": 0.069,
+   "source_sha": "aad7b63b542e"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.063,
+   "source_sha": "aad7b63b542e"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.064,
+   "source_sha": "aad7b63b542e"
+  }
+ ],
+ "django/django:django/middleware/csrf.py:rotate_token": [
+  {
+   "kinds": {},
+   "seconds": 0.115,
+   "source_sha": "96ecba0af00f"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.06,
+   "source_sha": "96ecba0af00f"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.066,
+   "source_sha": "96ecba0af00f"
+  }
+ ],
+ "django/django:django/contrib/gis/db/models/functions.py:Transform.__init__": [
+  {
+   "kinds": {},
+   "seconds": 0.097,
+   "source_sha": "5a76126fbdb5"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.063,
+   "source_sha": "5a76126fbdb5"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.065,
+   "source_sha": "5a76126fbdb5"
+  }
+ ],
+ "django/django:django/http/request.py:QueryDict.__copy__": [
+  {
+   "kinds": {},
+   "seconds": 0.088,
+   "source_sha": "0e8698fcfc52"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.062,
+   "source_sha": "0e8698fcfc52"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.069,
+   "source_sha": "0e8698fcfc52"
+  }
+ ],
+ "django/django:django/forms/formsets.py:formset_factory": [
+  {
+   "kinds": {},
+   "seconds": 0.092,
+   "source_sha": "f83ebbadef6a"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.063,
+   "source_sha": "f83ebbadef6a"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.076,
+   "source_sha": "f83ebbadef6a"
+  }
+ ],
+ "django/django:django/contrib/gis/db/models/lookups.py:GISLookup.process_rhs": [
+  {
+   "kinds": {},
+   "seconds": 0.123,
+   "source_sha": "21ec5b986208"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.079,
+   "source_sha": "21ec5b986208"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.071,
+   "source_sha": "21ec5b986208"
+  }
+ ],
+ "django/django:django/db/models/query.py:QuerySet.__init__": [
+  {
+   "kinds": {},
+   "seconds": 0.118,
+   "source_sha": "a62e149e661b"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.113,
+   "source_sha": "a62e149e661b"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.103,
+   "source_sha": "a62e149e661b"
+  }
+ ],
+ "django/django:django/contrib/admin/tests.py:AdminSeleniumTestCase.wait_for_popup": [
+  {
+   "kinds": {},
+   "seconds": 0.068,
+   "source_sha": "749aa8b37188"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.058,
+   "source_sha": "749aa8b37188"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.06,
+   "source_sha": "749aa8b37188"
+  }
+ ],
+ "django/django:django/core/serializers/base.py:DeserializationError.WithData": [
+  {
+   "kinds": {},
+   "seconds": 0.049,
+   "source_sha": "5911d4856cf6"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.07,
+   "source_sha": "5911d4856cf6"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.075,
+   "source_sha": "5911d4856cf6"
+  }
+ ],
+ "sympy/sympy:sympy/functions/special/spherical_harmonics.py:Ynm.fdiff": [
+  {
+   "kinds": {},
+   "seconds": 0.073,
+   "source_sha": "d86342901d67"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.056,
+   "source_sha": "d86342901d67"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.062,
+   "source_sha": "d86342901d67"
+  }
+ ],
+ "sympy/sympy:sympy/assumptions/handlers/order.py:AskNonZeroHandler.Add": [
+  {
+   "kinds": {},
+   "seconds": 0.066,
+   "source_sha": "59980b19c3a9"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.058,
+   "source_sha": "59980b19c3a9"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.064,
+   "source_sha": "59980b19c3a9"
+  }
+ ],
+ "sympy/sympy:sympy/assumptions/handlers/sets.py:AskIntegerHandler.Mul": [
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.057,
+   "source_sha": "6bdcf5c08bb3"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.083,
+   "source_sha": "6bdcf5c08bb3"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.077,
+   "source_sha": "6bdcf5c08bb3"
+  }
+ ],
+ "sympy/sympy:sympy/matrices/densetools.py:conjugate_transpose": [
+  {
+   "kinds": {},
+   "seconds": 0.053,
+   "source_sha": "4da90fd0b212"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.056,
+   "source_sha": "4da90fd0b212"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.069,
+   "source_sha": "4da90fd0b212"
+  }
+ ],
+ "psf/requests:requests/packages/chardet/sbcharsetprober.py:SingleByteCharSetProber.get_confidence": [
+  {
+   "kinds": {},
+   "seconds": 0.045,
+   "source_sha": "04d81548cba6"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.051,
+   "source_sha": "04d81548cba6"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.049,
+   "source_sha": "04d81548cba6"
+  }
+ ],
+ "psf/requests:requests/packages/chardet/charsetgroupprober.py:CharSetGroupProber.get_confidence": [
+  {
+   "kinds": {},
+   "seconds": 0.068,
+   "source_sha": "66d7cc53781c"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.04,
+   "source_sha": "66d7cc53781c"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.047,
+   "source_sha": "66d7cc53781c"
+  }
+ ],
+ "sympy/sympy:sympy/series/sequences.py:SeqBase.free_symbols": [
+  {
+   "kinds": {},
+   "seconds": 0.076,
+   "source_sha": "379c538cff1e"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.067,
+   "source_sha": "379c538cff1e"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.087,
+   "source_sha": "379c538cff1e"
+  }
+ ],
+ "sympy/sympy:sympy/geometry/entity.py:GeometryEntity.__new__": [
+  {
+   "kinds": {},
+   "seconds": 0.066,
+   "source_sha": "800d336ccc3e"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.08,
+   "source_sha": "800d336ccc3e"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.073,
+   "source_sha": "800d336ccc3e"
+  }
+ ],
+ "sympy/sympy:sympy/printing/latex.py:LatexPrinter._print_LeviCivita": [
+  {
+   "kinds": {},
+   "seconds": 0.127,
+   "source_sha": "cbe86a748131"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.144,
+   "source_sha": "cbe86a748131"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.156,
+   "source_sha": "cbe86a748131"
+  }
+ ],
+ "sympy/sympy:sympy/matrices/matrices.py:MatrixBase.inv_mod": [
+  {
+   "kinds": {},
+   "seconds": 0.145,
+   "source_sha": "81cf1b920aec"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.159,
+   "source_sha": "81cf1b920aec"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.124,
+   "source_sha": "81cf1b920aec"
+  }
+ ],
+ "psf/requests:requests/packages/chardet/escprober.py:EscCharSetProber.__init__": [
+  {
+   "kinds": {},
+   "seconds": 0.049,
+   "source_sha": "eaacc44ac991"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.048,
+   "source_sha": "eaacc44ac991"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.047,
+   "source_sha": "eaacc44ac991"
+  }
+ ],
+ "psf/requests:requests/packages/urllib3/response.py:HTTPResponse.get_redirect_location": [
+  {
+   "kinds": {},
+   "seconds": 0.042,
+   "source_sha": "64bff8aefb68"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.051,
+   "source_sha": "64bff8aefb68"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.052,
+   "source_sha": "64bff8aefb68"
+  }
+ ],
+ "psf/requests:requests/packages/chardet/sbcharsetprober.py:SingleByteCharSetProber.reset": [
+  {
+   "kinds": {},
+   "seconds": 0.053,
+   "source_sha": "b4de2a0030be"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.057,
+   "source_sha": "b4de2a0030be"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.067,
+   "source_sha": "b4de2a0030be"
+  }
+ ],
+ "psf/requests:requests/cookies.py:morsel_to_cookie": [
+  {
+   "kinds": {},
+   "seconds": 0.064,
+   "source_sha": "670e02e9d64b"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.067,
+   "source_sha": "670e02e9d64b"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.051,
+   "source_sha": "670e02e9d64b"
+  }
+ ],
+ "psf/requests:requests/models.py:PreparedRequest.prepare_cookies": [
+  {
+   "kinds": {},
+   "seconds": 0.069,
+   "source_sha": "efc9dae2e796"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.07,
+   "source_sha": "efc9dae2e796"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.073,
+   "source_sha": "efc9dae2e796"
+  }
+ ],
+ "psf/requests:requests/models.py:Response.json": [
+  {
+   "kinds": {},
+   "seconds": 0.092,
+   "source_sha": "0b3b7151358b"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.081,
+   "source_sha": "0b3b7151358b"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.075,
+   "source_sha": "0b3b7151358b"
+  }
+ ],
+ "pallets/flask:src/flask/app.py:Flask.test_cli_runner": [
+  {
+   "kinds": {},
+   "seconds": 0.082,
+   "source_sha": "2ec2e2c7ff0a"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.078,
+   "source_sha": "2ec2e2c7ff0a"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.096,
+   "source_sha": "2ec2e2c7ff0a"
+  }
+ ],
+ "pallets/flask:src/flask/json/__init__.py:JSONEncoder.default": [
+  {
+   "kinds": {},
+   "seconds": 0.057,
+   "source_sha": "5eb06a0efeb6"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.066,
+   "source_sha": "5eb06a0efeb6"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.053,
+   "source_sha": "5eb06a0efeb6"
+  }
+ ],
+ "pallets/flask:src/flask/json/__init__.py:htmlsafe_dump": [
+  {
+   "kinds": {},
+   "seconds": 0.067,
+   "source_sha": "b9b456d3aba1"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.055,
+   "source_sha": "b9b456d3aba1"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.056,
+   "source_sha": "b9b456d3aba1"
+  }
+ ],
+ "pallets/flask:src/flask/app.py:Flask.make_default_options_response": [
+  {
+   "kinds": {},
+   "seconds": 0.092,
+   "source_sha": "b8820f9266d4"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.093,
+   "source_sha": "b8820f9266d4"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.098,
+   "source_sha": "b8820f9266d4"
+  }
+ ],
+ "pallets/flask:src/flask/blueprints.py:Blueprint.after_app_request": [
+  {
+   "kinds": {},
+   "seconds": 0.062,
+   "source_sha": "0001d8e22dbf"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.071,
+   "source_sha": "0001d8e22dbf"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.056,
+   "source_sha": "0001d8e22dbf"
+  }
+ ],
+ "pallets/flask:src/flask/wrappers.py:Request.on_json_loading_failed": [
+  {
+   "kinds": {},
+   "seconds": 0.042,
+   "source_sha": "314a9676c5e5"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.06,
+   "source_sha": "314a9676c5e5"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.051,
+   "source_sha": "314a9676c5e5"
+  }
+ ],
+ "pallets/flask:src/flask/debughelpers.py:_dump_loader_info": [
+  {
+   "kinds": {},
+   "seconds": 0.056,
+   "source_sha": "ae2c23d07e2f"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.055,
+   "source_sha": "ae2c23d07e2f"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.055,
+   "source_sha": "ae2c23d07e2f"
+  }
+ ],
+ "pallets/flask:src/flask/templating.py:DispatchingJinjaLoader._get_source_explained": [
+  {
+   "kinds": {},
+   "seconds": 0.063,
+   "source_sha": "0ff539e7663f"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.06,
+   "source_sha": "0ff539e7663f"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.059,
+   "source_sha": "0ff539e7663f"
+  }
+ ],
+ "pallets/flask:src/flask/app.py:Flask.got_first_request": [
+  {
+   "kinds": {},
+   "seconds": 0.105,
+   "source_sha": "5efd9c8d30f4"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.09,
+   "source_sha": "5efd9c8d30f4"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.077,
+   "source_sha": "5efd9c8d30f4"
+  }
+ ],
+ "pallets/flask:src/flask/app.py:Flask.shell_context_processor": [
+  {
+   "kinds": {},
+   "seconds": 0.088,
+   "source_sha": "b3c521b00934"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.088,
+   "source_sha": "b3c521b00934"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.097,
+   "source_sha": "b3c521b00934"
+  }
+ ],
+ "pallets/flask:src/flask/config.py:Config.from_envvar": [
+  {
+   "kinds": {},
+   "seconds": 0.062,
+   "source_sha": "f53bac6fce3b"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.063,
+   "source_sha": "f53bac6fce3b"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.061,
+   "source_sha": "f53bac6fce3b"
+  }
+ ],
+ "pallets/flask:src/flask/helpers.py:make_response": [
+  {
+   "kinds": {},
+   "seconds": 0.061,
+   "source_sha": "94dc2d3abd59"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.074,
+   "source_sha": "94dc2d3abd59"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.062,
+   "source_sha": "94dc2d3abd59"
+  }
+ ],
+ "pallets/flask:src/flask/app.py:Flask.ensure_sync": [
+  {
+   "kinds": {},
+   "seconds": 0.093,
+   "source_sha": "03ad148caf6d"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.08,
+   "source_sha": "03ad148caf6d"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.106,
+   "source_sha": "03ad148caf6d"
+  }
+ ],
+ "astropy/astropy:astropy/samp/web_profile.py:WebProfileRequestHandler._serve_cross_domain_xml": [
+  {
+   "kinds": {},
+   "seconds": 0.057,
+   "source_sha": "cdff1458d563"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.06,
+   "source_sha": "cdff1458d563"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.086,
+   "source_sha": "cdff1458d563"
+  }
+ ],
+ "astropy/astropy:astropy/coordinates/spectral_coordinate.py:attach_zero_velocities": [
+  {
+   "kinds": {},
+   "seconds": 0.076,
+   "source_sha": "20bb613eac89"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.06,
+   "source_sha": "20bb613eac89"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.077,
+   "source_sha": "20bb613eac89"
+  }
+ ],
+ "astropy/astropy:astropy/table/table_helpers.py:ArrayWrapperInfo._construct_from_dict": [
+  {
+   "kinds": {},
+   "seconds": 0.064,
+   "source_sha": "889bf224a933"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.064,
+   "source_sha": "889bf224a933"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.05,
+   "source_sha": "889bf224a933"
+  }
+ ],
+ "astropy/astropy:astropy/modeling/fitting.py:Fitter.__call__": [
+  {
+   "kinds": {},
+   "seconds": 0.104,
+   "source_sha": "726a87ede983"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.104,
+   "source_sha": "726a87ede983"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.097,
+   "source_sha": "726a87ede983"
+  }
+ ],
+ "astropy/astropy:astropy/io/fits/hdu/hdulist.py:HDUList.pop": [
+  {
+   "kinds": {},
+   "seconds": 0.091,
+   "source_sha": "c9aa9fb08256"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.083,
+   "source_sha": "c9aa9fb08256"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.08,
+   "source_sha": "c9aa9fb08256"
+  }
+ ],
+ "astropy/astropy:astropy/modeling/projections.py:AffineTransformation2D.input_units": [
+  {
+   "kinds": {},
+   "seconds": 0.079,
+   "source_sha": "367c85a44e20"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.077,
+   "source_sha": "367c85a44e20"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.072,
+   "source_sha": "367c85a44e20"
+  }
+ ],
+ "astropy/astropy:astropy/io/fits/util.py:_words_group": [
+  {
+   "kinds": {},
+   "seconds": 0.089,
+   "source_sha": "ac6a5880305f"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.069,
+   "source_sha": "ac6a5880305f"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.072,
+   "source_sha": "ac6a5880305f"
+  }
+ ],
+ "sympy/sympy:sympy/solvers/ode.py:get_numbered_constants": [
+  {
+   "kinds": {},
+   "seconds": 0.404,
+   "source_sha": "6613823f40c9"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.48,
+   "source_sha": "6613823f40c9"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.408,
+   "source_sha": "6613823f40c9"
+  }
+ ],
+ "astropy/astropy:astropy/modeling/polynomial.py:_SIP1D.evaluate": [
+  {
+   "kinds": {},
+   "seconds": 0.102,
+   "source_sha": "58de3fc6fdc2"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.132,
+   "source_sha": "58de3fc6fdc2"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.098,
+   "source_sha": "58de3fc6fdc2"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/neighbors/lof.py:LocalOutlierFactor._score_samples": [
+  {
+   "kinds": {},
+   "seconds": 0.052,
+   "source_sha": "5f04c4e66416"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.064,
+   "source_sha": "5f04c4e66416"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.07,
+   "source_sha": "5f04c4e66416"
+  }
+ ],
+ "astropy/astropy:astropy/modeling/fitting.py:model_to_fit_params": [
+  {
+   "kinds": {},
+   "seconds": 0.099,
+   "source_sha": "c3e5e5c2186a"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.111,
+   "source_sha": "c3e5e5c2186a"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.099,
+   "source_sha": "c3e5e5c2186a"
+  }
+ ],
+ "astropy/astropy:astropy/units/core.py:CompositeUnit.bases": [
+  {
+   "kinds": {},
+   "seconds": 0.122,
+   "source_sha": "1968c5a1580a"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.117,
+   "source_sha": "1968c5a1580a"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.091,
+   "source_sha": "1968c5a1580a"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/utils/extmath.py:safe_sparse_dot": [
+  {
+   "kinds": {},
+   "seconds": 0.082,
+   "source_sha": "def00bfae304"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.077,
+   "source_sha": "def00bfae304"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.061,
+   "source_sha": "def00bfae304"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/externals/joblib/numpy_pickle.py:NumpyPickler.save": [
+  {
+   "kinds": {},
+   "seconds": 0.058,
+   "source_sha": "1a66bd18fd8a"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.06,
+   "source_sha": "1a66bd18fd8a"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.07,
+   "source_sha": "1a66bd18fd8a"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/externals/joblib/func_inspect.py:getfullargspec": [
+  {
+   "kinds": {},
+   "seconds": 0.057,
+   "source_sha": "123c6bc7aa5b"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.059,
+   "source_sha": "123c6bc7aa5b"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.063,
+   "source_sha": "123c6bc7aa5b"
+  }
+ ],
+ "astropy/astropy:astropy/coordinates/representation.py:BaseRepresentation._combine_operation": [
+  {
+   "kinds": {},
+   "seconds": 0.137,
+   "source_sha": "b4b9b8cdb0d1"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.167,
+   "source_sha": "b4b9b8cdb0d1"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.158,
+   "source_sha": "b4b9b8cdb0d1"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/utils/sparsetools/setup.py:configuration": [
+  {
+   "kinds": {},
+   "seconds": 0.059,
+   "source_sha": "805e8e592524"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.047,
+   "source_sha": "805e8e592524"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.058,
+   "source_sha": "805e8e592524"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/metrics/classification.py:_check_targets": [
+  {
+   "kinds": {},
+   "seconds": 0.075,
+   "source_sha": "3624911c2088"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.086,
+   "source_sha": "3624911c2088"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.076,
+   "source_sha": "3624911c2088"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/preprocessing/label.py:LabelEncoder.fit_transform": [
+  {
+   "kinds": {},
+   "seconds": 0.056,
+   "source_sha": "a2752f98bf39"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.07,
+   "source_sha": "a2752f98bf39"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.184,
+   "source_sha": "a2752f98bf39"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/feature_extraction/text.py:CountVectorizer.inverse_transform": [
+  {
+   "kinds": {},
+   "seconds": 0.089,
+   "source_sha": "6e8a31ddcc20"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.164,
+   "source_sha": "6e8a31ddcc20"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.097,
+   "source_sha": "6e8a31ddcc20"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/mixture/gmm.py:_log_multivariate_normal_density_full": [
+  {
+   "kinds": {},
+   "seconds": 0.085,
+   "source_sha": "2e6b794f40ff"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.2,
+   "source_sha": "2e6b794f40ff"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.076,
+   "source_sha": "2e6b794f40ff"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/model_selection/_split.py:_validate_shuffle_split": [
+  {
+   "kinds": {},
+   "seconds": 0.095,
+   "source_sha": "b19d04d33900"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.202,
+   "source_sha": "b19d04d33900"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.092,
+   "source_sha": "b19d04d33900"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/util/nodes.py:process_index_entry": [
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.212,
+   "source_sha": "254acbdb058e"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.069,
+   "source_sha": "254acbdb058e"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.079,
+   "source_sha": "254acbdb058e"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/ext/intersphinx.py:resolve_reference_detect_inventory": [
+  {
+   "kinds": {},
+   "seconds": 0.081,
+   "source_sha": "f9481a627087"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.07,
+   "source_sha": "f9481a627087"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.084,
+   "source_sha": "f9481a627087"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/builders/html/__init__.py:StandaloneHTMLBuilder.gen_indices": [
+  {
+   "kinds": {},
+   "seconds": 0.126,
+   "source_sha": "27fb20dfc7b0"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.103,
+   "source_sha": "27fb20dfc7b0"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.111,
+   "source_sha": "27fb20dfc7b0"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/environment/__init__.py:BuildEnvironment.setup": [
+  {
+   "kinds": {},
+   "seconds": 0.071,
+   "source_sha": "3c0c17c549ce"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.077,
+   "source_sha": "3c0c17c549ce"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.071,
+   "source_sha": "3c0c17c549ce"
+  }
+ ],
+ "pytest-dev/pytest:src/_pytest/logging.py:_LiveLoggingStreamHandler.__init__": [
+  {
+   "kinds": {},
+   "seconds": 0.073,
+   "source_sha": "9e5f3b49f091"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.072,
+   "source_sha": "9e5f3b49f091"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.086,
+   "source_sha": "9e5f3b49f091"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/builders/html/__init__.py:setup_resource_paths": [
+  {
+   "kinds": {},
+   "seconds": 0.112,
+   "source_sha": "c13ad713d16e"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.105,
+   "source_sha": "c13ad713d16e"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.111,
+   "source_sha": "c13ad713d16e"
+  }
+ ],
+ "pytest-dev/pytest:src/_pytest/hookspec.py:pytest_assertion_pass": [
+  {
+   "kinds": {},
+   "seconds": 0.077,
+   "source_sha": "6553b01b4dfd"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.066,
+   "source_sha": "6553b01b4dfd"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.055,
+   "source_sha": "6553b01b4dfd"
+  }
+ ],
+ "pytest-dev/pytest:src/_pytest/reports.py:TestReport.__init__": [
+  {
+   "kinds": {},
+   "seconds": 0.058,
+   "source_sha": "8b38edcc9029"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.066,
+   "source_sha": "8b38edcc9029"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.071,
+   "source_sha": "8b38edcc9029"
+  }
+ ],
+ "pytest-dev/pytest:src/_pytest/warning_types.py:PytestExperimentalApiWarning.simple": [
+  {
+   "kinds": {},
+   "seconds": 0.051,
+   "source_sha": "1aa7d117a0c2"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.065,
+   "source_sha": "1aa7d117a0c2"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.06,
+   "source_sha": "1aa7d117a0c2"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/writers/latex.py:LaTeXTranslator.table": [
+  {
+   "kinds": {},
+   "seconds": 0.135,
+   "source_sha": "0d14140853c6"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.163,
+   "source_sha": "0d14140853c6"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.144,
+   "source_sha": "0d14140853c6"
+  }
+ ],
+ "pytest-dev/pytest:src/_pytest/nodes.py:Node.addfinalizer": [
+  {
+   "kinds": {},
+   "seconds": 0.067,
+   "source_sha": "9cc840882230"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.08,
+   "source_sha": "9cc840882230"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.067,
+   "source_sha": "9cc840882230"
+  }
+ ],
+ "pytest-dev/pytest:src/_pytest/cacheprovider.py:LFPluginCollSkipfiles.pytest_make_collect_report": [
+  {
+   "kinds": {},
+   "seconds": 0.06,
+   "source_sha": "6170090fe526"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.082,
+   "source_sha": "6170090fe526"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.082,
+   "source_sha": "6170090fe526"
+  }
+ ],
+ "pytest-dev/pytest:scripts/prepare-release-pr.py:find_next_version": [
+  {
+   "kinds": {},
+   "seconds": 0.068,
+   "source_sha": "537708b9def6"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.064,
+   "source_sha": "537708b9def6"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.067,
+   "source_sha": "537708b9def6"
+  }
+ ],
+ "pytest-dev/pytest:src/_pytest/unittest.py:UnitTestCase.collect": [
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.061,
+   "source_sha": "bd9f965c278b"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.063,
+   "source_sha": "bd9f965c278b"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.066,
+   "source_sha": "bd9f965c278b"
+  }
+ ],
+ "pytest-dev/pytest:src/_pytest/config/__init__.py:_get_directory": [
+  {
+   "kinds": {},
+   "seconds": 0.099,
+   "source_sha": "6c1e79ff0a5f"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.111,
+   "source_sha": "6c1e79ff0a5f"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.111,
+   "source_sha": "6c1e79ff0a5f"
+  }
+ ],
+ "django/django:django/contrib/auth/backends.py:ModelBackend._get_permissions": [
+  {
+   "kinds": {},
+   "seconds": 0.054,
+   "source_sha": "43d76a05aaab"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.055,
+   "source_sha": "43d76a05aaab"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.061,
+   "source_sha": "43d76a05aaab"
+  }
+ ],
+ "pytest-dev/pytest:src/_pytest/unittest.py:pytest_runtest_makereport": [
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.069,
+   "source_sha": "805736011193"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.071,
+   "source_sha": "805736011193"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.068,
+   "source_sha": "805736011193"
+  }
+ ],
+ "pytest-dev/pytest:src/_pytest/_py/path.py:LocalPath._gethomedir": [
+  {
+   "kinds": {},
+   "seconds": 0.098,
+   "source_sha": "f72e332461c4"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.096,
+   "source_sha": "f72e332461c4"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.115,
+   "source_sha": "f72e332461c4"
+  }
+ ],
+ "pytest-dev/pytest:src/_pytest/pytester.py:HookRecorder.getcalls": [
+  {
+   "kinds": {},
+   "seconds": 0.088,
+   "source_sha": "db987475de2c"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.123,
+   "source_sha": "db987475de2c"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.122,
+   "source_sha": "db987475de2c"
+  }
+ ],
+ "django/django:django/db/models/base.py:Model.clean_fields": [
+  {
+   "kinds": {},
+   "seconds": 0.097,
+   "source_sha": "e91028332c56"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.135,
+   "source_sha": "e91028332c56"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.11,
+   "source_sha": "e91028332c56"
+  }
+ ],
+ "astropy/astropy:astropy/config/configuration.py:ConfigNamespace.set_temp": [
+  {
+   "kinds": {},
+   "seconds": 0.067,
+   "source_sha": "ad04bbff3108"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.079,
+   "source_sha": "ad04bbff3108"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.079,
+   "source_sha": "ad04bbff3108"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/externals/funcsigs.py:formatannotation": [
+  {
+   "kinds": {},
+   "seconds": 0.078,
+   "source_sha": "3dc42fa29eaa"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.089,
+   "source_sha": "3dc42fa29eaa"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.082,
+   "source_sha": "3dc42fa29eaa"
+  }
+ ],
+ "matplotlib/matplotlib:lib/matplotlib/tri/triangulation.py:Triangulation.__init__": [
+  {
+   "kinds": {},
+   "seconds": 0.063,
+   "source_sha": "0a948ad49291"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.057,
+   "source_sha": "0a948ad49291"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.056,
+   "source_sha": "0a948ad49291"
+  }
+ ],
+ "astropy/astropy:astropy/units/quantity_helper/function_helpers.py:einsum": [
+  {
+   "kinds": {},
+   "seconds": 0.095,
+   "source_sha": "bbf343046598"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.099,
+   "source_sha": "bbf343046598"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.105,
+   "source_sha": "bbf343046598"
+  }
+ ],
+ "astropy/astropy:astropy/utils/console.py:isatty": [
+  {
+   "kinds": {},
+   "seconds": 0.079,
+   "source_sha": "fd5b3efd9f0b"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.082,
+   "source_sha": "fd5b3efd9f0b"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.076,
+   "source_sha": "fd5b3efd9f0b"
+  }
+ ],
+ "pydata/xarray:xarray/core/resample.py:DatasetResample.__init__": [
+  {
+   "kinds": {},
+   "seconds": 0.046,
+   "source_sha": "7e77e8cb1f49"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.062,
+   "source_sha": "7e77e8cb1f49"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.052,
+   "source_sha": "7e77e8cb1f49"
+  }
+ ],
+ "matplotlib/matplotlib:lib/matplotlib/axes/_base.py:_AxesBase.redraw_in_frame": [
+  {
+   "kinds": {},
+   "seconds": 0.186,
+   "source_sha": "729e3e43f944"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.165,
+   "source_sha": "729e3e43f944"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.196,
+   "source_sha": "729e3e43f944"
+  }
+ ],
+ "django/django:django/contrib/gis/gdal/prototypes/errcheck.py:check_geom_offset": [
+  {
+   "kinds": {},
+   "seconds": 0.052,
+   "source_sha": "74fd499cd4eb"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.055,
+   "source_sha": "74fd499cd4eb"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.057,
+   "source_sha": "74fd499cd4eb"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/domains/cpp.py:ASTDeclaratorParen.describe_signature": [
+  {
+   "kinds": {},
+   "seconds": 0.595,
+   "source_sha": "6487db889ca0"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.409,
+   "source_sha": "6487db889ca0"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.433,
+   "source_sha": "6487db889ca0"
+  }
+ ],
+ "pydata/xarray:xarray/backends/locks.py:_get_lock_maker": [
+  {
+   "kinds": {},
+   "seconds": 0.057,
+   "source_sha": "fefbeb971da1"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.059,
+   "source_sha": "fefbeb971da1"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.053,
+   "source_sha": "fefbeb971da1"
+  }
+ ],
+ "django/django:django/db/models/sql/compiler.py:SQLCompiler.deferred_to_columns": [
+  {
+   "kinds": {},
+   "seconds": 0.089,
+   "source_sha": "1fdbfe213b70"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.097,
+   "source_sha": "1fdbfe213b70"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.11,
+   "source_sha": "1fdbfe213b70"
+  }
+ ],
+ "astropy/astropy:astropy/coordinates/baseframe.py:BaseCoordinateFrame._get_representation_info": [
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.106,
+   "source_sha": "0badf505ac5e"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.103,
+   "source_sha": "0badf505ac5e"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.112,
+   "source_sha": "0badf505ac5e"
+  }
+ ],
+ "sympy/sympy:sympy/ntheory/generate.py:prevprime": [
+  {
+   "kinds": {},
+   "seconds": 0.075,
+   "source_sha": "6dc52afcb819"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.08,
+   "source_sha": "6dc52afcb819"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.061,
+   "source_sha": "6dc52afcb819"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/util/jsdump.py:encode_string": [
+  {
+   "kinds": {},
+   "seconds": 0.053,
+   "source_sha": "90f8e135432c"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.053,
+   "source_sha": "90f8e135432c"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.065,
+   "source_sha": "90f8e135432c"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/linear_model/stochastic_gradient.py:BaseSGD._get_penalty_type": [
+  {
+   "kinds": {},
+   "seconds": 0.076,
+   "source_sha": "2555b6dadd76"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.08,
+   "source_sha": "2555b6dadd76"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.089,
+   "source_sha": "2555b6dadd76"
+  }
+ ],
+ "pylint-dev/pylint:pylint/checkers/base.py:BasicErrorChecker.visit_assign": [
+  {
+   "kinds": {},
+   "seconds": 0.132,
+   "source_sha": "c13c32ee1870"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.146,
+   "source_sha": "c13c32ee1870"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.167,
+   "source_sha": "c13c32ee1870"
+  }
+ ],
+ "django/django:django/core/management/utils.py:popen_wrapper": [
+  {
+   "kinds": {},
+   "seconds": 0.06,
+   "source_sha": "65049cf3c888"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.067,
+   "source_sha": "65049cf3c888"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.049,
+   "source_sha": "65049cf3c888"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/linear_model/stochastic_gradient.py:BaseSGD._get_learning_rate_type": [
+  {
+   "kinds": {},
+   "seconds": 0.088,
+   "source_sha": "ab79e2120353"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.073,
+   "source_sha": "ab79e2120353"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.088,
+   "source_sha": "ab79e2120353"
+  }
+ ],
+ "django/django:django/forms/widgets.py:NullBooleanSelect.format_value": [
+  {
+   "kinds": {},
+   "seconds": 0.089,
+   "source_sha": "fece4b725ecf"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.092,
+   "source_sha": "fece4b725ecf"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.092,
+   "source_sha": "fece4b725ecf"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/util/i18n.py:search_image_for_language": [
+  {
+   "kinds": {},
+   "seconds": 0.074,
+   "source_sha": "975ee858de5f"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.066,
+   "source_sha": "975ee858de5f"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.066,
+   "source_sha": "975ee858de5f"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/gaussian_process/kernels.py:_approx_fprime": [
+  {
+   "kinds": {},
+   "seconds": 0.091,
+   "source_sha": "af62b198f0e3"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.097,
+   "source_sha": "af62b198f0e3"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.078,
+   "source_sha": "af62b198f0e3"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/util/logging.py:ColorizeFormatter.format": [
+  {
+   "kinds": {},
+   "seconds": 0.075,
+   "source_sha": "978753b539ea"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.075,
+   "source_sha": "978753b539ea"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.085,
+   "source_sha": "978753b539ea"
+  }
+ ],
+ "django/django:django/db/models/sql/query.py:Query.get_initial_alias": [
+  {
+   "kinds": {},
+   "seconds": 0.11,
+   "source_sha": "18c88faf6c73"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.14,
+   "source_sha": "18c88faf6c73"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.104,
+   "source_sha": "18c88faf6c73"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/application.py:Sphinx.add_autodoc_attrgetter": [
+  {
+   "kinds": {},
+   "seconds": 0.085,
+   "source_sha": "c5c1d6dadf62"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.075,
+   "source_sha": "c5c1d6dadf62"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.092,
+   "source_sha": "c5c1d6dadf62"
+  }
+ ],
+ "sympy/sympy:sympy/polys/sqfreetools.py:dup_sqf_norm": [
+  {
+   "kinds": {},
+   "seconds": 0.071,
+   "source_sha": "e9f667ad08f7"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.065,
+   "source_sha": "e9f667ad08f7"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.07,
+   "source_sha": "e9f667ad08f7"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/mixture/base.py:BaseMixture._estimate_log_prob": [
+  {
+   "kinds": {},
+   "seconds": 0.061,
+   "source_sha": "f4c522933866"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.081,
+   "source_sha": "f4c522933866"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.07,
+   "source_sha": "f4c522933866"
+  }
+ ],
+ "django/django:django/db/models/sql/query.py:Query.set_extra_mask": [
+  {
+   "kinds": {},
+   "seconds": 0.132,
+   "source_sha": "d6aace323bd6"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.125,
+   "source_sha": "d6aace323bd6"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.141,
+   "source_sha": "d6aace323bd6"
+  }
+ ],
+ "pylint-dev/pylint:pylint/lint/pylinter.py:PyLinter.add_ignored_message": [
+  {
+   "kinds": {},
+   "seconds": 0.109,
+   "source_sha": "c22eb949e4dd"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.157,
+   "source_sha": "c22eb949e4dd"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.086,
+   "source_sha": "c22eb949e4dd"
+  }
+ ],
+ "sympy/sympy:sympy/polys/densebasic.py:dup_deflate": [
+  {
+   "kinds": {},
+   "seconds": 0.093,
+   "source_sha": "2b2701a3b08d"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.117,
+   "source_sha": "2b2701a3b08d"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.103,
+   "source_sha": "2b2701a3b08d"
+  }
+ ],
+ "matplotlib/matplotlib:lib/matplotlib/backend_tools.py:SetCursorBase.set_cursor": [
+  {
+   "kinds": {},
+   "seconds": 0.116,
+   "source_sha": "dbe7c0268591"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.083,
+   "source_sha": "dbe7c0268591"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.07,
+   "source_sha": "dbe7c0268591"
+  }
+ ],
+ "astropy/astropy:astropy/coordinates/builtin_frames/galactic_transforms.py:fk5_to_gal": [
+  {
+   "kinds": {},
+   "seconds": 0.065,
+   "source_sha": "46d9614b87ef"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.06,
+   "source_sha": "46d9614b87ef"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.062,
+   "source_sha": "46d9614b87ef"
+  }
+ ],
+ "astropy/astropy:astropy/modeling/functional_models.py:Tangent1D.inverse": [
+  {
+   "kinds": {},
+   "seconds": 0.156,
+   "source_sha": "f61601748ce9"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.151,
+   "source_sha": "f61601748ce9"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.133,
+   "source_sha": "f61601748ce9"
+  }
+ ],
+ "matplotlib/matplotlib:lib/matplotlib/offsetbox.py:AnchoredOffsetbox.draw": [
+  {
+   "kinds": {},
+   "seconds": 0.116,
+   "source_sha": "d008d5e5cd88"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.086,
+   "source_sha": "d008d5e5cd88"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.093,
+   "source_sha": "d008d5e5cd88"
+  }
+ ],
+ "astropy/astropy:astropy/coordinates/angle_formats.py:hours_to_hms": [
+  {
+   "kinds": {},
+   "seconds": 0.067,
+   "source_sha": "c9498f99cbc3"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.059,
+   "source_sha": "c9498f99cbc3"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.088,
+   "source_sha": "c9498f99cbc3"
+  }
+ ],
+ "django/django:django/templatetags/l10n.py:localize": [
+  {
+   "kinds": {},
+   "seconds": 0.052,
+   "source_sha": "2696e01ede8c"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.049,
+   "source_sha": "2696e01ede8c"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.057,
+   "source_sha": "2696e01ede8c"
+  }
+ ],
+ "astropy/astropy:astropy/cosmology/flrw.py:LambdaCDM._dS_comoving_distance_z1z2": [
+  {
+   "kinds": {},
+   "seconds": 0.124,
+   "source_sha": "9fbd92ebe79d"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.099,
+   "source_sha": "9fbd92ebe79d"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.11,
+   "source_sha": "9fbd92ebe79d"
+  }
+ ],
+ "sympy/sympy:sympy/integrals/risch.py:splitfactor": [
+  {
+   "kinds": {},
+   "seconds": 0.114,
+   "source_sha": "5c73a1fdbb1a"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.116,
+   "source_sha": "5c73a1fdbb1a"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.106,
+   "source_sha": "5c73a1fdbb1a"
+  }
+ ],
+ "astropy/astropy:astropy/coordinates/representation.py:PhysicsSphericalRepresentation.phi": [
+  {
+   "kinds": {},
+   "seconds": 0.153,
+   "source_sha": "b7e34e0f8b3b"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.177,
+   "source_sha": "b7e34e0f8b3b"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.144,
+   "source_sha": "b7e34e0f8b3b"
+  }
+ ],
+ "django/django:django/utils/autoreload.py:WatchmanReloader.watched_roots": [
+  {
+   "kinds": {},
+   "seconds": 0.081,
+   "source_sha": "60f649dd56da"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.081,
+   "source_sha": "60f649dd56da"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.084,
+   "source_sha": "60f649dd56da"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/ext/graphviz.py:ClickableMapDefinition.parse": [
+  {
+   "kinds": {},
+   "seconds": 0.083,
+   "source_sha": "66a5ffca5484"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.068,
+   "source_sha": "66a5ffca5484"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.064,
+   "source_sha": "66a5ffca5484"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaration.__init__": [
+  {
+   "kinds": {},
+   "seconds": 0.232,
+   "source_sha": "f98c200e8b87"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.231,
+   "source_sha": "f98c200e8b87"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.255,
+   "source_sha": "f98c200e8b87"
+  }
+ ],
+ "sympy/sympy:sympy/physics/quantum/shor.py:shor": [
+  {
+   "kinds": {},
+   "seconds": 0.062,
+   "source_sha": "92e47c3a2101"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.07,
+   "source_sha": "92e47c3a2101"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.067,
+   "source_sha": "92e47c3a2101"
+  }
+ ],
+ "astropy/astropy:astropy/modeling/core.py:Model._supports_unit_fitting": [
+  {
+   "kinds": {},
+   "seconds": 0.189,
+   "source_sha": "22a31ff9fb66"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.201,
+   "source_sha": "22a31ff9fb66"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.179,
+   "source_sha": "22a31ff9fb66"
+  }
+ ],
+ "django/django:django/db/backends/mysql/base.py:DatabaseWrapper.check_constraints": [
+  {
+   "kinds": {},
+   "seconds": 0.052,
+   "source_sha": "bcf5c45f9807"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.059,
+   "source_sha": "bcf5c45f9807"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.073,
+   "source_sha": "bcf5c45f9807"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaratorNameParam.describe_signature": [
+  {
+   "kinds": {},
+   "seconds": 0.275,
+   "source_sha": "d0bc016f811c"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.275,
+   "source_sha": "d0bc016f811c"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.221,
+   "source_sha": "d0bc016f811c"
+  }
+ ],
+ "pydata/xarray:xarray/core/duck_array_ops.py:_create_nan_agg_method": [
+  {
+   "kinds": {},
+   "seconds": 0.07,
+   "source_sha": "0f3f015b5991"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.058,
+   "source_sha": "0f3f015b5991"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.08,
+   "source_sha": "0f3f015b5991"
+  }
+ ],
+ "sympy/sympy:sympy/functions/special/elliptic_integrals.py:elliptic_pi.fdiff": [
+  {
+   "kinds": {},
+   "seconds": 0.079,
+   "source_sha": "0d58a64ab7f5"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.067,
+   "source_sha": "0d58a64ab7f5"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.086,
+   "source_sha": "0d58a64ab7f5"
+  }
+ ],
+ "django/django:django/contrib/auth/backends.py:ModelBackend._get_permissions:transform:nesting": [
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.072,
+   "source_sha": "eb0ead2179ef"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.071,
+   "source_sha": "eb0ead2179ef"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.049,
+   "source_sha": "eb0ead2179ef"
+  }
+ ],
+ "matplotlib/matplotlib:lib/matplotlib/blocking_input.py:BlockingKeyMouseInput.post_event": [
+  {
+   "kinds": {},
+   "seconds": 0.072,
+   "source_sha": "caf05c515870"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.064,
+   "source_sha": "caf05c515870"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.067,
+   "source_sha": "caf05c515870"
+  }
+ ],
+ "matplotlib/matplotlib:lib/matplotlib/afm.py:AFM.get_kern_dist_from_name": [
+  {
+   "kinds": {},
+   "seconds": 0.064,
+   "source_sha": "4a5f01690da8"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.083,
+   "source_sha": "4a5f01690da8"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.071,
+   "source_sha": "4a5f01690da8"
+  }
+ ],
+ "sympy/sympy:sympy/polys/ring_series.py:rs_cos_sin": [
+  {
+   "kinds": {},
+   "seconds": 0.105,
+   "source_sha": "86400a2b3710"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.114,
+   "source_sha": "86400a2b3710"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.124,
+   "source_sha": "86400a2b3710"
+  }
+ ],
+ "matplotlib/matplotlib:lib/matplotlib/tri/triangulation.py:Triangulation.__init__:transform:redundant_check": [
+  {
+   "kinds": {
+    "redundant_check": [
+     "if not (self.x.shape != self.y.shape or self.x.ndim != 1):"
+    ]
+   },
+   "seconds": 0.06,
+   "source_sha": "28dba87f182d"
+  },
+  {
+   "kinds": {
+    "redundant_check": [
+     "if not (self.x.shape != self.y.shape or self.x.ndim != 1):"
+    ]
+   },
+   "seconds": 0.057,
+   "source_sha": "28dba87f182d"
+  },
+  {
+   "kinds": {
+    "redundant_check": [
+     "if not (self.x.shape != self.y.shape or self.x.ndim != 1):"
+    ]
+   },
+   "seconds": 0.065,
+   "source_sha": "28dba87f182d"
+  }
+ ],
+ "matplotlib/matplotlib:lib/matplotlib/axes/_base.py:_AxesBase.get_navigate": [
+  {
+   "kinds": {},
+   "seconds": 0.207,
+   "source_sha": "d03af14c9f3e"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.17,
+   "source_sha": "d03af14c9f3e"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.19,
+   "source_sha": "d03af14c9f3e"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/externals/funcsigs.py:formatannotation:transform:redundant_check": [
+  {
+   "kinds": {
+    "redundant_check": [
+     "if not (isinstance(annotation, type)):"
+    ]
+   },
+   "seconds": 0.09,
+   "source_sha": "480dd0d7dcfb"
+  },
+  {
+   "kinds": {
+    "redundant_check": [
+     "if not (isinstance(annotation, type)):"
+    ]
+   },
+   "seconds": 0.084,
+   "source_sha": "480dd0d7dcfb"
+  },
+  {
+   "kinds": {
+    "redundant_check": [
+     "if not (isinstance(annotation, type)):"
+    ]
+   },
+   "seconds": 0.065,
+   "source_sha": "480dd0d7dcfb"
+  }
+ ],
+ "astropy/astropy:astropy/units/quantity_helper/function_helpers.py:einsum:transform:nesting": [
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.103,
+   "source_sha": "9d49fa94a8a8"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.094,
+   "source_sha": "9d49fa94a8a8"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.085,
+   "source_sha": "9d49fa94a8a8"
+  }
+ ],
+ "astropy/astropy:astropy/config/configuration.py:ConfigNamespace.set_temp:transform:redundant_check": [
+  {
+   "kinds": {
+    "redundant_check": [
+     "if not (hasattr(self, attr)):"
+    ]
+   },
+   "seconds": 0.084,
+   "source_sha": "6b8805db2ada"
+  },
+  {
+   "kinds": {
+    "redundant_check": [
+     "if not (hasattr(self, attr)):"
+    ]
+   },
+   "seconds": 0.085,
+   "source_sha": "6b8805db2ada"
+  },
+  {
+   "kinds": {
+    "redundant_check": [
+     "if not (hasattr(self, attr)):"
+    ]
+   },
+   "seconds": 0.087,
+   "source_sha": "6b8805db2ada"
+  }
+ ],
+ "django/django:django/db/models/base.py:Model.clean_fields:transform:nesting": [
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.122,
+   "source_sha": "b88008ab2042"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.116,
+   "source_sha": "b88008ab2042"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.13,
+   "source_sha": "b88008ab2042"
+  }
+ ],
+ "astropy/astropy:astropy/utils/console.py:isatty:transform:redundant_check": [
+  {
+   "kinds": {
+    "redundant_check": [
+     "if not (hasattr(file, 'isatty')):"
+    ]
+   },
+   "seconds": 0.075,
+   "source_sha": "ea9f11651936"
+  },
+  {
+   "kinds": {
+    "redundant_check": [
+     "if not (hasattr(file, 'isatty')):"
+    ]
+   },
+   "seconds": 0.087,
+   "source_sha": "ea9f11651936"
+  },
+  {
+   "kinds": {
+    "redundant_check": [
+     "if not (hasattr(file, 'isatty')):"
+    ]
+   },
+   "seconds": 0.074,
+   "source_sha": "ea9f11651936"
+  }
+ ],
+ "matplotlib/matplotlib:lib/matplotlib/axes/_base.py:_AxesBase.redraw_in_frame:transform:nesting": [
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.171,
+   "source_sha": "1647705e9e2a"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.201,
+   "source_sha": "1647705e9e2a"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.181,
+   "source_sha": "1647705e9e2a"
+  }
+ ],
+ "django/django:django/contrib/gis/gdal/prototypes/errcheck.py:check_geom_offset:transform:swallowed_error": [
+  {
+   "kinds": {
+    "swallowed_error": []
+   },
+   "seconds": 0.066,
+   "source_sha": "ee128ebfdea0"
+  },
+  {
+   "kinds": {
+    "swallowed_error": []
+   },
+   "seconds": 0.057,
+   "source_sha": "ee128ebfdea0"
+  },
+  {
+   "kinds": {
+    "swallowed_error": []
+   },
+   "seconds": 0.057,
+   "source_sha": "ee128ebfdea0"
+  }
+ ],
+ "pydata/xarray:xarray/core/resample.py:DatasetResample.__init__:transform:swallowed_error": [
+  {
+   "kinds": {
+    "swallowed_error": []
+   },
+   "seconds": 0.055,
+   "source_sha": "3d0affa329b0"
+  },
+  {
+   "kinds": {
+    "swallowed_error": []
+   },
+   "seconds": 0.053,
+   "source_sha": "3d0affa329b0"
+  },
+  {
+   "kinds": {
+    "swallowed_error": []
+   },
+   "seconds": 0.061,
+   "source_sha": "3d0affa329b0"
+  }
+ ],
+ "sympy/sympy:sympy/ntheory/generate.py:prevprime:transform:lookup_table": [
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.086,
+   "source_sha": "baace34423f3"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.079,
+   "source_sha": "baace34423f3"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.087,
+   "source_sha": "baace34423f3"
+  }
+ ],
+ "pydata/xarray:xarray/backends/locks.py:_get_lock_maker:transform:lookup_table": [
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.062,
+   "source_sha": "886ca89688c2"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.058,
+   "source_sha": "886ca89688c2"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.068,
+   "source_sha": "886ca89688c2"
+  }
+ ],
+ "astropy/astropy:astropy/coordinates/baseframe.py:BaseCoordinateFrame._get_representation_info:transform:swallowed_error": [
+  {
+   "kinds": {
+    "nesting": [],
+    "swallowed_error": []
+   },
+   "seconds": 0.118,
+   "source_sha": "aeaa0a9ad970"
+  },
+  {
+   "kinds": {
+    "nesting": [],
+    "swallowed_error": []
+   },
+   "seconds": 0.114,
+   "source_sha": "aeaa0a9ad970"
+  },
+  {
+   "kinds": {
+    "nesting": [],
+    "swallowed_error": []
+   },
+   "seconds": 0.101,
+   "source_sha": "aeaa0a9ad970"
+  }
+ ],
+ "django/django:django/db/models/sql/compiler.py:SQLCompiler.deferred_to_columns:transform:swallowed_error": [
+  {
+   "kinds": {
+    "swallowed_error": []
+   },
+   "seconds": 0.095,
+   "source_sha": "c5554d26337d"
+  },
+  {
+   "kinds": {
+    "swallowed_error": []
+   },
+   "seconds": 0.104,
+   "source_sha": "c5554d26337d"
+  },
+  {
+   "kinds": {
+    "swallowed_error": []
+   },
+   "seconds": 0.124,
+   "source_sha": "c5554d26337d"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/util/jsdump.py:encode_string:transform:lookup_table": [
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.053,
+   "source_sha": "1f4a58567641"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.052,
+   "source_sha": "1f4a58567641"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.063,
+   "source_sha": "1f4a58567641"
+  }
+ ],
+ "pylint-dev/pylint:pylint/checkers/base.py:BasicErrorChecker.visit_assign:transform:redundant_check": [
+  {
+   "kinds": {
+    "redundant_check": [
+     "if isinstance(assign_target, nodes.Tuple):"
+    ]
+   },
+   "seconds": 0.151,
+   "source_sha": "48afb0e36233"
+  },
+  {
+   "kinds": {
+    "redundant_check": [
+     "if isinstance(assign_target, nodes.Tuple):"
+    ]
+   },
+   "seconds": 0.129,
+   "source_sha": "48afb0e36233"
+  },
+  {
+   "kinds": {
+    "redundant_check": [
+     "if isinstance(assign_target, nodes.Tuple):"
+    ]
+   },
+   "seconds": 0.144,
+   "source_sha": "48afb0e36233"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/linear_model/stochastic_gradient.py:BaseSGD._get_learning_rate_type:transform:lookup_table": [
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.08,
+   "source_sha": "b748468d086a"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.087,
+   "source_sha": "b748468d086a"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.088,
+   "source_sha": "b748468d086a"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/linear_model/stochastic_gradient.py:BaseSGD._get_penalty_type:transform:lookup_table": [
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.113,
+   "source_sha": "d927aeb8d4a0"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.088,
+   "source_sha": "d927aeb8d4a0"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.085,
+   "source_sha": "d927aeb8d4a0"
+  }
+ ],
+ "django/django:django/core/management/utils.py:popen_wrapper:transform:filler_comment": [
+  {
+   "kinds": {},
+   "seconds": 0.057,
+   "source_sha": "16ee83d2b114"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.063,
+   "source_sha": "16ee83d2b114"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.049,
+   "source_sha": "16ee83d2b114"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/util/i18n.py:search_image_for_language:transform:filler_comment": [
+  {
+   "kinds": {},
+   "seconds": 0.057,
+   "source_sha": "6b248c6be485"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.064,
+   "source_sha": "6b248c6be485"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.051,
+   "source_sha": "6b248c6be485"
+  }
+ ],
+ "django/django:django/forms/widgets.py:NullBooleanSelect.format_value:transform:lookup_table": [
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.095,
+   "source_sha": "d4837f54d4bb"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.121,
+   "source_sha": "d4837f54d4bb"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.099,
+   "source_sha": "d4837f54d4bb"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/gaussian_process/kernels.py:_approx_fprime:transform:filler_comment": [
+  {
+   "kinds": {},
+   "seconds": 0.093,
+   "source_sha": "f46608b207d2"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.102,
+   "source_sha": "f46608b207d2"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.093,
+   "source_sha": "f46608b207d2"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/util/logging.py:ColorizeFormatter.format:transform:filler_comment": [
+  {
+   "kinds": {},
+   "seconds": 0.074,
+   "source_sha": "a75c18bfdf8f"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.067,
+   "source_sha": "a75c18bfdf8f"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.066,
+   "source_sha": "a75c18bfdf8f"
+  }
+ ],
+ "django/django:django/db/models/sql/query.py:Query.get_initial_alias:transform:filler_comment": [
+  {
+   "kinds": {},
+   "seconds": 0.121,
+   "source_sha": "6882e66ed15a"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.143,
+   "source_sha": "6882e66ed15a"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.155,
+   "source_sha": "6882e66ed15a"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/application.py:Sphinx.add_autodoc_attrgetter:transform:dead": [
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.105,
+   "source_sha": "1f6a5d980cc5"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.078,
+   "source_sha": "1f6a5d980cc5"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.069,
+   "source_sha": "1f6a5d980cc5"
+  }
+ ],
+ "scikit-learn/scikit-learn:sklearn/mixture/base.py:BaseMixture._estimate_log_prob:transform:dead": [
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.067,
+   "source_sha": "814fb7878e19"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.082,
+   "source_sha": "814fb7878e19"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.065,
+   "source_sha": "814fb7878e19"
+  }
+ ],
+ "django/django:django/db/models/sql/query.py:Query.set_extra_mask:transform:dead": [
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.126,
+   "source_sha": "eeca4c2409b9"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.126,
+   "source_sha": "eeca4c2409b9"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.123,
+   "source_sha": "eeca4c2409b9"
+  }
+ ],
+ "sympy/sympy:sympy/polys/sqfreetools.py:dup_sqf_norm:transform:nesting+filler_comment": [
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.07,
+   "source_sha": "c1bc5be45623"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.068,
+   "source_sha": "c1bc5be45623"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.064,
+   "source_sha": "c1bc5be45623"
+  }
+ ],
+ "sympy/sympy:sympy/ntheory/generate.py:prevprime:transform:nesting+lookup_table": [
+  {
+   "kinds": {
+    "nesting": [],
+    "lookup_table": []
+   },
+   "seconds": 0.072,
+   "source_sha": "8324495613f2"
+  },
+  {
+   "kinds": {
+    "nesting": [],
+    "lookup_table": []
+   },
+   "seconds": 0.074,
+   "source_sha": "8324495613f2"
+  },
+  {
+   "kinds": {
+    "nesting": [],
+    "lookup_table": []
+   },
+   "seconds": 0.079,
+   "source_sha": "8324495613f2"
+  }
+ ],
+ "pylint-dev/pylint:pylint/lint/pylinter.py:PyLinter.add_ignored_message:transform:dead": [
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.105,
+   "source_sha": "c74fcf1f83c8"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.111,
+   "source_sha": "c74fcf1f83c8"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.103,
+   "source_sha": "c74fcf1f83c8"
+  }
+ ],
+ "astropy/astropy:astropy/modeling/functional_models.py:Tangent1D.inverse:transform:dead": [
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.11,
+   "source_sha": "c8623f797bd7"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.148,
+   "source_sha": "c8623f797bd7"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.139,
+   "source_sha": "c8623f797bd7"
+  }
+ ],
+ "sympy/sympy:sympy/polys/densebasic.py:dup_deflate:transform:nesting+dead": [
+  {
+   "kinds": {
+    "nesting": [],
+    "dead": []
+   },
+   "seconds": 0.092,
+   "source_sha": "17fea1c9e64f"
+  },
+  {
+   "kinds": {
+    "nesting": [],
+    "dead": []
+   },
+   "seconds": 0.094,
+   "source_sha": "17fea1c9e64f"
+  },
+  {
+   "kinds": {
+    "nesting": [],
+    "dead": []
+   },
+   "seconds": 0.082,
+   "source_sha": "17fea1c9e64f"
+  }
+ ],
+ "pydata/xarray:xarray/backends/locks.py:_get_lock_maker:transform:lookup_table+filler_comment": [
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.059,
+   "source_sha": "198f8b86d1f2"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.059,
+   "source_sha": "198f8b86d1f2"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.071,
+   "source_sha": "198f8b86d1f2"
+  }
+ ],
+ "astropy/astropy:astropy/coordinates/builtin_frames/galactic_transforms.py:fk5_to_gal:nemotron:nesting": [
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.059,
+   "source_sha": "6ced21d7d69e"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.049,
+   "source_sha": "6ced21d7d69e"
+  },
+  {
+   "kinds": {
+    "nesting": []
+   },
+   "seconds": 0.062,
+   "source_sha": "6ced21d7d69e"
+  }
+ ],
+ "matplotlib/matplotlib:lib/matplotlib/backend_tools.py:SetCursorBase.set_cursor:transform:swallowed_error+dead": [
+  {
+   "kinds": {
+    "swallowed_error": [],
+    "dead": []
+   },
+   "seconds": 0.087,
+   "source_sha": "306ceed00c77"
+  },
+  {
+   "kinds": {
+    "swallowed_error": [],
+    "dead": []
+   },
+   "seconds": 0.095,
+   "source_sha": "306ceed00c77"
+  },
+  {
+   "kinds": {
+    "swallowed_error": [],
+    "dead": []
+   },
+   "seconds": 0.102,
+   "source_sha": "306ceed00c77"
+  }
+ ],
+ "matplotlib/matplotlib:lib/matplotlib/offsetbox.py:AnchoredOffsetbox.draw:nemotron:nesting": [
+  {
+   "kinds": {},
+   "seconds": 0.103,
+   "source_sha": "9dc56f45ceb5"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.116,
+   "source_sha": "9dc56f45ceb5"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.111,
+   "source_sha": "9dc56f45ceb5"
+  }
+ ],
+ "astropy/astropy:astropy/coordinates/angle_formats.py:hours_to_hms:nemotron:redundant_check": [
+  {
+   "kinds": {},
+   "seconds": 0.088,
+   "source_sha": "2e397dcceda5"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.068,
+   "source_sha": "2e397dcceda5"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.067,
+   "source_sha": "2e397dcceda5"
+  }
+ ],
+ "astropy/astropy:astropy/cosmology/flrw.py:LambdaCDM._dS_comoving_distance_z1z2:nemotron:redundant_check": [
+  {
+   "kinds": {},
+   "seconds": 0.093,
+   "source_sha": "b23287a27802"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.124,
+   "source_sha": "b23287a27802"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.093,
+   "source_sha": "b23287a27802"
+  }
+ ],
+ "sympy/sympy:sympy/integrals/risch.py:splitfactor:nemotron:redundant_check": [
+  {
+   "kinds": {},
+   "seconds": 0.111,
+   "source_sha": "dff7616e9f04"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.11,
+   "source_sha": "dff7616e9f04"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.113,
+   "source_sha": "dff7616e9f04"
+  }
+ ],
+ "django/django:django/templatetags/l10n.py:localize:nemotron:swallowed_error": [
+  {
+   "kinds": {
+    "swallowed_error": []
+   },
+   "seconds": 0.054,
+   "source_sha": "1ebe3bf42698"
+  },
+  {
+   "kinds": {
+    "swallowed_error": []
+   },
+   "seconds": 0.045,
+   "source_sha": "1ebe3bf42698"
+  },
+  {
+   "kinds": {
+    "swallowed_error": []
+   },
+   "seconds": 0.071,
+   "source_sha": "1ebe3bf42698"
+  }
+ ],
+ "astropy/astropy:astropy/coordinates/representation.py:PhysicsSphericalRepresentation.phi:nemotron:redundant_check": [
+  {
+   "kinds": {},
+   "seconds": 0.151,
+   "source_sha": "70a41bde4481"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.148,
+   "source_sha": "70a41bde4481"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.172,
+   "source_sha": "70a41bde4481"
+  }
+ ],
+ "django/django:django/utils/autoreload.py:WatchmanReloader.watched_roots:nemotron:swallowed_error": [
+  {
+   "kinds": {
+    "swallowed_error": []
+   },
+   "seconds": 0.08,
+   "source_sha": "610e90b42cb2"
+  },
+  {
+   "kinds": {
+    "swallowed_error": []
+   },
+   "seconds": 0.073,
+   "source_sha": "610e90b42cb2"
+  },
+  {
+   "kinds": {
+    "swallowed_error": []
+   },
+   "seconds": 0.085,
+   "source_sha": "610e90b42cb2"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaratorNameParam.describe_signature:nemotron:redundant_check": [
+  {
+   "kinds": {},
+   "seconds": 0.195,
+   "source_sha": "ea5e7a4ebdba"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.236,
+   "source_sha": "ea5e7a4ebdba"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.206,
+   "source_sha": "ea5e7a4ebdba"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaration.__init__:nemotron:nesting": [
+  {
+   "kinds": {},
+   "seconds": 0.238,
+   "source_sha": "93ebe10f0858"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.245,
+   "source_sha": "93ebe10f0858"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.238,
+   "source_sha": "93ebe10f0858"
+  }
+ ],
+ "sympy/sympy:sympy/ntheory/generate.py:prevprime:nemotron:lookup_table": [
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.068,
+   "source_sha": "6e261aeb12c8"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.084,
+   "source_sha": "6e261aeb12c8"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.076,
+   "source_sha": "6e261aeb12c8"
+  }
+ ],
+ "sphinx-doc/sphinx:sphinx/ext/graphviz.py:ClickableMapDefinition.parse:nemotron:filler_comment": [
+  {
+   "kinds": {},
+   "seconds": 0.073,
+   "source_sha": "7e8fa24718f2"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.081,
+   "source_sha": "7e8fa24718f2"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.073,
+   "source_sha": "7e8fa24718f2"
+  }
+ ],
+ "astropy/astropy:astropy/modeling/core.py:Model._supports_unit_fitting:nemotron:redundant_check": [
+  {
+   "kinds": {},
+   "seconds": 0.208,
+   "source_sha": "a33d8e4d7f58"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.208,
+   "source_sha": "a33d8e4d7f58"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.194,
+   "source_sha": "a33d8e4d7f58"
+  }
+ ],
+ "sympy/sympy:sympy/physics/quantum/shor.py:shor:nemotron:filler_comment": [
+  {
+   "kinds": {},
+   "seconds": 0.062,
+   "source_sha": "7917fdba563a"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.076,
+   "source_sha": "7917fdba563a"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.063,
+   "source_sha": "7917fdba563a"
+  }
+ ],
+ "django/django:django/db/backends/mysql/base.py:DatabaseWrapper.check_constraints:nemotron:filler_comment": [
+  {
+   "kinds": {},
+   "seconds": 0.05,
+   "source_sha": "dd9724b1c9f9"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.056,
+   "source_sha": "dd9724b1c9f9"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.059,
+   "source_sha": "dd9724b1c9f9"
+  }
+ ],
+ "django/django:django/forms/widgets.py:NullBooleanSelect.format_value:nemotron:lookup_table": [
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.109,
+   "source_sha": "479797a39843"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.119,
+   "source_sha": "479797a39843"
+  },
+  {
+   "kinds": {
+    "lookup_table": []
+   },
+   "seconds": 0.088,
+   "source_sha": "479797a39843"
+  }
+ ],
+ "pydata/xarray:xarray/core/duck_array_ops.py:_create_nan_agg_method:nemotron:filler_comment": [
+  {
+   "kinds": {},
+   "seconds": 0.078,
+   "source_sha": "dcc7b187805e"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.063,
+   "source_sha": "dcc7b187805e"
+  },
+  {
+   "kinds": {},
+   "seconds": 0.072,
+   "source_sha": "dcc7b187805e"
+  }
+ ],
+ "sympy/sympy:sympy/functions/special/elliptic_integrals.py:elliptic_pi.fdiff:nemotron:dead": [
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.073,
+   "source_sha": "b5edf00f069c"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.055,
+   "source_sha": "b5edf00f069c"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.058,
+   "source_sha": "b5edf00f069c"
+  }
+ ],
+ "matplotlib/matplotlib:lib/matplotlib/blocking_input.py:BlockingKeyMouseInput.post_event:nemotron:dead": [
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.051,
+   "source_sha": "945c6fe19ce0"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.061,
+   "source_sha": "945c6fe19ce0"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.049,
+   "source_sha": "945c6fe19ce0"
+  }
+ ],
+ "matplotlib/matplotlib:lib/matplotlib/afm.py:AFM.get_kern_dist_from_name:nemotron:dead": [
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.074,
+   "source_sha": "36f260bbc799"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.061,
+   "source_sha": "36f260bbc799"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.046,
+   "source_sha": "36f260bbc799"
+  }
+ ],
+ "sympy/sympy:sympy/polys/ring_series.py:rs_cos_sin:nemotron:dead": [
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.097,
+   "source_sha": "6f1c60483da6"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.088,
+   "source_sha": "6f1c60483da6"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.076,
+   "source_sha": "6f1c60483da6"
+  }
+ ],
+ "matplotlib/matplotlib:lib/matplotlib/axes/_base.py:_AxesBase.get_navigate:nemotron:dead": [
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.178,
+   "source_sha": "16ded7d267f8"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.124,
+   "source_sha": "16ded7d267f8"
+  },
+  {
+   "kinds": {
+    "dead": []
+   },
+   "seconds": 0.108,
+   "source_sha": "16ded7d267f8"
+  }
+ ]
+}

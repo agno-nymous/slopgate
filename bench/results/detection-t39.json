@@ -1,0 +1,633 @@
+{
+ "runs": "runs-t39.json",
+ "set": "held_out",
+ "groups": {
+  "all": {
+   "nesting": {
+    "items": 15,
+    "tp": 36,
+    "fp": 3,
+    "fn": 6,
+    "precision": 0.923,
+    "recall": 0.857
+   },
+   "redundant_check": {
+    "items": 8,
+    "tp": 15,
+    "fp": 0,
+    "fn": 9,
+    "precision": 1.0,
+    "recall": 0.625
+   },
+   "swallowed_error": {
+    "items": 7,
+    "tp": 21,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "lookup_table": {
+    "items": 10,
+    "tp": 30,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "dead": {
+    "items": 12,
+    "tp": 36,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "total": {
+    "items": 48,
+    "tp": 138,
+    "fp": 3,
+    "fn": 15,
+    "precision": 0.979,
+    "recall": 0.902
+   }
+  },
+  "transform": {
+   "nesting": {
+    "items": 7,
+    "tp": 21,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "redundant_check": {
+    "items": 5,
+    "tp": 15,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "swallowed_error": {
+    "items": 5,
+    "tp": 15,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "lookup_table": {
+    "items": 8,
+    "tp": 24,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "dead": {
+    "items": 7,
+    "tp": 21,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "total": {
+    "items": 29,
+    "tp": 96,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   }
+  },
+  "nemotron": {
+   "nesting": {
+    "items": 3,
+    "tp": 3,
+    "fp": 0,
+    "fn": 6,
+    "precision": 1.0,
+    "recall": 0.333
+   },
+   "redundant_check": {
+    "items": 3,
+    "tp": 0,
+    "fp": 0,
+    "fn": 9,
+    "precision": null,
+    "recall": 0.0
+   },
+   "swallowed_error": {
+    "items": 2,
+    "tp": 6,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "lookup_table": {
+    "items": 2,
+    "tp": 6,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "dead": {
+    "items": 5,
+    "tp": 15,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "total": {
+    "items": 14,
+    "tp": 30,
+    "fp": 0,
+    "fn": 15,
+    "precision": 1.0,
+    "recall": 0.667
+   }
+  },
+  "two_kinds": {
+   "nesting": {
+    "items": 2,
+    "tp": 6,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "redundant_check": {
+    "items": 0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 0,
+    "precision": null,
+    "recall": null
+   },
+   "swallowed_error": {
+    "items": 1,
+    "tp": 3,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "lookup_table": {
+    "items": 1,
+    "tp": 3,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "dead": {
+    "items": 2,
+    "tp": 6,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   },
+   "total": {
+    "items": 3,
+    "tp": 18,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0
+   }
+  }
+ },
+ "invalid_injections": {
+  "matplotlib/matplotlib:lib/matplotlib/projections/polar.py:PolarAxes._init_axis:nemotron:redundant_check": "Super added `if hasattr(self, 'xaxis') and self.xaxis is not None: pass`. No earlier check guarantees it.",
+  "pallets/flask:src/flask/sessions.py:SessionInterface.make_null_session:nemotron:redundant_check": "Super added `if hasattr(self, 'null_session_class'): pass`. No earlier check guarantees it.",
+  "astropy/astropy:astropy/coordinates/representation.py:PhysicsSphericalRepresentation.phi:nemotron:redundant_check": "Super added `if hasattr(self, '_phi'): pass`. No earlier check guarantees it.",
+  "astropy/astropy:astropy/coordinates/angle_formats.py:hours_to_hms:nemotron:redundant_check": "Super added `if abs(h - int(h)) < 1e-10: pass`. No earlier check guarantees it.",
+  "astropy/astropy:astropy/modeling/core.py:Model._supports_unit_fitting:nemotron:redundant_check": "Super added `if hasattr(self, '_parameter_units_for_data_units'): pass`. The same test comes after it, not before it.",
+  "sympy/sympy:sympy/integrals/risch.py:splitfactor:nemotron:redundant_check": "Super added `if hasattr(q_split := ..., '__len__') and len(q_split) >= 2: pass`. No earlier check guarantees it."
+ },
+ "false_positives": [
+  {
+   "id": "pytest-dev/pytest:src/_pytest/unittest.py:UnitTestCase.collect",
+   "kind": "nesting",
+   "runs": 3
+  }
+ ],
+ "false_negatives": [
+  {
+   "id": "astropy/astropy:astropy/cosmology/flrw.py:LambdaCDM._dS_comoving_distance_z1z2:nemotron:redundant_check",
+   "kind": "redundant_check",
+   "runs": 3
+  },
+  {
+   "id": "matplotlib/matplotlib:lib/matplotlib/offsetbox.py:AnchoredOffsetbox.draw:nemotron:nesting",
+   "kind": "nesting",
+   "runs": 3
+  },
+  {
+   "id": "matplotlib/matplotlib:lib/matplotlib/offsetbox.py:AnchoredOffsetbox.draw:nemotron:nesting",
+   "kind": "redundant_check",
+   "runs": 3
+  },
+  {
+   "id": "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaration.__init__:nemotron:nesting",
+   "kind": "nesting",
+   "runs": 3
+  },
+  {
+   "id": "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaratorNameParam.describe_signature:nemotron:redundant_check",
+   "kind": "redundant_check",
+   "runs": 3
+  }
+ ],
+ "unlabelled": [],
+ "clean": {
+  "item_runs": 240,
+  "fp_rate": {
+   "nesting": 0.013,
+   "redundant_check": 0.0,
+   "swallowed_error": 0.0,
+   "lookup_table": 0.0,
+   "dead": 0.0,
+   "total": 0.013
+  },
+  "any_kind_rate": 0.05
+ },
+ "seconds": {
+  "mean": 0.094,
+  "median": 0.079,
+  "p95": 0.186,
+  "max": 0.595
+ },
+ "errors": [],
+ "stability": {
+  "all": 1.0,
+  "clean": 1.0,
+  "source": 1.0,
+  "transform": 1.0,
+  "nemotron": 1.0
+ },
+ "counts": {
+  "origin": {
+   "clean": 80,
+   "source": 52,
+   "transform": 29,
+   "nemotron": 14
+  },
+  "repo": {
+   "django/django": 30,
+   "sympy/sympy": 23,
+   "psf/requests": 8,
+   "pallets/flask": 13,
+   "astropy/astropy": 28,
+   "scikit-learn/scikit-learn": 19,
+   "sphinx-doc/sphinx": 18,
+   "pytest-dev/pytest": 12,
+   "matplotlib/matplotlib": 14,
+   "pylint-dev/pylint": 4,
+   "pydata/xarray": 6
+  }
+ },
+ "change": {
+  "nesting": {
+   "precision": {
+    "base": {
+     "value": 0.56,
+     "low": 0.35,
+     "high": 0.759
+    },
+    "new": {
+     "value": 0.923,
+     "low": 0.75,
+     "high": 1.0
+    },
+    "difference": {
+     "value": 0.363,
+     "low": 0.174,
+     "high": 0.556
+    }
+   },
+   "recall": {
+    "base": {
+     "value": 1.0,
+     "low": 1.0,
+     "high": 1.0
+    },
+    "new": {
+     "value": 0.857,
+     "low": 0.636,
+     "high": 1.0
+    },
+    "difference": {
+     "value": -0.143,
+     "low": -0.364,
+     "high": 0.0
+    }
+   },
+   "fp_rate": {
+    "base": {
+     "value": 0.113,
+     "low": 0.046,
+     "high": 0.186
+    },
+    "new": {
+     "value": 0.013,
+     "low": 0.0,
+     "high": 0.042
+    },
+    "difference": {
+     "value": -0.1,
+     "low": -0.169,
+     "high": -0.039
+    }
+   }
+  },
+  "redundant_check": {
+   "precision": {
+    "base": {
+     "value": 0.316,
+     "low": 0.043,
+     "high": 0.667
+    },
+    "new": {
+     "value": 1.0,
+     "low": 1.0,
+     "high": 1.0,
+     "resamples": 992
+    },
+    "difference": {
+     "value": 0.684,
+     "low": 0.333,
+     "high": 0.95,
+     "resamples": 992
+    }
+   },
+   "recall": {
+    "base": {
+     "value": 0.25,
+     "low": 0.037,
+     "high": 0.5
+    },
+    "new": {
+     "value": 0.625,
+     "low": 0.25,
+     "high": 1.0
+    },
+    "difference": {
+     "value": 0.375,
+     "low": 0.0,
+     "high": 0.778
+    }
+   },
+   "fp_rate": {
+    "base": {
+     "value": 0.004,
+     "low": 0.0,
+     "high": 0.014
+    },
+    "new": {
+     "value": 0.0,
+     "low": 0.0,
+     "high": 0.0
+    },
+    "difference": {
+     "value": -0.004,
+     "low": -0.014,
+     "high": 0.0
+    }
+   }
+  },
+  "swallowed_error": {
+   "precision": {
+    "base": {
+     "value": 1.0,
+     "low": 1.0,
+     "high": 1.0
+    },
+    "new": {
+     "value": 1.0,
+     "low": 1.0,
+     "high": 1.0
+    },
+    "difference": {
+     "value": 0.0,
+     "low": 0.0,
+     "high": 0.0
+    }
+   },
+   "recall": {
+    "base": {
+     "value": 1.0,
+     "low": 1.0,
+     "high": 1.0
+    },
+    "new": {
+     "value": 1.0,
+     "low": 1.0,
+     "high": 1.0
+    },
+    "difference": {
+     "value": 0.0,
+     "low": 0.0,
+     "high": 0.0
+    }
+   },
+   "fp_rate": {
+    "base": {
+     "value": 0.0,
+     "low": 0.0,
+     "high": 0.0
+    },
+    "new": {
+     "value": 0.0,
+     "low": 0.0,
+     "high": 0.0
+    },
+    "difference": {
+     "value": 0.0,
+     "low": 0.0,
+     "high": 0.0
+    }
+   }
+  },
+  "lookup_table": {
+   "precision": {
+    "base": {
+     "value": 1.0,
+     "low": 1.0,
+     "high": 1.0,
+     "resamples": 998
+    },
+    "new": {
+     "value": 1.0,
+     "low": 1.0,
+     "high": 1.0,
+     "resamples": 998
+    },
+    "difference": {
+     "value": 0.0,
+     "low": 0.0,
+     "high": 0.0,
+     "resamples": 998
+    }
+   },
+   "recall": {
+    "base": {
+     "value": 1.0,
+     "low": 1.0,
+     "high": 1.0,
+     "resamples": 998
+    },
+    "new": {
+     "value": 1.0,
+     "low": 1.0,
+     "high": 1.0,
+     "resamples": 998
+    },
+    "difference": {
+     "value": 0.0,
+     "low": 0.0,
+     "high": 0.0,
+     "resamples": 998
+    }
+   },
+   "fp_rate": {
+    "base": {
+     "value": 0.0,
+     "low": 0.0,
+     "high": 0.0
+    },
+    "new": {
+     "value": 0.0,
+     "low": 0.0,
+     "high": 0.0
+    },
+    "difference": {
+     "value": 0.0,
+     "low": 0.0,
+     "high": 0.0
+    }
+   }
+  },
+  "dead": {
+   "precision": {
+    "base": {
+     "value": 1.0,
+     "low": 1.0,
+     "high": 1.0
+    },
+    "new": {
+     "value": 1.0,
+     "low": 1.0,
+     "high": 1.0
+    },
+    "difference": {
+     "value": 0.0,
+     "low": 0.0,
+     "high": 0.0
+    }
+   },
+   "recall": {
+    "base": {
+     "value": 1.0,
+     "low": 1.0,
+     "high": 1.0
+    },
+    "new": {
+     "value": 1.0,
+     "low": 1.0,
+     "high": 1.0
+    },
+    "difference": {
+     "value": 0.0,
+     "low": 0.0,
+     "high": 0.0
+    }
+   },
+   "fp_rate": {
+    "base": {
+     "value": 0.0,
+     "low": 0.0,
+     "high": 0.0
+    },
+    "new": {
+     "value": 0.0,
+     "low": 0.0,
+     "high": 0.0
+    },
+    "difference": {
+     "value": 0.0,
+     "low": 0.0,
+     "high": 0.0
+    }
+   }
+  },
+  "total": {
+   "precision": {
+    "base": {
+     "value": 0.746,
+     "low": 0.63,
+     "high": 0.849
+    },
+    "new": {
+     "value": 0.979,
+     "low": 0.925,
+     "high": 1.0
+    },
+    "difference": {
+     "value": 0.233,
+     "low": 0.138,
+     "high": 0.342
+    }
+   },
+   "recall": {
+    "base": {
+     "value": 0.882,
+     "low": 0.799,
+     "high": 0.958
+    },
+    "new": {
+     "value": 0.902,
+     "low": 0.789,
+     "high": 0.984
+    },
+    "difference": {
+     "value": 0.02,
+     "low": -0.078,
+     "high": 0.109
+    }
+   },
+   "fp_rate": {
+    "base": {
+     "value": 0.117,
+     "low": 0.048,
+     "high": 0.189
+    },
+    "new": {
+     "value": 0.013,
+     "low": 0.0,
+     "high": 0.042
+    },
+    "difference": {
+     "value": -0.104,
+     "low": -0.174,
+     "high": -0.042
+    }
+   }
+  }
+ },
+ "tokens": [
+  {
+   "model": "nvidia/nemotron-3-super-120b-a12b",
+   "use": "injection",
+   "input_tokens": 43585,
+   "output_tokens": 38719,
+   "usd": 0.0479
+  }
+ ]
+}

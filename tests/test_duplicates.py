@@ -3,7 +3,7 @@ import subprocess
 import sys
 
 import pytest
-from test_review import FLAT, NO_LINES, NESTED, SIMPLE, TESTS, fenced, models, review
+from test_review import FLAT, NESTED, SIMPLE, TESTS, fenced, models, review
 
 from slopgate import embed
 from slopgate.cli import main
@@ -205,7 +205,7 @@ def test_methods_are_never_duplicates(make_repo, fake_llm, capsys, base, head):
 
 def test_partly_changed_function_lands_in_followup_with_full_file(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": "", "app/perms.py": NESTED}, {"app/perms.py": NESTED.replace("return True", "return bool(1)")})
-    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
 
     result = review(capsys, repo)
 

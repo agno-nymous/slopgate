@@ -45,8 +45,8 @@ The live tests are marked `live` and are off by default (`addopts` in `pyproject
 | File | What it does |
 |---|---|
 | `slopgate/cli.py` | Command-line entry: `review`, `index`, `hook`. Imports are lazy, so `slopgate --help` takes 0.03 s. |
-| `slopgate/review.py` | The gate: find candidates, write characterization tests, rewrite, prove in the sandbox. All model prompts of the gate are here, except `CHECK_PROMPT`. |
-| `slopgate/kinds.py` | The slop kinds: `classify` (Ruff, vulture, `nesting()`, and one Lightning check for each model kind with `CHECK_PROMPT`), the fix texts, and `leftover` (the check that a rewrite removes the slop). |
+| `slopgate/review.py` | The gate: find candidates, write characterization tests, rewrite, prove in the sandbox. All model prompts of the gate are here. |
+| `slopgate/kinds.py` | The slop kinds: `classify` (Ruff, vulture, and the `flattenable` and `repeated_checks` AST checks; no model call), the fix texts, and `leftover` (the check that a rewrite removes the slop). |
 | `slopgate/github.py` | Posts the review, the follow-up pull request, and the summary. |
 | `slopgate/sandbox.py` | `Local` (temporary folder) and `Contree` (Nebius sandbox). Each run starts from one checkpoint. |
 | `slopgate/llm.py` | Token Factory client: `complete` (text), `decide` (forced tool call, returns a pydantic object), and `yes_probability` (one-token yes/no with logprobs). |
@@ -59,7 +59,7 @@ The live tests are marked `live` and are off by default (`addopts` in `pyproject
 
 ## Model rules
 
-- Lightning (`nvidia/Nemotron-3_5-Lightning`), Super (`nvidia/nemotron-3-super-120b-a12b`), and Ultra (`nvidia/Nemotron-3-Ultra-550b-a55b`) are all thinking models. Super writes tests and rewrites. Ultra does the rewrite retry and the summary. Lightning checks the `redundant_check` and `filler_comment` kinds, and runs the hook's yes/no check. Ruff, vulture, and `nesting()` measure the other kinds, with no model.
+- Lightning (`nvidia/Nemotron-3_5-Lightning`), Super (`nvidia/nemotron-3-super-120b-a12b`), and Ultra (`nvidia/Nemotron-3-Ultra-550b-a55b`) are all thinking models. Super writes tests and rewrites. Ultra does the rewrite retry and the summary. Lightning runs only the hook's yes/no check. The static checks (Ruff, vulture, `flattenable`, and `repeated_checks`) find all slop kinds of the gate except `duplicate`, which Super decides. They call no model.
 - **Turn thinking off on every request:** `extra_body={"chat_template_kwargs": {"enable_thinking": False}}`. With thinking on, a complex request can spend the whole output limit on reasoning and return an empty or cut-off reply (`finish_reason: "length"`). A forced tool call does not turn thinking off by itself.
 - `complete` sends `max_tokens=32768` (`MAX_OUTPUT_TOKENS`). The server default is 8,192 output tokens, and one long test file passed it on PR #17.
 - **Code comes back as one ```` ```python ```` block in markdown. Never ask for code inside JSON or inside tool-call arguments.** In the fair run on 2026-10-06 (equal prompts, thinking off, 54 replies each), markdown proved 45 and a forced tool call proved 41, with 3 broken files from wrong bracket types (ticket 20).
