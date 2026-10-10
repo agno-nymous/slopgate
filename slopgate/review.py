@@ -413,9 +413,11 @@ def replace_calls(repo, head, function, helper) -> dict[str, str]:
 
 
 def check(sandbox, checkpoint, function, test_path, cmd, tests) -> str | None:
-    _, output = sandbox.run(
+    code, output = sandbox.run(
         checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o - | python -c \"{MISSED}\" {shlex.quote(function.path)}"
     )
+    if code == 124:
+        return f"characterization tests time out: {tail(output)}"
     second, _ = sandbox.run(checkpoint, {test_path: tests}, f"PYTHONHASHSEED=2 {cmd}")
     passed = COVERAGE in output
     if passed != (not second):

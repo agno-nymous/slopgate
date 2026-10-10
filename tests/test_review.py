@@ -2,6 +2,8 @@ import ast
 import json
 import re
 import shlex
+import subprocess
+import sys
 import textwrap
 import time
 from types import SimpleNamespace
@@ -15,7 +17,7 @@ from slopgate.config import AGENT_SECONDS, AGENT_STEPS, SUPER, ULTRA
 from slopgate.functions import is_test_file, parse, pytest_patterns
 from slopgate.kinds import KINDS, classify, flattenable, has_dead_code, leftover, problems, repeated_checks
 from slopgate.review import EXECUTE, characterize, same_code, strip_fence
-from slopgate.sandbox import ContreeSession, Local, LocalSession
+from slopgate.sandbox import Contree, ContreeSession, Local, LocalSession
 
 NESTED = '''\
 def can_edit(user_active, is_owner, locked, archived):
@@ -1067,6 +1069,64 @@ def test_shell_returns_at_the_time_limit_when_a_child_left_the_process_group(tmp
     escaped = 'python -c "import os, time; os.setsid(); time.sleep(8)" &'
     assert sandbox.shell(f"echo started; {escaped} sleep 30", tmp_path, 1) == (124, "started\n\ntimed out after 1 s")
     assert time.perf_counter() - start < 8
+
+
+def test_local_run_gives_a_command_no_stdin(tmp_path):
+    # pytest gives its own children /dev/null as stdin, so the run must happen in a process whose stdin stays open.
+    code = f"from slopgate.sandbox import Local; print(Local().run({str(tmp_path)!r}, {{}}, 'python -c \\'input()\\''))"
+    child = subprocess.Popen([sys.executable, "-c", code], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+
+    child.wait(timeout=10)
+
+    assert "EOFError" in child.stdout.read()
+    child.stdin.close()
+
+
+def test_local_run_stops_a_command_at_the_time_limit(tmp_path, monkeypatch):
+    monkeypatch.setattr("slopgate.sandbox.SANDBOX_TIMEOUT", 1)
+    start = time.perf_counter()
+
+    code, output = Local().run(tmp_path, {}, 'python -c "while True: pass"')
+
+    assert code == 124 and output.endswith("timed out after 1 s")
+    assert time.perf_counter() - start < 10
+
+
+def test_contree_run_bounds_the_command_and_reports_a_run_that_reached_the_time_limit(monkeypatch):
+    monkeypatch.setattr("slopgate.sandbox.SANDBOX_TIMEOUT", 7)
+    clock, runs = [0.0], []
+
+    def run(exit_code, seconds):
+        def start(**kwargs):
+            runs.append(kwargs)
+            clock[0] += seconds
+            return SimpleNamespace(wait=lambda: SimpleNamespace(exit_code=exit_code, stdout="partial", stderr=""))
+
+        return SimpleNamespace(run=start)
+
+    monkeypatch.setattr("slopgate.sandbox.time", SimpleNamespace(monotonic=lambda: clock[0]))
+    box = Contree.__new__(Contree)
+
+    assert box.run(run(137, 12), {"tests/test_x.py": "x = 1\n"}, "pytest -q") == (124, "partial\ntimed out after 7 s")
+    assert box.run(run(124, 1), {}, "exit 124") == (124, "partial")
+    assert runs[0] == {"shell": "timeout -k 5 7 sh -c 'pytest -q'", "cwd": "/repo", "files": {"/repo/tests/test_x.py": b"x = 1\n"}, "timeout": 67}
+
+
+LOOPS = TESTS.format(name="can_edit", call="can_edit").replace("assert can_edit(False, True, False, False) is False", "while True: pass")
+
+
+def test_a_test_that_never_ends_rejects_the_function_and_the_review_goes_on(make_repo, fake_llm, monkeypatch, capsys):
+    monkeypatch.setattr("slopgate.sandbox.SANDBOX_TIMEOUT", 1)
+    repo = two_nested_functions(make_repo, "")
+    fake_llm.replies += [fenced(LOOPS), fenced(TESTS.format(name="can_view", call="can_view")), fenced(FLAT_VIEW)]
+
+    result = review(capsys, repo)
+
+    [rejected] = result["rejected"]
+    assert rejected["function"] == "can_edit"
+    assert rejected["reason"].startswith("characterization tests time out:") and rejected["reason"].endswith("timed out after 1 s")
+    [suggestion] = result["suggestions"]
+    assert suggested_code(suggestion["body"]) == FLAT_VIEW
 
 
 def test_contree_session_bounds_each_command_in_the_sandbox_and_reads_a_missing_file_as_none():

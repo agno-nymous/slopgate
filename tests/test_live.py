@@ -95,6 +95,25 @@ def test_contree_session_hides_the_api_key_and_ends_a_hung_command(make_repo):
     assert session.read("missing.txt") is None
 
 
+@needs_sandbox
+def test_contree_run_stops_a_sleep_at_the_time_limit(make_repo, monkeypatch):
+    repo = make_repo({"README.md": "demo\n"}, {"app/__init__.py": ""})
+    box = Contree()
+    checkpoint = box.prepare(repo, "HEAD", None)
+    monkeypatch.setattr("slopgate.sandbox.SANDBOX_TIMEOUT", 5)
+
+    start = time.perf_counter()
+    assert box.run(checkpoint, {}, "true")[0] == 0
+    overhead = time.perf_counter() - start
+    start = time.perf_counter()
+    code, output = box.run(checkpoint, {}, "sleep 10")
+    seconds = time.perf_counter() - start
+    print(f"true: {overhead:.1f} s, sleep 10: {code} {output!r} after {seconds:.1f} s")
+
+    assert code == 124 and output.endswith("timed out after 5 s")
+    assert seconds < 5 + overhead + 3
+
+
 @pytest.mark.parametrize("model", [config.SUPER, config.ULTRA])
 def test_complete_replies_without_reasoning(monkeypatch, model):
     openai = llm.client()

@@ -6,6 +6,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import time
 import tomllib
 from pathlib import Path
 
@@ -13,6 +14,7 @@ from contree_sdk import ContreeSync
 from contree_sdk.sdk.exceptions import NotFoundError
 
 from slopgate import trace
+from slopgate.config import SANDBOX_TIMEOUT
 from slopgate.diff import git
 
 
@@ -40,6 +42,10 @@ def commands(repo, ref) -> tuple[str | None, str]:
     else:
         setup = None
     return override.get("setup", setup), override.get("test", "python -m pytest -q")
+
+
+def bounded(cmd: str, seconds: int) -> str:
+    return f"timeout -k 5 {seconds} sh -c {shlex.quote(cmd)}"
 
 
 def shell(cmd: str, cwd, timeout: float | None = None) -> tuple[int, str]:
@@ -91,7 +97,7 @@ class ContreeSession:
             # The SDK uses its timeout for the server and for the client wait. The client gives up first and the session
             # fails for good, so `timeout` in the sandbox ends the command and the SDK waits 60 s longer.
             done = self.session.run(
-                shell=f"timeout -k 5 {timeout} sh -c {shlex.quote(command)}",
+                shell=bounded(command, timeout),
                 cwd="/repo",
                 timeout=timeout + 60,
                 disposable=False,
@@ -128,7 +134,7 @@ class Local:
             for rel, content in files.items():
                 (work / rel).parent.mkdir(parents=True, exist_ok=True)
                 (work / rel).write_text(content)
-            code, output = shell(cmd, work)
+            code, output = shell(cmd, work, SANDBOX_TIMEOUT)
             trace.output({"exit_code": code, "output": output})
             return code, output
 
@@ -155,10 +161,14 @@ class Contree:
     def run(self, checkpoint, files: dict[str, str], cmd: str) -> tuple[int, str]:
         with trace.span("sandbox.run", input={"cmd": cmd, "files": files}):
             files = {f"/repo/{rel}": content.encode() for rel, content in files.items()}
-            result = checkpoint.run(shell=cmd, cwd="/repo", files=files).wait()
-            output = result.stdout + result.stderr
-            trace.output({"exit_code": result.exit_code, "output": output})
-            return result.exit_code, output
+            began = time.monotonic()
+            result = checkpoint.run(shell=bounded(cmd, SANDBOX_TIMEOUT), cwd="/repo", files=files, timeout=SANDBOX_TIMEOUT + 60).wait()
+            code, output = result.exit_code, result.stdout + result.stderr
+            # The exit code cannot tell a timeout: a command may exit 124 itself, and one that ignores SIGTERM ends with 137.
+            if time.monotonic() - began >= SANDBOX_TIMEOUT:
+                code, output = 124, f"{output}\ntimed out after {SANDBOX_TIMEOUT} s"
+            trace.output({"exit_code": code, "output": output})
+            return code, output
 
     def session(self, checkpoint) -> ContreeSession:
         return ContreeSession(checkpoint)

@@ -20,3 +20,7 @@ PRICES = {LIGHTNING: (0.06, 0.24), SUPER: (0.30, 0.90), ULTRA: (1.0, 3.0)}
 AGENT_STEPS = 15
 AGENT_SECONDS = 120
 AGENT_TOKENS = 150_000
+
+# Seconds for one sandbox run (the check, the rewrite proof, the repo tests). The slowest normal run in ticket 33 took 159 s:
+# this repo's own test suite in ConTree.
+SANDBOX_TIMEOUT = 600
