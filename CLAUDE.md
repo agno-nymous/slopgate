@@ -45,11 +45,11 @@ The live tests are marked `live` and are off by default (`addopts` in `pyproject
 | File | What it does |
 |---|---|
 | `slopgate/cli.py` | Command-line entry: `review`, `index`, `hook`. Imports are lazy, so `slopgate --help` takes 0.03 s. |
-| `slopgate/review.py` | The gate: find candidates, write characterization tests, rewrite, prove in the sandbox. All model prompts of the gate are here. |
+| `slopgate/review.py` | The gate: find candidates, write characterization tests with an agent loop in a sandbox session (`characterize`, ticket 41), rewrite, prove in the sandbox. All model prompts of the gate are here. |
 | `slopgate/kinds.py` | The slop kinds: `classify` (Ruff, vulture, and the `flattenable` and `repeated_checks` AST checks; no model call), the fix texts, and `leftover` (the check that a rewrite removes the slop). |
 | `slopgate/github.py` | Posts the review, the follow-up pull request, and the summary. |
-| `slopgate/sandbox.py` | `Local` (temporary folder) and `Contree` (Nebius sandbox). Each run starts from one checkpoint. |
-| `slopgate/llm.py` | Token Factory client: `complete` (text), `decide` (forced tool call, returns a pydantic object), and `yes_probability` (one-token yes/no with logprobs). |
+| `slopgate/sandbox.py` | `Local` (temporary folder) and `Contree` (Nebius sandbox). Each run starts from one checkpoint. `session(checkpoint)` gives the test agent a session that keeps files between commands. |
+| `slopgate/llm.py` | Token Factory client: `complete` (text), `decide` (forced tool call, returns a pydantic object), `step` (one call of the test agent's tool loop), and `yes_probability` (one-token yes/no with logprobs). |
 | `slopgate/embed.py` | CodeRankEmbed embeddings for the hook only. Compiles to int8 ONNX in `~/.cache/slopgate/`. |
 | `slopgate/index.py` | Function index of a commit, in `.slopgate/<sha>.json`, and keyword search over it. |
 | `slopgate/live.py` | The hook. Its store is `.slopgate/live.db` (SQLite). |
@@ -59,12 +59,13 @@ The live tests are marked `live` and are off by default (`addopts` in `pyproject
 
 ## Model rules
 
-- Lightning (`nvidia/Nemotron-3_5-Lightning`), Super (`nvidia/nemotron-3-super-120b-a12b`), and Ultra (`nvidia/Nemotron-3-Ultra-550b-a55b`) are all thinking models. Super writes tests and rewrites. Ultra does the rewrite retry and the summary. Lightning runs only the hook's yes/no check. The static checks (Ruff, vulture, `flattenable`, and `repeated_checks`) find all slop kinds of the gate except `duplicate`, which Super decides. They call no model.
+- Lightning (`nvidia/Nemotron-3_5-Lightning`), Super (`nvidia/nemotron-3-super-120b-a12b`), and Ultra (`nvidia/Nemotron-3-Ultra-550b-a55b`) are all thinking models. Super runs the test agent and writes rewrites. Ultra does the rewrite retry and the summary. Lightning runs only the hook's yes/no check. The static checks (Ruff, vulture, `flattenable`, and `repeated_checks`) find all slop kinds of the gate except `duplicate`, which Super decides. They call no model.
 - **Turn thinking off on every request:** `extra_body={"chat_template_kwargs": {"enable_thinking": False}}`. With thinking on, a complex request can spend the whole output limit on reasoning and return an empty or cut-off reply (`finish_reason: "length"`). A forced tool call does not turn thinking off by itself.
 - `complete` sends `max_tokens=32768` (`MAX_OUTPUT_TOKENS`). The server default is 8,192 output tokens, and one long test file passed it on PR #17.
 - **Code comes back as one ```` ```python ```` block in markdown. Never ask for code inside JSON or inside tool-call arguments.** In the fair run on 2026-10-06 (equal prompts, thinking off, 54 replies each), markdown proved 45 and a forced tool call proved 41, with 3 broken files from wrong bracket types (ticket 20).
+- **Exception: the characterization test agent** (`characterize`, ticket 41). Super gets one `execute` tool in a sandbox session and writes the test file with a heredoc. It can run the code, read files, and see the failures and the missed branches. On 36 functions (2026-10-10), it proved 24 and the old markdown flow proved 7. 2 of 80 heredoc writes were broken. A plain tool loop proved more than Deep Agents (19), so the gate uses no agent framework.
 - **Decisions** (a kind, a verdict, a reason) come back as a forced tool call whose parameters are a pydantic model (`decide`, ticket 18). The chat template shows each `Field(description=...)` to the model, so the descriptions act as instructions. Put the reason field before the verdict field. Do not use `response_format` with a JSON schema: the server enforces the shape there, but the model does not see the descriptions.
-- Never offer "cannot do it" as an optional tool next to a text reply. Models choose the optional tool too often (12 of 12 false refusals in one test). Use a text line such as `CANNOT_TEST: <reason>` instead.
+- Never offer "cannot do it" as an optional tool next to a text reply. Models choose the optional tool too often (12 of 12 false refusals in one test). Use a text line such as `CANNOT_TEST: <reason>` instead (the tests prompt used this line until ticket 41).
 - A schema makes the shape of a reply certain, not its content. The sandbox proof stays the check for content.
 - Frameworks were measured and rejected: DSPy (Super writes its field markers wrong, and DSPy then falls back to JSON without telling you) and Pydantic AI mixed outputs (the over-calling problem above).
 

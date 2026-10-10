@@ -98,7 +98,7 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
 
 These were measured from 2026-10-04 to 2026-10-06. Do not reopen them without new data. `CLAUDE.md` ("Model rules") and tickets 18 to 21 hold the evidence.
 
-- Code replies (tests, rewrites) come back as one ```` ```python ```` block in markdown. Never put code in JSON or in tool-call arguments.
+- Code replies (rewrites) come back as one ```` ```python ```` block in markdown. Never put code in JSON or in tool-call arguments. The one exception is the characterization test agent (ticket 41): it writes the test file with `execute` and a heredoc in a sandbox session.
 - Decisions (slop kinds, the duplicate verdict) come back as a forced tool call with a pydantic model, with the reason field before the verdict.
 - Every model request sends `chat_template_kwargs: {"enable_thinking": False}`.
 - No DSPy, no Pydantic AI, no instructor.
