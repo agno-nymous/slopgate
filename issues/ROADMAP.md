@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**23 — Log the time of each gate step.** It adds the `Slowest:` line to the pull request comment. Ticket 34 is done: each rejection with pytest output now starts with one plain sentence, and the output is in a code block.
+**23 — Log the time of each gate step.** It adds the `Slowest:` line to the pull request comment. Ticket 34 is done: each function with slop and no rewrite gets an inline note, and the review comment shows no failed attempts. Ticket 46 must be done before the Slopgate workflow is on again.
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -26,7 +26,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 12 | [29 — Keep the passing characterization tests](29-keep-passing-characterization-tests.md) | wontfix | 20 | Replaced by ticket 41: the agent fixes or removes a failing test itself. |
 | 13 | [31 — Retry once for missed branches, with 3 attempts in total](31-retry-missed-branches.md) | wontfix | 29 | Replaced by ticket 41: the agent sees the missed branches and adds tests. |
 | 14 | [33 — Add a time limit to each sandbox run](33-sandbox-time-limit.md) | done | — | A model-written call such as `input()` blocks the gate with no end. |
-| 15 | [34 — Readable rejection reasons in the review comment](34-readable-rejection-reasons.md) | done | — | The raw pytest output on PR #20 looked like a crash of the gate. |
+| 15 | [34 — Report the slop of each function without a rewrite, and no raw failures in the review comment](34-readable-rejection-reasons.md) | done | — | The raw pytest output on PR #20 looked like a crash of the gate. |
 | 16 | [19 — Several slop kinds per function](19-several-slop-kinds-per-function.md) | done | 18, 21, 36 | Fixes all problems of a function in one suggestion. Built in ticket 36, stage 2. |
 | 17 | [23 — Log the time of each gate step](23-log-time-per-gate-step.md) | ready-for-agent | — | Reduced on 2026-10-08 to the `Slowest:` line in the pull request comment. The Phoenix spans of ticket 32 give the time of each step. |
 | 18 | [24 — Save the embedding model cache on main](24-model-cache-on-main.md) | wontfix | — | Ticket 28 removes the embedding model from the gate. |
@@ -50,6 +50,7 @@ Added after the order was set:
 | [43 — The gate cannot prove a `redundant_check` rewrite](43-dead-branch-of-redundant-check.md) | ready-for-agent | Found by ticket 39. The never-run branch of a repeated check fails the branch coverage rule. |
 | [44 — The import line is wrong for a repo with a `src/` layout](44-src-layout-import-line.md) | ready-for-agent | Found by ticket 41. All 6 pytest functions failed in every design. |
 | [45 — The test agent cannot characterize large functions](45-characterize-large-functions.md) | ready-for-agent | Found by ticket 41. The agent proved no function of complexity 17 or more; `review` (complexity 65) stopped at the token limit. |
+| [46 — Find the changed functions from the merge-base, not from the base tip](46-diff-from-merge-base.md) | ready-for-agent | Found by the code review of ticket 34. An inline comment on a line outside the pull request diff makes GitHub reject the whole review. Do it before the Slopgate workflow is on again. |
 
 Tickets 01 to 07, 12 to 22, 26, 28, 32, 33, 34, 36, 37, 39, and 41 are done. Tickets 24, 29, 30, 31, and 35 are wontfix.
 
