@@ -8,7 +8,7 @@ import pytest
 from openai import OpenAI
 from test_duplicates import SLUGIFY
 from test_hook import SLUG_COPY, UNIQUE, indexed, write
-from test_review import FLAT, KINDS_SOURCE, NO_LINES, NESTED, SIMPLE, TESTS, fenced, review
+from test_review import FLAT, NESTED, SIMPLE, TESTS, fenced, review
 from test_wrappers import APPLY_DISCOUNT
 
 from slopgate import config, embed, live, llm
@@ -56,8 +56,6 @@ def test_nested_fixture_gives_same_json_in_contree_and_local(make_repo, fake_llm
         {"app/perms.py": NESTED + "\n\n" + SIMPLE},
     )
     fake_llm.replies += 2 * [
-        NO_LINES,
-        NO_LINES,
         "```python\n" + TESTS.format(name="can_edit", call="can_edit") + "```",
         "Here is the rewrite:\n```python\n" + FLAT + "```",
     ]
@@ -72,7 +70,7 @@ def test_nested_fixture_gives_same_json_in_contree_and_local(make_repo, fake_llm
 @pytest.mark.parametrize("manifest", [{"pyproject.toml": PYPROJECT}, {"requirements.txt": "attrs\n"}], ids=["pyproject", "requirements"])
 def test_detected_install_provides_dependency(make_repo, fake_llm, capsys, manifest):
     repo = make_repo({"app/__init__.py": "", **manifest}, {"app/perms.py": "import attrs\n\n\n" + NESTED})
-    fake_llm.replies += [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
 
     result = review(capsys, repo, "contree")
 
@@ -176,14 +174,6 @@ def test_classify_finds_no_kind_in_the_pr_20_test_functions():
 
     assert len(found) == 12
     assert found == dict.fromkeys(found, {}), found
-
-
-def test_classify_finds_filler_comments_in_clamp_all():
-    [function] = [f for f in parse("app/perms.py", KINDS_SOURCE) if f.qualname == "clamp_all"]
-
-    kinds = classify(function, KINDS_SOURCE)
-
-    assert "filler_comment" in kinds, kinds
 
 
 def test_int8_model_matches_torch():

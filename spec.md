@@ -11,7 +11,6 @@ Coding agents now write a large share of pull requests. People cannot review the
 - deep nesting where guard clauses would do
 - redundant checks and `try/except` blocks that swallow errors
 - one-use wrapper functions
-- filler comments that restate the code
 - long `if/else` chains where a lookup table would do
 - new functions that re-implement a helper that already exists in the repo
 
@@ -108,7 +107,7 @@ The `--dry-run` JSON has three parts: `suggestions` (GitHub review comment paylo
 - **Index.** Stores per function: the function record and the structure hash. The gate searches it by token Jaccard. The index stores no vectors. The hook store of the live flag holds the CodeRankEmbed vectors. The index is saved in a `.slopgate/` folder in the repo, which git ignores.
 - **Embedder.** CodeRankEmbed (`nomic-ai/CodeRankEmbed`, 137M parameters, MIT license) runs on the local CPU for the live flag only. The hook compiles the model once per machine to `~/.cache/slopgate/` as int8 ONNX.
 - **LLM client.** One function sends a prompt to a Token Factory model and returns text, with an optional JSON mode. Temperature 0. Every LLM call goes through it, so tests replace it with a fake.
-- **Triage.** A free static pass first: complexity at least 6, nesting more than 2, or a `vulture` dead-code hit. Then Nemotron Lightning names one slop kind or "none". The kinds are `nesting`, `redundant_check`, `swallowed_error`, `wrapper`, `lookup_table`, `filler_comment`, `dead`, and `duplicate`. Bad JSON or an unknown kind counts as "none".
+- **Triage.** Static checks find the kinds, with no model call. The kinds are `nesting`, `redundant_check`, `swallowed_error`, `wrapper`, `lookup_table`, `dead`, and `duplicate`. Ruff finds `swallowed_error`, `lookup_table`, and `dead`. Vulture also finds `dead`. `nesting` is a nesting depth of more than 2, with an `if` that a guard clause or a merged condition can make flat. `redundant_check` is an `if` whose condition an earlier check in the same function already decides (an AST check). The wrapper and duplicate searches find `wrapper` and `duplicate`.
 - **Duplicate search.** For each new module-level function: an exact structure-hash match needs no model call. Otherwise, keyword search (token Jaccard) over an index built at the base ref, with a score floor of 0.30 and the top 5 results. Nemotron Super then decides whether the candidate does the same job and states any behavior difference. The function itself and other changed functions are excluded.
 - **Proof.** For each candidate:
   1. Nemotron Super writes characterization tests. Each test file imports its target through exactly one import line.
@@ -135,7 +134,7 @@ The `--dry-run` JSON has three parts: `suggestions` (GitHub review comment paylo
 
 | Job | Model |
 |---|---|
-| Triage, summaries, default classifier | `nvidia/Nemotron-3_5-Lightning` |
+| Hook yes/no duplicate check | `nvidia/Nemotron-3_5-Lightning` |
 | Characterization tests, rewrites, duplicate check | `nvidia/nemotron-3-super-120b-a12b` |
 | Retry and review summary | `nvidia/Nemotron-3-Ultra-550b-a55b` |
 

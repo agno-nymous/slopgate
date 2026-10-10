@@ -1,9 +1,10 @@
 import ast
+from collections import Counter
 
 import pytest
 
 from bench.detect import Item, accept, from_reply, function, measured, splice
-from bench.score import MEASURED, outcomes, score
+from bench.score import compare, outcomes, score, split
 from bench.transforms import after_return, negate, transform, unused_local
 from slopgate import kinds
 from slopgate.functions import parse
@@ -55,15 +56,6 @@ class Shirt:
         return SIZES.get(self.label, 0)
 '''
 
-FILLER = '''\
-def report(rows):
-    total = 0
-    for row in rows:
-        total += row.value
-    print(total)
-    return total
-'''
-
 SCALE = '''\
 def scale(value, factor):
     result = value * factor
@@ -82,10 +74,9 @@ def injected(kind: str, text: str, qualname: str, new: str | None = None) -> Ite
     item = accept(source, text, new, [kind], "transform")
     assert item is not None
     assert item.changed_lines
-    if kind in MEASURED:
-        before = measured(source.path, source.start, source.source, text)
-        after = kinds.measured(function(source, item.source), splice(source, item.source, text))
-        assert after - before == {kind}
+    before = measured(source.path, source.start, source.source, text)
+    after = kinds.measured(function(source, item.source), splice(source, item.source, text))
+    assert after.keys() - before == {kind}
     return item
 
 
@@ -114,20 +105,10 @@ def test_indenting_keeps_multiline_strings():
     assert '    try:\n        sql = """\nSELECT 1\n"""\n' in item.source
 
 
-def test_redundant_check_inserts_a_grounded_check():
+def test_redundant_check_inserts_a_check_that_repeats_the_guard():
     item = injected("redundant_check", REDUNDANT, "total")
     assert item.changed_lines == ["if prices is not None:"]
-    assert kinds.grounded_line("redundant_check", item.changed_lines[0], item.source)
-
-
-def test_filler_comments_restate_the_next_line():
-    item = injected("filler_comment", FILLER, "report")
-    assert item.changed_lines == ["# set total", "# loop over rows", "# update total"]
-    assert all(kinds.grounded_line("filler_comment", line, item.source) for line in item.changed_lines)
-
-
-def test_filler_skips_a_function_with_a_comment():
-    assert transform("filler_comment", "def f(rows):\n    # why\n    total = 0\n    total += 1\n    return total\n", "") is None
+    assert kinds.repeated_checks(item.source) == ["if prices is not None:"]
 
 
 NOT_GUARD = '''\
@@ -194,7 +175,7 @@ def make(item_id: str, origin: str, injected_kinds=(), source_id=None) -> Item:
     return Item(item_id, "r", "c", "m.py", item_id, 1, 2, "", origin, source_id, list(injected_kinds))
 
 
-MEASURE = {"seconds": 1.0, "input_tokens": 10, "output_tokens": 2}
+MEASURE = {"seconds": 1.0}
 
 
 def test_score_counts_tp_fp_fn_and_unlabelled():
@@ -204,14 +185,14 @@ def test_score_counts_tp_fp_fn_and_unlabelled():
         "c1": [{"kinds": {"swallowed_error": [], "nesting": []}} | MEASURE],
         "c2": [{"kinds": {"dead": []}} | MEASURE, {"error": "boom"} | MEASURE],
         "s1": [{"kinds": {}} | MEASURE],
-        "t1": [{"kinds": {"filler_comment": ["# x"]}} | MEASURE],
+        "t1": [{"kinds": {"redundant_check": ["if x:"]}} | MEASURE],
     }
 
     report = score(items, runs, {"labels": labels, "injections": {}})
 
-    assert report["groups"]["all"]["total"] == {"items": 2, "tp": 1, "fp": 1, "fn": 1, "precision": 0.5, "recall": 0.5}
+    assert report["groups"]["all"]["total"] == {"items": 2, "tp": 1, "fp": 2, "fn": 1, "precision": 0.333, "recall": 0.5}
     assert report["groups"]["transform"]["dead"] == {"items": 1, "tp": 0, "fp": 0, "fn": 1, "precision": None, "recall": 0.0}
-    assert report["unlabelled"] == [{"id": "c2", "kind": "dead", "runs": 1}, {"id": "t1", "kind": "filler_comment", "runs": 1}]
+    assert report["unlabelled"] == [{"id": "c2", "kind": "dead", "runs": 1}]
     assert report["clean"]["fp_rate"]["total"] == 0.5
     assert report["clean"]["any_kind_rate"] == 1.0
     assert report["errors"] == [{"id": "c2", "error": "boom"}]
@@ -219,18 +200,26 @@ def test_score_counts_tp_fp_fn_and_unlabelled():
 
 
 def test_injected_item_scores_only_what_its_source_does_not():
-    item = make("t1", "transform", ["redundant_check"], "s1")
-    labels = {"s1": {"filler_comment": {"decision": "false_positive"}, "nesting": {"decision": "slop"}}}
-    run = {"kinds": {"redundant_check": ["if x:"], "filler_comment": ["# x"], "nesting": [], "dead": []}}
+    item = make("t1", "transform", ["swallowed_error"], "s1")
+    labels = {"s1": {"redundant_check": {"decision": "false_positive"}, "nesting": {"decision": "slop"}}}
+    run = {"kinds": {"swallowed_error": [], "redundant_check": ["if x:"], "nesting": [], "dead": []}}
 
-    assert sorted(outcomes(item, run, labels)) == [("dead", "fp"), ("redundant_check", "tp")]
-    assert outcomes(item, {"kinds": {}}, labels) == [("redundant_check", "fn")]
+    assert sorted(outcomes(item, run, labels, {})) == [("dead", "fp"), ("swallowed_error", "tp")]
+    assert outcomes(item, {"kinds": {}}, labels, {}) == [("swallowed_error", "fn")]
 
 
-def test_unknown_llm_kind_on_an_injected_item_is_unlabelled():
+def test_new_kind_on_an_injected_item_is_a_false_positive():
     item = make("t2", "transform", ["dead"], "s2")
 
-    assert sorted(outcomes(item, {"kinds": {"filler_comment": ["# y"], "dead": []}}, {})) == [("dead", "tp"), ("filler_comment", "unlabelled")]
+    assert sorted(outcomes(item, {"kinds": {"redundant_check": ["if y:"], "dead": []}}, {}, {})) == [("dead", "tp"), ("redundant_check", "fp")]
+
+
+def test_kind_found_on_the_source_is_scored_on_the_source_only():
+    item = make("t3", "transform", ["dead"], "s3")
+    run = {"kinds": {"redundant_check": ["if y:"], "nesting": [], "dead": []}}
+    runs = {"s3": [{"kinds": {}}, {"kinds": {"redundant_check": ["if y:"]}}], "s4": [{"kinds": {"nesting": []}}]}
+
+    assert sorted(outcomes(item, run, {}, runs)) == [("dead", "tp"), ("nesting", "fp")]
 
 
 def test_invalid_nemotron_items_leave_the_scoring():
@@ -245,6 +234,91 @@ def test_invalid_nemotron_items_leave_the_scoring():
     assert report["counts"]["origin"] == {"nemotron": 1}
     with pytest.raises(SystemExit, match="n2"):
         score(items, runs, {"labels": {}, "injections": {"n1": injections["n1"]}})
+
+
+def test_score_ignores_the_removed_filler_comment_kind():
+    items = [
+        make("c1", "clean"),
+        make("s1", "source"),
+        make("t1", "transform", ["filler_comment"], "s1"),
+        make("t2", "transform", ["dead", "filler_comment"], "s1"),
+    ]
+    labels = {"c1": {"filler_comment": {"decision": "slop"}}, "s1": {"filler_comment": {"decision": "false_positive"}}}
+    runs = {
+        "c1": [{"kinds": {"filler_comment": ["# x"]}} | MEASURE],
+        "s1": [{"kinds": {"filler_comment": ["# x"]}} | MEASURE],
+        "t1": [{"kinds": {"filler_comment": ["# x"]}} | MEASURE],
+        "t2": [{"kinds": {"dead": [], "filler_comment": ["# x"]}} | MEASURE],
+    }
+
+    report = score(items, runs, {"labels": labels, "injections": {}})
+
+    assert "filler_comment" not in report["groups"]["all"]
+    assert report["groups"]["all"]["total"] == {"items": 1, "tp": 1, "fp": 0, "fn": 0, "precision": 1.0, "recall": 1.0}
+    assert report["groups"]["two_kinds"]["total"]["items"] == 0
+    assert report["unlabelled"] == [] and report["false_positives"] == []
+    assert report["clean"]["any_kind_rate"] == 0.0
+    assert report["counts"]["origin"] == {"clean": 1, "source": 1, "transform": 1}
+
+
+def functions(count: int) -> list[Item]:
+    sources = [make(f"s{n}", "source") for n in range(count)]
+    return sources + [make(f"t{n}", "transform", ["dead"], f"s{n}") for n in range(count)] + [make(f"c{n}", "clean") for n in range(count)]
+
+
+def test_split_keeps_each_function_in_one_set_and_is_deterministic():
+    items = functions(10)
+
+    sets = split(items)
+
+    assert all(sets[f"t{n}"] == sets[f"s{n}"] for n in range(10))
+    assert split(items[::-1]) == sets
+    assert Counter(sets[i.id] for i in items if i.source_id is None) == {"tuning": 12, "held_out": 8}
+
+
+def test_compare_finds_a_clear_improvement_and_no_change_between_equal_runs():
+    items = functions(20)
+    labels = {f"c{n}": {"nesting": {"decision": "false_positive"}} for n in range(20)}
+    review = {"labels": labels, "injections": {}}
+    # the gate before finds the injected kind in half of the items and flags half of the clean functions
+    base = {f"t{n}": [{"kinds": {"dead": []} if n % 2 else {}}] for n in range(20)} | {f"c{n}": [{"kinds": {"nesting": []} if n % 2 else {}}] for n in range(20)}
+    new = {f"t{n}": [{"kinds": {"dead": []}}] for n in range(20)} | {f"c{n}": [{"kinds": {}}] for n in range(20)}
+
+    better = compare(items, review, base, new)
+    same = compare(items, review, base, base)
+
+    assert better["dead"]["recall"]["base"]["value"] == 0.5 and better["dead"]["recall"]["new"]["value"] == 1.0
+    assert better["dead"]["recall"]["difference"]["low"] > 0
+    assert better["nesting"]["fp_rate"]["difference"]["high"] < 0
+    assert better["total"]["fp_rate"]["new"] == {"value": 0.0, "low": 0.0, "high": 0.0}
+    differences = [entry["difference"] for kind in same.values() for entry in kind.values() if entry["difference"]["value"] is not None]
+    assert differences and all(d["value"] == d["low"] == d["high"] == 0 for d in differences)
+
+
+def test_compare_resamples_a_source_and_its_injected_items_together():
+    items = [make("s1", "source"), make("t1", "transform", ["dead"], "s1"), make("c2", "clean")]
+    review = {"labels": {"s1": {"nesting": {"decision": "slop"}}}, "injections": {}}
+    runs = {"s1": [{"kinds": {"nesting": []}}], "t1": [{"kinds": {}}], "c2": [{"kinds": {}}]}
+
+    recall = compare(items, review, runs, runs)["total"]["recall"]["base"]
+
+    # by item, a draw could hold s1 without t1 (recall 1.0) or t1 without s1 (0.0); by function, s1 and t1 always come as a pair
+    assert (recall["value"], recall["low"], recall["high"]) == (0.5, 0.5, 0.5)
+    assert 600 < recall["resamples"] < 900
+
+
+def test_compare_scores_both_arms_against_the_same_source_flags():
+    items = [make("s1", "source"), make("t1", "transform", ["dead"], "s1")]
+    review = {"labels": {}, "injections": {}}
+    flagged = [{"kinds": {"dead": [], "nesting": []}}]
+    # only the base arm flags nesting on the unlabelled source; both arms flag it on the injected item
+    base = {"s1": [{"kinds": {"nesting": []}}], "t1": flagged}
+    new = {"s1": [{"kinds": {}}], "t1": flagged}
+
+    precision = compare(items, review, base, new)["total"]["precision"]
+
+    assert precision["base"]["value"] == precision["new"]["value"] == 1.0
+    assert precision["difference"]["value"] == 0
 
 
 METHOD = Item("r:m.py:Store.get", "r", "c", "m.py", "Store.get", 2, 4, "    def get(self, key):\n        value = self.data[key]\n        return value\n", "source")

@@ -174,10 +174,10 @@ def test_traced_review_matches_untraced_review(make_repo, fake_llm, capsys, monk
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import SimpleSpanProcessor
     from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-    from test_review import FLAT, NO_LINES, NESTED, TESTS, fenced, review
+    from test_review import FLAT, NESTED, TESTS, fenced, review
 
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
-    replies = [NO_LINES, fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+    replies = [fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
     fake_llm.replies += replies
     untraced = review(capsys, repo)
     exporter = InMemorySpanExporter()

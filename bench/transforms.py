@@ -3,7 +3,6 @@ import re
 import textwrap
 import zlib
 
-from slopgate import kinds
 from slopgate.config import NESTING
 from slopgate.functions import nesting
 
@@ -151,42 +150,6 @@ def lookup(code: str, text: str) -> str | None:
     return None
 
 
-def restate(node) -> str | None:
-    match node:
-        case ast.Return(value=ast.Name(id=name)):
-            return f"return the {name}"
-        case ast.Return(value=value) if value is not None:
-            return "return the result"
-        case ast.For(iter=ast.Name(id=name)):
-            return f"loop over {name}"
-        case ast.For():
-            return "loop over the items"
-        case ast.Expr(value=ast.Call(func=ast.Name(id=name) | ast.Attribute(attr=name))):
-            return f"call {name}"
-        case ast.Assign(targets=[ast.Name(id=name)]):
-            return f"set {name}"
-        case ast.AugAssign(target=ast.Name(id=name)):
-            return f"update {name}"
-    return None
-
-
-def filler(code: str, text: str) -> str | None:
-    if kinds.comments(code):
-        return None
-    lines = code.splitlines(keepends=True)
-    notes = {}
-    for node in ast.walk(ast.parse(code).body[0]):
-        line = lines[node.lineno - 1] if isinstance(node, ast.stmt) else ""
-        if line and len(line) - len(line.lstrip()) == node.col_offset and (note := restate(node)):
-            notes.setdefault(node.lineno, f"{' ' * node.col_offset}# {note}\n")
-    picked = sorted(notes.items())[:3]
-    if len(picked) < 2:
-        return None
-    for lineno, comment in reversed(picked):
-        lines.insert(lineno - 1, comment)
-    return "".join(lines)
-
-
 def unused_local(code: str, text: str) -> str | None:
     node = ast.parse(code).body[0]
     params = [a.arg for a in (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs) if a.arg not in ("self", "cls")]
@@ -219,7 +182,6 @@ TRANSFORMS = {
     "redundant_check": redundant,
     "swallowed_error": swallowed,
     "lookup_table": lookup,
-    "filler_comment": filler,
     "dead": dead,
 }
 
