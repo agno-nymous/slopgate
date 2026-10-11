@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**08 — Live duplicate flag at plan time.** Ticket 46 is done, so the Slopgate workflow can be on again when the user says so. Tickets 42 and 48 come before ticket 10.
+**49 — Find the gate's errors in the Phoenix traces, and fix the harness.** On 2026-10-11 the user set the pull request gate first: fix its errors before the live flag. Ticket 49 counts the causes of the wrong results. Its counts can change the order of rows 21 to 26.
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -31,28 +31,29 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 17 | [23 — Log the time of each gate step](23-log-time-per-gate-step.md) | wontfix | — | Reduced on 2026-10-08 to the `Slowest:` line in the pull request comment. The Phoenix spans of ticket 32 give the time of each step. |
 | 18 | [24 — Save the embedding model cache on main](24-model-cache-on-main.md) | wontfix | — | Ticket 28 removes the embedding model from the gate. |
 | 19 | [25 — Faster proof](25-faster-proof.md) | done | 32 | Needs the step times from one traced review first. |
-| 20 | [08 — Live duplicate flag at plan time](08-live-flag-plan-time.md) | ready-for-agent | 07 (done) | The second half of the live flag in the spec. Ticket 11 needs it. |
-| 21 | [10 — Benchmark on SWE-bench with injected slop](10-benchmark.md) | ready-for-agent | 37, 41 | Stage 2: the full gate. The results go into the submission. Ticket 11 needs it. |
-| 22 | [09 — Jev classifier backend and comparison](09-jev-backend-and-comparison.md) | ready-for-agent | 07 (done) | Lowest priority. Skip it if time runs short. |
-| 23 | [11 — Hackathon submission package](11-submission-package.md) | ready-for-agent | 06, 08, 10 | Last. It describes the finished project. Before the repo is public, set the Slopgate workflow back to `ubuntu-latest` (ticket 27). |
+| 20 | [49 — Find the gate's errors in the Phoenix traces, and fix the harness](49-trace-review-harness-fixes.md) | ready-for-agent | — | The user set it first on 2026-10-11. The traces show the most frequent causes of wrong results, so the next fixes go where they help most. |
+| 21 | [48 — Compare the repo suite with a baseline run of the original code](48-repo-suite-baseline.md) | ready-for-agent | — | A repo test that fails on the original code rejects every rewrite: 2 of 8 sympy rewrites in the ticket 38 run. |
+| 22 | [44 — The import line is wrong for a repo with a `src/` layout](44-src-layout-import-line.md) | ready-for-agent | — | All 6 pytest functions failed in every design of ticket 41. |
+| 23 | [43 — The gate cannot prove a `redundant_check` rewrite](43-dead-branch-of-redundant-check.md) | ready-for-agent | 39 (done) | No rewrite of this kind can pass the branch coverage rule. |
+| 24 | [45 — The test agent cannot characterize large functions](45-characterize-large-functions.md) | ready-for-agent | 41 (done) | The agent proved no function of complexity 17 or more, and it can spend 150,000 tokens first. |
+| 25 | [40 — Limit the output tokens of `decide`](40-limit-decide-output.md) | ready-for-agent | — | 5 of 1,407 runs took 60 s to 110 s. Speed only. |
+| 26 | [47 — `parse` splits lines on a form feed, so later functions get the wrong source](47-parse-splits-on-form-feed.md) | ready-for-agent | — | Not seen in the 12 SWE-bench Lite repos. |
+| 27 | [27 — Run the gate automatically on a self-hosted runner](27-gate-on-self-hosted-runner.md) | needs-live-check | 26 (done) | Turn the Slopgate workflow on again only when the user says so. Then do the live check on a real pull request. It also checks ticket 46 on GitHub. |
+| 28 | [42 — Benchmark statistics: label agreement, run metadata, and pass@k](42-benchmark-statistics.md) | ready-for-agent | 37 (done) | Do it before ticket 10. |
+| 29 | [10 — Benchmark on SWE-bench with injected slop](10-benchmark.md) | ready-for-agent | 37, 41 | Stage 2: the full gate. The results go into the submission. Ticket 11 needs it. |
+| 30 | [08 — Live duplicate flag at plan time](08-live-flag-plan-time.md) | ready-for-agent | 07 (done) | Moved after the gate work on 2026-10-11. Ticket 11 needs it, or the submission leaves it out. |
+| 31 | [09 — Jev classifier backend and comparison](09-jev-backend-and-comparison.md) | ready-for-agent | 07 (done) | Lowest priority. Skip it if time runs short. |
+| 32 | [11 — Hackathon submission package](11-submission-package.md) | ready-for-agent | 06, 08, 10 | Last. It describes the finished project. Before the repo is public, set the Slopgate workflow back to `ubuntu-latest` (ticket 27). |
 
 Added after the order was set:
 
 | Ticket | Status | Note |
 |---|---|---|
 | [26 — Review a pull request on the local machine](26-review-a-pr-locally.md) | done | Adds `slopgate review --pr <number>`. |
-| [27 — Run the gate automatically on a self-hosted runner](27-gate-on-self-hosted-runner.md) | needs-live-check | The workflow runs on the user's Mac. It needs the runner to be registered. |
 | [38 — A comment at column 0 inside a method crashes `classify`](38-column-zero-comment-crash.md) | done | Found by ticket 37. Also fixes two more `index.build` crashes: a backslash continuation into a comment, and a file that is not UTF-8. |
 | [39 — Design: better detection for `redundant_check` and `nesting`; remove `filler_comment`](39-detection-precision.md) | done | Found by ticket 37. On the held-out set, the false-kind rate on clean function runs fell from 0.117 to 0.013. |
-| [40 — Limit the output tokens of `decide`](40-limit-decide-output.md) | ready-for-agent | Found by ticket 37. 5 of 1,407 `classify` runs took 60 s to 110 s. Since ticket 39, `classify` makes no model call; the limit still applies to the duplicate verdict. |
-| [42 — Benchmark statistics: label agreement, run metadata, and pass@k](42-benchmark-statistics.md) | ready-for-agent | The user set it on 2026-10-10. Do it before ticket 10. Ticket 39 does the other 3 checks of the evals guide (held-out set, ranges, errors apart). |
 | [41 — Characterization tests by an agent in a ConTree sandbox](41-characterization-agent-in-contree.md) | done | A plain tool loop (design D) proved 24 of 36 functions; the old flow proved 7. `characterize` uses it now. Tickets 29, 30, 31, and 35 are wontfix. |
-| [43 — The gate cannot prove a `redundant_check` rewrite](43-dead-branch-of-redundant-check.md) | ready-for-agent | Found by ticket 39. The never-run branch of a repeated check fails the branch coverage rule. |
-| [44 — The import line is wrong for a repo with a `src/` layout](44-src-layout-import-line.md) | ready-for-agent | Found by ticket 41. All 6 pytest functions failed in every design. |
-| [45 — The test agent cannot characterize large functions](45-characterize-large-functions.md) | ready-for-agent | Found by ticket 41. The agent proved no function of complexity 17 or more; `review` (complexity 65) stopped at the token limit. |
 | [46 — Find the changed functions from the merge-base, not from the base tip](46-diff-from-merge-base.md) | done | Found by the code review of ticket 34. An inline comment on a line outside the pull request diff makes GitHub reject the whole review. Do it before the Slopgate workflow is on again. |
-| [47 — `parse` splits lines on a form feed, so later functions get the wrong source](47-parse-splits-on-form-feed.md) | ready-for-agent | Found by the code review of ticket 38. Not seen in the 12 SWE-bench Lite repos. |
-| [48 — Compare the repo suite with a baseline run of the original code](48-repo-suite-baseline.md) | ready-for-agent | Found by ticket 38. A repo test that fails on the original code rejects every rewrite: 2 of 8 sympy rewrites in the ticket 38 run. Do it before ticket 10. |
 
 Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, and 46 are done. Tickets 23, 24, 29, 30, 31, and 35 are wontfix.
 
