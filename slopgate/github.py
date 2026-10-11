@@ -76,18 +76,14 @@ def open_followup(repo, followups, pr, target, files) -> str:
 def summary(result, followup_line, seconds) -> str:
     try:
         with trace.span("gate.summary", prompt="SUMMARY_PROMPT"):
-            text = llm.complete(ULTRA, SUMMARY_PROMPT.format(results=json.dumps(result, indent=1)[:20000])).strip() + "\n\n"
+            text = llm.complete(ULTRA, SUMMARY_PROMPT.format(results=json.dumps({k: v for k, v in result.items() if k != "rejected"}, indent=1)[:20000])).strip() + "\n\n"
     except Exception:
         text = ""
-    rejected = result["rejected"]
     lines = [
-        f"Accepted: {plural(len(result['suggestions']), 'inline suggestion')}, {followup_line}. Rejected: {len(rejected)}."
-        + (f" Notes on test files: {len(result['notes'])}." if result["notes"] else ""),
+        f"Accepted: {plural(len(result['suggestions']), 'inline suggestion')}, {followup_line}."
+        + (f" Notes: {len(result['notes'])}." if result["notes"] else ""),
         f"{cost()} Time: {duration(seconds)}.",
     ]
-    if rejected:
-        reasons = "\n".join(f"- `{r['function']}` ({', '.join(r['kinds'])}) in {r['path']}: {r['reason']}" for r in rejected)
-        lines.append(f"<details><summary>Rejected</summary>\n\n{reasons}\n\n</details>")
     return text + "\n\n".join(lines)
 
 

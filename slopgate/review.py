@@ -543,15 +543,27 @@ def deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, t
     return {"function": function.qualname, "kinds": ["duplicate"], "reason": reason, "files": files}, None
 
 
-def note(function, kinds, line, match, patterns) -> dict:
+TEST_FILE = "Slopgate does not change test files."
+REJECTED = "Slopgate could not prove a rewrite of this function, so it changed nothing."
+NO_ENVIRONMENT = "Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing."
+
+
+def note(function, kinds, added, found, patterns, why) -> dict:
+    kinds = list(kinds)
     if kinds == ["duplicate"]:
-        helper = match["helper"]
+        helper = found["helper"]
         fix = "Consider one parametrized test." if is_test_file(helper["path"], patterns) else "Call it instead."
         finding = f"`{function.qualname}` does the same job as `{helper['qualname']}` in {helper['path']}. {fix}"
+    elif kinds == ["wrapper"]:
+        finding = f"`{function.qualname}` only forwards to `{found['inner']}`. Inline it into its single caller."
     else:
         finding = f"`{function.qualname}`: " + " ".join(KINDS[kind] for kind in kinds)
-    body = f"{', '.join(f'**{kind}**' for kind in kinds)} (not proven): {finding} Not proven: Slopgate does not change test files."
-    return {"path": function.path, "function": function.qualname, "kinds": kinds, "line": line, "body": body}
+    body = f"{', '.join(f'**{kind}**' for kind in kinds)} (not rewritten): {finding} {why}"
+    return {"path": function.path, "function": function.qualname, "kinds": kinds, "line": max(added), "body": body}
+
+
+def unproven(candidates, patterns, why) -> list:
+    return [note(function, kinds, added, found, patterns, why) for function, added, kinds, _, found in candidates]
 
 
 def review(repo, base, head, sandbox) -> dict:
@@ -560,7 +572,7 @@ def review(repo, base, head, sandbox) -> dict:
     names = diff.git(repo, "ls-tree", "--name-only", head).splitlines()
     patterns = pytest_patterns(lambda name: diff.git(repo, "show", f"{head}:{name}") if name in names else None)
     wrapped, plans = set(), {}
-    for function, _ in changed:
+    for function, added in changed:
         if "." not in function.qualname and not is_test_file(function.path, patterns):
             text = diff.git(repo, "show", f"{head}:{function.path}")
             node = next((n for n in ast.parse(text).body if isinstance(n, DEFS) and n.lineno == function.start), None)
@@ -570,6 +582,7 @@ def review(repo, base, head, sandbox) -> dict:
                 plan = removal(repo, head, function, text, node, inner)
                 if plan and plan["rule"]:
                     result["rejected"].append({"function": function.qualname, "path": function.path, "kinds": ["wrapper"], "reason": f"rule: {plan['rule']}"})
+                    result["notes"].append(note(function, ["wrapper"], added, plan, patterns, REJECTED))
                 elif plan:
                     plans[function] = plan
     matches = {}
@@ -589,12 +602,13 @@ def review(repo, base, head, sandbox) -> dict:
     for function, added in changed:
         text = diff.git(repo, "show", f"{head}:{function.path}")
         if function in plans:
-            kinds = {"wrapper": []}
+            kinds, found = {"wrapper": []}, plans[function]
         elif function in wrapped:
             continue
         elif matches.get(function):
-            kinds = {"duplicate": []}
+            kinds, found = {"duplicate": []}, matches[function]
         else:
+            found = None
             with trace.span("gate.classify", path=function.path, qualname=function.qualname):
                 try:
                     kinds = classify(function, text)
@@ -605,9 +619,9 @@ def review(repo, base, head, sandbox) -> dict:
         if not kinds:
             continue
         if is_test_file(function.path, patterns):
-            result["notes"].append(note(function, list(kinds), max(added), matches.get(function), patterns))
+            result["notes"].append(note(function, kinds, added, found, patterns, TEST_FILE))
         else:
-            candidates.append((function, added, kinds, text))
+            candidates.append((function, added, kinds, text, found))
     if not candidates:
         return result
     setup, test = commands(repo, head)
@@ -616,32 +630,32 @@ def review(repo, base, head, sandbox) -> dict:
             checkpoint = sandbox.prepare(repo, head, setup)
     except InstallError as error:
         result["rejected"].append({"reason": f"could not build test environment\n{error}"})
+        result["notes"] += unproven(candidates, patterns, NO_ENVIRONMENT)
         return result
     # ponytail: one trial at a time (well under the cap of 8); a thread pool of 8 when review time matters
-    for n, (function, added, kinds, text) in enumerate(candidates):
+    for n, (function, added, kinds, text, found) in enumerate(candidates):
         rejected = {"function": function.qualname, "path": function.path, "kinds": list(kinds)}
         before = {key: len(items) for key, items in result.items()}
         with trace.span("gate.function", path=function.path, qualname=function.qualname, slop_kinds=list(kinds)):
             try:
                 test_path = f"tests/test_slopgate_{n}.py"
                 cmd = f"python -m coverage run --branch -m pytest -q {test_path}"
-                match = matches.get(function)
-                plan = plans.get(function)
+                wrapper = "wrapper" in kinds
                 tests = None
-                if not (match and match["exact"]):
-                    target = plan["caller"] if plan else function
+                if wrapper or not (found and found["exact"]):
+                    target = found["caller"] if wrapper else function
                     with trace.span("gate.characterize"):
                         tests, failure = characterize(sandbox, checkpoint, target, test_path, cmd)
                         trace.output(failure or "passed")
                     if failure:
                         result["rejected"].append({**rejected, "reason": failure})
                         continue
-                if match or plan:
+                if found:
                     with trace.span("gate.proof", attempt=1):
-                        if plan:
-                            followup, failure = inline(sandbox, checkpoint, function, plan, tests, test, test_path, cmd)
+                        if wrapper:
+                            followup, failure = inline(sandbox, checkpoint, function, found, tests, test, test_path, cmd)
                         else:
-                            followup, failure = deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, test_path, cmd)
+                            followup, failure = deduplicate(repo, head, sandbox, checkpoint, function, found, tests, test, test_path, cmd)
                         trace.output(failure or "passed")
                     if failure:
                         result["rejected"].append({**rejected, "reason": failure})
@@ -711,4 +725,6 @@ def review(repo, base, head, sandbox) -> dict:
                 result["rejected"].append({**rejected, "reason": f"internal error: {error!r}"})
             finally:
                 trace.output({key: items[before[key]:] for key, items in result.items() if len(items) > before[key]})
+    failed = {(r["path"], r["function"]) for r in result["rejected"] if "function" in r}
+    result["notes"] += unproven([c for c in candidates if (c[0].path, c[0].qualname) in failed], patterns, REJECTED)
     return result

@@ -281,8 +281,8 @@ def test_copied_test_function_gets_a_duplicate_note(make_repo, fake_llm, capsys)
 
     assert fake_llm.calls == []
     body = (
-        "**duplicate** (not proven): `test_unique_write` does the same job as `test_non_python_change` in tests/test_hook.py. "
-        "Consider one parametrized test. Not proven: Slopgate does not change test files."
+        "**duplicate** (not rewritten): `test_unique_write` does the same job as `test_non_python_change` in tests/test_hook.py. "
+        "Consider one parametrized test. Slopgate does not change test files."
     )
     assert result == EMPTY | {"notes": [{"path": "tests/test_hook.py", "function": "test_unique_write", "kinds": ["duplicate"], "line": 8, "body": body}]}
 
@@ -294,8 +294,8 @@ def test_test_function_copying_a_production_function_says_to_call_it(make_repo, 
 
     assert fake_llm.calls == []
     body = (
-        "**duplicate** (not proven): `make_slug` does the same job as `slugify` in app/text.py. "
-        "Call it instead. Not proven: Slopgate does not change test files."
+        "**duplicate** (not rewritten): `make_slug` does the same job as `slugify` in app/text.py. "
+        "Call it instead. Slopgate does not change test files."
     )
     assert result == EMPTY | {"notes": [{"path": "tests/conftest.py", "function": "make_slug", "kinds": ["duplicate"], "line": 5, "body": body}]}
 
