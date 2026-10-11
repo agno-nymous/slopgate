@@ -63,7 +63,7 @@ def main(argv=None):
                     event = json.load(file)
         pr = event and f"{event['repository']['full_name']}#{event['pull_request']['number']}"
         session = pr or f"{os.path.basename(os.path.realpath(args.repo))}@{diff.git(args.repo, 'rev-parse', head).strip()[:12]}"
-        with trace.span("gate.review", session=session, input=f"{pr or args.repo} {base}..{head}", repo=args.repo, base=base, head=head, pr=pr, sandbox=args.sandbox):
+        with trace.span("gate.review", session=session, input=f"{pr or args.repo} {base}...{head}", repo=args.repo, base=base, head=head, pr=pr, sandbox=args.sandbox):
             result = review(args.repo, base, head, {"local": Local, "contree": Contree}[args.sandbox]())
             if not args.dry_run:
                 github.publish(args.repo, result, event, time.monotonic() - started)

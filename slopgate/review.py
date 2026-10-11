@@ -3,6 +3,7 @@ import json
 import math
 import re
 import shlex
+import subprocess
 import textwrap
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -708,7 +709,11 @@ def repo_suite(sandbox, checkpoint, test, accepted: list[Rewrite], threads) -> d
 
 def review(repo, base, head, sandbox) -> dict:
     result = {"suggestions": [], "followup": [], "rejected": [], "notes": []}
-    changed = diff.changed_functions(repo, base, head)
+    try:
+        fork = diff.git(repo, "merge-base", base, head).strip()
+    except subprocess.CalledProcessError as error:
+        raise RuntimeError(f"{base} and {head} have no merge-base; fetch the full history (git fetch --unshallow)") from error
+    changed = diff.changed_functions(repo, fork, head)
     names = diff.git(repo, "ls-tree", "--name-only", head).splitlines()
     patterns = pytest_patterns(lambda name: diff.git(repo, "show", f"{head}:{name}") if name in names else None)
     wrapped, plans = set(), {}
@@ -728,7 +733,7 @@ def review(repo, base, head, sandbox) -> dict:
     matches = {}
     if any("." not in function.qualname for function, _ in changed):
         with trace.span("gate.index"):
-            base_index = index.build(repo, base)
+            base_index = index.build(repo, fork)
             known = {(r["path"], r["qualname"]) for r in base_index}
             skip = {(function.path, function.qualname) for function, _ in changed}
             kept = {(r["path"], r["qualname"]) for r in index.build(repo, head)}
