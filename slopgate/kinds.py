@@ -4,13 +4,12 @@ import io
 import json
 import subprocess
 import sys
-import textwrap
 import tokenize
 
 import vulture
 
 from slopgate.config import NESTING
-from slopgate.functions import BLOCKS, Function
+from slopgate.functions import BLOCKS, Function, dedent
 
 KINDS = {
     "nesting": "It nests blocks deeply. Flatten it with guard clauses or a single boolean expression.",
@@ -58,7 +57,7 @@ def comments(code: str) -> list[str]:
 def has_dead_code(function, text: str) -> bool:
     scan = vulture.Vulture()
     scan.scan(text, filename=function.path)
-    tree = ast.parse(textwrap.dedent(function.source))
+    tree = ast.parse(dedent(function.source))
     # vulture reports unused parameters as typ "variable"; removing one would change a signature callers use
     params = {
         a.arg
@@ -144,7 +143,7 @@ def kept(facts: dict, nodes) -> dict:
 
 
 def repeated_checks(source: str) -> list[str]:
-    source = textwrap.dedent(source)
+    source = dedent(source)
     lines = source.splitlines()
     found = []
 
@@ -182,7 +181,7 @@ def repeated_checks(source: str) -> list[str]:
 
 
 def flattenable(source: str) -> bool:
-    function = ast.parse(textwrap.dedent(source)).body[0]
+    function = ast.parse(dedent(source)).body[0]
 
     def rest(node):
         return [] if len(node.orelse) == 1 and isinstance(node.orelse[0], ast.Pass) else node.orelse

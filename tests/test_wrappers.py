@@ -59,6 +59,33 @@ def test_same_file_wrapper_is_inlined_into_its_caller(make_repo, fake_llm, capsy
     ]
 
 
+def test_wrapper_review_skips_a_file_that_is_not_utf_8(make_repo, fake_llm, capsys, tmp_path):
+    (tmp_path / "app").mkdir()
+    (tmp_path / "app/latin.py").write_bytes("# -*- coding: latin-1 -*-\ndef caf():\n    return 'café'\n".encode("latin-1"))
+    repo = make_repo(
+        {"app/__init__.py": "", "app/billing.py": COMPUTE_TAX},
+        {"app/billing.py": COMPUTE_TAX + TAX_FOR + INVOICE_TOTAL},
+    )
+    fake_llm.replies += [OTHER_JOB, fenced(INVOICE_TESTS)]
+
+    [followup] = review(capsys, repo)["followup"]
+
+    assert followup["files"] == {"app/billing.py": COMPUTE_TAX + INVOICE_TOTAL.replace("tax_for(", "compute_tax(")}
+
+
+def test_wrapper_whose_caller_ends_in_a_backslash_into_a_comment_is_inlined(make_repo, fake_llm, capsys):
+    caller = INVOICE_TOTAL.replace("0.2)\n", "0.2) \\\n        # VAT\n")
+    repo = make_repo(
+        {"app/__init__.py": "", "app/billing.py": COMPUTE_TAX},
+        {"app/billing.py": COMPUTE_TAX + TAX_FOR + caller},
+    )
+    fake_llm.replies += [OTHER_JOB, fenced(INVOICE_TESTS)]
+
+    [followup] = review(capsys, repo)["followup"]
+
+    assert followup["files"] == {"app/billing.py": COMPUTE_TAX + caller.replace("tax_for(", "compute_tax(")}
+
+
 def test_caller_tests_run_on_the_rewrite(make_repo, fake_llm, capsys):
     repo = make_repo(
         {"app/__init__.py": "", "app/billing.py": COMPUTE_TAX},

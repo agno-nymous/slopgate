@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**38 — A comment at column 0 inside a method crashes `classify`.** On 2026-10-10, a full-gate run on 16 SWE-bench items crashed in 8 reviews with this bug, in `index.build`. Ticket 25 is done: candidates get their proof in parallel. Ticket 23 is wontfix: the Phoenix spans of ticket 32 give the time of each step. Ticket 34 is done: each function with slop and no rewrite gets an inline note, and the review comment shows no failed attempts. Ticket 46 must be done before the Slopgate workflow is on again.
+**46 — Find the changed functions from the merge-base, not from the base tip.** It must be done before the Slopgate workflow is on again. Ticket 38 is done: `index.build` completes on all 12 SWE-bench Lite repos, so the full gate can run on them. Ticket 42 comes before ticket 10. Ticket 08 is the next open row of the order table.
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -42,7 +42,7 @@ Added after the order was set:
 |---|---|---|
 | [26 — Review a pull request on the local machine](26-review-a-pr-locally.md) | done | Adds `slopgate review --pr <number>`. |
 | [27 — Run the gate automatically on a self-hosted runner](27-gate-on-self-hosted-runner.md) | needs-live-check | The workflow runs on the user's Mac. It needs the runner to be registered. |
-| [38 — A comment at column 0 inside a method crashes `classify`](38-column-zero-comment-crash.md) | ready-for-agent | Found by ticket 37. 34 functions in the 12 SWE-bench Lite repos. Do it before ticket 10. |
+| [38 — A comment at column 0 inside a method crashes `classify`](38-column-zero-comment-crash.md) | done | Found by ticket 37. Also fixes two more `index.build` crashes: a backslash continuation into a comment, and a file that is not UTF-8. |
 | [39 — Design: better detection for `redundant_check` and `nesting`; remove `filler_comment`](39-detection-precision.md) | done | Found by ticket 37. On the held-out set, the false-kind rate on clean function runs fell from 0.117 to 0.013. |
 | [40 — Limit the output tokens of `decide`](40-limit-decide-output.md) | ready-for-agent | Found by ticket 37. 5 of 1,407 `classify` runs took 60 s to 110 s. Since ticket 39, `classify` makes no model call; the limit still applies to the duplicate verdict. |
 | [42 — Benchmark statistics: label agreement, run metadata, and pass@k](42-benchmark-statistics.md) | ready-for-agent | The user set it on 2026-10-10. Do it before ticket 10. Ticket 39 does the other 3 checks of the evals guide (held-out set, ranges, errors apart). |
@@ -51,8 +51,10 @@ Added after the order was set:
 | [44 — The import line is wrong for a repo with a `src/` layout](44-src-layout-import-line.md) | ready-for-agent | Found by ticket 41. All 6 pytest functions failed in every design. |
 | [45 — The test agent cannot characterize large functions](45-characterize-large-functions.md) | ready-for-agent | Found by ticket 41. The agent proved no function of complexity 17 or more; `review` (complexity 65) stopped at the token limit. |
 | [46 — Find the changed functions from the merge-base, not from the base tip](46-diff-from-merge-base.md) | ready-for-agent | Found by the code review of ticket 34. An inline comment on a line outside the pull request diff makes GitHub reject the whole review. Do it before the Slopgate workflow is on again. |
+| [47 — `parse` splits lines on a form feed, so later functions get the wrong source](47-parse-splits-on-form-feed.md) | ready-for-agent | Found by the code review of ticket 38. Not seen in the 12 SWE-bench Lite repos. |
+| [48 — Compare the repo suite with a baseline run of the original code](48-repo-suite-baseline.md) | ready-for-agent | Found by ticket 38. A repo test that fails on the original code rejects every rewrite: 2 of 8 sympy rewrites in the ticket 38 run. Do it before ticket 10. |
 
-Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 39, and 41 are done. Tickets 23, 24, 29, 30, 31, and 35 are wontfix.
+Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, and 41 are done. Tickets 23, 24, 29, 30, 31, and 35 are wontfix.
 
 ## Rules for the order
 

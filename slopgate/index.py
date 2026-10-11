@@ -3,7 +3,7 @@ from dataclasses import asdict
 from functools import cache
 from pathlib import Path
 
-from slopgate.diff import git
+from slopgate.diff import git, python_sources
 from slopgate.functions import jaccard, parse, structure_hash, tokens
 
 pool_tokens = cache(tokens)
@@ -18,12 +18,11 @@ def build(repo, ref) -> list[dict]:
     if path.exists():
         return json.loads(path.read_text())
     functions = []
-    for name in git(repo, "ls-tree", "-r", "--name-only", path.stem).splitlines():
-        if name.endswith(".py"):
-            try:
-                functions += parse(name, git(repo, "show", f"{path.stem}:{name}"))
-            except SyntaxError:
-                continue
+    for name, text in python_sources(repo, path.stem):
+        try:
+            functions += parse(name, text)
+        except SyntaxError:
+            continue
     records = [{**asdict(f), "hash": structure_hash(f.source)} for f in functions]
     path.parent.mkdir(exist_ok=True)
     (path.parent / ".gitignore").write_text("*\n")
