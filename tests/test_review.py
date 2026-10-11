@@ -16,7 +16,7 @@ from slopgate import kinds, llm, sandbox
 from slopgate import review as gate
 from slopgate.cli import main
 from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, SUPER, ULTRA
-from slopgate.functions import is_test_file, parse, pytest_patterns
+from slopgate.functions import dedent, is_test_file, parse, pytest_patterns, structure_hash
 from slopgate.kinds import KINDS, classify, flattenable, has_dead_code, leftover, problems, repeated_checks
 from slopgate.review import COVERAGE, EXECUTE, NO_ENVIRONMENT, REJECTED, characterize, same_code, strip_fence
 from slopgate.sandbox import Contree, ContreeSession, Local, LocalSession
@@ -842,6 +842,80 @@ def test_deep_loops_that_do_real_work_are_not_nesting(source):
 
     assert not flattenable(source)
     assert classify(function, source) == {}
+
+
+PROBER = """class Prober:
+    def get_name(self):
+        if not self.best:
+            self.get_confidence()
+#            self.best = None
+        return self.best.name
+"""
+
+
+def test_method_with_a_comment_at_column_0_is_classified_and_hashed():
+    (function,) = parse("app/prober.py", PROBER)
+    (uncommented,) = parse("app/prober.py", PROBER.replace("#            self.best = None\n", ""))
+
+    assert classify(function, PROBER) == {}
+    assert structure_hash(function.source) == structure_hash(uncommented.source)
+
+
+def test_dedent_leaves_less_indented_string_lines_unchanged():
+    (function,) = parse("app/report.py", 'class Report:\n    def render(self):\n        text = """head\nbody\n"""\n        return text\n')
+
+    source = dedent(function.source)
+
+    assert source == 'def render(self):\n    text = """head\nbody\n"""\n    return text\n'
+    assert ast.parse(source).body[0].body[0].value.value == "head\nbody\n"
+
+
+def test_parse_keeps_a_backslash_continuation_into_a_comment_with_its_function():
+    text = (
+        "def test_guess_rational_cv():\n"
+        "    assert guess_solve_strategy( (sqrt(x) + 1)/(x**Rational(1, 3) + sqrt(x) + 1), x ) \\\n"
+        "        #==GS_RATIONAL_CV_1\n"
+        "\n\n"
+        "def test_guess_transcendental():\n"
+        "    pass\n"
+    )
+
+    first, _ = parse("t.py", text)
+
+    assert first.end == 3
+    assert first.source.endswith("        #==GS_RATIONAL_CV_1\n")
+
+
+def test_parse_ends_a_function_at_a_comment_that_ends_in_a_backslash():
+    (kept,) = parse("t.py", "def f():\n    x = 1  # C:\\\n")
+
+    assert kept.end == 2
+
+
+def test_method_with_a_string_line_left_of_the_def_is_rejected_without_a_model_call(make_repo, fake_llm, capsys):
+    method = "class Policy:\n" + textwrap.indent(NESTED, "    ").replace(
+        "        if user_active:\n", '        print("""head\nbody\n""")\n        if user_active:\n', 1
+    )
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": method})
+
+    result = review(capsys, repo)
+
+    assert fake_llm.calls == []
+    [rejected] = result["rejected"]
+    assert (rejected["function"], rejected["reason"]) == ("Policy.can_edit", "a line is left of the def, so the gate cannot re-indent a rewrite")
+
+
+def test_method_with_only_a_comment_left_of_the_def_gets_a_rewrite(make_repo, fake_llm, capsys):
+    method = "class Policy:\n    VERSION = 1\n\n" + textwrap.indent("@staticmethod\n" + NESTED, "    ").replace(
+        "        if user_active:\n", "#        note\n        if user_active:\n", 1
+    )
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": method})
+    fake_llm.replies += [fenced(TESTS.format(name="Policy", call="Policy.can_edit")), fenced("@staticmethod\n" + FLAT)]
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == []
+    assert suggested_code(result["suggestions"][0]["body"]) == textwrap.indent("@staticmethod\n" + FLAT, "    ")
 
 
 def test_rewrite_prompt_states_the_bool_rule(make_repo, fake_llm, capsys):

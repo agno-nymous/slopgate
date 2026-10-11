@@ -3,7 +3,6 @@ import configparser
 import fnmatch
 import hashlib
 import re
-import textwrap
 import tomllib
 from dataclasses import dataclass
 
@@ -31,15 +30,25 @@ def parse(path: str, text: str) -> list[Function]:
                 walk(node.body, f"{prefix}{node.name}.")
             elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 start = node.decorator_list[0].lineno if node.decorator_list else node.lineno
-                source = "".join(lines[start - 1 : node.end_lineno])
-                found.append(Function(prefix + node.name, path, start, node.end_lineno, source))
+                end = node.end_lineno
+                if lines[end - 1].encode()[node.end_col_offset :].strip() == b"\\":
+                    end += 1
+                source = "".join(lines[start - 1 : end])
+                found.append(Function(prefix + node.name, path, start, end, source))
 
     walk(ast.parse(text).body, "")
     return found
 
 
+def dedent(source: str) -> str:
+    first = next((line for line in source.splitlines() if line.strip()), "")
+    prefix = first[: len(first) - len(first.lstrip())]
+    # unlike textwrap.dedent, a less indented line (a column-0 comment, a multi-line string line) stays as it is
+    return "".join(line.removeprefix(prefix) for line in source.splitlines(keepends=True))
+
+
 def structure_hash(source: str) -> str:
-    node = ast.parse(textwrap.dedent(source)).body[0]
+    node = ast.parse(dedent(source)).body[0]
     if ast.get_docstring(node) is not None:
         node.body = node.body[1:] or [ast.Pass()]
     names = {}
@@ -60,7 +69,7 @@ def structure_hash(source: str) -> str:
 
 
 def complexity(source: str) -> int:
-    return cc_visit(textwrap.dedent(source))[0].complexity
+    return cc_visit(dedent(source))[0].complexity
 
 
 def nesting(source: str) -> int:
@@ -71,7 +80,7 @@ def nesting(source: str) -> int:
         ]
         return (isinstance(node, BLOCKS) and not is_elif) + max(inner, default=0)
 
-    return depth(ast.parse(textwrap.dedent(source)))
+    return depth(ast.parse(dedent(source)))
 
 
 def tokens(source: str) -> frozenset[str]:

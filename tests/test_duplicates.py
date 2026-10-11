@@ -1,6 +1,7 @@
 import json
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 from test_review import FLAT, NESTED, SIMPLE, TESTS, fenced, models, review
@@ -101,6 +102,14 @@ def test_index_is_written_once_and_loaded_after(make_repo, fake_embed, capsys, t
     path.write_bytes(written)
     assert fake_embed.calls == []
     assert all("vector" not in record for record in json.loads(written))
+
+
+def test_index_skips_a_file_that_is_not_utf_8(make_repo):
+    repo = make_repo({"app/text.py": SLUGIFY}, {"app/latin.py": "x = 1\n"})
+    (Path(repo) / "app/latin.py").write_bytes("# -*- coding: latin-1 -*-\ndef caf():\n    return 'café'\n".encode("latin-1"))
+    subprocess.run(["git", "commit", "-qam", "latin-1"], cwd=repo, check=True)
+
+    assert [record["qualname"] for record in build(repo, "HEAD")] == ["slugify"]
 
 
 def test_renamed_exact_copy_is_replaced_by_the_helper_without_llm(make_repo, fake_llm, capsys, tmp_path_factory):

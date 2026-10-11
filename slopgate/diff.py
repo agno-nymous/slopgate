@@ -8,6 +8,16 @@ def git(repo, *args) -> str:
     return subprocess.run(["git", *args], cwd=repo, capture_output=True, text=True, check=True).stdout
 
 
+def python_sources(repo, ref):
+    for path in git(repo, "ls-tree", "-r", "--name-only", ref).splitlines():
+        if path.endswith(".py"):
+            try:
+                text = git(repo, "show", f"{ref}:{path}")
+            except UnicodeDecodeError:
+                continue
+            yield path, text
+
+
 def changed_functions(repo, base, head) -> list[tuple[Function, set[int]]]:
     added: dict[str, set[int]] = {}
     for line in git(repo, "diff", "--unified=0", "--diff-filter=AM", base, head, "--", "*.py").splitlines():

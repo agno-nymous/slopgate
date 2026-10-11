@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 from slopgate import diff, index, llm, trace
 from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, DUPLICATE_SCORE, SUPER, ULTRA, WORKERS
-from slopgate.functions import Function, complexity, is_test_file, nesting, parse, pytest_patterns, structure_hash
+from slopgate.functions import Function, complexity, dedent, is_test_file, nesting, parse, pytest_patterns, structure_hash
 from slopgate.kinds import KINDS, classify, comments, leftover, problems
 from slopgate.sandbox import InstallError, commands, tail
 
@@ -127,7 +127,7 @@ def strip_fence(text: str) -> str | None:
 
 
 def same_code(a: str, b: str) -> bool:
-    a, b = textwrap.dedent(a), textwrap.dedent(b)
+    a, b = dedent(a), dedent(b)
     return ast.dump(ast.parse(a)) == ast.dump(ast.parse(b)) and comments(a) == comments(b)
 
 
@@ -274,10 +274,7 @@ def wrapper_rule(trees, files, function) -> str | None:
 def removal(repo, head, function, text, node, inner) -> dict | None:
     module, name = module_of(function.path), function.qualname
     sources, trees, uses = {}, {}, []
-    for path in diff.git(repo, "ls-tree", "-r", "--name-only", head).splitlines():
-        if not path.endswith(".py"):
-            continue
-        source = text if path == function.path else diff.git(repo, "show", f"{head}:{path}")
+    for path, source in diff.python_sources(repo, head):
         try:
             tree = ast.parse(source)
         except SyntaxError:
@@ -349,7 +346,7 @@ def removal(repo, head, function, text, node, inner) -> dict | None:
             after = max((n.end_lineno for n in trees[path].body if isinstance(n, (ast.Import, ast.ImportFrom))), default=0)
             edits[path].append((after + 1, 0, after + 1, 0, line + "\n"))
     files = {p: apply(sources[p], e) for p, e in edits.items()}
-    caller = next(f for f in parse(path, sources[path]) if f.qualname == fn.name and f.end == fn.end_lineno)
+    caller = next(f for f in parse(path, sources[path]) if f.qualname == fn.name and f.start <= fn.lineno <= f.end)
     return {"caller": caller, "inner": callee, "files": files, "rule": wrapper_rule(trees, files, function)}
 
 
@@ -373,10 +370,7 @@ def replace_calls(repo, head, function, helper) -> dict[str, str]:
     old, new = function.qualname, helper["qualname"]
     module, helper_module = module_of(function.path), module_of(helper["path"])
     files = {}
-    for path in diff.git(repo, "ls-tree", "-r", "--name-only", head).splitlines():
-        if not path.endswith(".py"):
-            continue
-        text = diff.git(repo, "show", f"{head}:{path}")
+    for path, text in diff.python_sources(repo, head):
         try:
             tree = ast.parse(text)
         except SyntaxError:
@@ -452,7 +446,7 @@ def limit(steps: int, began: float, tokens: int) -> str | None:
 
 
 def characterize(sandbox, checkpoint, function, test_path, cmd) -> tuple[str | None, str | None]:
-    source = textwrap.dedent(function.source)
+    source = dedent(function.source)
     name = nondeterministic(source)
     if name:
         return None, f"nondeterministic: uses {name}"
@@ -600,6 +594,10 @@ def trial(repo, head, sandbox, checkpoint, test, n, candidate) -> tuple[str, dic
     cmd = f"python -m coverage run --branch -m pytest -q {test_path}"
     wrapper = "wrapper" in kinds
     tests = None
+    indent = function.source[: len(function.source) - len(function.source.lstrip())]
+    # dedent leaves such a line (in a multi-line string) as it is, so indenting the rewrite back would change it
+    if not found and any(line.strip() and not line.startswith(indent) and not line.lstrip().startswith("#") for line in function.source.splitlines()):
+        return "rejected", rejection(function, kinds, "a line is left of the def, so the gate cannot re-indent a rewrite"), None
     if wrapper or not (found and found["exact"]):
         target = found["caller"] if wrapper else function
         with trace.span("gate.characterize"):
@@ -618,8 +616,7 @@ def trial(repo, head, sandbox, checkpoint, test, n, candidate) -> tuple[str, dic
             return "rejected", rejection(function, kinds, failure), None
         return "followup", followup, None
 
-    dedented = textwrap.dedent(function.source)
-    indent = function.source[: len(function.source) - len(function.source.lstrip())]
+    dedented = dedent(function.source)
     with trace.span("gate.rewrite", prompt="REWRITE_PROMPT"):
         reply = llm.complete(SUPER, REWRITE_PROMPT.format(problems=problems(kinds), source=dedented))
     for retry in (False, True):
@@ -628,7 +625,7 @@ def trial(repo, head, sandbox, checkpoint, test, n, candidate) -> tuple[str, dic
             if fenced is None:
                 failure = "rewrite reply is not a python block"
                 break
-            rewrite = textwrap.dedent(fenced).strip("\n") + "\n"
+            rewrite = dedent(fenced).strip("\n") + "\n"
             failure = broken_rule(dedented, rewrite)
             if failure:
                 failure = f"rule: {failure}"
