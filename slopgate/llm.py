@@ -47,7 +47,7 @@ def step(model: str, messages: list[dict], tools: list[dict]):
     usage.append((model, reply.usage.prompt_tokens, reply.usage.completion_tokens))
     if reply.choices[0].finish_reason == "length":
         raise CutOff("reply cut off")
-    return reply.choices[0].message
+    return reply.choices[0].message, reply.usage.prompt_tokens
 
 
 def yes_probability(model: str, prompt: str) -> float:

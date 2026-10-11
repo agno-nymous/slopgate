@@ -11,7 +11,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from slopgate import embed, llm, trace
+from slopgate import embed, llm, review, trace
 from slopgate.review import strip_fence
 
 STARTED = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -77,22 +77,24 @@ def fake_llm(monkeypatch):
         fake.calls.append((model, task))
         llm.usage.append((model, 1000, 100))
         if messages[-1]["role"] == "tool":
-            return SimpleNamespace(content="Done.", tool_calls=None)
+            return SimpleNamespace(content="Done.", tool_calls=None), 1000
         reply = fake.replies.pop(0)
         if not isinstance(reply, str):
-            return reply
+            return reply, 1000
         # a str reply is the test file that the agent writes
         tests = strip_fence(reply)
         path = re.search(r"Write the tests to (\S+)\. ", task)[1]
         command = f"mkdir -p {os.path.dirname(path)} && printf %s {shlex.quote(reply if tests is None else tests)} > {path}"
         call = SimpleNamespace(id="call_0", function=SimpleNamespace(name="execute", arguments=json.dumps({"command": command})))
-        return SimpleNamespace(content="", tool_calls=[call])
+        return SimpleNamespace(content="", tool_calls=[call]), 1000
 
     monkeypatch.setattr(llm, "complete", complete)
     monkeypatch.setattr(llm, "step", step)
     monkeypatch.setattr(llm, "decide", decide)
     monkeypatch.setattr(llm, "yes_probability", yes_probability)
     monkeypatch.setattr(llm, "usage", [])
+    # The fake replies are a FIFO queue, so the candidates must run in order.
+    monkeypatch.setattr(review, "WORKERS", 1)
     return fake
 
 
