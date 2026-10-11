@@ -49,3 +49,11 @@ Do not change multi-line strings: a line inside a string that does not start wit
 - [ ] `uv run pytest -q` passes.
 
 ## Comments
+
+### 2026-10-10 — the same bug crashes the whole review
+
+A full-gate run on the held-out SWE-bench items of ticket 37 (16 items from django and sympy) found a larger effect. `index.build` calls `structure_hash` (`slopgate/functions.py`) on every function of the base commit. `structure_hash` parses `textwrap.dedent(source)`, so it raises `IndentationError: unexpected indent` on one function with a comment at column 0. `review` builds the index for each change to a module-level function. So the whole review crashes. It gives no result, not only a missed function.
+
+In that run, 8 of 16 reviews crashed this way: 6 sympy items and 2 django items, each with a changed module-level function. Example: `sympy/ntheory/generate.py:prevprime` with an injected `lookup_table`.
+
+The fix must also cover `structure_hash`. Do this ticket before ticket 10.

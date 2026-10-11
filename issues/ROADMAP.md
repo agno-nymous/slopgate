@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**23 — Log the time of each gate step.** It adds the `Slowest:` line to the pull request comment. Ticket 34 is done: each function with slop and no rewrite gets an inline note, and the review comment shows no failed attempts. Ticket 46 must be done before the Slopgate workflow is on again.
+**38 — A comment at column 0 inside a method crashes `classify`.** On 2026-10-10, a full-gate run on 16 SWE-bench items crashed in 8 reviews with this bug, in `index.build`. Ticket 25 is done: candidates get their proof in parallel. Ticket 23 is wontfix: the Phoenix spans of ticket 32 give the time of each step. Ticket 34 is done: each function with slop and no rewrite gets an inline note, and the review comment shows no failed attempts. Ticket 46 must be done before the Slopgate workflow is on again.
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -28,9 +28,9 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 14 | [33 — Add a time limit to each sandbox run](33-sandbox-time-limit.md) | done | — | A model-written call such as `input()` blocks the gate with no end. |
 | 15 | [34 — Report the slop of each function without a rewrite, and no raw failures in the review comment](34-readable-rejection-reasons.md) | done | — | The raw pytest output on PR #20 looked like a crash of the gate. |
 | 16 | [19 — Several slop kinds per function](19-several-slop-kinds-per-function.md) | done | 18, 21, 36 | Fixes all problems of a function in one suggestion. Built in ticket 36, stage 2. |
-| 17 | [23 — Log the time of each gate step](23-log-time-per-gate-step.md) | ready-for-agent | — | Reduced on 2026-10-08 to the `Slowest:` line in the pull request comment. The Phoenix spans of ticket 32 give the time of each step. |
+| 17 | [23 — Log the time of each gate step](23-log-time-per-gate-step.md) | wontfix | — | Reduced on 2026-10-08 to the `Slowest:` line in the pull request comment. The Phoenix spans of ticket 32 give the time of each step. |
 | 18 | [24 — Save the embedding model cache on main](24-model-cache-on-main.md) | wontfix | — | Ticket 28 removes the embedding model from the gate. |
-| 19 | [25 — Faster proof](25-faster-proof.md) | ready-for-agent | 32 | Needs the step times from one traced review first. |
+| 19 | [25 — Faster proof](25-faster-proof.md) | done | 32 | Needs the step times from one traced review first. |
 | 20 | [08 — Live duplicate flag at plan time](08-live-flag-plan-time.md) | ready-for-agent | 07 (done) | The second half of the live flag in the spec. Ticket 11 needs it. |
 | 21 | [10 — Benchmark on SWE-bench with injected slop](10-benchmark.md) | ready-for-agent | 37, 41 | Stage 2: the full gate. The results go into the submission. Ticket 11 needs it. |
 | 22 | [09 — Jev classifier backend and comparison](09-jev-backend-and-comparison.md) | ready-for-agent | 07 (done) | Lowest priority. Skip it if time runs short. |
@@ -52,7 +52,7 @@ Added after the order was set:
 | [45 — The test agent cannot characterize large functions](45-characterize-large-functions.md) | ready-for-agent | Found by ticket 41. The agent proved no function of complexity 17 or more; `review` (complexity 65) stopped at the token limit. |
 | [46 — Find the changed functions from the merge-base, not from the base tip](46-diff-from-merge-base.md) | ready-for-agent | Found by the code review of ticket 34. An inline comment on a line outside the pull request diff makes GitHub reject the whole review. Do it before the Slopgate workflow is on again. |
 
-Tickets 01 to 07, 12 to 22, 26, 28, 32, 33, 34, 36, 37, 39, and 41 are done. Tickets 24, 29, 30, 31, and 35 are wontfix.
+Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 39, and 41 are done. Tickets 23, 24, 29, 30, 31, and 35 are wontfix.
 
 ## Rules for the order
 
