@@ -5,6 +5,7 @@ import shlex
 import subprocess
 import sys
 import textwrap
+import threading
 import time
 from types import SimpleNamespace
 
@@ -12,11 +13,12 @@ import pytest
 from contree_sdk.sdk.exceptions import NotFoundError
 
 from slopgate import kinds, llm, sandbox
+from slopgate import review as gate
 from slopgate.cli import main
-from slopgate.config import AGENT_SECONDS, AGENT_STEPS, SUPER, ULTRA
+from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, SUPER, ULTRA
 from slopgate.functions import is_test_file, parse, pytest_patterns
 from slopgate.kinds import KINDS, classify, flattenable, has_dead_code, leftover, problems, repeated_checks
-from slopgate.review import EXECUTE, NO_ENVIRONMENT, REJECTED, characterize, same_code, strip_fence
+from slopgate.review import COVERAGE, EXECUTE, NO_ENVIRONMENT, REJECTED, characterize, same_code, strip_fence
 from slopgate.sandbox import Contree, ContreeSession, Local, LocalSession
 
 NESTED = '''\
@@ -299,7 +301,7 @@ def test_broken_trial_does_not_affect_the_next(make_repo, fake_llm, capsys):
 
 def test_failing_test_override_rejects_rewrite(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED, ".slopgate.toml": "[sandbox]\ntest = 'exit 1'\n"})
-    fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), fenced(FLAT)]
+    fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
 
     result = review(capsys, repo)
 
@@ -307,6 +309,7 @@ def test_failing_test_override_rejects_rewrite(make_repo, fake_llm, capsys):
     [rejected] = result["rejected"]
     assert (rejected["function"], rejected["path"]) == ("can_edit", "app/perms.py")
     assert rejected["reason"].startswith("rewrite fails repo tests")
+    assert models(fake_llm) == [SUPER, SUPER, SUPER]
 
 
 def test_passing_test_override_replaces_red_repo_suite(make_repo, fake_llm, capsys):
@@ -936,7 +939,7 @@ def scripted(monkeypatch, replies) -> list[str]:
         steps.append(model)
         llm.usage.append((model, 1000, 100))
         reply = replies[min(len(steps), len(replies)) - 1]
-        return reply() if callable(reply) else reply
+        return (reply() if callable(reply) else reply), 1000
 
     monkeypatch.setattr(llm, "step", step)
     monkeypatch.setattr(llm, "usage", [])
@@ -953,6 +956,22 @@ def test_agent_stops_at_the_step_limit_and_the_check_judges_its_file(make_repo, 
 
     assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (None, "step limit: characterization tests miss branches: 1")
     assert steps == [SUPER] * AGENT_STEPS
+
+
+def test_agent_counts_the_tokens_of_its_own_replies_when_other_threads_add_usage(make_repo, monkeypatch):
+    sandbox, checkpoint, function = perms(make_repo)
+    steps = []
+
+    def step(model, messages, tools):
+        steps.append(model)
+        llm.usage += [(model, AGENT_TOKENS // 2 + 1, 100), (model, 1, 1)]
+        return writes(WEAK), AGENT_TOKENS // 2 + 1
+
+    monkeypatch.setattr(llm, "step", step)
+    monkeypatch.setattr(llm, "usage", [])
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (None, "token limit: characterization tests miss branches: 1")
+    assert len(steps) == 2
 
 
 def test_the_last_reply_before_the_step_limit_still_runs_its_tool_calls(make_repo, monkeypatch):
@@ -1037,7 +1056,7 @@ def test_tool_call_arguments_that_are_not_json_get_an_error_message(make_repo, m
     def step(model, messages, tools):
         seen.append(messages[-1])
         llm.usage.append((model, 1000, 100))
-        return agent_reply(tool_call('{"command": "cat > t.py <<EOF')) if len(seen) == 1 else agent_reply()
+        return (agent_reply(tool_call('{"command": "cat > t.py <<EOF')) if len(seen) == 1 else agent_reply()), 1000
 
     monkeypatch.setattr(llm, "step", step)
     monkeypatch.setattr(llm, "usage", [])
@@ -1198,7 +1217,8 @@ def test_step_offers_the_tools_with_thinking_off(monkeypatch):
     requests = fake_client(monkeypatch, [("stop", "ok")])
     messages = [{"role": "user", "content": "task"}]
 
-    assert llm.step(SUPER, messages, [EXECUTE]).content == "ok"
+    message, sent = llm.step(SUPER, messages, [EXECUTE])
+    assert (message.content, sent) == ("ok", 1)
     [request] = requests
     assert (request["messages"], request["tools"], request["tool_choice"]) == (messages, [EXECUTE], "auto")
     assert request["extra_body"] == {"chat_template_kwargs": {"enable_thinking": False}}
@@ -1365,3 +1385,162 @@ def test_cut_off_duplicate_verdict_skips_the_helper_and_the_review_goes_on(make_
 
     assert result == {"suggestions": [], "followup": [], "rejected": [], "notes": []}
     assert len(requests) == 1
+
+
+def nested(name):
+    return NESTED.replace("can_edit", name)
+
+
+def flat(name):
+    return FLAT.replace("can_edit", name)
+
+
+SUITE = "python -m pytest -q"
+
+
+class SlowSandbox:
+    def __init__(self, delay=lambda cmd: 0.25, suite=lambda code: True):
+        self.delay, self.suite, self.suites = delay, suite, []
+        self.lock, self.active, self.peak = threading.Lock(), 0, 0
+
+    def busy(self, cmd):
+        with self.lock:
+            self.active += 1
+            self.peak = max(self.peak, self.active)
+        time.sleep(self.delay(cmd))
+        with self.lock:
+            self.active -= 1
+
+    def prepare(self, repo, ref, setup):
+        return None
+
+    def session(self, checkpoint):
+        return self
+
+    def execute(self, command, timeout):
+        self.busy(command)
+        return 0, ""
+
+    def read(self, path):
+        return "def test_placeholder():\n    pass\n"
+
+    def run(self, checkpoint, files, cmd):
+        self.busy(cmd)
+        if cmd != SUITE:
+            return 0, f"5 passed\n{COVERAGE}\n[]"
+        self.suites.append(files)
+        return (0, "1 passed") if self.suite(files["app/perms.py"]) else (1, "FAILED tests/test_app.py::test_app")
+
+
+@pytest.fixture
+def gate_review(make_repo, monkeypatch):
+    def step(model, messages, tools):
+        llm.usage.append((model, 1000, 100))
+        if messages[-1]["role"] == "tool":
+            return SimpleNamespace(content="Done.", tool_calls=None), 1000
+        call = SimpleNamespace(id="call_0", function=SimpleNamespace(name="execute", arguments=json.dumps({"command": "true"})))
+        return SimpleNamespace(content="", tool_calls=[call]), 1000
+
+    def complete(model, prompt):
+        llm.usage.append((model, 1000, 100))
+        name = re.search(r"def (\w+)\(", prompt)[1]
+        return "I cannot rewrite this." if name in prose else fenced(flat(name))
+
+    prose = set()
+    monkeypatch.setattr(llm, "step", step)
+    monkeypatch.setattr(llm, "complete", complete)
+    monkeypatch.setattr(llm, "usage", [])
+    repo = None
+
+    def run(names, sandbox, workers=8, refuse=()):
+        nonlocal repo
+        repo = repo or make_repo({"app/__init__.py": ""}, {"app/perms.py": "\n\n".join(map(nested, names))})
+        prose.update(refuse)
+        monkeypatch.setattr(gate, "WORKERS", workers)
+        return gate.review(repo, "HEAD~1", "HEAD", sandbox)
+
+    return run
+
+
+def rewritten(result):
+    return [re.search(r"rewrite of `(\w+)`", s["body"])[1] for s in result["suggestions"]]
+
+
+THREE = ["can_edit", "can_view", "can_delete"]
+
+
+def test_candidates_run_in_parallel(gate_review):
+    peaks, timings = {}, {}
+    for workers in (1, 8):
+        sandbox = SlowSandbox()
+        began = time.perf_counter()
+        result = gate_review(THREE, sandbox, workers)
+        timings[workers] = time.perf_counter() - began
+        peaks[workers] = sandbox.peak
+        assert rewritten(result) == THREE
+
+    assert peaks == {1: 1, 8: 3}
+    assert timings[8] < timings[1] / 2, timings
+
+
+def test_accepted_rewrites_share_one_repo_suite_run(gate_review):
+    sandbox = SlowSandbox(delay=lambda cmd: 0)
+
+    result = gate_review(THREE, sandbox)
+
+    assert rewritten(result) == THREE and result["rejected"] == []
+    assert sandbox.suites == [{"app/perms.py": "\n\n".join(map(flat, THREE))}]
+
+
+def test_rewrite_that_breaks_the_repo_suite_alone_is_the_only_one_rejected(gate_review):
+    sandbox = SlowSandbox(delay=lambda cmd: 0, suite=lambda code: flat("can_view") not in code)
+
+    result = gate_review(THREE, sandbox)
+
+    assert rewritten(result) == ["can_edit", "can_delete"]
+    [rejected] = result["rejected"]
+    assert (rejected["function"], rejected["path"], rejected["kinds"]) == ("can_view", "app/perms.py", ["nesting"])
+    assert rejected["reason"] == "rewrite fails repo tests: FAILED tests/test_app.py::test_app"
+    assert [note["function"] for note in result["notes"]] == ["can_view"]
+
+
+def test_rewrites_that_pass_alone_but_fail_together_keep_the_first(gate_review):
+    sandbox = SlowSandbox(delay=lambda cmd: 0, suite=lambda code: not (flat("can_edit") in code and flat("can_view") in code))
+
+    result = gate_review(THREE, sandbox)
+
+    assert rewritten(result) == ["can_edit", "can_delete"]
+    assert result["rejected"] == [
+        {"function": "can_view", "path": "app/perms.py", "kinds": ["nesting"], "reason": "rewrite conflicts with another rewrite"}
+    ]
+
+
+def test_parallel_results_keep_the_candidate_order(gate_review):
+    def first_is_slowest(cmd):
+        n = re.search(r"test_slopgate_(\d+)", cmd)
+        return 0.1 * (4 - int(n[1])) if n else 0
+
+    names = [*THREE, "can_move"]
+    refuse = ["can_edit", "can_delete"]
+    parallel = gate_review(names, SlowSandbox(delay=first_is_slowest), 8, refuse)
+    serial = gate_review(names, SlowSandbox(delay=first_is_slowest), 1, refuse)
+
+    assert rewritten(parallel) == ["can_view", "can_move"]
+    assert [r["function"] for r in parallel["rejected"]] == refuse
+    assert (parallel["suggestions"], parallel["rejected"]) == (serial["suggestions"], serial["rejected"])
+
+
+def test_broken_repo_suite_run_rejects_the_accepted_rewrites_and_keeps_the_other_results(gate_review):
+    def broken(code):
+        raise RuntimeError("sandbox down")
+
+    result = gate_review(THREE, SlowSandbox(delay=lambda cmd: 0, suite=broken), refuse=["can_view"])
+
+    error = "internal error: RuntimeError('sandbox down')"
+    assert result["suggestions"] == [] and result["followup"] == []
+    assert [(r["function"], r["reason"]) for r in result["rejected"]] == [
+        ("can_edit", error),
+        ("can_view", "rewrite reply is not a python block"),
+        ("can_delete", error),
+    ]
+    assert [note["function"] for note in result["notes"]] == THREE

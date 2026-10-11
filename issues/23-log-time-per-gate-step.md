@@ -11,7 +11,7 @@ Ticket 32 (Phoenix tracing) gives the time of each step when tracing is on. So t
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** wontfix
 
 ## Context
 
@@ -48,3 +48,9 @@ Ticket 25 (faster proof) needs these numbers before it starts.
 After merge, open a test pull request on the demo repo and read the "Slowest:" line. Record the numbers in the Comments of ticket 25.
 
 ## Comments
+
+### 2026-10-10 — wontfix
+
+The user closed this ticket. The Phoenix spans of ticket 32 give the time of each step: `gate.index`, `gate.duplicate`, `gate.classify`, `sandbox.prepare`, `gate.characterize`, `gate.proof`, `gate.rewrite`, and `gate.retry`. Ticket 25 reads the step times from one traced review.
+
+Tracing was off in all runs after 2026-10-09 03:56 UTC. `.env` had no `PHOENIX_COLLECTOR_ENDPOINT` line, and no Phoenix server ran. To get step times, start Phoenix and set `PHOENIX_COLLECTOR_ENDPOINT` (see `CLAUDE.md`).

@@ -169,7 +169,7 @@ def test_agent_proves_characterization_tests(make_repo, monkeypatch, path, qualn
     start = time.perf_counter()
     tests, failure = characterize(sandbox, sandbox.prepare(repo, "HEAD", None), function, test_path, f"python -m coverage run --branch -m pytest -q {test_path}")
     print(f"{qualname}: {time.perf_counter() - start:.1f} s, {len(replies)} steps, failure {failure!r}")
-    for reply in replies:
+    for reply, _ in replies:
         print(reply.content, [call.function.arguments for call in reply.tool_calls or []])
 
     assert failure is None and tests, failure

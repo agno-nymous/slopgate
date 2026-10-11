@@ -5,12 +5,15 @@ import re
 import shlex
 import textwrap
 import time
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
+from typing import NamedTuple
 
 from pydantic import BaseModel, Field
 
 from slopgate import diff, index, llm, trace
-from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, DUPLICATE_SCORE, SUPER, ULTRA
-from slopgate.functions import complexity, is_test_file, nesting, parse, pytest_patterns, structure_hash
+from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, DUPLICATE_SCORE, SUPER, ULTRA, WORKERS
+from slopgate.functions import Function, complexity, is_test_file, nesting, parse, pytest_patterns, structure_hash
 from slopgate.kinds import KINDS, classify, comments, leftover, problems
 from slopgate.sandbox import InstallError, commands, tail
 
@@ -474,8 +477,8 @@ def characterize(sandbox, checkpoint, function, test_path, cmd) -> tuple[str | N
         while not (stop := limit(steps, began, tokens)):
             steps += 1
             with trace.span("gate.agent", step=steps):
-                message = llm.step(SUPER, messages, [EXECUTE])
-            tokens += llm.usage[-1][1]
+                message, sent = llm.step(SUPER, messages, [EXECUTE])
+            tokens += sent
             calls = message.tool_calls or []
             if not calls:
                 break
@@ -566,6 +569,146 @@ def unproven(candidates, patterns, why) -> list:
     return [note(function, kinds, added, found, patterns, why) for function, added, kinds, _, found in candidates]
 
 
+def rejection(function, kinds, reason: str) -> dict:
+    return {"function": function.qualname, "path": function.path, "kinds": list(kinds), "reason": reason}
+
+
+class Rewrite(NamedTuple):
+    function: Function
+    text: str
+    suggested: str
+
+
+def prove(repo, head, sandbox, checkpoint, test, n, candidate) -> tuple[str, dict, str | None]:
+    function, _, kinds, _, _ = candidate
+    with trace.span("gate.function", path=function.path, qualname=function.qualname, slop_kinds=list(kinds)):
+        try:
+            outcome = trial(repo, head, sandbox, checkpoint, test, n, candidate)
+        except llm.CutOff:
+            outcome = "rejected", rejection(function, kinds, "reply cut off"), None
+        # One broken candidate must not lose the results of the others (the review of PR #15 was lost this way).
+        except Exception as error:
+            outcome = "rejected", rejection(function, kinds, f"internal error: {error!r}"), None
+        into, entry, suggested = outcome
+        trace.output({into: entry, "repo_suite": "pending" if suggested else "not needed"})
+    return outcome
+
+
+def trial(repo, head, sandbox, checkpoint, test, n, candidate) -> tuple[str, dict, str | None]:
+    function, added, kinds, text, found = candidate
+    test_path = f"tests/test_slopgate_{n}.py"
+    cmd = f"python -m coverage run --branch -m pytest -q {test_path}"
+    wrapper = "wrapper" in kinds
+    tests = None
+    if wrapper or not (found and found["exact"]):
+        target = found["caller"] if wrapper else function
+        with trace.span("gate.characterize"):
+            tests, failure = characterize(sandbox, checkpoint, target, test_path, cmd)
+            trace.output(failure or "passed")
+        if failure:
+            return "rejected", rejection(function, kinds, failure), None
+    if found:
+        with trace.span("gate.proof", attempt=1):
+            if wrapper:
+                followup, failure = inline(sandbox, checkpoint, function, found, tests, test, test_path, cmd)
+            else:
+                followup, failure = deduplicate(repo, head, sandbox, checkpoint, function, found, tests, test, test_path, cmd)
+            trace.output(failure or "passed")
+        if failure:
+            return "rejected", rejection(function, kinds, failure), None
+        return "followup", followup, None
+
+    dedented = textwrap.dedent(function.source)
+    indent = function.source[: len(function.source) - len(function.source.lstrip())]
+    with trace.span("gate.rewrite", prompt="REWRITE_PROMPT"):
+        reply = llm.complete(SUPER, REWRITE_PROMPT.format(problems=problems(kinds), source=dedented))
+    for retry in (False, True):
+        with trace.span("gate.proof", attempt=retry + 1):
+            fenced = strip_fence(reply)
+            if fenced is None:
+                failure = "rewrite reply is not a python block"
+                break
+            rewrite = textwrap.dedent(fenced).strip("\n") + "\n"
+            failure = broken_rule(dedented, rewrite)
+            if failure:
+                failure = f"rule: {failure}"
+                break
+            if same_code(dedented, rewrite):
+                failure = "rewrite makes no change"
+                break
+            suggested = textwrap.indent(rewrite, indent)
+            spliced = splice(text, function, suggested)
+            failure = leftover(kinds, function, suggested, spliced)
+            if not failure:
+                code, output = sandbox.run(checkpoint, {test_path: tests, function.path: spliced}, cmd)
+                failure = f"rewrite fails characterization tests: {tail(output)}" if code else None
+            trace.output(failure or "passed")
+        if not failure or retry:
+            break
+        with trace.span("gate.retry", prompt="RETRY_PROMPT"):
+            reply = llm.complete(
+                ULTRA, RETRY_PROMPT.format(problems=problems(kinds), source=dedented, rewrite=rewrite, failure=failure)
+            )
+    if failure:
+        return "rejected", rejection(function, kinds, failure), None
+
+    start, end = function.start, function.end
+    passed = re.search(r"(\d+) passed", output)[1]
+    summary = (
+        f"Slopgate ({', '.join(f'`{kind}`' for kind in kinds)}) rewrite of `{function.qualname}`.\n"
+        f"nesting {nesting(function.source)} -> {nesting(rewrite)}, "
+        f"complexity {complexity(function.source)} -> {complexity(rewrite)}. "
+        f"{passed} characterization tests passed in sandbox."
+    )
+    if set(range(start, end + 1)) <= added:
+        suggestion = {"path": function.path, "line": end, "side": "RIGHT", "body": f"{summary}\n\n```suggestion\n{suggested}```"}
+        if start != end:
+            suggestion |= {"start_line": start, "start_side": "RIGHT"}
+        return "suggestions", suggestion, suggested
+    return "followup", {"function": function.qualname, "kinds": list(kinds), "reason": summary, "files": {function.path: spliced}}, suggested
+
+
+def splice(text: str, function, suggested: str) -> str:
+    lines = text.splitlines(keepends=True)
+    return "".join(lines[: function.start - 1]) + suggested + "".join(lines[function.end :])
+
+
+def repo_suite(sandbox, checkpoint, test, accepted: list[Rewrite], threads) -> dict:
+    def run(rewrites):
+        files = {}
+        # Bottom up, so that the line numbers of the other rewrites in one file stay valid.
+        for rewrite in sorted(rewrites, key=lambda rewrite: rewrite.function.start, reverse=True):
+            path = rewrite.function.path
+            files[path] = splice(files.get(path, rewrite.text), rewrite.function, rewrite.suggested)
+        code, output = sandbox.run(checkpoint, files, test)
+        return code in (0, 5), output
+
+    failures = {}
+    with trace.span("gate.repo_suite", rewrites=len(accepted)):
+        together, output = run(accepted)
+        if not together:
+            alone = [(together, output)] if len(accepted) == 1 else threads.map(trace.bind(lambda rewrite: run([rewrite])), accepted)
+            passed = []
+            for rewrite, (ok, output) in zip(accepted, alone):
+                if ok:
+                    passed.append(rewrite)
+                else:
+                    failures[rewrite.function] = f"rewrite fails repo tests: {tail(output)}"
+            # When every rewrite passed alone, the first run already tried them together.
+            if len(passed) > 1 and passed != accepted:
+                together, _ = run(passed)
+            if len(passed) > 1 and not together:
+                kept = passed[:1]
+                for rewrite in passed[1:]:
+                    ok, _ = run([*kept, rewrite])
+                    if ok:
+                        kept.append(rewrite)
+                    else:
+                        failures[rewrite.function] = "rewrite conflicts with another rewrite"
+        trace.output({f"{function.path}::{function.qualname}": reason for function, reason in failures.items()} or "passed")
+    return failures
+
+
 def review(repo, base, head, sandbox) -> dict:
     result = {"suggestions": [], "followup": [], "rejected": [], "notes": []}
     changed = diff.changed_functions(repo, base, head)
@@ -581,7 +724,7 @@ def review(repo, base, head, sandbox) -> dict:
                 wrapped.add(function)
                 plan = removal(repo, head, function, text, node, inner)
                 if plan and plan["rule"]:
-                    result["rejected"].append({"function": function.qualname, "path": function.path, "kinds": ["wrapper"], "reason": f"rule: {plan['rule']}"})
+                    result["rejected"].append(rejection(function, ["wrapper"], f"rule: {plan['rule']}"))
                     result["notes"].append(note(function, ["wrapper"], added, plan, patterns, REJECTED))
                 elif plan:
                     plans[function] = plan
@@ -613,7 +756,7 @@ def review(repo, base, head, sandbox) -> dict:
                 try:
                     kinds = classify(function, text)
                 except Exception as error:
-                    result["rejected"].append({"function": function.qualname, "path": function.path, "kinds": [], "reason": f"internal error: {error!r}"})
+                    result["rejected"].append(rejection(function, [], f"internal error: {error!r}"))
                     continue
                 trace.output(kinds)
         if not kinds:
@@ -632,99 +775,18 @@ def review(repo, base, head, sandbox) -> dict:
         result["rejected"].append({"reason": f"could not build test environment\n{error}"})
         result["notes"] += unproven(candidates, patterns, NO_ENVIRONMENT)
         return result
-    # ponytail: one trial at a time (well under the cap of 8); a thread pool of 8 when review time matters
-    for n, (function, added, kinds, text, found) in enumerate(candidates):
-        rejected = {"function": function.qualname, "path": function.path, "kinds": list(kinds)}
-        before = {key: len(items) for key, items in result.items()}
-        with trace.span("gate.function", path=function.path, qualname=function.qualname, slop_kinds=list(kinds)):
-            try:
-                test_path = f"tests/test_slopgate_{n}.py"
-                cmd = f"python -m coverage run --branch -m pytest -q {test_path}"
-                wrapper = "wrapper" in kinds
-                tests = None
-                if wrapper or not (found and found["exact"]):
-                    target = found["caller"] if wrapper else function
-                    with trace.span("gate.characterize"):
-                        tests, failure = characterize(sandbox, checkpoint, target, test_path, cmd)
-                        trace.output(failure or "passed")
-                    if failure:
-                        result["rejected"].append({**rejected, "reason": failure})
-                        continue
-                if found:
-                    with trace.span("gate.proof", attempt=1):
-                        if wrapper:
-                            followup, failure = inline(sandbox, checkpoint, function, found, tests, test, test_path, cmd)
-                        else:
-                            followup, failure = deduplicate(repo, head, sandbox, checkpoint, function, found, tests, test, test_path, cmd)
-                        trace.output(failure or "passed")
-                    if failure:
-                        result["rejected"].append({**rejected, "reason": failure})
-                    else:
-                        result["followup"].append(followup)
-                    continue
-
-                dedented = textwrap.dedent(function.source)
-                indent = function.source[: len(function.source) - len(function.source.lstrip())]
-                lines = text.splitlines(keepends=True)
-                with trace.span("gate.rewrite", prompt="REWRITE_PROMPT"):
-                    reply = llm.complete(SUPER, REWRITE_PROMPT.format(problems=problems(kinds), source=dedented))
-                for retry in (False, True):
-                    with trace.span("gate.proof", attempt=retry + 1):
-                        fenced = strip_fence(reply)
-                        if fenced is None:
-                            failure = "rewrite reply is not a python block"
-                            break
-                        rewrite = textwrap.dedent(fenced).strip("\n") + "\n"
-                        failure = broken_rule(dedented, rewrite)
-                        if failure:
-                            failure = f"rule: {failure}"
-                            break
-                        if same_code(dedented, rewrite):
-                            failure = "rewrite makes no change"
-                            break
-                        suggested = textwrap.indent(rewrite, indent)
-                        spliced = "".join(lines[: function.start - 1]) + suggested + "".join(lines[function.end :])
-                        failure = leftover(kinds, function, suggested, spliced)
-                        if not failure:
-                            code, output = sandbox.run(checkpoint, {test_path: tests, function.path: spliced}, cmd)
-                            if code:
-                                failure = f"rewrite fails characterization tests: {tail(output)}"
-                            else:
-                                repo_code, repo_output = sandbox.run(checkpoint, {function.path: spliced}, test)
-                                failure = f"rewrite fails repo tests: {tail(repo_output)}" if repo_code not in (0, 5) else None
-                        trace.output(failure or "passed")
-                    if not failure or retry:
-                        break
-                    with trace.span("gate.retry", prompt="RETRY_PROMPT"):
-                        reply = llm.complete(
-                            ULTRA, RETRY_PROMPT.format(problems=problems(kinds), source=dedented, rewrite=rewrite, failure=failure)
-                        )
-                if failure:
-                    result["rejected"].append({**rejected, "reason": failure})
-                    continue
-
-                start, end = function.start, function.end
-                passed = re.search(r"(\d+) passed", output)[1]
-                summary = (
-                    f"Slopgate ({', '.join(f'`{kind}`' for kind in kinds)}) rewrite of `{function.qualname}`.\n"
-                    f"nesting {nesting(function.source)} -> {nesting(rewrite)}, "
-                    f"complexity {complexity(function.source)} -> {complexity(rewrite)}. "
-                    f"{passed} characterization tests passed in sandbox."
-                )
-                if set(range(start, end + 1)) <= added:
-                    suggestion = {"path": function.path, "line": end, "side": "RIGHT", "body": f"{summary}\n\n```suggestion\n{suggested}```"}
-                    if start != end:
-                        suggestion |= {"start_line": start, "start_side": "RIGHT"}
-                    result["suggestions"].append(suggestion)
-                else:
-                    result["followup"].append({"function": function.qualname, "kinds": list(kinds), "reason": summary, "files": {function.path: spliced}})
-            except llm.CutOff:
-                result["rejected"].append({**rejected, "reason": "reply cut off"})
-            # One broken candidate must not lose the results of the others (the review of PR #15 was lost this way).
-            except Exception as error:
-                result["rejected"].append({**rejected, "reason": f"internal error: {error!r}"})
-            finally:
-                trace.output({key: items[before[key]:] for key, items in result.items() if len(items) > before[key]})
+    worker = trace.bind(partial(prove, repo, head, sandbox, checkpoint, test))
+    with ThreadPoolExecutor(WORKERS) as threads:
+        outcomes = list(threads.map(worker, range(len(candidates)), candidates))
+        accepted = [Rewrite(function, text, suggested) for (function, _, _, text, _), (_, _, suggested) in zip(candidates, outcomes) if suggested]
+        try:
+            failures = repo_suite(sandbox, checkpoint, test, accepted, threads) if accepted else {}
+        except Exception as error:
+            failures = {rewrite.function: f"internal error: {error!r}" for rewrite in accepted}
+    for (function, _, kinds, _, _), (into, entry, _) in zip(candidates, outcomes):
+        if function in failures:
+            into, entry = "rejected", rejection(function, kinds, failures[function])
+        result[into].append(entry)
     failed = {(r["path"], r["function"]) for r in result["rejected"] if "function" in r}
     result["notes"] += unproven([c for c in candidates if (c[0].path, c[0].qualname) in failed], patterns, REJECTED)
     return result
