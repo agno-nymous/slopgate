@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**46 — Find the changed functions from the merge-base, not from the base tip.** It must be done before the Slopgate workflow is on again. Ticket 38 is done: `index.build` completes on all 12 SWE-bench Lite repos, so the full gate can run on them. Ticket 42 comes before ticket 10. Ticket 08 is the next open row of the order table.
+**08 — Live duplicate flag at plan time.** Ticket 46 is done, so the Slopgate workflow can be on again when the user says so. Tickets 42 and 48 come before ticket 10.
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -50,11 +50,11 @@ Added after the order was set:
 | [43 — The gate cannot prove a `redundant_check` rewrite](43-dead-branch-of-redundant-check.md) | ready-for-agent | Found by ticket 39. The never-run branch of a repeated check fails the branch coverage rule. |
 | [44 — The import line is wrong for a repo with a `src/` layout](44-src-layout-import-line.md) | ready-for-agent | Found by ticket 41. All 6 pytest functions failed in every design. |
 | [45 — The test agent cannot characterize large functions](45-characterize-large-functions.md) | ready-for-agent | Found by ticket 41. The agent proved no function of complexity 17 or more; `review` (complexity 65) stopped at the token limit. |
-| [46 — Find the changed functions from the merge-base, not from the base tip](46-diff-from-merge-base.md) | ready-for-agent | Found by the code review of ticket 34. An inline comment on a line outside the pull request diff makes GitHub reject the whole review. Do it before the Slopgate workflow is on again. |
+| [46 — Find the changed functions from the merge-base, not from the base tip](46-diff-from-merge-base.md) | done | Found by the code review of ticket 34. An inline comment on a line outside the pull request diff makes GitHub reject the whole review. Do it before the Slopgate workflow is on again. |
 | [47 — `parse` splits lines on a form feed, so later functions get the wrong source](47-parse-splits-on-form-feed.md) | ready-for-agent | Found by the code review of ticket 38. Not seen in the 12 SWE-bench Lite repos. |
 | [48 — Compare the repo suite with a baseline run of the original code](48-repo-suite-baseline.md) | ready-for-agent | Found by ticket 38. A repo test that fails on the original code rejects every rewrite: 2 of 8 sympy rewrites in the ticket 38 run. Do it before ticket 10. |
 
-Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, and 41 are done. Tickets 23, 24, 29, 30, 31, and 35 are wontfix.
+Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, and 46 are done. Tickets 23, 24, 29, 30, 31, and 35 are wontfix.
 
 ## Rules for the order
 

@@ -256,6 +256,39 @@ def test_slop_in_a_test_file_gets_a_note_and_no_proof(make_repo, fake_llm, capsy
     }
 
 
+def test_base_branch_moved_ahead_finds_only_pull_request_functions(make_repo, fake_llm, tmp_path):
+    repo = make_repo(
+        {"app/__init__.py": "", "tests/test_old.py": NESTED + "\n\n" + FLAT_VIEW},
+        {"tests/test_old.py": NESTED + "\n\n" + NESTED.replace("can_edit", "can_view"), "tests/test_new.py": NESTED.replace("can_edit", "can_new")},
+    )
+
+    def git(*args):
+        subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True)
+
+    git("branch", "pr")
+    git("checkout", "-q", "-B", "main", "HEAD~1")
+    (tmp_path / "tests/test_old.py").write_text(FLAT + "\n\n" + FLAT_VIEW)
+    (tmp_path / "tests/test_new.py").write_text(FLAT.replace("can_edit", "can_new"))
+    git("add", "-A")
+    git("commit", "-q", "-m", "main moves ahead")
+
+    result = gate.review(repo, "main", "pr", None)
+
+    assert [(n["path"], n["function"], n["kinds"], n["line"]) for n in result["notes"]] == [
+        ("tests/test_new.py", "can_new", ["duplicate"], 14),
+        ("tests/test_old.py", "can_view", ["nesting"], 30),
+    ]
+
+
+def test_review_without_a_merge_base_names_the_cause(make_repo):
+    repo = make_repo({"a.py": "x = 1\n"}, {"a.py": "x = 2\n"})
+    for args in (("checkout", "-q", "--orphan", "x"), ("add", "-A"), ("commit", "-q", "-m", "orphan")):
+        subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True)
+
+    with pytest.raises(RuntimeError, match="merge-base"):
+        gate.review(repo, "main", "x", None)
+
+
 def two_nested_functions(make_repo, slopgate_toml):
     return make_repo(
         {"app/__init__.py": ""},
