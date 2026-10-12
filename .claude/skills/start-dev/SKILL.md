@@ -22,6 +22,10 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
    - Run `make runner-status`. It must show `Started:` with a process number.
    - Run `gh api repos/agno-nymous/slopgate/actions/runners -q '.runners[] | .name + " " + .status'`. The runner must be `online`.
    - If the runner is stopped or offline, run `make runner-start` and check again. If it is still offline, tell the user. Show the user the output of `make runner-logs`, and continue the ticket. The `slopgate` check waits in the queue until the runner is online.
+7. Start Phoenix for every ticket. The gate and the live tests send their traces to it.
+   - Run `curl -s -m 3 -o /dev/null -w "%{http_code}" http://127.0.0.1:6006/`. The answer `200` means that Phoenix runs.
+   - If it does not run, start it with a background Bash call: `PHOENIX_HOST=127.0.0.1 uvx arize-phoenix serve`. Poll the `curl` command until it answers `200`.
+   - The main checkout `.env` has no `PHOENIX_COLLECTOR_ENDPOINT` line, so a live command does not trace by default. Put `PHOENIX_COLLECTOR_ENDPOINT=http://127.0.0.1:6006` before each live command in steps 3 to 6 (`PHOENIX_COLLECTOR_ENDPOINT=http://127.0.0.1:6006 uv run --env-file <main checkout>/.env ...`). Never set it in a shell profile.
 
 ## 2. Start the ticket
 
@@ -57,12 +61,16 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
 ## 4. Verify
 
 1. Run `uv run pytest -q`. All tests must pass.
-2. Run the live tests that the ticket names: `uv run --extra hook --env-file <main checkout>/.env pytest -m live -q` (or the single test path).
-3. For a gate change, run one local dry run: `uv run --env-file <main checkout>/.env slopgate review --repo <repo> --base <ref> --head <ref> --dry-run`. Do not use `--sandbox local` on this repo: `.slopgate.toml` installs with `apt-get`, which exists only in the Contree Linux image.
+2. Run the live tests that the ticket names: `PHOENIX_COLLECTOR_ENDPOINT=http://127.0.0.1:6006 uv run --extra hook --env-file <main checkout>/.env pytest -m live -q` (or the single test path).
+3. For a gate change, run one local dry run: `PHOENIX_COLLECTOR_ENDPOINT=http://127.0.0.1:6006 uv run --env-file <main checkout>/.env slopgate review --repo <repo> --base <ref> --head <ref> --dry-run`. Do not use `--sandbox local` on this repo: `.slopgate.toml` installs with `apt-get`, which exists only in the Contree Linux image.
    If the ticket changes the dependencies in `pyproject.toml`, also check the `setup` line of `.slopgate.toml` and the install step of `action.yml`. Both install with pip, and pip does not install uv dependency groups.
-4. Check each acceptance box only after you see it pass. If a box cannot pass (for example, it needs an external service that is not available), leave it open, and use `Status: needs-live-check` instead of `done`.
-5. Measure the numbers that the ticket asks for (time, counts, rates). Do not estimate them.
-6. Run a code review when the feature is done and the tests pass. Dispatch a read-only `pstack:poteto-agent` subagent with `model: "opus"`. Tell it to invoke the `pstack:thermo-nuclear-code-quality-review` skill on the diff against `origin/main` plus the untracked files, and to check the diff against the ticket's design and acceptance boxes. Apply each finding, or reject it with a reason. Then run `uv run pytest -q` again. Give the findings and what you did with each to the user.
+4. Read the Phoenix traces of every live run in steps 2 and 3. Do this each time, also when the run passes. Invoke the `phoenix-cli` skill, and use `PHOENIX_ENDPOINT=http://127.0.0.1:6006` with `--project slopgate-gate` (gate runs) or `--project slopgate-tests` (live tests).
+   - List the traces of the run: `px trace list --project <project> --last-n-minutes 60 --format raw --no-progress`. Each `gate.review` trace is one run. Open each one with `px trace get <trace-id>`.
+   - Look for: a trace with status `ERROR`, a `sandbox.prepare` span that failed or took more than 60 s, a `characterize` span that stopped at the step or token limit, a `sandbox.run` span that exited non-zero, and a model call that returned `finish_reason: "length"`.
+   - Say what you found, with the trace id, in the Comments entry of step 5 and in the final report. A failure that has a cause in the trace is a finding, not noise. If it is outside the ticket, write it as a new ticket.
+5. Check each acceptance box only after you see it pass. If a box cannot pass (for example, it needs an external service that is not available), leave it open, and use `Status: needs-live-check` instead of `done`.
+6. Measure the numbers that the ticket asks for (time, counts, rates). Do not estimate them.
+7. Run a code review when the feature is done and the tests pass. Dispatch a read-only `pstack:poteto-agent` subagent with `model: "opus"`. Tell it to invoke the `pstack:thermo-nuclear-code-quality-review` skill on the diff against `origin/main` plus the untracked files, and to check the diff against the ticket's design and acceptance boxes. Apply each finding, or reject it with a reason. Then run `uv run pytest -q` again. Give the findings and what you did with each to the user.
 
 ## 5. Finish the ticket text
 
