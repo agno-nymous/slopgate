@@ -1818,3 +1818,9 @@ def test_shown_keeps_five_head_and_five_tail_lines_of_many_short_lines():
 def test_shown_returns_short_output_unchanged_with_the_exit_code():
     assert gate.shown(0, "ok\n") == "ok\n\n[Command succeeded with exit code 0]"
     assert gate.shown(2, "bad") == "bad\n[Command failed with exit code 2]"
+
+
+def test_module_of_drops_a_leading_src_folder():
+    assert gate.module_of("src/flask/helpers.py") == "flask.helpers"
+    assert gate.module_of("slopgate/review.py") == "slopgate.review"
+    assert gate.module_of("pkg/src/mod.py") == "pkg.src.mod"

@@ -115,7 +115,7 @@ class SameJob(BaseModel):
 
 
 def module_of(path: str) -> str:
-    return path.removesuffix(".py").replace("/", ".")
+    return path.removeprefix("src/").removesuffix(".py").replace("/", ".")
 
 
 def strip_fence(text: str) -> str | None:
