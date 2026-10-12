@@ -68,3 +68,11 @@ The user chooses the design from the table. Record the chosen limits in `slopgat
 - [ ] A dry run of the gate on the commits of ticket 41 gives a result for `review` that the chosen design explains: proved, or rejected at once with the reason.
 
 ## Comments
+
+### 2026-10-11 — count from ticket 49
+
+The traced dry runs of ticket 49 (10 pull requests, 15 candidates) gave 7 wrong results from this cause: `review` 4 times (81 to 158 lines), `removal` (77 lines), and `characterize` 2 times (55 lines). Each run stopped at the step limit (5) or the token limit (2), and used 105,000 to 190,000 tokens and 65 s to 99 s.
+
+In 5 of these runs, the output of the failing pytest runs was 61 % to 73 % of the message history. Design 2 (short history) addresses this. A pytest option such as `--tb=short` is another way to cut it, but it is a prompt change and needs a live comparison first.
+
+A live comparison in ticket 49 on 7 functions (variant A: now; variant B: the missed-branch command filtered to the lines of the target; variant C: B plus a stop rule) gave 2, 2, and 3 passes of 7, and 91, 90, and 89 steps. The same function passed in one run and failed in the next at temperature 0. So a design comparison here needs at least 3 runs for each function.

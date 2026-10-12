@@ -35,3 +35,11 @@ Found by ticket 41. The benchmark used `src/` functions from `pallets/flask` and
 - [ ] `uv run pytest -q` passes.
 
 ## Comments
+
+### 2026-10-11 — count from ticket 49
+
+The traced dry run of `pallets/flask#4646` (trace `1d564d20`) gave the import line `from src.flask.cli import find_best_app`. That run also had no install step (fixed in ticket 49: `commands` now installs a `setup.py` repo). Count in the 10 traced runs of ticket 49: 1 of 15 candidates.
+
+### 2026-10-11 — external count from ticket 49
+
+flask#5818 has its package in `src/flask/`. In the 4 agent runs on this pull request, the agent first wrote `from src.flask.app import Flask`, or added `--source=src` to its command. Count: 4 of the 7 external candidate runs, plus flask#4646 above, so 5 of 7.
