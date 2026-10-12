@@ -35,7 +35,7 @@ def commands(repo, ref) -> tuple[str | None, str]:
     override = tomllib.loads(git(repo, "show", f"{ref}:.slopgate.toml")) if ".slopgate.toml" in names else {}
     override = override.get("sandbox", {})
     requirements = sorted(fnmatch.filter(names, "requirements*.txt"))
-    if "pyproject.toml" in names:
+    if {"pyproject.toml", "setup.py"} & set(names):
         setup = "pip install -e ."
     elif requirements:
         setup = "pip install " + " ".join(f"-r {name}" for name in requirements)

@@ -1651,3 +1651,27 @@ def test_broken_repo_suite_run_rejects_the_accepted_rewrites_and_keeps_the_other
         ("can_delete", error),
     ]
     assert [note["function"] for note in result["notes"]] == THREE
+
+
+def test_setup_py_repo_installs_the_package(make_repo):
+    repo = make_repo({"setup.py": ""}, {"app.py": ""})
+
+    assert sandbox.commands(repo, "HEAD")[0] == "pip install -e ."
+
+
+def test_setup_cfg_alone_is_not_a_manifest(make_repo):
+    repo = make_repo({"setup.cfg": "", "requirements.txt": ""}, {"app.py": ""})
+
+    assert sandbox.commands(repo, "HEAD")[0] == "pip install -r requirements.txt"
+
+
+def test_manifest_wins_over_requirements_files(make_repo):
+    repo = make_repo({"setup.py": "", "requirements.txt": ""}, {"app.py": ""})
+
+    assert sandbox.commands(repo, "HEAD")[0] == "pip install -e ."
+
+
+def test_requirements_only_repo_installs_the_requirements(make_repo):
+    repo = make_repo({"requirements.txt": ""}, {"app.py": ""})
+
+    assert sandbox.commands(repo, "HEAD")[0] == "pip install -r requirements.txt"
