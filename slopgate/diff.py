@@ -35,3 +35,12 @@ def changed_functions(repo, base, head) -> list[tuple[Function, set[int]]]:
             if touched:
                 changed.append((function, touched))
     return changed
+
+
+def old_function(repo, base, function) -> tuple[Function, str] | None:
+    try:
+        text = git(repo, "show", f"{base}:{function.path}")
+        found = parse(function.path, text)
+    except (subprocess.CalledProcessError, UnicodeDecodeError, SyntaxError, ValueError):
+        return None
+    return next(((old, text) for old in found if old.qualname == function.qualname), None)

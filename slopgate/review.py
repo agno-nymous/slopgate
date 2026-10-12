@@ -771,6 +771,9 @@ def review(repo, base, head, sandbox) -> dict:
             with trace.span("gate.classify", path=function.path, qualname=function.qualname):
                 try:
                     kinds = classify(function, text)
+                    if kinds and (old := diff.old_function(repo, fork, function)):
+                        before = classify(*old)
+                        kinds = {kind: lines for kind, lines in kinds.items() if kind not in before}
                 except Exception as error:
                     result["rejected"].append(rejection(function, [], f"internal error: {error!r}"))
                     continue
