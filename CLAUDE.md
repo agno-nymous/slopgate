@@ -53,7 +53,7 @@ The live tests are marked `live` and are off by default (`addopts` in `pyproject
 | `slopgate/embed.py` | CodeRankEmbed embeddings for the hook only. Compiles to int8 ONNX in `~/.cache/slopgate/`. |
 | `slopgate/index.py` | Function index of a commit, in `.slopgate/<sha>.json`, and keyword search over it. |
 | `slopgate/live.py` | The hook. Its store is `.slopgate/live.db` (SQLite). |
-| `slopgate/diff.py`, `slopgate/functions.py` | Changed functions between two refs, the `.py` files of a commit that decode (`python_sources`), function parsing, `dedent` (by the indent of the `def` line; use it, not `textwrap.dedent`), token sets of functions, and the test-file rule (`is_test_file`, `pytest_patterns`) that the gate and the hook share. |
+| `slopgate/diff.py`, `slopgate/functions.py` | Changed functions between two refs, `old_function` (the same function at the merge-base, so the gate keeps only kinds that the pull request adds), the `.py` files of a commit that decode (`python_sources`), function parsing, `dedent` (by the indent of the `def` line; use it, not `textwrap.dedent`), token sets of functions, and the test-file rule (`is_test_file`, `pytest_patterns`) that the gate and the hook share. |
 | `slopgate/trace.py` | Phoenix tracing: start, span, output, bind. Off unless PHOENIX_COLLECTOR_ENDPOINT is a local address; with tracing off it imports no OpenTelemetry module. |
 | `slopgate/config.py` | Model names, thresholds, and prices. |
 

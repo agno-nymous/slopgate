@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**54 — The gate flags slop in old lines that the pull request did not write.** Ticket 49 is done. On 10 external pull requests, 6 of 7 candidate runs had their slop only in old lines, so ticket 54 comes first. Then the causes by external count: 53, 55, 44, 57, and 56.
+**53 — An old commit installs today's versions of its dependencies.** Tickets 49 and 54 are done. Ticket 53 has the highest external count of the open tickets (5 of 7 candidates). Then the causes by external count: 55, 44, 57, and 56.
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -32,7 +32,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 18 | [24 — Save the embedding model cache on main](24-model-cache-on-main.md) | wontfix | — | Ticket 28 removes the embedding model from the gate. |
 | 19 | [25 — Faster proof](25-faster-proof.md) | done | 32 | Needs the step times from one traced review first. |
 | 20 | [49 — Find the gate's errors in the Phoenix traces, and fix the harness](49-trace-review-harness-fixes.md) | done | — | The user set it first on 2026-10-11. The traces show the most frequent causes of wrong results, so the next fixes go where they help most. |
-| 21 | [54 — The gate flags slop in old lines that the pull request did not write](54-flag-only-slop-the-pr-adds.md) | ready-for-agent | — | Found by ticket 49 on external pull requests: 6 of 7 candidate runs had their slop only in old lines. Each one cost an agent run of 60 s to 73 s. |
+| 21 | [54 — The gate flags slop in old lines that the pull request did not write](54-flag-only-slop-the-pr-adds.md) | done | — | Found by ticket 49 on external pull requests: 6 of 7 candidate runs had their slop only in old lines. Each one cost an agent run of 60 s to 73 s. |
 | 22 | [53 — An old commit installs today's versions of its dependencies](53-old-commit-installs-new-dependencies.md) | ready-for-agent | — | Found by ticket 49: 5 of 7 external candidates. The sandbox ignores `uv.lock` and the dependency groups, so flask#5818 (2025) got a `pytest` without `monkeypatch.notset`. Do it before ticket 10. |
 | 23 | [55 — The test agent passes only with changes that the judge does not keep](55-agent-run-differs-from-judge-run.md) | ready-for-agent | — | Found by ticket 49: 4 of 7 external candidates. The agent moved `conftest.py` or set an environment variable, and the judge did not. |
 | 24 | [44 — The import line is wrong for a repo with a `src/` layout](44-src-layout-import-line.md) | ready-for-agent | — | All 6 pytest functions failed in every design of ticket 41. Ticket 49: 5 of 7 external candidates. A small change. |
@@ -63,7 +63,7 @@ Added after the order was set:
 | [41 — Characterization tests by an agent in a ConTree sandbox](41-characterization-agent-in-contree.md) | done | A plain tool loop (design D) proved 24 of 36 functions; the old flow proved 7. `characterize` uses it now. Tickets 29, 30, 31, and 35 are wontfix. |
 | [46 — Find the changed functions from the merge-base, not from the base tip](46-diff-from-merge-base.md) | done | Found by the code review of ticket 34. An inline comment on a line outside the pull request diff makes GitHub reject the whole review. Do it before the Slopgate workflow is on again. |
 
-Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, 46, and 49 are done. Tickets 23, 24, 29, 30, 31, and 35 are wontfix.
+Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, 46, 49, and 54 are done. Tickets 23, 24, 29, 30, 31, and 35 are wontfix.
 
 ## Rules for the order
 
