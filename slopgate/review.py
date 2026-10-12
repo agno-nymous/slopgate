@@ -181,19 +181,25 @@ def broken_rule(original: str, rewrite: str) -> str | None:
 
 
 def find_duplicate(function, pool) -> dict | None:
-    code_hash = structure_hash(function.source)
-    for record in pool:
-        if record["hash"] == code_hash:
-            return {"helper": record, "exact": True, "difference": "", "note": "exact structural copy"}
-    for score, record in index.search(pool, function.source, DUPLICATE_SCORE, 5):
-        prompt = SAME_JOB_PROMPT.format(
-            path=function.path, source=function.source, helper_path=record["path"], helper_source=record["source"]
-        )
-        with trace.span("gate.same_job", helper=f"{record['path']}::{record['qualname']}", score=round(score, 2), prompt="SAME_JOB_PROMPT"):
-            verdict = llm.decide(SUPER, prompt, SameJob)
-        if verdict and verdict.same_job:
-            return {"helper": record, "exact": False, "difference": verdict.difference, "note": f"score {score:.2f}"}
-    return None
+    with trace.span("gate.duplicate", path=function.path, qualname=function.qualname):
+        code_hash = structure_hash(function.source)
+        for record in pool:
+            if record["hash"] == code_hash:
+                result = {"helper": record, "exact": True, "difference": "", "note": "exact structural copy"}
+                trace.output(result)
+                return result
+        for score, record in index.search(pool, function.source, DUPLICATE_SCORE, 5):
+            prompt = SAME_JOB_PROMPT.format(
+                path=function.path, source=function.source, helper_path=record["path"], helper_source=record["source"]
+            )
+            with trace.span("gate.same_job", helper=f"{record['path']}::{record['qualname']}", score=round(score, 2), prompt="SAME_JOB_PROMPT"):
+                verdict = llm.decide(SUPER, prompt, SameJob)
+            if verdict and verdict.same_job:
+                result = {"helper": record, "exact": False, "difference": verdict.difference, "note": f"score {score:.2f}"}
+                trace.output(result)
+                return result
+        trace.output(None)
+        return None
 
 
 def apply(text: str, edits) -> str:
@@ -738,11 +744,14 @@ def review(repo, base, head, sandbox) -> dict:
             skip = {(function.path, function.qualname) for function, _ in changed}
             kept = {(r["path"], r["qualname"]) for r in index.build(repo, head)}
             pool = [r for r in base_index if "." not in r["qualname"] and (r["path"], r["qualname"]) not in skip and (r["path"], r["qualname"]) in kept]
-        for function, _ in changed:
-            if "." not in function.qualname and function not in wrapped and (function.path, function.qualname) not in known:
-                with trace.span("gate.duplicate", path=function.path, qualname=function.qualname):
-                    matches[function] = find_duplicate(function, pool)
-                    trace.output(matches[function])
+        looked = [
+            function
+            for function, _ in changed
+            if "." not in function.qualname and function not in wrapped and (function.path, function.qualname) not in known
+        ]
+
+        with ThreadPoolExecutor(WORKERS) as threads:
+            matches = dict(zip(looked, threads.map(trace.bind(partial(find_duplicate, pool=pool)), looked)))
     candidates = []
     for function, added in changed:
         text = diff.git(repo, "show", f"{head}:{function.path}")

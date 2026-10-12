@@ -162,6 +162,24 @@ def test_copy_with_other_error_on_none(make_repo, fake_llm, capsys, difference, 
         assert result["followup"] == []
 
 
+def test_every_new_copy_gets_its_own_duplicate_result(make_repo, fake_llm, capsys):
+    other = "def shout(text):\n    if text is None:\n        raise ValueError('text is required')\n    return text.upper().strip()\n"
+    copy = other.replace("shout", "yell").replace("(text)", "(line)").replace("text.upper", "line.upper").replace("if text", "if line")
+    repo = make_repo({"app/__init__.py": "", "app/text.py": SLUGIFY + "\n\n" + other}, {"app/posts.py": RENAMED_COPY + "\n\n" + copy})
+
+    result = review(capsys, repo)
+
+    assert fake_llm.calls == []
+    assert result["rejected"] == []
+    assert sorted((entry["function"], entry["kinds"]) for entry in result["followup"]) == [
+        ("make_slug", ["duplicate"]),
+        ("yell", ["duplicate"]),
+    ]
+    helper = {entry["function"]: entry["reason"] for entry in result["followup"]}
+    assert "`slugify` in app/text.py" in helper["make_slug"]
+    assert "`shout` in app/text.py" in helper["yell"]
+
+
 def test_candidate_without_a_verdict_is_skipped(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": "", "app/a.py": SLUGIFY, "app/b.py": SLUGIFY}, {"app/posts.py": TYPE_ERROR_COPY})
     fake_llm.replies += [None, SameJob(difference="raises TypeError", same_job=True), fenced(SLUG_TESTS)]
