@@ -25,3 +25,8 @@ AGENT_TOKENS = 150_000
 # Seconds for one sandbox run (the check, the rewrite proof, the repo tests). The slowest normal run in ticket 33 took 159 s:
 # this repo's own test suite in ConTree.
 SANDBOX_TIMEOUT = 600
+
+# A commit from before Python 3.12 runs on Python 3.10 with the dependencies of its own time (ticket 53). On 3.12 the old pytest
+# fails in the assertion rewriter, and some old packages have no wheel.
+OLD_COMMIT_BEFORE = "2023-10-02T00:00:00+00:00"
+OLD_COMMIT_IMAGE = "python:3.10-slim"

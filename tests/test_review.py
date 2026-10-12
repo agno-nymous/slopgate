@@ -7,6 +7,7 @@ import sys
 import textwrap
 import threading
 import time
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -15,7 +16,7 @@ from contree_sdk.sdk.exceptions import NotFoundError
 from slopgate import kinds, llm, sandbox
 from slopgate import review as gate
 from slopgate.cli import main
-from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, SUPER, ULTRA
+from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, OLD_COMMIT_IMAGE, SUPER, ULTRA
 from slopgate.functions import dedent, is_test_file, parse, pytest_patterns, structure_hash
 from slopgate.kinds import KINDS, classify, flattenable, has_dead_code, leftover, problems, repeated_checks
 from slopgate.review import COVERAGE, EXECUTE, NO_ENVIRONMENT, REJECTED, characterize, same_code, strip_fence
@@ -1537,7 +1538,9 @@ class SlowSandbox:
         with self.lock:
             self.active -= 1
 
-    def prepare(self, repo, ref, setup):
+    pins = False
+
+    def prepare(self, repo, ref, setup, image=None):
         return None
 
     def session(self, checkpoint):
@@ -1676,6 +1679,96 @@ def test_setup_py_repo_installs_the_package(make_repo):
     repo = make_repo({"setup.py": ""}, {"app.py": ""})
 
     assert sandbox.commands(repo, "HEAD")[0] == "pip install -e ."
+
+
+OLD = "2022-05-31T09:10:36-07:00"
+RECENT = "2026-01-01T00:00:00+00:00"
+
+
+def shell_syntax_ok(setup):
+    return subprocess.run(["sh", "-n", "-c", setup]).returncode == 0
+
+
+def test_repo_with_a_lock_installs_the_locked_versions(make_repo):
+    repo = make_repo({"pyproject.toml": "", "uv.lock": ""}, {"app.py": ""})
+
+    setup, _, image = sandbox.commands(repo, "HEAD", RECENT)
+
+    assert "uv export --frozen --all-groups" in setup
+    assert "{" not in setup
+    assert setup.endswith("|| pip install -e .")
+    assert shell_syntax_ok(setup)
+    assert image is None
+
+
+def test_old_commit_installs_the_versions_of_its_date_on_the_old_image(make_repo):
+    repo = make_repo({"pyproject.toml": ""}, {"app.py": ""})
+
+    setup, _, image = sandbox.commands(repo, "HEAD", OLD)
+
+    assert f"--exclude-newer {OLD}" in setup
+    assert "{" not in setup
+    assert "--exclude-newer-package setuptools=" in setup
+    assert "pytest --reinstall-package pytest" in setup
+    assert setup.endswith("|| pip install -e .")
+    assert shell_syntax_ok(setup)
+    assert image == OLD_COMMIT_IMAGE
+
+
+def test_recent_commit_installs_the_newest_versions(make_repo):
+    repo = make_repo({"pyproject.toml": ""}, {"app.py": ""})
+
+    assert sandbox.commands(repo, "HEAD", RECENT) == ("pip install -e .", "python -m pytest -q", None)
+
+
+def test_install_is_not_pinned_without_a_date(make_repo):
+    repo = make_repo({"pyproject.toml": "", "uv.lock": ""}, {"app.py": ""})
+
+    assert sandbox.commands(repo, "HEAD")[0] == "pip install -e ."
+
+
+def test_setup_override_wins_over_the_old_image(make_repo):
+    repo = make_repo({"pyproject.toml": "", ".slopgate.toml": '[sandbox]\nsetup = "make dev"\n'}, {"app.py": ""})
+
+    assert sandbox.commands(repo, "HEAD", OLD) == ("make dev", "python -m pytest -q", None)
+
+
+def test_old_repo_with_requirements_only_keeps_the_default_image(make_repo):
+    repo = make_repo({"requirements.txt": ""}, {"app.py": ""})
+
+    assert sandbox.commands(repo, "HEAD", OLD) == ("pip install -r requirements.txt", "python -m pytest -q", None)
+
+
+def test_only_the_contree_sandbox_pins():
+    assert Contree.pins and not Local.pins
+
+
+def test_commit_before_python_312_is_old():
+    assert sandbox.is_old(OLD)
+    assert not sandbox.is_old(RECENT)
+
+
+def test_review_dates_the_install_by_the_merge_base_not_the_head(make_repo, monkeypatch):
+    monkeypatch.setenv("GIT_COMMITTER_DATE", OLD)
+    repo = make_repo({"pyproject.toml": "", "app/__init__.py": ""}, {"README": ""})
+    (Path(repo) / "app/perms.py").write_text(NESTED)
+    monkeypatch.setenv("GIT_COMMITTER_DATE", RECENT)
+    for args in (["add", "-A"], ["-c", "user.name=t", "-c", "user.email=t@e.com", "commit", "-q", "-m", "head"]):
+        subprocess.run(["git", *args], cwd=repo, check=True)
+    seen = []
+
+    class Box(Local):
+        pins = True
+
+        def prepare(self, repo, ref, setup, image=None):
+            seen.append((setup, image))
+            raise sandbox.InstallError("stop")
+
+    gate.review(repo, "HEAD~1", "HEAD", Box())
+
+    [(setup, image)] = seen
+    assert f"--exclude-newer {OLD}" in setup
+    assert image == OLD_COMMIT_IMAGE
 
 
 def test_setup_cfg_alone_is_not_a_manifest(make_repo):

@@ -8,13 +8,14 @@ import sys
 import tempfile
 import time
 import tomllib
+from datetime import datetime
 from pathlib import Path
 
 from contree_sdk import ContreeSync
 from contree_sdk.sdk.exceptions import NotFoundError
 
 from slopgate import trace
-from slopgate.config import SANDBOX_TIMEOUT
+from slopgate.config import OLD_COMMIT_BEFORE, OLD_COMMIT_IMAGE, SANDBOX_TIMEOUT
 from slopgate.diff import git
 
 
@@ -30,18 +31,51 @@ def archive(repo, ref) -> bytes:
     return subprocess.run(["git", "archive", ref], cwd=repo, capture_output=True, check=True).stdout
 
 
-def commands(repo, ref) -> tuple[str | None, str]:
+def commit_date(repo, ref) -> str:
+    return git(repo, "show", "-s", "--format=%cI", ref).strip()
+
+
+def is_old(date: str) -> bool:
+    return datetime.fromisoformat(date) < datetime.fromisoformat(OLD_COMMIT_BEFORE)
+
+
+# uv needs a path, not a name, to install into a Python that is not in a virtual environment.
+PYTHON = '"$(command -v python)"'
+
+
+def pinned_install(names, since) -> tuple[str, str | None]:
+    # Each variant falls back to the plain install: a failed pinned install must not become "could not build test environment".
+    plain = "pip install -e ."
+    if "uv.lock" in names and "pyproject.toml" in names:
+        pinned = f"R=$(mktemp) && uv export --frozen --all-groups --no-hashes --no-emit-project -o $R && uv pip install --python {PYTHON} -q -r $R -e ."
+        image = None
+    elif is_old(since):
+        # The sandbox installs the newest pytest first: reinstall it with the date limit. A setuptools from before 2022 cannot build an
+        # editable install, so setuptools is limited to the date only after the build: the newest one warns in `pkg_resources`.
+        install = f"uv pip install --python {PYTHON} -q --exclude-newer {since}"
+        pinned = f"{install} --exclude-newer-package setuptools=2100-01-01 -e . pytest --reinstall-package pytest && {install} setuptools --reinstall-package setuptools"
+        image = OLD_COMMIT_IMAGE
+    else:
+        return plain, None
+    return f"pip install -q uv && {pinned} || {plain}", image
+
+
+def commands(repo, ref, since=None) -> tuple[str | None, str, str | None]:
+    # `since` is the commit date of the merge-base. Without it the install is not pinned: the Local sandbox installs into this venv.
     names = git(repo, "ls-tree", "--name-only", ref).splitlines()
     override = tomllib.loads(git(repo, "show", f"{ref}:.slopgate.toml")) if ".slopgate.toml" in names else {}
     override = override.get("sandbox", {})
     requirements = sorted(fnmatch.filter(names, "requirements*.txt"))
+    image = None
     if {"pyproject.toml", "setup.py"} & set(names):
-        setup = "pip install -e ."
+        setup, image = pinned_install(names, since) if since else ("pip install -e .", None)
     elif requirements:
         setup = "pip install " + " ".join(f"-r {name}" for name in requirements)
     else:
         setup = None
-    return override.get("setup", setup), override.get("test", "python -m pytest -q")
+    if "setup" in override:
+        setup, image = override["setup"], None
+    return setup, override.get("test", "python -m pytest -q"), image
 
 
 def bounded(cmd: str, seconds: int) -> str:
@@ -118,7 +152,9 @@ class ContreeSession:
 
 
 class Local:
-    def prepare(self, repo, ref, setup: str | None) -> Path:
+    pins = False
+
+    def prepare(self, repo, ref, setup: str | None, image=None) -> Path:
         path = Path(tempfile.mkdtemp(prefix="slopgate-"))
         subprocess.run(["tar", "-x", "-C", path], input=archive(repo, ref), check=True)
         if setup:
@@ -143,14 +179,16 @@ class Local:
 
 
 class Contree:
+    pins = True
+
     def __init__(self, image="python:3.12-slim"):
         self.client = ContreeSync()
         self.image = image
 
-    def prepare(self, repo, ref, setup: str | None):
+    def prepare(self, repo, ref, setup: str | None, image=None):
         script = "mkdir -p /repo && tar -x -f /tmp/repo.tar -C /repo && cd /repo && pip install -q pytest coverage || exit\n"
         result = (
-            self.client.images.use(self.image)
+            self.client.images.use(image or self.image)
             .run(shell=script + (setup or ""), files={"/tmp/repo.tar": archive(repo, ref)}, disposable=False)
             .wait()
         )
