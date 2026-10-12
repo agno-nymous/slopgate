@@ -16,7 +16,7 @@ from slopgate import diff, index, llm, trace
 from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, DUPLICATE_SCORE, SUPER, ULTRA, WORKERS
 from slopgate.functions import Function, complexity, dedent, is_test_file, nesting, parse, pytest_patterns, structure_hash
 from slopgate.kinds import KINDS, classify, comments, leftover, problems
-from slopgate.sandbox import InstallError, commands, tail
+from slopgate.sandbox import InstallError, commands, commit_date, tail
 
 NONDETERMINISTIC = {"random", "secrets", "uuid", "time", "datetime"}
 DEFS = (ast.FunctionDef, ast.AsyncFunctionDef)
@@ -786,10 +786,11 @@ def review(repo, base, head, sandbox) -> dict:
             candidates.append((function, added, kinds, text, found))
     if not candidates:
         return result
-    setup, test = commands(repo, head)
+    # The date of the merge-base, not of the head: the head of a benchmark case is a new commit on old code.
+    setup, test, image = commands(repo, head, commit_date(repo, fork) if sandbox.pins else None)
     try:
         with trace.span("sandbox.prepare", input=setup):
-            checkpoint = sandbox.prepare(repo, head, setup)
+            checkpoint = sandbox.prepare(repo, head, setup, image)
     except InstallError as error:
         result["rejected"].append({"reason": f"could not build test environment\n{error}"})
         result["notes"] += unproven(candidates, patterns, NO_ENVIRONMENT)
