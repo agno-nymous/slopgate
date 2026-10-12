@@ -1675,3 +1675,34 @@ def test_requirements_only_repo_installs_the_requirements(make_repo):
     repo = make_repo({"requirements.txt": ""}, {"app.py": ""})
 
     assert sandbox.commands(repo, "HEAD")[0] == "pip install -r requirements.txt"
+
+
+def test_shown_cuts_one_huge_line_without_duplicating_it():
+    result = gate.shown(0, "x" * 100_000)
+
+    body = result.rsplit("\n[Command", 1)[0]
+    assert len(body) < 81_000
+    assert body.count("x" * 8_001) == 0
+    assert "92000 characters truncated" in body
+
+
+def test_shown_keeps_each_line_once_when_there_are_few_lines():
+    lines = [str(n) * 30_000 for n in range(4)]
+
+    body = gate.shown(0, "\n".join(lines)).rsplit("\n[Command", 1)[0]
+
+    assert len(body) < 81_000
+    assert [line[0] for line in body.splitlines()] == ["0", "1", "2", "3"]
+
+
+def test_shown_keeps_five_head_and_five_tail_lines_of_many_short_lines():
+    lines = [f"{n:09d}" for n in range(20_000)]
+
+    body = gate.shown(1, "\n".join(lines)).rsplit("\n[Command", 1)[0]
+
+    assert body.splitlines() == [*lines[:5], "... [19990 lines truncated] ...", *lines[-5:]]
+
+
+def test_shown_returns_short_output_unchanged_with_the_exit_code():
+    assert gate.shown(0, "ok\n") == "ok\n\n[Command succeeded with exit code 0]"
+    assert gate.shown(2, "bad") == "bad\n[Command failed with exit code 2]"
