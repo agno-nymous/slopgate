@@ -576,6 +576,25 @@ def test_function_with_no_kind_makes_no_model_call(make_repo, fake_llm, capsys, 
     assert fake_llm.calls == []
 
 
+def test_old_slop_in_a_function_with_a_new_one_line_change_is_not_a_candidate(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": "", "app/perms.py": NESTED}, {"app/perms.py": NESTED.replace("return True", "return 1")})
+
+    assert review(capsys, repo) == {"suggestions": [], "followup": [], "rejected": [], "notes": []}
+    assert fake_llm.calls == []
+
+
+def test_slop_that_a_pull_request_adds_to_an_existing_function_is_still_a_candidate(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": "", "tests/test_perms.py": FLAT}, {"tests/test_perms.py": NESTED})
+
+    assert [n["kinds"] for n in review(capsys, repo)["notes"]] == [["nesting"]]
+
+
+def test_a_base_file_that_does_not_parse_does_not_hide_the_slop_of_the_function(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": "", "tests/test_perms.py": "def broken(:\n"}, {"tests/test_perms.py": NESTED})
+
+    assert [n["kinds"] for n in review(capsys, repo)["notes"]] == [["nesting"]]
+
+
 STILL_NESTED = SIGNATURE + "    if user_active:\n        if is_owner:\n            if not locked:\n                return not archived\n    return False\n"
 PARSE_INT = "def parse_int(value):\n    try:\n        return int(value)\n    except Exception:\n        return None\n"
 PARSE_INT_TESTS = (
