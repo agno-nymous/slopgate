@@ -1085,6 +1085,23 @@ def test_agent_stops_at_the_step_limit_and_the_check_judges_its_file(make_repo, 
     assert steps == [SUPER] * AGENT_STEPS
 
 
+def test_agent_rules_tell_the_agent_not_to_install_packages(make_repo, monkeypatch):
+    sandbox, checkpoint, function = perms(make_repo)
+    seen = []
+
+    def step(model, messages, tools):
+        seen.append(messages[0]["content"])
+        return agent_reply(), 1000
+
+    monkeypatch.setattr(llm, "step", step)
+    monkeypatch.setattr(llm, "usage", [])
+
+    characterize(sandbox, checkpoint, function, TEST_PATH, CMD)
+
+    assert "Do not install packages." in seen[0]
+    assert f"replace it in {TEST_PATH}" in seen[0]
+
+
 def test_agent_counts_the_tokens_of_its_own_replies_when_other_threads_add_usage(make_repo, monkeypatch):
     sandbox, checkpoint, function = perms(make_repo)
     steps = []
