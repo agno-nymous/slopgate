@@ -22,6 +22,8 @@ NONDETERMINISTIC = {"random", "secrets", "uuid", "time", "datetime"}
 DEFS = (ast.FunctionDef, ast.AsyncFunctionDef)
 BOOL_CALLS = {"bool", "isinstance", "issubclass", "callable", "hasattr", "all", "any"}
 COVERAGE = "--slopgate-coverage--"
+# a repo .coveragerc with parallel = 1 writes .coverage.<host>.<pid>.<suffix>, and coverage json reads only .coverage
+COMBINE = "python -m coverage combine -q >/dev/null 2>&1"
 MISSED = "import json, sys; print(json.dumps(json.load(sys.stdin)['files'][sys.argv[1]]['missing_branches'], separators=(',', ':')))"
 
 AGENT_RULES = """You write characterization tests in a sandbox. Commands run in the root of the repository, and its dependencies are installed.
@@ -49,7 +51,7 @@ PYTHONHASHSEED=1 {cmd}
 
 Then show the missed branches of {path} as [from line, to line] pairs (a negative target means the function exits there):
 
-python -m coverage json -q -o - | python -c "{missed}" {path}"""
+{combine}; python -m coverage json -q -o - | python -c "{missed}" {path}"""
 
 EXECUTE = {
     "type": "function",
@@ -115,7 +117,7 @@ class SameJob(BaseModel):
 
 
 def module_of(path: str) -> str:
-    return path.removesuffix(".py").replace("/", ".")
+    return path.removeprefix("src/").removesuffix(".py").replace("/", ".")
 
 
 def strip_fence(text: str) -> str | None:
@@ -418,7 +420,7 @@ def replace_calls(repo, head, function, helper) -> dict[str, str]:
 
 def check(sandbox, checkpoint, function, test_path, cmd, tests) -> str | None:
     code, output = sandbox.run(
-        checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && python -m coverage json -q -o - | python -c \"{MISSED}\" {shlex.quote(function.path)}"
+        checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && {{ {COMBINE}; python -m coverage json -q -o - | python -c \"{MISSED}\" {shlex.quote(function.path)}; }}"
     )
     if code == 124:
         return f"characterization tests time out: {tail(output)}"
@@ -474,6 +476,7 @@ def characterize(sandbox, checkpoint, function, test_path, cmd) -> tuple[str | N
         end=function.end,
         cmd=cmd,
         missed=MISSED,
+        combine=COMBINE,
     )
     messages = [{"role": "system", "content": AGENT_RULES.format(test_path=test_path)}, {"role": "user", "content": task}]
     steps = tokens = 0

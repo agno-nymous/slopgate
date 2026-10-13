@@ -33,3 +33,15 @@ Choose by the count of commits that build and pass a small test run.
 - [ ] The Comments give the result of each option on 3 commits.
 - [ ] A dry run on xarray at 2019-10-12 gives an environment in which `import xarray` works.
 - [ ] `uv run pytest -q` passes.
+
+### 2026-10-12 — count from ticket 44
+
+An injected-slop run on SWE-bench Lite commits (dry run, `slopgate review --repo <checkout> --base <commit> --head HEAD --dry-run`) failed to build or run a test environment on 3 of 3 repos at commits from before 2020:
+
+| Repo | Commit date | Error |
+|---|---|---|
+| `sympy/sympy` | 2016-07-16 | `from UserDict import DictMixin as MappingMixin` in `_pytest/main.py` (an old `pytest`, installed on Python 3.10) |
+| `django/django` | 2019-02-08 | `py/_path/local.py` in `pyimport` (`__import__(modname)` failed; 4 functions) |
+| `psf/requests` | 2014-03-12 | import error in `requests/packages/urllib3/__init__.py` (`could not build test environment`) |
+
+The pinned install takes the dependency versions of the commit date. For these dates, the versions of `pytest` and `py` are too old for Python 3.10. The ticket text names only `pydata/xarray` and `pandas`: the fix must also cover `pytest` and `py`. Count: 6 of 6 injected functions on these three repos got no rewrite (the 7th run, `sympy` `ZeroMatrix.__pow__`, ended with a sandbox timeout: ticket 60). The benchmark of ticket 10 can choose newer SWE-bench commits for these repos (2020 or later) instead.
