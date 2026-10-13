@@ -31,6 +31,7 @@ AGENT_RULES = """You write characterization tests in a sandbox. Commands run in 
 Rules:
 - Write files only with the execute tool and a heredoc, for example: mkdir -p tests && cat > {test_path} <<'EOF' ... EOF
 - Do not change any file except {test_path}.
+- Do not install packages. The tests run later on a copy of the repository that has only the packages that are installed now. If a module is missing, replace it in {test_path}, for example with unittest.mock.patch.dict(sys.modules, ...).
 - The tests get no network and no API keys. Do not call real network services or models: patch them.
 - You can read files and run commands (grep, cat, python) in the repository.
 - Stop when the tests pass twice and cover every branch of the target."""

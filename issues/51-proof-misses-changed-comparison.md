@@ -33,3 +33,46 @@ Option 1 is cheap and needs no model. Measure its false rejects first.
 - [ ] `uv run pytest -q` passes.
 
 ## Comments
+
+### 2026-10-12: design review by an Opus 5.5 subagent (read-only)
+
+A subagent read `slopgate/review.py`, `CLAUDE.md`, and tickets 41, 43, 48, 51, 52, and 55. It answered the question "Is there a better way than characterization tests on the original and on the rewrite?".
+
+**Result.** Keep the method. Do not replace it. Build option 1 of this ticket (the comparison rule). Measure the false accepts of the current proof first.
+
+**Why a false accept costs most.** When the gate rejects a rewrite, it still posts a note. A wrong suggestion goes into the code with one click. This ticket measured 1 wrong suggestion in 2 traced runs. That sample is too small to give a rate.
+
+**Weak points of the proof, in order:**
+
+1. Branch coverage is not boundary coverage. The agent tests have a median of 4.5 asserts and a mutant kill rate of 86% (ticket 41).
+2. The tests exist before the rewrite. They cannot aim at the lines that the rewrite changes.
+3. A test that patches a callee tests the mock, not the callee.
+4. Some failures only cost recall and fail closed: the agent environment differs from the judge environment (ticket 55), the branch rule blocks `redundant_check` (ticket 43), and the step and time limits stop runs.
+
+**Measure before the build (3 steps):**
+
+1. False accepts of the current proof, with no model call. `bench/results/characterize/runs.json` holds the proved test files under `tests`. Run each file against boundary mutants of its original: `==` to `>=` and `<=`, `<` to `<=`, `>` to `>=`. The `SWAPS` table in `bench/characterize.py` has only negations, and tests kill negations easily, so the 86% kill rate does not predict this ticket. Each surviving mutant is a wrong rewrite that the proof would accept.
+2. False rejects of option 1. Dry-run the gate on at least 5 external SWE-bench repositories (for example the 9 items of ticket 38), 3 runs for each item, because run-to-run variance is high. Label each accepted rewrite by hand. The target is 0 false rejects.
+3. Offline test: option 1 rejects every surviving mutant from step 1.
+
+**The rule must handle 5 cases.** These set its false-reject rate:
+
+- split a chained comparison into pairs;
+- read `not (a == b)` as `a != b`;
+- read `b > a` as `a < b`;
+- let a rewrite keep only a subset of the original comparisons;
+- check `lookup_table` rewrites with care: a new `x in TABLE` is the most likely false reject.
+
+**Other options that the subagent compared:**
+
+| Option | Blocks this ticket's case | Note |
+|---|---|---|
+| A. Comparison rule (option 1 here) | yes | About 30 lines, no runtime cost, no model call. |
+| B. Rewrite-aware agent pass: after a rewrite passes, ask the agent for one test that passes on the original and fails on the rewrite | likely | Adds 60 s to 150 s for each accepted rewrite. A pass that finds no difference does not prove equality. Do it only if the false-accept measurement justifies the cost. |
+| C. Hypothesis differential test | yes, for int inputs | Needs a new library in the sandbox. Generators for Django objects are hard to write. |
+| D. Mechanical AST transforms for `redundant_check`, `dead`, and collapsible `if` | no | Equivalent by construction, so no agent run. It would also fix ticket 43. This ticket was a `nesting` rewrite. |
+| E. Record each return value and compare the original and the rewrite | no | No input reaches `count=0`. Ticket 41 deleted the old recorder. |
+
+**Not recommended:** symbolic checks (they need type hints, and old SWE-bench code mostly has none; this is an inference, not a measurement), full mutation testing as a gate, and reuse of the repo-test coverage.
+
+**Known limits of this review.** The subagent made no edits and ran no sandbox runs. It did not count how many functions each slop kind covers. It did not check that every row of `runs.json` holds a complete test file.
