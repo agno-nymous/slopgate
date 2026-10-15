@@ -15,12 +15,13 @@ from pydantic import BaseModel, Field
 from slopgate import diff, index, llm, trace
 from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, DUPLICATE_SCORE, SUPER, ULTRA, WORKERS
 from slopgate.functions import Function, complexity, dedent, is_test_file, nesting, parse, pytest_patterns, structure_hash
-from slopgate.kinds import KINDS, classify, comments, leftover, problems
+from slopgate.kinds import FLIP, KINDS, classify, comments, leftover, problems
 from slopgate.sandbox import InstallError, commands, commit_date, tail
 
 NONDETERMINISTIC = {"random", "secrets", "uuid", "time", "datetime"}
 DEFS = (ast.FunctionDef, ast.AsyncFunctionDef)
 BOOL_CALLS = {"bool", "isinstance", "issubclass", "callable", "hasattr", "all", "any"}
+MIRROR = {ast.Gt: ast.Lt, ast.GtE: ast.LtE}
 COVERAGE = "--slopgate-coverage--"
 # a repo .coveragerc with parallel = 1 writes .coverage.<host>.<pid>.<suffix>, and coverage json reads only .coverage
 COMBINE = "python -m coverage combine -q >/dev/null 2>&1"
@@ -161,6 +162,23 @@ def returns(fn) -> list:
     return [node.value for node in scope(fn) if isinstance(node, ast.Return)]
 
 
+def canonical(left: str, op: type, right: str) -> tuple:
+    if op in MIRROR:
+        left, op, right = right, MIRROR[op], left
+    if op in (ast.Eq, ast.NotEq, ast.Is, ast.IsNot):
+        left, right = sorted((left, right))
+    return left, op, right
+
+
+def comparisons(tree) -> set:
+    found = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Compare):
+            operands = [ast.dump(operand) for operand in (node.left, *node.comparators)]
+            found.update(canonical(left, type(op), right) for left, op, right in zip(operands, node.ops, operands[1:]))
+    return found
+
+
 def broken_rule(original: str, rewrite: str) -> str | None:
     try:
         new = ast.parse(rewrite)
@@ -180,6 +198,11 @@ def broken_rule(original: str, rewrite: str) -> str | None:
     old_returns = returns(old.body[0])
     if old_returns and all(map(boolish, old_returns)) and not all(map(boolish, returns(new.body[0]))):
         return "returns a non-bool value where the original returns only bools"
+    compared = comparisons(old)
+    allowed = compared | {canonical(left, FLIP[op], right) for left, op, right in compared}
+    pairs = {frozenset((left, right)) for left, _, right in compared}
+    if any((left, op, right) not in allowed and frozenset((left, right)) in pairs for left, op, right in comparisons(new)):
+        return "changes a comparison"
     return None
 
 

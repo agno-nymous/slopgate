@@ -19,7 +19,7 @@ from slopgate.cli import main
 from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, OLD_COMMIT_IMAGE, SUPER, ULTRA
 from slopgate.functions import dedent, is_test_file, parse, pytest_patterns, structure_hash
 from slopgate.kinds import KINDS, classify, flattenable, has_dead_code, leftover, problems, repeated_checks
-from slopgate.review import COVERAGE, EXECUTE, NO_ENVIRONMENT, REJECTED, characterize, same_code, strip_fence
+from slopgate.review import COVERAGE, EXECUTE, NO_ENVIRONMENT, REJECTED, broken_rule, characterize, same_code, strip_fence
 from slopgate.sandbox import Contree, ContreeSession, Local, LocalSession
 
 NESTED = '''\
@@ -1496,6 +1496,99 @@ CLAMP = KINDS_SOURCE[KINDS_SOURCE.index("def clamp_all") : KINDS_SOURCE.index("d
 )
 def test_same_code_compares_syntax_and_comments(original, rewrite, same):
     assert same_code(original, rewrite) is same
+
+
+PR23_ORIGINAL = '''\
+def transformed(injected: list[str], pool: list[Item], count: int) -> list[Item]:
+    found = []
+    for source in shuffled(pool, "+".join(injected)):
+        text = file_text(source)
+        new = source.source
+        for kind in injected:
+            new = new and transform(kind, new, text)
+        if item := accept(source, text, new, injected, "transform"):
+            found.append(item)
+            if len(found) == count:
+                break
+    return found
+
+'''
+
+PR23_REWRITE = '''\
+def transformed(injected: list[str], pool: list[Item], count: int) -> list[Item]:
+    found = []
+    for source in shuffled(pool, "+".join(injected)):
+        text = file_text(source)
+        new = source.source
+        for kind in injected:
+            new = new and transform(kind, new, text)
+        if not (item := accept(source, text, new, injected, "transform")):
+            continue
+        found.append(item)
+        if len(found) >= count:
+            break
+    return found
+'''
+
+EQUAL = "def f(found, count):\n    if len(found) == count:\n        return 1\n    return 0\n"
+NOT_EQUAL = "def f(a, b):\n    if a != b:\n        return 1\n    return 0\n"
+
+
+@pytest.mark.parametrize(
+    ("original", "rewrite", "expected"),
+    [
+        (PR23_ORIGINAL, PR23_REWRITE, "changes a comparison"),
+        (EQUAL, EQUAL.replace("len(found) == count", "count <= len(found)"), "changes a comparison"),
+        ("def f(x):\n    return 0 < x < 10\n", "def f(x):\n    return 0 < x <= 10\n", "changes a comparison"),
+        ("def f(r):\n    return r >= 1.0\n", "def f(r):\n    return r > 1.0\n", "changes a comparison"),
+        (NOT_EQUAL, NOT_EQUAL.replace("a != b", "a < b"), "changes a comparison"),
+        (
+            "def f(items, target):\n    found = []\n    for item in items:\n        if item == target:\n            found.append(item)\n    return found\n",
+            "def f(items, target):\n    found = []\n    for item in items:\n        if item != target:\n            continue\n        found.append(item)\n    return found\n",
+            None,
+        ),
+        (NOT_EQUAL, NOT_EQUAL.replace("a != b", "not (a == b)"), None),
+        ("def f(a, b):\n    return a < b\n", "def f(a, b):\n    return b > a\n", None),
+        ("def f(x):\n    return x is None\n", "def f(x):\n    return None is x\n", None),
+        (
+            "def f(a, b):\n    if a > b:\n        return 1\n    return 0\n",
+            "def f(a, b):\n    if a <= b:\n        return 0\n    return 1\n",
+            None,
+        ),
+        (
+            "def f(x):\n    if 0 < x < 10:\n        return 1\n    return 0\n",
+            "def f(x):\n    if x <= 0 or x >= 10:\n        return 0\n    return 1\n",
+            None,
+        ),
+        (
+            "def f(x):\n    if x > 5:\n        if x > 0:\n            return 1\n    return 0\n",
+            "def f(x):\n    if x > 5:\n        return 1\n    return 0\n",
+            None,
+        ),
+        (
+            "def f(items, key):\n    if key in items:\n        return items[key]\n    return None\n",
+            "def f(items, key):\n    if key in items:\n        result = items[key]\n        if result is None:\n            return None\n        return result\n    return None\n",
+            None,
+        ),
+    ],
+    ids=[
+        "pr23-found-count",
+        "mirrored-changed-operator",
+        "chained",
+        "non-strict-to-strict",
+        "not-equal-to-less",
+        "guard-clause-negation",
+        "not-around-the-negation",
+        "mirrored-same-comparison",
+        "symmetric-swap",
+        "mirrored-guard",
+        "chained-guard",
+        "dropped-comparison",
+        "new-operands",
+    ],
+)
+def test_broken_rule_rejects_a_changed_comparison_and_allows_negations(original, rewrite, expected):
+    assert broken_rule(original, rewrite) == expected
 
 
 def test_rewrite_and_retry_prompts_hold_code_in_python_blocks(make_repo, fake_llm, capsys):
