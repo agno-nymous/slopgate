@@ -1,5 +1,5 @@
 {
- "reviewed_by": "Drafted by Claude on 2026-10-09 (two Opus subagents and the main session; 16 subagent drafts spot-checked). The user accepted the drafts on 2026-10-09 without a review of each row.",
+ "reviewed_by": "Drafted by Claude on 2026-10-09 (two Opus subagents and the main session; 16 subagent drafts spot-checked). The user accepted the drafts on 2026-10-09 without a review of each row. On 2026-10-17 (ticket 42), Nemotron Ultra labelled each row again without the first labels, and two Opus subagents reviewed every scored row (the 109 rows of kinds in slopgate.kinds.KINDS) from the source. The labels follow the human-reviewer standard: slop means that a reviewer wants the kind flagged, by the one-line rule in KINDS, not by what the gate's checks can find. The review changed 1 decision (AccumulationBounds.intersection nesting: its reason stated a false fact) and 8 reasons (numberformat.format:transform:dead redundant_check, and 7 Nemotron nesting injections whose reason named the depth check that ticket 39 removed). The user approved these changes.",
  "injections": {
   "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaration.__init__:nemotron:nesting": {
    "valid": true,
@@ -7,11 +7,11 @@
   },
   "matplotlib/matplotlib:lib/matplotlib/transforms.py:BboxTransformTo.get_matrix:nemotron:nesting": {
    "valid": true,
-   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+   "reason": "Depth 3: 'if DEBUG:' holds only 'if outw == 0 or outh == 0:' and its else is only 'pass', so the two conditions can join as 'if DEBUG and (outw == 0 or outh == 0):'."
   },
   "astropy/astropy:astropy/coordinates/builtin_frames/galactic_transforms.py:fk5_to_gal:nemotron:nesting": {
    "valid": true,
-   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+   "reason": "Depth 4: the else of 'if pmats is not None:' ends with 'return matrix_product(mat1, mat2, mat3, None)', so that branch can become a guard clause and the body can move out of the if."
   },
   "pylint-dev/pylint:pylint/checkers/variables.py:_is_type_checking_import:nemotron:nesting": {
    "valid": true,
@@ -19,15 +19,15 @@
   },
   "matplotlib/matplotlib:lib/matplotlib/axes/_axes.py:Axes.semilogx:nemotron:nesting": {
    "valid": true,
-   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+   "reason": "Depth 3: \"if k not in ['base', 'subs', 'nonpositive']:\" holds only \"if k not in ['basex', 'subsx', 'nonposx']:\", and both elses are only 'pass', so the two conditions can join with 'and'."
   },
   "pytest-dev/pytest:src/_pytest/warnings.py:pytest_collection:nemotron:nesting": {
    "valid": true,
-   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+   "reason": "Depth 3: 'if config is not None:' is the last statement of the function and wraps 'if hook is not None:', so it can become the guard 'if config is None: return'."
   },
   "pytest-dev/pytest:src/_pytest/tmpdir.py:pytest_configure:nemotron:nesting": {
    "valid": true,
-   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+   "reason": "Depth 5: 'if config is not None:' holds only \"if hasattr(config, 'add_cleanup'):\", which holds only \"if callable(getattr(config, 'add_cleanup')):\", so the three conditions can join with 'and'."
   },
   "matplotlib/matplotlib:lib/matplotlib/axes/_axes.py:Axes._convert_dx:nemotron:nesting": {
    "valid": true,
@@ -35,11 +35,11 @@
   },
   "matplotlib/matplotlib:lib/matplotlib/offsetbox.py:AnchoredOffsetbox.draw:nemotron:nesting": {
    "valid": true,
-   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+   "reason": "Depth 3: 'if not self.get_visible():' is the last statement of the function, its branch is only 'pass', and its else wraps 'if child is not None:', so it can become the guard 'if not self.get_visible(): return'."
   },
   "django/django:django/core/checks/model_checks.py:check_all_models:nemotron:nesting": {
    "valid": true,
-   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+   "reason": "Depth 3: 'if model._meta.managed:' holds only 'if not model._meta.proxy:', so the two conditions can join as 'if model._meta.managed and not model._meta.proxy:'."
   },
   "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaratorNameParam.describe_signature:nemotron:redundant_check": {
    "valid": true,
@@ -422,7 +422,7 @@
   "django/django:django/utils/numberformat.py:format:transform:dead": {
    "redundant_check": {
     "decision": "false_positive",
-    "reason": "No quoted check is decided by an earlier one; `if use_grouping:` follows a new assignment of use_grouping."
+    "reason": "`if decimal_pos is not None:` on line 37 comes after the if on line 33 and not in its body, and the assignments of use_grouping come before its first test on line 19."
    }
   },
   "django/django:django/views/defaults.py:permission_denied": {
@@ -903,8 +903,8 @@
   },
   "sympy/sympy:sympy/calculus/util.py:AccumulationBounds.intersection": {
    "nesting": {
-    "decision": "slop",
-    "reason": "Depth 3: 'if self.min <= other.min: if self.max <= other.max' should be one 'and' test, and the for/if is a comprehension."
+    "decision": "false_positive",
+    "reason": "Depth 3 is 'if isinstance(other, FiniteSet):' / 'for i in other:' / 'if i in self:', and the outer if already ends with a return; 'if self.min <= other.min:' holds two ifs, so it cannot join into one 'and' test."
    },
    "redundant_check": {
     "decision": "slop",
