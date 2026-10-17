@@ -52,6 +52,7 @@ def main(argv=None):
     trace.start("slopgate-gate")
     result = {"suggestions": [], "followup": [], "rejected": [], "notes": []}
     started = time.monotonic()
+    failed = False
     try:
         if args.pr:
             event = github.pull_request(args.repo, args.pr)
@@ -69,5 +70,8 @@ def main(argv=None):
                 github.publish(args.repo, result, event, time.monotonic() - started)
             trace.output(result)
     except Exception as error:
+        failed = True
         print(f"slopgate: {error!r}", file=sys.stderr)
     print(json.dumps(result, indent=2))
+    if failed:
+        sys.exit(1)

@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**60 — A sandbox error other than an install error gives an empty review and exit code 0.** Tickets 44, 49, 51, 52, 53, 54, and 55 are done. Then do 42, 48, and 10, in the order below.
+**42 — Benchmark statistics: label agreement, run metadata, and pass@k.** Tickets 44, 49, 51, 52, 53, 54, 55, and 60 are done. Then do 48 and 10, in the order below.
 
 ## Plan to the deadline (set on 2026-10-17)
 
@@ -52,7 +52,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 24 | [55 — The test agent passes only with changes that the judge does not keep](55-agent-run-differs-from-judge-run.md) | done | — | Found by ticket 49: 4 of 7 external candidates. The agent moved `conftest.py` or set an environment variable, and the judge did not. Do it together with ticket 52: both change how the agent is prompted or how its session behaves, so one live comparison on the same functions answers both. Test a rule that says "run the test file after each rewrite" too (the pylint trace of ticket 53 never ran its last rewrite). |
 | 25 | [52 — The test agent uses its steps to read code](52-agent-reads-code-step-by-step.md) | done | — | Found by ticket 49: 77 of 201 agent commands only read code. External: 1 of 7. Do it together with ticket 55 (one live comparison). The traces of ticket 53 show 2 of 4 agent runs ended at the step limit after 3 to 8 steps of reading or experiments. |
 | 26 | [51 — The proof accepts a rewrite that changes a comparison](51-proof-misses-changed-comparison.md) | done | — | Moved up on 2026-10-12. A wrong suggestion that passes the proof costs more than a slow gate. Ticket 10 needs it first: the benchmark must not count wrong rewrites. An Opus review (see the ticket Comments) says: measure the false accepts of the current proof first (no model call), then build the comparison rule. |
-| 27 | [60 — A sandbox error other than an install error gives an empty review and exit code 0](60-silent-exit-on-sandbox-error.md) | ready-for-agent | — | Moved up on 2026-10-17 to come before ticket 10: a sandbox error that looks like "no slop found" lowers the detection recall. |
+| 27 | [60 — A sandbox error other than an install error gives an empty review and exit code 0](60-silent-exit-on-sandbox-error.md) | done | — | Moved up on 2026-10-17 to come before ticket 10: a sandbox error that looks like "no slop found" lowers the detection recall. |
 | 28 | [42 — Benchmark statistics: label agreement, run metadata, and pass@k](42-benchmark-statistics.md) | ready-for-agent | 37 (done) | Moved up on 2026-10-17. Ticket 10 uses its metadata and pass@k functions. |
 | 29 | [48 — Compare the repo suite with a baseline run of the original code](48-repo-suite-baseline.md) | ready-for-agent | — | Moved up on 2026-10-17. A repo test that fails on the original code lowers the acceptance rate of ticket 10. |
 | 30 | [58 — A repo that takes its version from the git history does not install in the sandbox](58-setuptools-scm-needs-version.md) | ready-for-agent | — | Do it only if the instances of ticket 10 include `pytest-dev/pytest`. |
@@ -85,7 +85,7 @@ Added after the order was set:
 | [46 — Find the changed functions from the merge-base, not from the base tip](46-diff-from-merge-base.md) | done | Found by the code review of ticket 34. An inline comment on a line outside the pull request diff makes GitHub reject the whole review. Do it before the Slopgate workflow is on again. |
 | [63 — CrossHair as a second equivalence check](63-crosshair-equivalence-check.md) | wontfix | Measured on 2026-10-17. It finds the PR #23 change only with stub callees, not with the real callees. |
 
-Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, 44, 46, 49, 51, 52, 53, 54, and 55 are done. Tickets 23, 24, 29, 30, 31, 35, and 63 are wontfix.
+Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, 44, 46, 49, 51, 52, 53, 54, 55, and 60 are done. Tickets 23, 24, 29, 30, 31, 35, and 63 are wontfix.
 
 ## Rules for the order
 

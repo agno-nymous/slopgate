@@ -430,8 +430,10 @@ def test_github_server_errors_give_up_after_three_tries(github, fake_llm, capsys
     set_count(3)
     fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT), SUMMARY]
 
-    post(repo)
+    with pytest.raises(SystemExit) as exit:
+        post(repo)
 
+    assert exit.value.code == 1
     assert "HTTP 503" in capsys.readouterr().err
     assert len(calls()) == 3
 

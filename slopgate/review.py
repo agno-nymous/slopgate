@@ -918,8 +918,9 @@ def review(repo, base, head, sandbox) -> dict:
     try:
         with trace.span("sandbox.prepare", input=setup):
             checkpoint = sandbox.prepare(repo, head, setup, image)
-    except InstallError as error:
-        result["rejected"].append({"reason": f"could not build test environment\n{error}"})
+    except Exception as error:
+        detail = error if isinstance(error, InstallError) else repr(error)
+        result["rejected"].append({"reason": f"could not build test environment\n{detail}"})
         result["notes"] += unproven(candidates, patterns, NO_ENVIRONMENT)
         return result
     worker = trace.bind(partial(prove, repo, head, sandbox, checkpoint, test))
