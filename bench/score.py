@@ -1,7 +1,11 @@
+import datetime
+import hashlib
 import random
 import statistics
+import subprocess
 from collections import Counter
 from dataclasses import replace
+from pathlib import Path
 
 from slopgate import kinds
 from slopgate.config import PRICES
@@ -9,11 +13,14 @@ from slopgate.config import PRICES
 WORKERS = 8
 DRAWS = 1000
 METRICS = ("precision", "recall", "fp_rate")
+SPLIT_SEED = 39
+BOOTSTRAP_SEED = 39
+ROOT = Path(__file__).parent.parent
 
 
 def split(items) -> dict[str, str]:
     keys = sorted({item.source_id or item.id for item in items})
-    random.Random(39).shuffle(keys)
+    random.Random(SPLIT_SEED).shuffle(keys)
     tuning = set(keys[: round(0.6 * len(keys))])
     return {item.id: "tuning" if (item.source_id or item.id) in tuning else "held_out" for item in items}
 
@@ -62,6 +69,77 @@ def outcomes(item, run: dict, labels: dict, runs: dict) -> list[tuple[str, str]]
 
 def ratio(a: int, b: int) -> float | None:
     return round(a / b, 3) if b else None
+
+
+def kappa(first: list[bool], second: list[bool]) -> float | None:
+    n = len(first)
+    if not n:
+        return None
+    observed = sum(a == b for a, b in zip(first, second)) / n
+    chance = sum(first.count(v) * second.count(v) for v in (True, False)) / n**2
+    return None if chance == 1 else round((observed - chance) / (1 - chance), 3)
+
+
+def agreement(pairs: list[tuple[str, bool, bool]]) -> dict:
+    groups = {}
+    for kind, a, b in pairs:
+        groups.setdefault(kind, []).append((a, b))
+    groups["total"] = [(a, b) for _, a, b in pairs]
+    return {
+        kind: {"rows": len(rows), "agree": ratio(sum(a == b for a, b in rows), len(rows)), "kappa": kappa([a for a, _ in rows], [b for _, b in rows])}
+        for kind, rows in groups.items()
+    }
+
+
+def prompt_hash(text: str) -> str:
+    return hashlib.sha256(text.encode()).hexdigest()[:12]
+
+
+def git_output(*args) -> str:
+    return subprocess.run(["git", *args], cwd=ROOT, check=True, capture_output=True, text=True).stdout.strip()
+
+
+def metadata(models: dict[str, str], prompts: dict[str, str], seeds: dict[str, int], runs_per_item: int | None = None, counts: dict[str, int] | None = None, usd: float | None = None) -> dict:
+    optional = {"runs_per_item": runs_per_item, "counts": counts, "usd": usd}
+    return {
+        "models": models,
+        "commit": git_output("rev-parse", "HEAD"),
+        "dirty": bool(git_output("status", "--porcelain")),
+        "date": datetime.date.today().isoformat(),
+        "seeds": seeds,
+        "prompts": {name: prompt_hash(text) for name, text in prompts.items()},
+    } | {key: value for key, value in optional.items() if value is not None}
+
+
+def mismatch(a: dict, b: dict) -> list[str]:
+    a_prompts, b_prompts = a.get("prompts", {}), b.get("prompts", {})
+    lines = [
+        f"prompt {name}: {a_prompts.get(name, 'missing')} against {b_prompts.get(name, 'missing')}"
+        for name in sorted(a_prompts.keys() | b_prompts.keys())
+        if a_prompts.get(name) != b_prompts.get(name)
+    ]
+    return lines + [f"{key}: {a.get(key)} against {b.get(key)}" for key in ("models", "seeds", "counts", "runs_per_item") if a.get(key) != b.get(key)]
+
+
+def passes(hits: list[list[bool]], unit: str = "items") -> dict:
+    hits = [h for h in hits if h]
+    return {"items": len(hits), "unit": unit, "any": ratio(sum(any(h) for h in hits), len(hits)), "all": ratio(sum(all(h) for h in hits), len(hits))}
+
+
+def pass_report(items: list, runs: dict, labels: dict) -> dict:
+    found, false = ({kind: [] for kind in [*kinds.KINDS, "total"]} for _ in range(2))
+    for item in items:
+        item_runs = runs.get(item.id, [])
+        for kind, value in truth(item, labels, runs).items():
+            if value:
+                found[kind].append(hits := [kind in run.get("kinds", {}) for run in item_runs])
+                found["total"].append(hits)
+        if item.origin == "clean":
+            fps = [{kind for kind, outcome in outcomes(item, run, labels, runs) if outcome == "fp"} if "kinds" in run else set() for run in item_runs]
+            for kind in kinds.KINDS:
+                false[kind].append([kind in f for f in fps])
+            false["total"].append([bool(f) for f in fps])
+    return {kind: {"found": passes(found[kind], "item-kinds" if kind == "total" else "items"), "clean_false": passes(false[kind])} for kind in found}
 
 
 def scores(counts: Counter, items: set) -> dict:
@@ -130,6 +208,7 @@ def score(items: list, runs: dict, review: dict) -> dict:
         return ratio(sum(len(s) == 1 for s in sets), len(sets))
 
     report["stability"] = {"all": stable(items)} | {origin: stable([i for i in items if i.origin == origin]) for origin in ("clean", "source", "transform", "nemotron")}
+    report["passes"] = pass_report(items, runs, labels)
     report["counts"] = {"origin": dict(Counter(i.origin for i in items)), "repo": dict(Counter(i.repo for i in items))}
     return report
 
@@ -178,7 +257,7 @@ def compare(items: list, review: dict, base: dict, new: dict) -> dict:
             before.update(tally(item, base[item.id], labels, both))
             after.update(tally(item, new[item.id], labels, both))
     keys = sorted(functions)
-    rng = random.Random(39)
+    rng = random.Random(BOOTSTRAP_SEED)
     draws = []
     for _ in range(DRAWS):
         before, after = Counter(), Counter()
@@ -202,14 +281,49 @@ def cost(model: str, usage: dict) -> float:
     return round((usage["input_tokens"] * price_in + usage["output_tokens"] * price_out) / 1e6, 4)
 
 
-def markdown(report: dict) -> str:
-    def row(*cells):
-        return "| " + " | ".join("" if c is None else str(c) for c in cells) + " |"
+def row(*cells) -> str:
+    return "| " + " | ".join("" if c is None else str(c) for c in cells) + " |"
 
+
+def joined(values: dict) -> str:
+    return ", ".join(f"{k} {v}" for k, v in values.items()) or "none"
+
+
+def describe(m: dict) -> dict:
+    return {
+        "models": ", ".join(f"{use}: {model}" for use, model in m["models"].items()) or "none",
+        "commit": m["commit"][:10] + (" (tree had changes)" if m["dirty"] else ""),
+        "date": m["date"],
+        "seeds": joined(m["seeds"]),
+        "runs per item": m.get("runs_per_item"),
+        "counts": joined(m["counts"]) if "counts" in m else None,
+        "cost (USD)": m.get("usd"),
+    }
+
+
+def run_metadata(meta: dict) -> list[str]:
+    stages = {title: meta[key] for title, key in (("report", "report"), ("groundtruth", "groundtruth"), ("runs", "runs"), ("base runs", "base_runs")) if key in meta}
+    stages |= {f"labels: {variant}": m for variant, m in meta.get("labels", {}).items()}
+    described = [describe(m) if m else None for m in stages.values()]
+    fields = ("models", "commit", "date", "seeds", "runs per item", "counts", "cost (USD)")
+    rows = [[field, *(("not recorded" if field == "models" else "") if d is None else d[field] for d in described)] for field in fields]
+    out = ["## Run metadata", "", row("field", *stages), row(*["---"] * (1 + len(stages)))]
+    out += [row(*r) for r in rows if any(c not in (None, "") for c in r[1:])] + ["", row("prompt", "stage", "hash"), row(*["---"] * 3)]
+    hashes = sorted((name, stage, digest) for stage, m in stages.items() if m for name, digest in m["prompts"].items())
+    out += [row(name, stage, f"`{digest}`") for name, stage, digest in hashes] + [""]
+    return out + [f"- Source of {stage}: {m['source']}" for stage, m in stages.items() if m and "source" in m] + [""]
+
+
+def markdown(report: dict) -> str:
     def cell(entry):
         return "" if entry["value"] is None else f"{entry['value']} [{entry['low']}, {entry['high']}]" + (f" ({entry['resamples']} resamples)" if "resamples" in entry else "")
 
     out = [f"# Detection benchmark: {report['runs']}, {report['set']}", ""]
+    if meta := report.get("metadata"):
+        out += run_metadata(meta)
+    if lines := report.get("mismatch"):
+        out += ["## Setup differences", "", "The base result and this result differ in the setup below. Read the change table with this in mind.", ""]
+        out += [f"- {line}" for line in lines] + [""]
     if change := report.get("change"):
         out += ["## Change against the gate before ticket 39", "", f"Each cell is the value and its 95% range from {DRAWS} bootstrap resamples of whole functions.", ""]
         header = [f"{variant} {name}" for name in ("precision", "recall", "FP rate") for variant in ("base", "new", "difference")]
@@ -222,6 +336,18 @@ def markdown(report: dict) -> str:
     clean = report["clean"]
     out += ["## False positives on clean functions", "", f"Clean item-runs: {clean['item_runs']}. Share with any kind: {clean['any_kind_rate']}.", ""]
     out += [row("kind", "false-positive rate"), row("---", "---")] + [row(kind, rate) for kind, rate in clean["fp_rate"].items()] + [""]
+    if agree := report.get("agreement"):
+        variants = list(agree)
+        shown = [kind for kind in [*kinds.KINDS, "total"] if any(kind in agree[v] for v in variants)]
+        out += ["## Label agreement (Cohen's kappa)", "", 'The "rule" prompt gives Ultra the one-line rule from `kinds.KINDS`. The "definition" prompt adds the gate\'s full definition from `bench/label.py`.', ""]
+        out += ["A kappa below 0.6 means the labels of that kind are not reliable, and kappa is unstable when almost all rows of a kind have the same label.", ""]
+        out += [row("kind", *(f"{name} ({v})" for v in variants for name in ("rows", "agreement", "kappa"))), row(*["---"] * (1 + 3 * len(variants)))]
+        out += [row(kind, *(agree[v].get(kind, {}).get(key) for v in variants for key in ("rows", "agree", "kappa"))) for kind in shown] + [""]
+    if passes_by_kind := report.get("passes"):
+        k = ((report.get("metadata") or {}).get("report") or {}).get("runs_per_item", 3)
+        out += [f"## Found in at least 1 of {k} runs and in all {k} runs", "", "An error run counts as a miss.", ""]
+        out += [row("kind", "found", f"found ≥1 of {k}", f"found {k} of {k}", "clean items", f"false kind ≥1 of {k}", f"false kind {k} of {k}"), row(*["---"] * 7)]
+        out += [row(kind, f"{p['found']['items']} {p['found']['unit']}", p["found"]["any"], p["found"]["all"], p["clean_false"]["items"], p["clean_false"]["any"], p["clean_false"]["all"]) for kind, p in passes_by_kind.items()] + [""]
     seconds = report["seconds"]
     out += ["## Time for each function (seconds)", "", row("mean", "median", "p95", "max"), row(*["---"] * 4), row(*(seconds.get(k) for k in ("mean", "median", "p95", "max"))), ""]
     out += [f"{WORKERS} worker processes; times include queueing.", ""]

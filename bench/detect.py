@@ -16,19 +16,16 @@ from dataclasses import asdict, dataclass, field, replace
 from difflib import SequenceMatcher
 from pathlib import Path
 
-from bench.score import WORKERS, compare, cost, markdown, score, split
+from bench import label
+from bench.paths import GROUNDTRUTH, LABELS, RESULTS, RUNS, all_runs, meta_path, stored_meta, write
+from bench.score import BOOTSTRAP_SEED, SPLIT_SEED, WORKERS, compare, cost, markdown, metadata, mismatch, score, split
 from bench.transforms import TRANSFORMS, indent_of, transform
 from slopgate import kinds, llm
 from slopgate.config import SUPER
 from slopgate.functions import Function, is_test_file, parse
 from slopgate.review import strip_fence
 
-ROOT = Path(__file__).parent
-RESULTS = ROOT / "results"
-GROUNDTRUTH = RESULTS / "groundtruth.json"
-RUNS = RESULTS / "runs.json"
 DETECTION = RESULTS / "detection"
-LABELS = ROOT / "labels.json"
 CACHE = Path.home() / ".cache" / "slopgate" / "bench"
 SAMPLE = CACHE / "sample.json"
 REPLIES = CACHE / "super.json"
@@ -53,6 +50,7 @@ CLEAN_PER_REPO = 25
 TRANSFORM_ITEMS = 12
 NEMOTRON_ITEMS = 10
 RUNS_PER_ITEM = 3
+SEED = 37
 
 INJECT = {
     "nesting": (
@@ -125,13 +123,6 @@ def function(item: Item, source: str) -> Function:
     return Function(item.qualname, item.path, item.start, item.start + len(source.splitlines()) - 1, source)
 
 
-def write(path: Path, data) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(".tmp")
-    temporary.write_text(json.dumps(data, indent=1) + "\n")
-    temporary.replace(path)
-
-
 def load_items(rows) -> list[Item]:
     return [Item(**row) for row in rows]
 
@@ -177,7 +168,7 @@ def repo_functions(repo: str, commit: str) -> list[Item]:
 def sample() -> None:
     if SAMPLE.exists():
         return
-    rng = random.Random(37)
+    rng = random.Random(SEED)
     commits = base_commits()
     clean, rest = [], []
     for repo in REPOS:
@@ -221,7 +212,7 @@ def accept(source: Item, text: str, new: str | None, injected: list[str], origin
 
 
 def shuffled(items: list[Item], name: str) -> list[Item]:
-    return random.Random(f"37:{name}").sample(items, len(items))
+    return random.Random(f"{SEED}:{name}").sample(items, len(items))
 
 
 def transformed(injected: list[str], pool: list[Item], count: int) -> list[Item]:
@@ -315,6 +306,8 @@ def inject() -> None:
     for name, count in Counter(f"{item.origin} {'+'.join(item.injected)}" for item in injected).items():
         print(f"{name}: {count}", file=sys.stderr)
     write(GROUNDTRUTH, {"super_usage": usage, "items": [asdict(item) for item in clean + sources + injected]})
+    prompts = {"INJECT_PROMPT": INJECT_PROMPT, "INJECT": json.dumps(INJECT, sort_keys=True)}
+    write(meta_path(GROUNDTRUTH), metadata({"injection": SUPER}, prompts, {"sample": SEED}))
 
 
 def source_sha(item: Item) -> str:
@@ -361,6 +354,7 @@ def run(name: str | None = None, subset: str = "all") -> None:
             runs[item_id] = item_runs
             write(path, runs)
             print(f"{done}/{len(todo)} {item_id}", file=sys.stderr)
+    write(meta_path(path), metadata({}, {"KINDS": json.dumps(kinds.KINDS, sort_keys=True)}, {}, RUNS_PER_ITEM))
 
 
 def report(name: str | None = None, subset: str = "all") -> None:
@@ -375,6 +369,26 @@ def report(name: str | None = None, subset: str = "all") -> None:
         result["change"] = compare(items, review, {item.id: current(item, base) for item in items}, runs)
     injection = groundtruth["super_usage"]
     result["tokens"] = [{"model": SUPER, "use": "injection"} | {k: injection[k] for k in ("input_tokens", "output_tokens")} | {"usd": cost(SUPER, injection)}]
+    agreement, disagreements, labelling = label.summary([asdict(item) for item in items], review, all_runs())
+    result["tokens"] += labelling
+    if agreement:
+        result["agreement"] = agreement
+    if disagreements and name is None and subset == "all":
+        label.DISAGREEMENTS.write_text(disagreements)
+    seeds = {"split": SPLIT_SEED, "bootstrap": BOOTSTRAP_SEED}
+    usd = round(sum(t["usd"] for t in result["tokens"]), 4)
+    result["metadata"] = {
+        "report": metadata({}, {}, seeds, RUNS_PER_ITEM, result["counts"]["origin"], usd),
+        "groundtruth": stored_meta(GROUNDTRUTH),
+        "runs": stored_meta(runs_path(name)),
+    }
+    if name is not None:
+        result["metadata"]["base_runs"] = stored_meta(RUNS)
+        result["mismatch"] = mismatch(result["metadata"]["base_runs"] or {}, result["metadata"]["runs"] or {})
+        for line in result["mismatch"]:
+            print(f"setup differs from {RUNS.name}: {line}", file=sys.stderr)
+    if labels := {v: json.loads(label.cache(v).read_text()).get("metadata") for v in label.VARIANTS if label.cache(v).exists()}:
+        result["metadata"]["labels"] = labels
     detection = DETECTION if name is None else RESULTS / f"detection-{name}"
     write(detection.with_suffix(".json"), result)
     detection.with_suffix(".md").write_text(markdown(result))

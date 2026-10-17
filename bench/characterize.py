@@ -13,7 +13,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from uuid import UUID
 
-from bench.detect import SAMPLE, checkout, write
+from bench.detect import SAMPLE, checkout
+from bench.paths import write
 from bench.score import WORKERS, cost
 from slopgate import llm, review
 from slopgate.config import SUPER
