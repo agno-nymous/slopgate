@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**51 — The proof accepts a rewrite that changes a comparison.** Tickets 44, 49, 52, 53, 54, and 55 are done. Option 1 (the comparison rule) is built. Option 2 (the mutation hint for the test agent) is in progress. Then do 57 and 56.
+**57 — Building the function index takes more than 80 s on a large repository.** Tickets 44, 49, 51, 52, 53, 54, and 55 are done. Then do 56.
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -37,7 +37,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 23 | [44 — The import line is wrong for a repo with a `src/` layout](44-src-layout-import-line.md) | done | — | All 6 pytest functions failed in every design of ticket 41. Ticket 49: 5 of 7 external candidates. A small change. |
 | 24 | [55 — The test agent passes only with changes that the judge does not keep](55-agent-run-differs-from-judge-run.md) | done | — | Found by ticket 49: 4 of 7 external candidates. The agent moved `conftest.py` or set an environment variable, and the judge did not. Do it together with ticket 52: both change how the agent is prompted or how its session behaves, so one live comparison on the same functions answers both. Test a rule that says "run the test file after each rewrite" too (the pylint trace of ticket 53 never ran its last rewrite). |
 | 25 | [52 — The test agent uses its steps to read code](52-agent-reads-code-step-by-step.md) | done | — | Found by ticket 49: 77 of 201 agent commands only read code. External: 1 of 7. Do it together with ticket 55 (one live comparison). The traces of ticket 53 show 2 of 4 agent runs ended at the step limit after 3 to 8 steps of reading or experiments. |
-| 26 | [51 — The proof accepts a rewrite that changes a comparison](51-proof-misses-changed-comparison.md) | in-progress | — | Moved up on 2026-10-12. A wrong suggestion that passes the proof costs more than a slow gate. Ticket 10 needs it first: the benchmark must not count wrong rewrites. An Opus review (see the ticket Comments) says: measure the false accepts of the current proof first (no model call), then build the comparison rule. |
+| 26 | [51 — The proof accepts a rewrite that changes a comparison](51-proof-misses-changed-comparison.md) | done | — | Moved up on 2026-10-12. A wrong suggestion that passes the proof costs more than a slow gate. Ticket 10 needs it first: the benchmark must not count wrong rewrites. An Opus review (see the ticket Comments) says: measure the false accepts of the current proof first (no model call), then build the comparison rule. |
 | 27 | [57 — Building the function index takes more than 80 s on a large repository](57-faster-function-index.md) | ready-for-agent | — | Found by ticket 49: `gate.index` took 82 s to 163 s on sympy and django. Speed only. |
 | 28 | [56 — The test-file rule misses `tests.py`, and django tests do not run under pytest](56-django-test-layout.md) | ready-for-agent | — | Found by ticket 49 on django#21736: a django test method got an agent run instead of a note. |
 | 29 | [48 — Compare the repo suite with a baseline run of the original code](48-repo-suite-baseline.md) | ready-for-agent | — | A repo test that fails on the original code rejects every rewrite: 2 of 8 sympy rewrites in the ticket 38 run. |

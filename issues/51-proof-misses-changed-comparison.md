@@ -9,7 +9,7 @@
 
 **Blocked by:** —
 
-**Status:** in-progress
+**Status:** done
 
 ## Context
 
@@ -31,10 +31,10 @@ Option 1 is cheap and needs no model. Measure its false rejects first.
 - [x] The Comments give the false-reject count of option 1 on the accepted rewrites of the ticket 41 benchmark.
 - [x] A dry run on PR #23 gives no suggestion that changes `==` to `>=`.
 - [x] `uv run pytest -q` passes.
-- [ ] Option 2: the Comments give the boundary kill rate before and after the hint round, measured in one bench run (each function is its own control).
-- [ ] Option 2: the proof rate does not fall, and the bench run has 0 errors from the mutant code.
-- [ ] Option 2: the Comments give the added seconds, steps, and tokens for each function, and how often the hint round runs.
-- [ ] Option 2: offline tests show the mutant generator, the hint round, the case with no survivor, the fallback to the round-1 test file, and the case with no budget left.
+- [x] Option 2: the Comments give the boundary kill rate before and after the hint round, measured in one bench run (each function is its own control).
+- [x] Option 2: the proof rate does not fall, and the bench run has 0 errors from the mutant code.
+- [x] Option 2: the Comments give the added seconds, steps, and tokens for each function, and how often the hint round runs.
+- [x] Option 2: offline tests show the mutant generator, the hint round, the case with no survivor, the fallback to the round-1 test file, and the case with no budget left.
 
 ## Comments
 
@@ -128,3 +128,81 @@ I labeled each reject by hand.
 - `a >= b` as the negation of `a < b`. These differ for NaN and for sets.
 
 A rule failure gets no retry, the same as each older rule. So each reject turns a suggestion into a note.
+
+### 2026-10-17: mutation hint for the test agent (option 2)
+
+**What was built.** `characterize` in `slopgate/review.py` has a hint round after round 1.
+- `boundary_mutants` makes the boundary mutants of the function from its source text. It uses `tokenize` and changes one comparison operator for each mutant: `==` to `>=` and `<=`, `!=` to `>` and `<`, `<` to `<=`, `<=` to `<`, `>` to `>=`, `>=` to `>`. It skips the decorators. It takes the sites in turn, so a late site gets a mutant before an early site gets its second one. The cap is `HINT_MUTANTS = 8`.
+- `survivors` runs the round-1 test file against each mutant in the sandbox, with a limit of `MUTANT_SECONDS = 60` for each run. A mutant whose run exits 0 survives.
+- If a mutant survives, `harden` starts a new agent conversation with `HINT_TASK`. The task lists each surviving change and tells the agent to add tests that pass on the original and fail with the change. The hint round has its own limits: `HINT_STEPS = 8` and `HINT_SECONDS = 90`.
+- The gate uses the hinted test file only if it passes the same check as round 1 and its survivors are a strict subset of the round-1 survivors. Otherwise the gate keeps the round-1 file. An error in the hint round also keeps the round-1 file and prints the error to stderr.
+- The `gate.mutants` span records the exit code of each mutant. The `gate.hint` span records the stop reason and the result (`hinted` or `kept round 1`).
+
+**Worked example.** Input: `transformed` in `bench/detect.py` at commit `0a8887b` (the PR #23 function), trace `cd3c18ea`.
+- Round 1 proved a test file. The mutant `line 237: if len(found) == count: changed to if len(found) >= count:` survived it. That mutant is the PR #23 rewrite.
+- The hint round added `test_transformed_count_zero_boundary`. It calls `transformed(["kind"], pool, 0)` with two accepted items and asserts 2 results. The original never breaks for `count=0`. The `>=` version breaks after the first item.
+- The hinted file kills the mutant, so the gate uses it.
+- The real PR #23 rewrite, spliced into the file, now fails the final test file: exit code 1, `1 failed, 5 passed`.
+
+**Measurement: bench run on 2026-10-17.** Input: the 36 functions of the ticket 41 benchmark plus `transformed@0a8887b`. Each function is its own control: the survivors of the round-1 file against the survivors of the final file.
+
+- Proof rate: 31 of 37 proved. 0 errors from the mutant code. The hint round runs only after round 1 passes, and it falls back to the round-1 file, so it cannot turn a proof into a failure. The 6 failures are round-1 failures: 3 fail on the original, 1 is nondeterministic across two runs, 1 wrote no test file in the time limit, and 1 uses `uuid`. The first bench run on 2026-10-14 proved 30 of 37.
+- The 31 proved functions have 25 boundary mutants. 2 are equivalent, and no test can kill them:
+  - `df % s != 0` to `> 0` in `_dup_decompose` (`s >= 2`);
+  - `len(args) == 1` to `<= 1` in `make_response` (an empty `args` returns earlier).
+- 2 more are equivalent for every numeric input: `argindex == 1` to `<= 1` and `argindex == 2` to `<= 2` in `Ynm.fdiff`. A lower number raises the same `ArgumentIndexError` in the `else` branch. Only `argindex=None` tells them apart: the mutant raises `TypeError`.
+
+| | Real mutants killed (Ynm counted) | Kill rate | Without the 2 Ynm mutants | Kill rate |
+|---|---|---|---|---|
+| Round-1 test files | 16 of 23 | 70% | 16 of 21 | 76% |
+| Final test files (after the hint round) | 20 of 23 | 87% | 20 of 21 | 95% |
+
+- The 3 real survivors: the 2 `Ynm.fdiff` mutants, and `fused[i] >= HOOK_FLOOR` to `> HOOK_FLOOR` in `matches`. A test for `matches` must make a fused score exactly equal to the floor.
+- The first bench run (2026-10-14, before the review fixes) gave 59% to 86% on 22 real mutants. Round 1 varies from run to run, so the "before" numbers differ.
+
+**Cost.** The hint round ran on 7 of 31 proved functions (23%). It used the hinted file on 4 and kept the round-1 file on 3. The 3 kept files are the 3 functions whose survivors are equivalent for numeric inputs.
+
+| Function | Hint seconds | Steps | Input tokens | Output tokens | Survivors before, after | Result |
+|---|---|---|---|---|---|---|
+| `matches` | 60.3 | 8 | 45,219 | 3,440 | 2, 1 | hinted |
+| `Response.json` | 51.8 | 8 | 36,704 | 2,780 | 1, 0 | hinted |
+| `SingleByteCharSetProber.get_confidence` | 27.7 | 8 | 22,407 | 1,374 | 1, 0 | hinted |
+| `transformed` | 29.0 | 8 | 22,978 | 1,050 | 1, 0 | hinted |
+| `_dup_decompose` | 29.2 | 8 | 22,198 | 1,035 | 1, 1 | kept round 1 |
+| `Ynm.fdiff` | 25.8 | 8 | 24,188 | 1,052 | 2, 2 | kept round 1 |
+| `make_response` | 24.4 | 8 | 20,957 | 973 | 1, 1 | kept round 1 |
+
+- Mutant runs: 21 of 31 proved functions have no boundary site, and they add 0 s. The other 10 add 2.5 s to 34.3 s (sum 84 s). Each hint-round file that passes the check gets one more mutant run: 2.4 s to 35.7 s (sum 56 s for 5 runs).
+- The slowest function in the bench took 225 s in all. The hint round adds no model call outside the 7 functions with a survivor.
+
+**Traces.** Project `slopgate-t51`: 1,833 spans, 0 `ERROR` spans, 0 replies with `finish_reason: "length"`. It has 7 `gate.hint` spans and 43 `gate.mutants` spans. The 543 `ChatCompletion` spans match the 543 `gate.agent` spans, so this run has no nested spans (ticket 61): each process opens its first span in its main thread.
+
+**Dry run on PR #23.** Base `6665674`, head `0a8887b`, the code of this ticket, trace `7b5ff8d9` (164 s). The run gave 0 suggestions and 1 note. It rejected `transformed` with `rule: signature changed`, the same as the two option 1 dry runs. `gate.mutants` and `gate.hint` ran under `gate.characterize`, so they keep their parent. The trace has 0 `ERROR` spans and 0 `length` stops.
+- The `>=` mutant survived round 1, and the hint round kept the round-1 file (15.5 s, 5 commands). The agent ran the tests once, then wrote "No additional tests needed; change undetectable." and stopped. `count=0` detects the change, so this is a miss.
+- Over all runs, the hint round killed the `transformed` mutant in 5 of 7 runs: bench run 1, bench run 2, 3 of 4 runs of variant A below, and not in this dry run.
+
+**Prompt variants of the hint round.** The miss above raised the question: does the sentence "If no input can tell a change from the original, skip that change." let the agent give up too early? Input: one round-1 test file for each of 4 functions with a real survivor (`matches`, `Response.json`, `get_confidence`, `transformed`). Each file let 1 mutant survive. `harden` ran 4 times for each function and each variant (16 runs for each variant). Project `slopgate-t51-variants`: 2,169 spans, 0 `ERROR` spans, 0 `length` stops.
+
+| Variant | Mutants killed | Runs that used the hinted file |
+|---|---|---|
+| A: current text | 14 of 16 | 14 |
+| B: without the "skip" sentence | 14 of 16 | 14 |
+| C: "Each change gives a different result for some input. Find that input." in its place | 13 of 16 | 13 |
+
+The variants give the same result, so `HINT_TASK` keeps its text. Each run took 42 s to 94 s, with the two mutant runs included.
+
+**Offline tests.** `tests/test_review.py` has 17 new tests:
+- the generator: one operator for each mutant, the cap, the order across sites, and the skip of the decorators;
+- the hint round: it adds a test, no round without a survivor, the fallback when the agent gives no better file, a file that kills no new mutant, a file that lets an earlier kill survive again, a file that kills more and is used;
+- the limits: its own step limit, its own time budget, `MUTANT_SECONDS` for each mutant run, and the limit that `Local.run` gets;
+- the trace of the exit codes and the outcome, an unreadable source file, and an error after round 1.
+
+`uv run pytest -q`: 355 passed.
+
+**Known limits.**
+- Every hint round used all 8 steps. The stop line in `HINT_TASK` did not make the agent stop early.
+- The gate cannot detect an equivalent mutant. The 3 hint rounds on equivalent mutants cost 79 s with no gain.
+- The mutant runs are sequential, with `MUTANT_SECONDS = 60` each. In the worst case (8 mutants that hang, run on the round-1 file and on the hinted file, plus `HINT_SECONDS = 90`), the hint round adds about 17 minutes to one function. The slowest mutant stage in the bench took 36 s.
+- Only operators change. A changed operand (`n == c - 1`) or a changed constant gives no mutant.
+- The cap of 8 mutants leaves later sites out of a function with many comparisons. No function in the bench had more than 8.
+- The hint round makes the test file stronger. It does not look at the rewrite. A rewrite that changes behavior in a way that no boundary mutant shows can still pass.
