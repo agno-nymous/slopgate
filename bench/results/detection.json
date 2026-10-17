@@ -5,10 +5,10 @@
   "all": {
    "nesting": {
     "items": 59,
-    "tp": 105,
-    "fp": 72,
+    "tp": 102,
+    "fp": 75,
     "fn": 0,
-    "precision": 0.593,
+    "precision": 0.576,
     "recall": 1.0
    },
    "redundant_check": {
@@ -45,10 +45,10 @@
    },
    "total": {
     "items": 160,
-    "tp": 375,
-    "fp": 110,
+    "tp": 372,
+    "fp": 113,
     "fn": 36,
-    "precision": 0.773,
+    "precision": 0.767,
     "recall": 0.912
    }
   },
@@ -408,6 +408,11 @@
    "runs": 3
   },
   {
+   "id": "sympy/sympy:sympy/calculus/util.py:AccumulationBounds.intersection",
+   "kind": "nesting",
+   "runs": 3
+  },
+  {
    "id": "sympy/sympy:sympy/functions/combinatorial/numbers.py:genocchi._eval_is_negative",
    "kind": "redundant_check",
    "runs": 3
@@ -552,6 +557,92 @@
   "transform": 0.847,
   "nemotron": 0.925
  },
+ "passes": {
+  "nesting": {
+   "found": {
+    "items": 34,
+    "unit": "items",
+    "any": 1.0,
+    "all": 1.0
+   },
+   "clean_false": {
+    "items": 200,
+    "unit": "items",
+    "any": 0.09,
+    "all": 0.09
+   }
+  },
+  "redundant_check": {
+   "found": {
+    "items": 22,
+    "unit": "items",
+    "any": 0.636,
+    "all": 0.273
+   },
+   "clean_false": {
+    "items": 200,
+    "unit": "items",
+    "any": 0.035,
+    "all": 0.015
+   }
+  },
+  "swallowed_error": {
+   "found": {
+    "items": 29,
+    "unit": "items",
+    "any": 1.0,
+    "all": 1.0
+   },
+   "clean_false": {
+    "items": 200,
+    "unit": "items",
+    "any": 0.005,
+    "all": 0.005
+   }
+  },
+  "lookup_table": {
+   "found": {
+    "items": 23,
+    "unit": "items",
+    "any": 1.0,
+    "all": 1.0
+   },
+   "clean_false": {
+    "items": 200,
+    "unit": "items",
+    "any": 0.0,
+    "all": 0.0
+   }
+  },
+  "dead": {
+   "found": {
+    "items": 28,
+    "unit": "items",
+    "any": 1.0,
+    "all": 1.0
+   },
+   "clean_false": {
+    "items": 200,
+    "unit": "items",
+    "any": 0.0,
+    "all": 0.0
+   }
+  },
+  "total": {
+   "found": {
+    "items": 136,
+    "unit": "item-kinds",
+    "any": 0.941,
+    "all": 0.882
+   },
+   "clean_false": {
+    "items": 200,
+    "unit": "items",
+    "any": 0.125,
+    "all": 0.11
+   }
+  }
+ },
  "counts": {
   "origin": {
    "clean": 200,
@@ -581,6 +672,174 @@
    "input_tokens": 43585,
    "output_tokens": 38719,
    "usd": 0.0479
+  },
+  {
+   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+   "use": "second labeller (rule)",
+   "input_tokens": 82714,
+   "output_tokens": 9798,
+   "usd": 0.1121
+  },
+  {
+   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+   "use": "second labeller (definition)",
+   "input_tokens": 95020,
+   "output_tokens": 12486,
+   "usd": 0.1325
   }
- ]
+ ],
+ "agreement": {
+  "rule": {
+   "nesting": {
+    "rows": 43,
+    "agree": 0.651,
+    "kappa": 0.34
+   },
+   "redundant_check": {
+    "rows": 34,
+    "agree": 0.471,
+    "kappa": 0.123
+   },
+   "swallowed_error": {
+    "rows": 13,
+    "agree": 0.923,
+    "kappa": 0.0
+   },
+   "dead": {
+    "rows": 12,
+    "agree": 0.917,
+    "kappa": 0.0
+   },
+   "lookup_table": {
+    "rows": 7,
+    "agree": 1.0,
+    "kappa": null
+   },
+   "total": {
+    "rows": 109,
+    "agree": 0.679,
+    "kappa": 0.348
+   }
+  },
+  "definition": {
+   "nesting": {
+    "rows": 43,
+    "agree": 0.767,
+    "kappa": 0.53
+   },
+   "redundant_check": {
+    "rows": 34,
+    "agree": 0.647,
+    "kappa": 0.294
+   },
+   "swallowed_error": {
+    "rows": 13,
+    "agree": 0.923,
+    "kappa": 0.0
+   },
+   "dead": {
+    "rows": 12,
+    "agree": 0.917,
+    "kappa": 0.0
+   },
+   "lookup_table": {
+    "rows": 7,
+    "agree": 1.0,
+    "kappa": null
+   },
+   "total": {
+    "rows": 109,
+    "agree": 0.78,
+    "kappa": 0.557
+   }
+  }
+ },
+ "metadata": {
+  "report": {
+   "models": {},
+   "commit": "58d9b5d1f3582dcb11062a1f186083366279d251",
+   "dirty": true,
+   "date": "2026-10-17",
+   "seeds": {
+    "split": 39,
+    "bootstrap": 39
+   },
+   "prompts": {},
+   "runs_per_item": 3,
+   "counts": {
+    "clean": 200,
+    "source": 129,
+    "transform": 72,
+    "nemotron": 40
+   },
+   "usd": 0.2925
+  },
+  "groundtruth": {
+   "models": {
+    "injection": "nvidia/nemotron-3-super-120b-a12b"
+   },
+   "commit": "be0d670fedfc4e945490ce9d731b394cc33ae2e6",
+   "dirty": false,
+   "date": "2026-10-09",
+   "seeds": {
+    "sample": 37
+   },
+   "prompts": {
+    "INJECT_PROMPT": "eb6823b10cc5",
+    "INJECT": "0a674837b4f3"
+   },
+   "source": "backfilled on 2026-10-17 from commit be0d670fedfc4e945490ce9d731b394cc33ae2e6, the last commit that wrote groundtruth.json; the hashes are of INJECT_PROMPT and of INJECT as json with sorted keys in bench/detect.py at that commit (read with git show, parsed with ast.literal_eval); the sample seed is the literal 37 in random.Random(37) in that file"
+  },
+  "runs": {
+   "models": {
+    "check": "nvidia/Nemotron-3_5-Lightning"
+   },
+   "commit": "be0d670fedfc4e945490ce9d731b394cc33ae2e6",
+   "dirty": false,
+   "date": "2026-10-09",
+   "seeds": {},
+   "runs_per_item": 3,
+   "prompts": {
+    "CHECK_PROMPT": "2dafaf056594",
+    "RULES": "ba6048530b12",
+    "KINDS": "b86e71f5d05e"
+   },
+   "source": "backfilled on 2026-10-17 from commit be0d670fedfc4e945490ce9d731b394cc33ae2e6, the last commit that wrote runs.json (the gate before ticket 39); classify in slopgate/kinds.py at that commit calls llm.decide(LIGHTNING, ...) with CHECK_PROMPT and RULES; the hashes are of CHECK_PROMPT, RULES and KINDS (json with sorted keys) at that commit (read with git show, parsed with ast.literal_eval)"
+  },
+  "labels": {
+   "rule": {
+    "models": {
+     "second_labeller": "nvidia/Nemotron-3-Ultra-550b-a55b"
+    },
+    "commit": "58d9b5d1f3582dcb11062a1f186083366279d251",
+    "dirty": true,
+    "date": "2026-10-17",
+    "seeds": {},
+    "prompts": {
+     "LABEL_PROMPT": "34b76acfaa9b",
+     "Label": "a7084cceb6d8",
+     "KINDS": "36d181cd34ef"
+    },
+    "runs_per_item": 1,
+    "source": "backfilled on 2026-10-17; the run used the same prompt text"
+   },
+   "definition": {
+    "models": {
+     "second_labeller": "nvidia/Nemotron-3-Ultra-550b-a55b"
+    },
+    "commit": "58d9b5d1f3582dcb11062a1f186083366279d251",
+    "dirty": true,
+    "date": "2026-10-17",
+    "seeds": {},
+    "prompts": {
+     "LABEL_PROMPT": "34b76acfaa9b",
+     "Label": "a7084cceb6d8",
+     "DEFINITIONS": "029ab69e3620",
+     "KINDS": "36d181cd34ef"
+    },
+    "runs_per_item": 1,
+    "source": "backfilled on 2026-10-17; the run used the same prompt text"
+   }
+  }
+ }
 }

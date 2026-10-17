@@ -1,5 +1,48 @@
 # Detection benchmark: runs-t39.json, held_out
 
+## Run metadata
+
+| field | report | groundtruth | runs | base runs | labels: rule | labels: definition |
+| --- | --- | --- | --- | --- | --- | --- |
+| models | none | injection: nvidia/nemotron-3-super-120b-a12b | none | check: nvidia/Nemotron-3_5-Lightning | second_labeller: nvidia/Nemotron-3-Ultra-550b-a55b | second_labeller: nvidia/Nemotron-3-Ultra-550b-a55b |
+| commit | 58d9b5d1f3 (tree had changes) | be0d670fed | c31b3c5800 | be0d670fed | 58d9b5d1f3 (tree had changes) | 58d9b5d1f3 (tree had changes) |
+| date | 2026-10-17 | 2026-10-09 | 2026-10-10 | 2026-10-09 | 2026-10-17 | 2026-10-17 |
+| seeds | split 39, bootstrap 39 | sample 37 | none | none | none | none |
+| runs per item | 3 |  | 3 | 3 | 1 | 1 |
+| counts | clean 80, source 52, transform 29, nemotron 14 |  |  |  |  |  |
+| cost (USD) | 0.2925 |  |  |  |  |  |
+
+| prompt | stage | hash |
+| --- | --- | --- |
+| CHECK_PROMPT | base runs | `2dafaf056594` |
+| DEFINITIONS | labels: definition | `029ab69e3620` |
+| INJECT | groundtruth | `0a674837b4f3` |
+| INJECT_PROMPT | groundtruth | `eb6823b10cc5` |
+| KINDS | base runs | `b86e71f5d05e` |
+| KINDS | labels: definition | `36d181cd34ef` |
+| KINDS | labels: rule | `36d181cd34ef` |
+| KINDS | runs | `36d181cd34ef` |
+| LABEL_PROMPT | labels: definition | `34b76acfaa9b` |
+| LABEL_PROMPT | labels: rule | `34b76acfaa9b` |
+| Label | labels: definition | `a7084cceb6d8` |
+| Label | labels: rule | `a7084cceb6d8` |
+| RULES | base runs | `ba6048530b12` |
+
+- Source of groundtruth: backfilled on 2026-10-17 from commit be0d670fedfc4e945490ce9d731b394cc33ae2e6, the last commit that wrote groundtruth.json; the hashes are of INJECT_PROMPT and of INJECT as json with sorted keys in bench/detect.py at that commit (read with git show, parsed with ast.literal_eval); the sample seed is the literal 37 in random.Random(37) in that file
+- Source of runs: backfilled on 2026-10-17 from commit c31b3c580064743a9bd02290f57159a46c099fc7, the last commit that wrote runs-t39.json (the gate of ticket 39); slopgate/kinds.py at that commit does not import llm, so the gate called no model; the hash is of KINDS (json with sorted keys) at that commit (read with git show, parsed with ast.literal_eval)
+- Source of base runs: backfilled on 2026-10-17 from commit be0d670fedfc4e945490ce9d731b394cc33ae2e6, the last commit that wrote runs.json (the gate before ticket 39); classify in slopgate/kinds.py at that commit calls llm.decide(LIGHTNING, ...) with CHECK_PROMPT and RULES; the hashes are of CHECK_PROMPT, RULES and KINDS (json with sorted keys) at that commit (read with git show, parsed with ast.literal_eval)
+- Source of labels: rule: backfilled on 2026-10-17; the run used the same prompt text
+- Source of labels: definition: backfilled on 2026-10-17; the run used the same prompt text
+
+## Setup differences
+
+The base result and this result differ in the setup below. Read the change table with this in mind.
+
+- prompt CHECK_PROMPT: 2dafaf056594 against missing
+- prompt KINDS: b86e71f5d05e against 36d181cd34ef
+- prompt RULES: ba6048530b12 against missing
+- models: {'check': 'nvidia/Nemotron-3_5-Lightning'} against {}
+
 ## Change against the gate before ticket 39
 
 Each cell is the value and its 95% range from 1000 bootstrap resamples of whole functions.
@@ -72,6 +115,34 @@ Clean item-runs: 240. Share with any kind: 0.05.
 | dead | 0.0 |
 | total | 0.013 |
 
+## Label agreement (Cohen's kappa)
+
+The "rule" prompt gives Ultra the one-line rule from `kinds.KINDS`. The "definition" prompt adds the gate's full definition from `bench/label.py`.
+
+A kappa below 0.6 means the labels of that kind are not reliable, and kappa is unstable when almost all rows of a kind have the same label.
+
+| kind | rows (rule) | agreement (rule) | kappa (rule) | rows (definition) | agreement (definition) | kappa (definition) |
+| --- | --- | --- | --- | --- | --- | --- |
+| nesting | 18 | 0.833 | 0.675 | 18 | 0.778 | 0.556 |
+| redundant_check | 15 | 0.533 | 0.222 | 15 | 0.667 | 0.359 |
+| swallowed_error | 2 | 1.0 |  | 2 | 1.0 |  |
+| lookup_table | 2 | 1.0 |  | 2 | 1.0 |  |
+| dead | 5 | 1.0 |  | 5 | 1.0 |  |
+| total | 42 | 0.762 | 0.54 | 42 | 0.786 | 0.581 |
+
+## Found in at least 1 of 3 runs and in all 3 runs
+
+An error run counts as a miss.
+
+| kind | found | found ≥1 of 3 | found 3 of 3 | clean items | false kind ≥1 of 3 | false kind 3 of 3 |
+| --- | --- | --- | --- | --- | --- | --- |
+| nesting | 14 items | 0.857 | 0.857 | 80 | 0.013 | 0.013 |
+| redundant_check | 8 items | 0.625 | 0.625 | 80 | 0.0 | 0.0 |
+| swallowed_error | 7 items | 1.0 | 1.0 | 80 | 0.0 | 0.0 |
+| lookup_table | 10 items | 1.0 | 1.0 | 80 | 0.0 | 0.0 |
+| dead | 12 items | 1.0 | 1.0 | 80 | 0.0 | 0.0 |
+| total | 51 item-kinds | 0.902 | 0.902 | 80 | 0.013 | 0.013 |
+
 ## Time for each function (seconds)
 
 | mean | median | p95 | max |
@@ -85,6 +156,8 @@ Clean item-runs: 240. Share with any kind: 0.05.
 | model | use | input tokens | output tokens | USD |
 | --- | --- | --- | --- | --- |
 | nvidia/nemotron-3-super-120b-a12b | injection | 43585 | 38719 | 0.0479 |
+| nvidia/Nemotron-3-Ultra-550b-a55b | second labeller (rule) | 82714 | 9798 | 0.1121 |
+| nvidia/Nemotron-3-Ultra-550b-a55b | second labeller (definition) | 95020 | 12486 | 0.1325 |
 
 ## Stability (same kinds in all runs)
 

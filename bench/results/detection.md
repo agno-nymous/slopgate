@@ -1,17 +1,49 @@
 # Detection benchmark: runs.json (gate before ticket 39), all
 
+## Run metadata
+
+| field | report | groundtruth | runs | labels: rule | labels: definition |
+| --- | --- | --- | --- | --- | --- |
+| models | none | injection: nvidia/nemotron-3-super-120b-a12b | check: nvidia/Nemotron-3_5-Lightning | second_labeller: nvidia/Nemotron-3-Ultra-550b-a55b | second_labeller: nvidia/Nemotron-3-Ultra-550b-a55b |
+| commit | 58d9b5d1f3 (tree had changes) | be0d670fed | be0d670fed | 58d9b5d1f3 (tree had changes) | 58d9b5d1f3 (tree had changes) |
+| date | 2026-10-17 | 2026-10-09 | 2026-10-09 | 2026-10-17 | 2026-10-17 |
+| seeds | split 39, bootstrap 39 | sample 37 | none | none | none |
+| runs per item | 3 |  | 3 | 1 | 1 |
+| counts | clean 200, source 129, transform 72, nemotron 40 |  |  |  |  |
+| cost (USD) | 0.2925 |  |  |  |  |
+
+| prompt | stage | hash |
+| --- | --- | --- |
+| CHECK_PROMPT | runs | `2dafaf056594` |
+| DEFINITIONS | labels: definition | `029ab69e3620` |
+| INJECT | groundtruth | `0a674837b4f3` |
+| INJECT_PROMPT | groundtruth | `eb6823b10cc5` |
+| KINDS | labels: definition | `36d181cd34ef` |
+| KINDS | labels: rule | `36d181cd34ef` |
+| KINDS | runs | `b86e71f5d05e` |
+| LABEL_PROMPT | labels: definition | `34b76acfaa9b` |
+| LABEL_PROMPT | labels: rule | `34b76acfaa9b` |
+| Label | labels: definition | `a7084cceb6d8` |
+| Label | labels: rule | `a7084cceb6d8` |
+| RULES | runs | `ba6048530b12` |
+
+- Source of groundtruth: backfilled on 2026-10-17 from commit be0d670fedfc4e945490ce9d731b394cc33ae2e6, the last commit that wrote groundtruth.json; the hashes are of INJECT_PROMPT and of INJECT as json with sorted keys in bench/detect.py at that commit (read with git show, parsed with ast.literal_eval); the sample seed is the literal 37 in random.Random(37) in that file
+- Source of runs: backfilled on 2026-10-17 from commit be0d670fedfc4e945490ce9d731b394cc33ae2e6, the last commit that wrote runs.json (the gate before ticket 39); classify in slopgate/kinds.py at that commit calls llm.decide(LIGHTNING, ...) with CHECK_PROMPT and RULES; the hashes are of CHECK_PROMPT, RULES and KINDS (json with sorted keys) at that commit (read with git show, parsed with ast.literal_eval)
+- Source of labels: rule: backfilled on 2026-10-17; the run used the same prompt text
+- Source of labels: definition: backfilled on 2026-10-17; the run used the same prompt text
+
 `items` is the number of distinct items with at least one TP, FP, or FN.
 
 ## Precision and recall: all
 
 | kind | items | TP | FP | FN | precision | recall |
 | --- | --- | --- | --- | --- | --- | --- |
-| nesting | 59 | 105 | 72 | 0 | 0.593 | 1.0 |
+| nesting | 59 | 102 | 75 | 0 | 0.576 | 1.0 |
 | redundant_check | 43 | 30 | 35 | 36 | 0.462 | 0.455 |
 | swallowed_error | 30 | 87 | 3 | 0 | 0.967 | 1.0 |
 | lookup_table | 23 | 69 | 0 | 0 | 1.0 | 1.0 |
 | dead | 28 | 84 | 0 | 0 | 1.0 | 1.0 |
-| total | 160 | 375 | 110 | 36 | 0.773 | 0.912 |
+| total | 160 | 372 | 113 | 36 | 0.767 | 0.912 |
 
 ## Precision and recall: transform
 
@@ -59,6 +91,34 @@ Clean item-runs: 600. Share with any kind: 0.153.
 | dead | 0.0 |
 | total | 0.115 |
 
+## Label agreement (Cohen's kappa)
+
+The "rule" prompt gives Ultra the one-line rule from `kinds.KINDS`. The "definition" prompt adds the gate's full definition from `bench/label.py`.
+
+A kappa below 0.6 means the labels of that kind are not reliable, and kappa is unstable when almost all rows of a kind have the same label.
+
+| kind | rows (rule) | agreement (rule) | kappa (rule) | rows (definition) | agreement (definition) | kappa (definition) |
+| --- | --- | --- | --- | --- | --- | --- |
+| nesting | 43 | 0.651 | 0.34 | 43 | 0.767 | 0.53 |
+| redundant_check | 34 | 0.471 | 0.123 | 34 | 0.647 | 0.294 |
+| swallowed_error | 13 | 0.923 | 0.0 | 13 | 0.923 | 0.0 |
+| lookup_table | 7 | 1.0 |  | 7 | 1.0 |  |
+| dead | 12 | 0.917 | 0.0 | 12 | 0.917 | 0.0 |
+| total | 109 | 0.679 | 0.348 | 109 | 0.78 | 0.557 |
+
+## Found in at least 1 of 3 runs and in all 3 runs
+
+An error run counts as a miss.
+
+| kind | found | found ≥1 of 3 | found 3 of 3 | clean items | false kind ≥1 of 3 | false kind 3 of 3 |
+| --- | --- | --- | --- | --- | --- | --- |
+| nesting | 34 items | 1.0 | 1.0 | 200 | 0.09 | 0.09 |
+| redundant_check | 22 items | 0.636 | 0.273 | 200 | 0.035 | 0.015 |
+| swallowed_error | 29 items | 1.0 | 1.0 | 200 | 0.005 | 0.005 |
+| lookup_table | 23 items | 1.0 | 1.0 | 200 | 0.0 | 0.0 |
+| dead | 28 items | 1.0 | 1.0 | 200 | 0.0 | 0.0 |
+| total | 136 item-kinds | 0.941 | 0.882 | 200 | 0.125 | 0.11 |
+
 ## Time for each function (seconds)
 
 | mean | median | p95 | max |
@@ -72,6 +132,8 @@ Clean item-runs: 600. Share with any kind: 0.153.
 | model | use | input tokens | output tokens | USD |
 | --- | --- | --- | --- | --- |
 | nvidia/nemotron-3-super-120b-a12b | injection | 43585 | 38719 | 0.0479 |
+| nvidia/Nemotron-3-Ultra-550b-a55b | second labeller (rule) | 82714 | 9798 | 0.1121 |
+| nvidia/Nemotron-3-Ultra-550b-a55b | second labeller (definition) | 95020 | 12486 | 0.1325 |
 
 ## Stability (same kinds in all runs)
 
@@ -150,6 +212,7 @@ Clean item-runs: 600. Share with any kind: 0.153.
 | scikit-learn/scikit-learn:sklearn/utils/estimator_checks.py:check_estimators_dtypes | nesting | 3 |
 | sphinx-doc/sphinx:sphinx/builders/xml.py:XMLBuilder.get_outdated_docs | nesting | 3 |
 | sphinx-doc/sphinx:sphinx/domains/std.py:ProductionList.run | nesting | 3 |
+| sympy/sympy:sympy/calculus/util.py:AccumulationBounds.intersection | nesting | 3 |
 | sympy/sympy:sympy/functions/combinatorial/numbers.py:genocchi._eval_is_negative | redundant_check | 3 |
 | sympy/sympy:sympy/functions/special/elliptic_integrals.py:elliptic_pi.fdiff:nemotron:dead | redundant_check | 1 |
 | sympy/sympy:sympy/integrals/risch.py:splitfactor | redundant_check | 3 |

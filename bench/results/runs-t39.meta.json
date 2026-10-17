@@ -1,0 +1,12 @@
+{
+ "models": {},
+ "commit": "c31b3c580064743a9bd02290f57159a46c099fc7",
+ "dirty": false,
+ "date": "2026-10-10",
+ "seeds": {},
+ "runs_per_item": 3,
+ "prompts": {
+  "KINDS": "36d181cd34ef"
+ },
+ "source": "backfilled on 2026-10-17 from commit c31b3c580064743a9bd02290f57159a46c099fc7, the last commit that wrote runs-t39.json (the gate of ticket 39); slopgate/kinds.py at that commit does not import llm, so the gate called no model; the hash is of KINDS (json with sorted keys) at that commit (read with git show, parsed with ast.literal_eval)"
+}

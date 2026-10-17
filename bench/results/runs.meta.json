@@ -1,0 +1,16 @@
+{
+ "models": {
+  "check": "nvidia/Nemotron-3_5-Lightning"
+ },
+ "commit": "be0d670fedfc4e945490ce9d731b394cc33ae2e6",
+ "dirty": false,
+ "date": "2026-10-09",
+ "seeds": {},
+ "runs_per_item": 3,
+ "prompts": {
+  "CHECK_PROMPT": "2dafaf056594",
+  "RULES": "ba6048530b12",
+  "KINDS": "b86e71f5d05e"
+ },
+ "source": "backfilled on 2026-10-17 from commit be0d670fedfc4e945490ce9d731b394cc33ae2e6, the last commit that wrote runs.json (the gate before ticket 39); classify in slopgate/kinds.py at that commit calls llm.decide(LIGHTNING, ...) with CHECK_PROMPT and RULES; the hashes are of CHECK_PROMPT, RULES and KINDS (json with sorted keys) at that commit (read with git show, parsed with ast.literal_eval)"
+}

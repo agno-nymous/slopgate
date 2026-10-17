@@ -1,0 +1,16 @@
+{
+ "models": {
+  "injection": "nvidia/nemotron-3-super-120b-a12b"
+ },
+ "commit": "be0d670fedfc4e945490ce9d731b394cc33ae2e6",
+ "dirty": false,
+ "date": "2026-10-09",
+ "seeds": {
+  "sample": 37
+ },
+ "prompts": {
+  "INJECT_PROMPT": "eb6823b10cc5",
+  "INJECT": "0a674837b4f3"
+ },
+ "source": "backfilled on 2026-10-17 from commit be0d670fedfc4e945490ce9d731b394cc33ae2e6, the last commit that wrote groundtruth.json; the hashes are of INJECT_PROMPT and of INJECT as json with sorted keys in bench/detect.py at that commit (read with git show, parsed with ast.literal_eval); the sample seed is the literal 37 in random.Random(37) in that file"
+}

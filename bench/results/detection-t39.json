@@ -272,6 +272,92 @@
   "transform": 1.0,
   "nemotron": 1.0
  },
+ "passes": {
+  "nesting": {
+   "found": {
+    "items": 14,
+    "unit": "items",
+    "any": 0.857,
+    "all": 0.857
+   },
+   "clean_false": {
+    "items": 80,
+    "unit": "items",
+    "any": 0.013,
+    "all": 0.013
+   }
+  },
+  "redundant_check": {
+   "found": {
+    "items": 8,
+    "unit": "items",
+    "any": 0.625,
+    "all": 0.625
+   },
+   "clean_false": {
+    "items": 80,
+    "unit": "items",
+    "any": 0.0,
+    "all": 0.0
+   }
+  },
+  "swallowed_error": {
+   "found": {
+    "items": 7,
+    "unit": "items",
+    "any": 1.0,
+    "all": 1.0
+   },
+   "clean_false": {
+    "items": 80,
+    "unit": "items",
+    "any": 0.0,
+    "all": 0.0
+   }
+  },
+  "lookup_table": {
+   "found": {
+    "items": 10,
+    "unit": "items",
+    "any": 1.0,
+    "all": 1.0
+   },
+   "clean_false": {
+    "items": 80,
+    "unit": "items",
+    "any": 0.0,
+    "all": 0.0
+   }
+  },
+  "dead": {
+   "found": {
+    "items": 12,
+    "unit": "items",
+    "any": 1.0,
+    "all": 1.0
+   },
+   "clean_false": {
+    "items": 80,
+    "unit": "items",
+    "any": 0.0,
+    "all": 0.0
+   }
+  },
+  "total": {
+   "found": {
+    "items": 51,
+    "unit": "item-kinds",
+    "any": 0.902,
+    "all": 0.902
+   },
+   "clean_false": {
+    "items": 80,
+    "unit": "items",
+    "any": 0.013,
+    "all": 0.013
+   }
+  }
+ },
  "counts": {
   "origin": {
    "clean": 80,
@@ -628,6 +714,192 @@
    "input_tokens": 43585,
    "output_tokens": 38719,
    "usd": 0.0479
+  },
+  {
+   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+   "use": "second labeller (rule)",
+   "input_tokens": 82714,
+   "output_tokens": 9798,
+   "usd": 0.1121
+  },
+  {
+   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+   "use": "second labeller (definition)",
+   "input_tokens": 95020,
+   "output_tokens": 12486,
+   "usd": 0.1325
   }
+ ],
+ "agreement": {
+  "rule": {
+   "nesting": {
+    "rows": 18,
+    "agree": 0.833,
+    "kappa": 0.675
+   },
+   "redundant_check": {
+    "rows": 15,
+    "agree": 0.533,
+    "kappa": 0.222
+   },
+   "swallowed_error": {
+    "rows": 2,
+    "agree": 1.0,
+    "kappa": null
+   },
+   "lookup_table": {
+    "rows": 2,
+    "agree": 1.0,
+    "kappa": null
+   },
+   "dead": {
+    "rows": 5,
+    "agree": 1.0,
+    "kappa": null
+   },
+   "total": {
+    "rows": 42,
+    "agree": 0.762,
+    "kappa": 0.54
+   }
+  },
+  "definition": {
+   "nesting": {
+    "rows": 18,
+    "agree": 0.778,
+    "kappa": 0.556
+   },
+   "redundant_check": {
+    "rows": 15,
+    "agree": 0.667,
+    "kappa": 0.359
+   },
+   "swallowed_error": {
+    "rows": 2,
+    "agree": 1.0,
+    "kappa": null
+   },
+   "lookup_table": {
+    "rows": 2,
+    "agree": 1.0,
+    "kappa": null
+   },
+   "dead": {
+    "rows": 5,
+    "agree": 1.0,
+    "kappa": null
+   },
+   "total": {
+    "rows": 42,
+    "agree": 0.786,
+    "kappa": 0.581
+   }
+  }
+ },
+ "metadata": {
+  "report": {
+   "models": {},
+   "commit": "58d9b5d1f3582dcb11062a1f186083366279d251",
+   "dirty": true,
+   "date": "2026-10-17",
+   "seeds": {
+    "split": 39,
+    "bootstrap": 39
+   },
+   "prompts": {},
+   "runs_per_item": 3,
+   "counts": {
+    "clean": 80,
+    "source": 52,
+    "transform": 29,
+    "nemotron": 14
+   },
+   "usd": 0.2925
+  },
+  "groundtruth": {
+   "models": {
+    "injection": "nvidia/nemotron-3-super-120b-a12b"
+   },
+   "commit": "be0d670fedfc4e945490ce9d731b394cc33ae2e6",
+   "dirty": false,
+   "date": "2026-10-09",
+   "seeds": {
+    "sample": 37
+   },
+   "prompts": {
+    "INJECT_PROMPT": "eb6823b10cc5",
+    "INJECT": "0a674837b4f3"
+   },
+   "source": "backfilled on 2026-10-17 from commit be0d670fedfc4e945490ce9d731b394cc33ae2e6, the last commit that wrote groundtruth.json; the hashes are of INJECT_PROMPT and of INJECT as json with sorted keys in bench/detect.py at that commit (read with git show, parsed with ast.literal_eval); the sample seed is the literal 37 in random.Random(37) in that file"
+  },
+  "runs": {
+   "models": {},
+   "commit": "c31b3c580064743a9bd02290f57159a46c099fc7",
+   "dirty": false,
+   "date": "2026-10-10",
+   "seeds": {},
+   "runs_per_item": 3,
+   "prompts": {
+    "KINDS": "36d181cd34ef"
+   },
+   "source": "backfilled on 2026-10-17 from commit c31b3c580064743a9bd02290f57159a46c099fc7, the last commit that wrote runs-t39.json (the gate of ticket 39); slopgate/kinds.py at that commit does not import llm, so the gate called no model; the hash is of KINDS (json with sorted keys) at that commit (read with git show, parsed with ast.literal_eval)"
+  },
+  "base_runs": {
+   "models": {
+    "check": "nvidia/Nemotron-3_5-Lightning"
+   },
+   "commit": "be0d670fedfc4e945490ce9d731b394cc33ae2e6",
+   "dirty": false,
+   "date": "2026-10-09",
+   "seeds": {},
+   "runs_per_item": 3,
+   "prompts": {
+    "CHECK_PROMPT": "2dafaf056594",
+    "RULES": "ba6048530b12",
+    "KINDS": "b86e71f5d05e"
+   },
+   "source": "backfilled on 2026-10-17 from commit be0d670fedfc4e945490ce9d731b394cc33ae2e6, the last commit that wrote runs.json (the gate before ticket 39); classify in slopgate/kinds.py at that commit calls llm.decide(LIGHTNING, ...) with CHECK_PROMPT and RULES; the hashes are of CHECK_PROMPT, RULES and KINDS (json with sorted keys) at that commit (read with git show, parsed with ast.literal_eval)"
+  },
+  "labels": {
+   "rule": {
+    "models": {
+     "second_labeller": "nvidia/Nemotron-3-Ultra-550b-a55b"
+    },
+    "commit": "58d9b5d1f3582dcb11062a1f186083366279d251",
+    "dirty": true,
+    "date": "2026-10-17",
+    "seeds": {},
+    "prompts": {
+     "LABEL_PROMPT": "34b76acfaa9b",
+     "Label": "a7084cceb6d8",
+     "KINDS": "36d181cd34ef"
+    },
+    "runs_per_item": 1,
+    "source": "backfilled on 2026-10-17; the run used the same prompt text"
+   },
+   "definition": {
+    "models": {
+     "second_labeller": "nvidia/Nemotron-3-Ultra-550b-a55b"
+    },
+    "commit": "58d9b5d1f3582dcb11062a1f186083366279d251",
+    "dirty": true,
+    "date": "2026-10-17",
+    "seeds": {},
+    "prompts": {
+     "LABEL_PROMPT": "34b76acfaa9b",
+     "Label": "a7084cceb6d8",
+     "DEFINITIONS": "029ab69e3620",
+     "KINDS": "36d181cd34ef"
+    },
+    "runs_per_item": 1,
+    "source": "backfilled on 2026-10-17; the run used the same prompt text"
+   }
+  }
+ },
+ "mismatch": [
+  "prompt CHECK_PROMPT: 2dafaf056594 against missing",
+  "prompt KINDS: b86e71f5d05e against 36d181cd34ef",
+  "prompt RULES: ba6048530b12 against missing",
+  "models: {'check': 'nvidia/Nemotron-3_5-Lightning'} against {}"
  ]
 }
