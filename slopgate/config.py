@@ -22,6 +22,11 @@ AGENT_STEPS = 15
 AGENT_SECONDS = 120
 AGENT_TOKENS = 150_000
 
+HINT_MUTANTS = 8
+HINT_STEPS = 8
+HINT_SECONDS = 90
+MUTANT_SECONDS = 60
+
 # Seconds for one sandbox run (the check, the rewrite proof, the repo tests). The slowest normal run in ticket 33 took 159 s:
 # this repo's own test suite in ConTree.
 SANDBOX_TIMEOUT = 600

@@ -163,14 +163,16 @@ class Local:
                 raise InstallError(tail(output))
         return path
 
-    def run(self, checkpoint: Path, files: dict[str, str], cmd: str) -> tuple[int, str]:
+    def run(self, checkpoint: Path, files: dict[str, str], cmd: str, seconds: int | None = None) -> tuple[int, str]:
+        if seconds is None:
+            seconds = SANDBOX_TIMEOUT
         with trace.span("sandbox.run", input={"cmd": cmd, "files": files}), tempfile.TemporaryDirectory() as tmp:
             work = Path(tmp) / "repo"
             shutil.copytree(checkpoint, work)
             for rel, content in files.items():
                 (work / rel).parent.mkdir(parents=True, exist_ok=True)
                 (work / rel).write_text(content)
-            code, output = shell(cmd, work, SANDBOX_TIMEOUT)
+            code, output = shell(cmd, work, seconds)
             trace.output({"exit_code": code, "output": output})
             return code, output
 
@@ -196,15 +198,17 @@ class Contree:
             raise InstallError(tail(result.stdout + result.stderr))
         return result
 
-    def run(self, checkpoint, files: dict[str, str], cmd: str) -> tuple[int, str]:
+    def run(self, checkpoint, files: dict[str, str], cmd: str, seconds: int | None = None) -> tuple[int, str]:
+        if seconds is None:
+            seconds = SANDBOX_TIMEOUT
         with trace.span("sandbox.run", input={"cmd": cmd, "files": files}):
             files = {f"/repo/{rel}": content.encode() for rel, content in files.items()}
             began = time.monotonic()
-            result = checkpoint.run(shell=bounded(cmd, SANDBOX_TIMEOUT), cwd="/repo", files=files, timeout=SANDBOX_TIMEOUT + 60).wait()
+            result = checkpoint.run(shell=bounded(cmd, seconds), cwd="/repo", files=files, timeout=seconds + 60).wait()
             code, output = result.exit_code, result.stdout + result.stderr
             # The exit code cannot tell a timeout: a command may exit 124 itself, and one that ignores SIGTERM ends with 137.
-            if time.monotonic() - began >= SANDBOX_TIMEOUT:
-                code, output = 124, f"{output}\ntimed out after {SANDBOX_TIMEOUT} s"
+            if time.monotonic() - began >= seconds:
+                code, output = 124, f"{output}\ntimed out after {seconds} s"
             trace.output({"exit_code": code, "output": output})
             return code, output
 

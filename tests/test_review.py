@@ -1,4 +1,5 @@
 import ast
+import io
 import json
 import re
 import shlex
@@ -7,6 +8,7 @@ import sys
 import textwrap
 import threading
 import time
+import tokenize
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -16,10 +18,10 @@ from contree_sdk.sdk.exceptions import NotFoundError
 from slopgate import kinds, llm, sandbox
 from slopgate import review as gate
 from slopgate.cli import main
-from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, OLD_COMMIT_IMAGE, SUPER, ULTRA
+from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, HINT_MUTANTS, HINT_STEPS, MUTANT_SECONDS, OLD_COMMIT_IMAGE, SUPER, ULTRA
 from slopgate.functions import dedent, is_test_file, parse, pytest_patterns, structure_hash
 from slopgate.kinds import KINDS, classify, flattenable, has_dead_code, leftover, problems, repeated_checks
-from slopgate.review import COVERAGE, EXECUTE, NO_ENVIRONMENT, REJECTED, characterize, same_code, strip_fence
+from slopgate.review import COVERAGE, EXECUTE, NO_ENVIRONMENT, REJECTED, boundary_mutants, broken_rule, characterize, same_code, strip_fence, survivors
 from slopgate.sandbox import Contree, ContreeSession, Local, LocalSession
 
 NESTED = '''\
@@ -473,6 +475,8 @@ KIND_CASES = [
                 ("none", None, 8080),
                 ("bool", True, 8080),
                 ("low", '"0"', 8080),
+                ("one", '"1"', 1),
+                ("max", '"65535"', 65535),
                 ("high", '"70000"', 8080),
                 ("garbage", '"abc"', 8080),
                 ("valid", '"443"', 443),
@@ -488,6 +492,7 @@ KIND_CASES = [
         + "".join(
             f"def test_{code}():\n    assert http_reason({code}) == {reason!r}\n\n\n"
             for code, reason in [
+                (100, "Unknown"),
                 (200, "OK"),
                 (201, "Created"),
                 (204, "No Content"),
@@ -510,14 +515,17 @@ KIND_CASES = [
 
 def test_each_in_place_kind_gets_a_suggestion_naming_it(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": KINDS_SOURCE})
-    fake_llm.replies += [fenced(reply) for _, tests, rewrite in KIND_CASES for reply in (tests, rewrite)]
+    replies = [fenced(reply) for _, tests, rewrite in KIND_CASES for reply in (tests, rewrite)]
+    # The mutants of `total` that survive (`len(prices) <= 0`, `price >= 0`) are equivalent, so its hint round writes no file.
+    replies.insert(3, agent_reply())
+    fake_llm.replies += replies
 
     result = review(capsys, repo)
 
     assert result["rejected"] == []
     named = [re.match(r"Slopgate \((.*?)\) rewrite", suggestion["body"])[1] for suggestion in result["suggestions"]]
     assert named == ["`nesting`", "`nesting`", "`swallowed_error`", "`lookup_table`", "`dead`"]
-    assert models(fake_llm) == [SUPER] * 15
+    assert models(fake_llm) == [SUPER] * 16
 
 
 REPEATED = SIGNATURE + """\
@@ -1210,6 +1218,254 @@ def test_tool_call_arguments_that_are_not_json_get_an_error_message(make_repo, m
     assert seen[1]["content"].startswith("Error: invalid arguments for execute: JSONDecodeError(")
 
 
+MUTANT_SOURCE = """\
+def before(a, b):
+    return a < b
+
+
+\f
+def target(value: int, limit) -> bool:  # x == y
+    shifted = 1 << value
+    text = "a < b"
+    if value == limit:
+        return True
+    return shifted < limit
+"""
+
+
+def token_strings(text):
+    return [token.string for token in tokenize.generate_tokens(io.StringIO(text).readline)]
+
+
+def test_boundary_mutants_change_one_comparison_operator_inside_the_function():
+    [function] = [f for f in parse("app/m.py", MUTANT_SOURCE) if f.qualname == "target"]
+
+    mutants = boundary_mutants(MUTANT_SOURCE, function)
+
+    assert [change for change, _ in mutants] == [
+        "line 9: `if value == limit:` changed to `if value >= limit:`",
+        "line 11: `return shifted < limit` changed to `return shifted <= limit`",
+        "line 9: `if value == limit:` changed to `if value <= limit:`",
+    ]
+    original = token_strings(MUTANT_SOURCE)
+    for _, mutant in mutants:
+        changed = token_strings(mutant)
+        assert len(changed) == len(original)
+        assert sum(a != b for a, b in zip(original, changed)) == 1
+    assert [io.StringIO(mutants[i][1]).readlines()[8].strip() for i in (0, 2)] == ["if value >= limit:", "if value <= limit:"]
+
+
+def test_boundary_mutants_stop_at_the_cap():
+    text = "def many(a, b):\n" + "".join(f"    x{i} = a == b\n" for i in range(HINT_MUTANTS))
+    [function] = parse("app/m.py", text)
+
+    mutants = boundary_mutants(text, function)
+
+    assert len(mutants) == HINT_MUTANTS
+    assert [change.split(":")[0] for change, _ in mutants] == [f"line {2 + i}" for i in range(HINT_MUTANTS)]
+
+
+def test_boundary_mutants_give_a_late_site_a_place_before_the_second_mutants_of_early_sites():
+    text = "def pick(kind, n, limit):\n" + "".join(f'    if kind == "{c}":\n        return 1\n' for c in "abcde") + "    if n > limit:\n        return 2\n    return 0\n"
+    [function] = parse("app/m.py", text)
+
+    mutants = boundary_mutants(text, function)
+
+    assert [change.split(":")[0] for change, _ in mutants][:6] == [f"line {n}" for n in (2, 4, 6, 8, 10, 12)]
+    assert "`if n > limit:` changed to `if n >= limit:`" in mutants[5][0]
+    assert len(mutants) == HINT_MUTANTS
+
+
+DECORATED = """\
+import sys
+
+import pytest
+
+
+@pytest.mark.skipif(sys.version_info < (3, 8), reason="x")
+def decorated(a, flag=1 < 2):
+    return a
+"""
+
+
+def test_boundary_mutants_skip_the_decorators_and_keep_the_default_arguments():
+    [function] = parse("app/m.py", DECORATED)
+
+    mutants = boundary_mutants(DECORATED, function)
+
+    assert [change for change, _ in mutants] == ["line 7: `def decorated(a, flag=1 < 2):` changed to `def decorated(a, flag=1 <= 2):`"]
+
+
+OVER = "def over_limit(count, limit):\n    if count > limit:\n        return True\n    return False\n"
+OVER_TESTS = "from app.limits import over_limit\n\n\ndef test_above():\n    assert over_limit(5, 3) is True\n\n\ndef test_below():\n    assert over_limit(1, 3) is False\n"
+OVER_PINNED = OVER_TESTS + "\n\ndef test_at_the_limit():\n    assert over_limit(3, 3) is False\n"
+OVER_BROKEN = OVER_TESTS + "\n\ndef test_broken():\n    assert False\n"
+OVER_CHANGE = "line 2: `if count > limit:` changed to `if count >= limit:`"
+
+
+def module(make_repo, name, source):
+    repo = make_repo({"app/__init__.py": ""}, {f"app/{name}.py": source})
+    [function] = parse(f"app/{name}.py", source)
+    sandbox = Local()
+    return sandbox, sandbox.prepare(repo, "HEAD", None), function
+
+
+def limits(make_repo):
+    return module(make_repo, "limits", OVER)
+
+
+def test_hint_round_adds_the_boundary_test_that_kills_a_surviving_mutant(make_repo, fake_llm):
+    sandbox, checkpoint, function = limits(make_repo)
+    fake_llm.replies += [fenced(OVER_TESTS), fenced(OVER_PINNED)]
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (OVER_PINNED, None)
+    assert len(fake_llm.calls) == 4
+    hint = fake_llm.calls[2][1]
+    assert f"- {OVER_CHANGE}\n" in hint
+    assert OVER_TESTS in hint
+    assert f"Write the tests to {TEST_PATH}. " in hint
+    assert "(lines 1 to 4 of app/limits.py)" in hint
+
+
+def test_no_hint_round_when_the_tests_already_kill_every_mutant(make_repo, fake_llm):
+    sandbox, checkpoint, function = limits(make_repo)
+    fake_llm.replies += [fenced(OVER_PINNED)]
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (OVER_PINNED, None)
+    assert len(fake_llm.calls) == 2
+
+
+@pytest.mark.parametrize("hint_reply", [fenced(OVER_BROKEN), agent_reply()], ids=["fails the check", "no new file"])
+def test_hint_round_that_gives_no_better_file_keeps_the_round_one_file(make_repo, fake_llm, hint_reply):
+    sandbox, checkpoint, function = limits(make_repo)
+    fake_llm.replies += [fenced(OVER_TESTS), hint_reply]
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (OVER_TESTS, None)
+    assert f"- {OVER_CHANGE}\n" in fake_llm.calls[2][1]
+
+
+def test_survivors_run_each_mutant_with_the_mutant_time_limit(make_repo, monkeypatch):
+    sandbox, checkpoint, function = limits(make_repo)
+    limits_seen, run = [], Local.run
+
+    def spy(self, checkpoint, files, cmd, seconds=None):
+        limits_seen.append(seconds)
+        return run(self, checkpoint, files, cmd, seconds)
+
+    monkeypatch.setattr(Local, "run", spy)
+
+    assert survivors(sandbox, checkpoint, function, OVER, TEST_PATH, CMD, OVER_TESTS) == [OVER_CHANGE]
+    assert limits_seen == [MUTANT_SECONDS]
+
+
+OVER_FAR = OVER_TESTS + "\n\ndef test_far_above():\n    assert over_limit(100, 3) is True\n"
+
+GRADE = 'def grade(score, low, high):\n    if score < low:\n        return "low"\n    if score > high:\n        return "high"\n    return "ok"\n'
+GRADE_TESTS = (
+    "from app.grade import grade\n\n\n"
+    'def test_low():\n    assert grade(0, 1, 5) == "low"\n\n\n'
+    'def test_high():\n    assert grade(6, 1, 5) == "high"\n\n\n'
+    'def test_ok():\n    assert grade(3, 1, 5) == "ok"\n'
+)
+AT_LOW = '\n\ndef test_at_low():\n    assert grade(1, 1, 5) == "ok"\n'
+AT_HIGH = '\n\ndef test_at_high():\n    assert grade(5, 1, 5) == "ok"\n'
+
+
+def test_hint_round_file_that_kills_no_new_mutant_keeps_the_round_one_file(make_repo, fake_llm):
+    sandbox, checkpoint, function = limits(make_repo)
+    fake_llm.replies += [fenced(OVER_TESTS), fenced(OVER_FAR)]
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (OVER_TESTS, None)
+    assert len(fake_llm.calls) == 4
+
+
+def test_hint_round_file_that_lets_an_earlier_kill_survive_again_keeps_the_round_one_file(make_repo, fake_llm):
+    sandbox, checkpoint, function = module(make_repo, "grade", GRADE)
+    round_one = GRADE_TESTS + AT_LOW
+    swapped = GRADE_TESTS + AT_HIGH
+    fake_llm.replies += [fenced(round_one), fenced(swapped)]
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (round_one, None)
+    assert "`if score > high:` changed to `if score >= high:`" in fake_llm.calls[2][1]
+    assert "`if score < low:`" not in fake_llm.calls[2][1]
+    assert len(fake_llm.calls) == 4
+
+
+def test_hint_round_file_that_kills_more_while_keeping_every_kill_is_used(make_repo, fake_llm):
+    sandbox, checkpoint, function = module(make_repo, "grade", GRADE)
+    fake_llm.replies += [fenced(GRADE_TESTS + AT_LOW), fenced(GRADE_TESTS + AT_LOW + AT_HIGH)]
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (GRADE_TESTS + AT_LOW + AT_HIGH, None)
+
+
+def test_the_hint_round_trace_records_the_exit_codes_and_the_outcome(make_repo, fake_llm, monkeypatch):
+    sandbox, checkpoint, function = limits(make_repo)
+    fake_llm.replies += [fenced(OVER_TESTS), fenced(OVER_PINNED)]
+    recorded = []
+    monkeypatch.setattr(gate.trace, "output", lambda value: recorded.append(value) if "exit_code" not in str(value) else None)
+
+    characterize(sandbox, checkpoint, function, TEST_PATH, CMD)
+
+    assert recorded == [{OVER_CHANGE: 0}, {OVER_CHANGE: 1}, {"stop": None, "result": "hinted"}]
+
+
+@pytest.mark.parametrize(
+    ("fails_on", "model_calls"),
+    [(lambda files: "app/limits.py" in files, 2), (lambda files: files.get(TEST_PATH) == OVER_PINNED, 4)],
+    ids=["mutant run", "check of the hinted file"],
+)
+def test_an_error_after_round_one_keeps_the_round_one_file(make_repo, fake_llm, monkeypatch, capsys, fails_on, model_calls):
+    sandbox, checkpoint, function = limits(make_repo)
+    fake_llm.replies += [fenced(OVER_TESTS), fenced(OVER_PINNED)]
+    run, raised = Local.run, []
+
+    def fails(self, checkpoint, files, cmd, seconds=None):
+        if fails_on(files):
+            raised.append(files)
+            raise RuntimeError("sandbox failed")
+        return run(self, checkpoint, files, cmd, seconds)
+
+    monkeypatch.setattr(Local, "run", fails)
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (OVER_TESTS, None)
+    assert len(raised) >= 1
+    assert len(fake_llm.calls) == model_calls
+    assert "slopgate: hint round failed: RuntimeError('sandbox failed')" in capsys.readouterr().err
+
+
+def test_an_unreadable_source_file_skips_the_hint_round_and_keeps_the_round_one_file(make_repo, fake_llm, monkeypatch):
+    sandbox, checkpoint, function = limits(make_repo)
+    fake_llm.replies += [fenced(OVER_TESTS)]
+    read = LocalSession.read
+
+    def fails(self, path):
+        if path == function.path:
+            raise RuntimeError("session failed")
+        return read(self, path)
+
+    monkeypatch.setattr(LocalSession, "read", fails)
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (OVER_TESTS, None)
+    assert len(fake_llm.calls) == 2
+
+
+def test_the_hint_round_uses_its_own_time_budget(make_repo, fake_llm, monkeypatch):
+    sandbox, checkpoint, function = limits(make_repo)
+    fake_llm.replies += [fenced(OVER_TESTS), fenced(OVER_PINNED)]
+    monkeypatch.setattr(gate, "HINT_SECONDS", 0)
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (OVER_TESTS, None)
+    assert len(fake_llm.calls) == 2
+
+
+def test_hint_round_has_its_own_step_limit_and_its_last_file_is_still_judged(make_repo, monkeypatch):
+    sandbox, checkpoint, function = limits(make_repo)
+    steps = scripted(monkeypatch, [writes(OVER_TESTS), agent_reply(), writes(OVER_PINNED)])
+
+    assert characterize(sandbox, checkpoint, function, TEST_PATH, CMD) == (OVER_PINNED, None)
+    assert len(steps) == 2 + HINT_STEPS
+
+
 def test_check_runs_on_the_original_code_and_not_in_the_agent_session(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
     breaks_target = json.loads(write_command("app/perms.py", SIGNATURE + "    return False\n"))["command"]
@@ -1247,6 +1503,15 @@ def test_shell_returns_at_the_time_limit_when_a_child_left_the_process_group(tmp
     escaped = 'python -c "import os, time; os.setsid(); time.sleep(8)" &'
     assert sandbox.shell(f"echo started; {escaped} sleep 30", tmp_path, 1) == (124, "started\n\ntimed out after 1 s")
     assert time.perf_counter() - start < 8
+
+
+def test_local_run_stops_a_command_at_the_limit_it_is_given(tmp_path):
+    start = time.perf_counter()
+
+    code, output = Local().run(tmp_path, {}, "sleep 30", 1)
+
+    assert code == 124 and output.endswith("timed out after 1 s")
+    assert time.perf_counter() - start < 10
 
 
 def test_local_run_gives_a_command_no_stdin(tmp_path):
@@ -1498,6 +1763,99 @@ def test_same_code_compares_syntax_and_comments(original, rewrite, same):
     assert same_code(original, rewrite) is same
 
 
+PR23_ORIGINAL = '''\
+def transformed(injected: list[str], pool: list[Item], count: int) -> list[Item]:
+    found = []
+    for source in shuffled(pool, "+".join(injected)):
+        text = file_text(source)
+        new = source.source
+        for kind in injected:
+            new = new and transform(kind, new, text)
+        if item := accept(source, text, new, injected, "transform"):
+            found.append(item)
+            if len(found) == count:
+                break
+    return found
+
+'''
+
+PR23_REWRITE = '''\
+def transformed(injected: list[str], pool: list[Item], count: int) -> list[Item]:
+    found = []
+    for source in shuffled(pool, "+".join(injected)):
+        text = file_text(source)
+        new = source.source
+        for kind in injected:
+            new = new and transform(kind, new, text)
+        if not (item := accept(source, text, new, injected, "transform")):
+            continue
+        found.append(item)
+        if len(found) >= count:
+            break
+    return found
+'''
+
+EQUAL = "def f(found, count):\n    if len(found) == count:\n        return 1\n    return 0\n"
+NOT_EQUAL = "def f(a, b):\n    if a != b:\n        return 1\n    return 0\n"
+
+
+@pytest.mark.parametrize(
+    ("original", "rewrite", "expected"),
+    [
+        (PR23_ORIGINAL, PR23_REWRITE, "changes a comparison"),
+        (EQUAL, EQUAL.replace("len(found) == count", "count <= len(found)"), "changes a comparison"),
+        ("def f(x):\n    return 0 < x < 10\n", "def f(x):\n    return 0 < x <= 10\n", "changes a comparison"),
+        ("def f(r):\n    return r >= 1.0\n", "def f(r):\n    return r > 1.0\n", "changes a comparison"),
+        (NOT_EQUAL, NOT_EQUAL.replace("a != b", "a < b"), "changes a comparison"),
+        (
+            "def f(items, target):\n    found = []\n    for item in items:\n        if item == target:\n            found.append(item)\n    return found\n",
+            "def f(items, target):\n    found = []\n    for item in items:\n        if item != target:\n            continue\n        found.append(item)\n    return found\n",
+            None,
+        ),
+        (NOT_EQUAL, NOT_EQUAL.replace("a != b", "not (a == b)"), None),
+        ("def f(a, b):\n    return a < b\n", "def f(a, b):\n    return b > a\n", None),
+        ("def f(x):\n    return x is None\n", "def f(x):\n    return None is x\n", None),
+        (
+            "def f(a, b):\n    if a > b:\n        return 1\n    return 0\n",
+            "def f(a, b):\n    if a <= b:\n        return 0\n    return 1\n",
+            None,
+        ),
+        (
+            "def f(x):\n    if 0 < x < 10:\n        return 1\n    return 0\n",
+            "def f(x):\n    if x <= 0 or x >= 10:\n        return 0\n    return 1\n",
+            None,
+        ),
+        (
+            "def f(x):\n    if x > 5:\n        if x > 0:\n            return 1\n    return 0\n",
+            "def f(x):\n    if x > 5:\n        return 1\n    return 0\n",
+            None,
+        ),
+        (
+            "def f(items, key):\n    if key in items:\n        return items[key]\n    return None\n",
+            "def f(items, key):\n    if key in items:\n        result = items[key]\n        if result is None:\n            return None\n        return result\n    return None\n",
+            None,
+        ),
+    ],
+    ids=[
+        "pr23-found-count",
+        "mirrored-changed-operator",
+        "chained",
+        "non-strict-to-strict",
+        "not-equal-to-less",
+        "guard-clause-negation",
+        "not-around-the-negation",
+        "mirrored-same-comparison",
+        "symmetric-swap",
+        "mirrored-guard",
+        "chained-guard",
+        "dropped-comparison",
+        "new-operands",
+    ],
+)
+def test_broken_rule_rejects_a_changed_comparison_and_allows_negations(original, rewrite, expected):
+    assert broken_rule(original, rewrite) == expected
+
+
 def test_rewrite_and_retry_prompts_hold_code_in_python_blocks(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
     fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(DROPS_LOCKED), fenced(FLAT)]
@@ -1570,7 +1928,7 @@ class SlowSandbox:
     def read(self, path):
         return "def test_placeholder():\n    pass\n"
 
-    def run(self, checkpoint, files, cmd):
+    def run(self, checkpoint, files, cmd, seconds=None):
         self.busy(cmd)
         if cmd != SUITE:
             return 0, f"5 passed\n{COVERAGE}\n[]"

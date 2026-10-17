@@ -1,26 +1,31 @@
 import ast
+import io
 import json
 import math
 import re
 import shlex
 import subprocess
+import sys
 import textwrap
 import time
+import tokenize
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
+from itertools import zip_longest
 from typing import NamedTuple
 
 from pydantic import BaseModel, Field
 
 from slopgate import diff, index, llm, trace
-from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, DUPLICATE_SCORE, SUPER, ULTRA, WORKERS
+from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, DUPLICATE_SCORE, HINT_MUTANTS, HINT_SECONDS, HINT_STEPS, MUTANT_SECONDS, SUPER, ULTRA, WORKERS
 from slopgate.functions import Function, complexity, dedent, is_test_file, nesting, parse, pytest_patterns, structure_hash
-from slopgate.kinds import KINDS, classify, comments, leftover, problems
+from slopgate.kinds import FLIP, KINDS, classify, comments, leftover, problems
 from slopgate.sandbox import InstallError, commands, commit_date, tail
 
 NONDETERMINISTIC = {"random", "secrets", "uuid", "time", "datetime"}
 DEFS = (ast.FunctionDef, ast.AsyncFunctionDef)
 BOOL_CALLS = {"bool", "isinstance", "issubclass", "callable", "hasattr", "all", "any"}
+MIRROR = {ast.Gt: ast.Lt, ast.GtE: ast.LtE}
 COVERAGE = "--slopgate-coverage--"
 # a repo .coveragerc with parallel = 1 writes .coverage.<host>.<pid>.<suffix>, and coverage json reads only .coverage
 COMBINE = "python -m coverage combine -q >/dev/null 2>&1"
@@ -53,6 +58,30 @@ PYTHONHASHSEED=1 {cmd}
 Then show the missed branches of {path} as [from line, to line] pairs (a negative target means the function exits there):
 
 {combine}; python -m coverage json -q -o - | python -c "{missed}" {path}"""
+
+HINT_TASK = """The test file {test_path} records what the Python function `{qualname}` in {path} does now. It passes and covers every branch.
+
+```python
+{source}
+```
+
+The tests do not detect these changes to comparisons in `{qualname}` (lines {start} to {end} of {path}):
+
+{changes}
+
+Write the tests to {test_path}. Keep every existing test, and add tests that pass on the original code and fail with each change. Use the values at the boundary of each comparison. If no input can tell a change from the original, skip that change. Stop when the new tests pass on the original code.
+
+The current test file:
+
+```python
+{tests}
+```
+
+Run the tests with coverage:
+
+PYTHONHASHSEED=1 {cmd}"""
+
+BOUNDARY = {"==": (">=", "<="), "!=": (">", "<"), "<": ("<=",), "<=": ("<",), ">": (">=",), ">=": (">",)}
 
 EXECUTE = {
     "type": "function",
@@ -161,6 +190,23 @@ def returns(fn) -> list:
     return [node.value for node in scope(fn) if isinstance(node, ast.Return)]
 
 
+def canonical(left: str, op: type, right: str) -> tuple:
+    if op in MIRROR:
+        left, op, right = right, MIRROR[op], left
+    if op in (ast.Eq, ast.NotEq, ast.Is, ast.IsNot):
+        left, right = sorted((left, right))
+    return left, op, right
+
+
+def comparisons(tree) -> set:
+    found = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Compare):
+            operands = [ast.dump(operand) for operand in (node.left, *node.comparators)]
+            found.update(canonical(left, type(op), right) for left, op, right in zip(operands, node.ops, operands[1:]))
+    return found
+
+
 def broken_rule(original: str, rewrite: str) -> str | None:
     try:
         new = ast.parse(rewrite)
@@ -180,6 +226,11 @@ def broken_rule(original: str, rewrite: str) -> str | None:
     old_returns = returns(old.body[0])
     if old_returns and all(map(boolish, old_returns)) and not all(map(boolish, returns(new.body[0]))):
         return "returns a non-bool value where the original returns only bools"
+    compared = comparisons(old)
+    allowed = compared | {canonical(left, FLIP[op], right) for left, op, right in compared}
+    pairs = {frozenset((left, right)) for left, _, right in compared}
+    if any((left, op, right) not in allowed and frozenset((left, right)) in pairs for left, op, right in comparisons(new)):
+        return "changes a comparison"
     return None
 
 
@@ -452,39 +503,49 @@ def shown(code: int, output: str) -> str:
     return output + f"\n[Command {'succeeded' if code == 0 else 'failed'} with exit code {code}]"
 
 
-def limit(steps: int, began: float, tokens: int) -> str | None:
-    if steps >= AGENT_STEPS:
+def boundary_mutants(text: str, function) -> list[tuple[str, str]]:
+    first = function.start + ast.parse(dedent(function.source)).body[0].lineno - 1
+    lines = io.StringIO(text).readlines()
+    sites = []
+    for token in tokenize.generate_tokens(io.StringIO(text).readline):
+        (row, col), end = token.start, token.end[1]
+        if token.type != tokenize.OP or token.string not in BOUNDARY or not first <= row <= function.end:
+            continue
+        site = []
+        for operator in BOUNDARY[token.string]:
+            changed = lines[row - 1][:col] + operator + lines[row - 1][end:]
+            change = f"line {row}: `{lines[row - 1].strip()}` changed to `{changed.strip()}`"
+            site.append((change, "".join([*lines[: row - 1], changed, *lines[row:]])))
+        sites.append(site)
+    # One mutant of every site first, so a site with two mutants does not use the cap before the later sites.
+    return [mutant for tier in zip_longest(*sites) for mutant in tier if mutant][:HINT_MUTANTS]
+
+
+def survivors(sandbox, checkpoint, function, text, test_path, cmd, tests) -> list[str]:
+    with trace.span("gate.mutants"):
+        codes = {
+            change: sandbox.run(checkpoint, {test_path: tests, function.path: mutant}, f"PYTHONHASHSEED=1 {cmd}", MUTANT_SECONDS)[0]
+            for change, mutant in boundary_mutants(text, function)
+        }
+        trace.output(codes)
+        return [change for change, code in codes.items() if code == 0]
+
+
+def limit(steps: int, began: float, tokens: int, max_steps: int, max_seconds: int) -> str | None:
+    if steps >= max_steps:
         return "step limit"
-    if time.perf_counter() - began > AGENT_SECONDS:
+    if time.perf_counter() - began > max_seconds:
         return "time limit"
     return "token limit" if tokens > AGENT_TOKENS else None
 
 
-def characterize(sandbox, checkpoint, function, test_path, cmd) -> tuple[str | None, str | None]:
-    source = dedent(function.source)
-    name = nondeterministic(source)
-    if name:
-        return None, f"nondeterministic: uses {name}"
-    session = sandbox.session(checkpoint)
-    task = AGENT_TASK.format(
-        qualname=function.qualname,
-        path=function.path,
-        source=source,
-        test_path=test_path,
-        module=module_of(function.path),
-        name=function.qualname.split(".")[0],
-        start=function.start,
-        end=function.end,
-        cmd=cmd,
-        missed=MISSED,
-        combine=COMBINE,
-    )
+def converse(session, test_path: str, task: str, max_steps: int, max_seconds: int) -> str | None:
     messages = [{"role": "system", "content": AGENT_RULES.format(test_path=test_path)}, {"role": "user", "content": task}]
     steps = tokens = 0
     began = time.perf_counter()
     # A failed reply or command ends the agent, but the file it already wrote still goes to the check.
     try:
-        while not (stop := limit(steps, began, tokens)):
+        while not (stop := limit(steps, began, tokens, max_steps, max_seconds)):
             steps += 1
             with trace.span("gate.agent", step=steps):
                 message, sent = llm.step(SUPER, messages, [EXECUTE])
@@ -500,7 +561,7 @@ def characterize(sandbox, checkpoint, function, test_path, cmd) -> tuple[str | N
                 }
             )
             for call in calls:
-                remaining = AGENT_SECONDS - (time.perf_counter() - began)
+                remaining = max_seconds - (time.perf_counter() - began)
                 if remaining <= 0:
                     stop = "time limit"
                     break
@@ -517,6 +578,61 @@ def characterize(sandbox, checkpoint, function, test_path, cmd) -> tuple[str | N
         stop = "reply cut off"
     except Exception as error:
         stop = f"agent error: {error!r}"
+    return stop
+
+
+def harden(sandbox, checkpoint, session, function, source, text, test_path, cmd, tests) -> str:
+    changes = survivors(sandbox, checkpoint, function, text, test_path, cmd, tests)
+    if not changes:
+        return tests
+    with trace.span("gate.hint", changes=len(changes)):
+        task = HINT_TASK.format(
+            test_path=test_path,
+            qualname=function.qualname,
+            path=function.path,
+            start=function.start,
+            end=function.end,
+            source=source,
+            changes="\n".join(f"- {change}" for change in changes),
+            tests=tests,
+            cmd=cmd,
+        )
+        stop = converse(session, test_path, task, HINT_STEPS, HINT_SECONDS)
+        hinted = session.read(test_path)
+        better = (
+            hinted is not None
+            and hinted != tests
+            and check(sandbox, checkpoint, function, test_path, cmd, hinted) is None
+            and set(survivors(sandbox, checkpoint, function, text, test_path, cmd, hinted)) < set(changes)
+        )
+        trace.output({"stop": stop, "result": "hinted" if better else "kept round 1"})
+    return hinted if better else tests
+
+
+def characterize(sandbox, checkpoint, function, test_path, cmd) -> tuple[str | None, str | None]:
+    source = dedent(function.source)
+    name = nondeterministic(source)
+    if name:
+        return None, f"nondeterministic: uses {name}"
+    session = sandbox.session(checkpoint)
+    try:
+        text = session.read(function.path)
+    except Exception:
+        text = None
+    task = AGENT_TASK.format(
+        qualname=function.qualname,
+        path=function.path,
+        source=source,
+        test_path=test_path,
+        module=module_of(function.path),
+        name=function.qualname.split(".")[0],
+        start=function.start,
+        end=function.end,
+        cmd=cmd,
+        missed=MISSED,
+        combine=COMBINE,
+    )
+    stop = converse(session, test_path, task, AGENT_STEPS, AGENT_SECONDS)
     try:
         tests = session.read(test_path)
     except Exception as error:
@@ -524,9 +640,16 @@ def characterize(sandbox, checkpoint, function, test_path, cmd) -> tuple[str | N
     if tests is None:
         return None, f"no test file: agent stopped ({stop or 'no tool call'})"
     failure = check(sandbox, checkpoint, function, test_path, cmd, tests)
-    if failure is None:
+    if failure is not None:
+        return None, f"{stop}: {failure}" if stop else failure
+    if text is None:
         return tests, None
-    return None, f"{stop}: {failure}" if stop else failure
+    try:
+        return harden(sandbox, checkpoint, session, function, source, text, test_path, cmd, tests), None
+    except Exception as error:
+        # An error after round 1 must not lose the file that already passed the check.
+        print(f"slopgate: hint round failed: {error!r}", file=sys.stderr)
+        return tests, None
 
 
 def deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, test_path, cmd) -> tuple[dict | None, str | None]:
