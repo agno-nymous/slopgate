@@ -1,8 +1,8 @@
 {
   "enabledPlugins": {
-    "pstack@pstack-claude": true,
     "mattpocock-skills@claude-plugins-official": false,
     "superpowers@claude-plugins-official": false,
-    "superpowers@superpowers-dev": false
+    "superpowers@superpowers-dev": false,
+    "pstack@cursor-plugins": true
   }
 }

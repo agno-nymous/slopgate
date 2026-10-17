@@ -44,7 +44,7 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
    - Measure a fact when you can (a prototype, a timing, a live call). Do not ask the user for it.
 3. Implementation goes to `pstack:poteto-agent` subagents. The main session designs, reviews the diff, and verifies on the real artifact.
 4. Dispatch subagents without `isolation: "worktree"`. That option is broken in this setup: the subagent's shell refuses every command with "The working-directory isolation context for this agent was lost". A subagent without `isolation` works in the session's worktree from step 2.
-5. Choose each subagent's model by its role and by the complexity of its task. Always pass `model` explicitly. Never use Fable.
+5. Choose each subagent's model by its role and by the complexity of its task. Always pass `model` and `effort: "high"` explicitly. Never use Fable.
 
    | Role | Model | `model` value | Use it for |
    |---|---|---|---|
@@ -52,7 +52,7 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
    | Implementer, complex | Sonnet 5.5 | `"sonnet"` | All code that is not mechanical: a change in any number of files, a change to a signature that other files call, model prompts and reply parsing in `slopgate/review.py`, new tests, fixes for failing tests. |
    | Implementer, mechanical | Haiku 5.5 | `"haiku"` | Mechanical work: rename, move code, edit ticket or doc text, run commands and summarize their output or logs. |
 
-   Only Sonnet 5.5 and Haiku 5.5 write code. For a complex task, let an Opus subagent write the design first (types, signatures, the steps, the tests). Then give that design to a Sonnet implementer. If you are not sure between Haiku and Sonnet, choose Sonnet. If a Haiku subagent fails or returns wrong work, give the task to Sonnet. If a Sonnet subagent fails, ask an Opus subagent to find the cause and to make the design more specific, then give the task to Sonnet again. `~/.claude/pstack-models.md` sets the same split: implementer roles run on sonnet, and design, review, and panel roles run on opus.
+   Only Sonnet 5.5 and Haiku 5.5 write code. For a complex task, let an Opus subagent write the design first (types, signatures, the steps, the tests). Then give that design to a Sonnet implementer. If you are not sure between Haiku and Sonnet, choose Sonnet. If a Haiku subagent fails or returns wrong work, give the task to Sonnet. If a Sonnet subagent fails, ask an Opus subagent to find the cause and to make the design more specific, then give the task to Sonnet again. The pstack skills (`pstack@cursor-plugins`) read no model file in Claude Code. Their default models are set to the same split: `claude-sonnet-5-5-high` for implementer roles, and `claude-opus-5-5-high` for design, review, and panel roles. Read `docs/harness/claude-code.md` in the plugin once per session: it maps the pstack tool and model names to Claude Code names.
 6. Follow the ticket's design. If the code shows that the design is wrong, stop and tell the user with evidence. Do not change the design silently.
 7. Do not add features, abstractions, or error handling that the ticket does not ask for.
 8. Read every line of each subagent's diff. Compare each command line in docs with the original: subagents drop flags such as `--env-file .env` and still report success. Run `uv run pytest -q` yourself after the last subagent edit.
