@@ -4,7 +4,21 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**57 — Building the function index takes more than 80 s on a large repository.** Tickets 44, 49, 51, 52, 53, 54, and 55 are done. Then do 56.
+**60 — A sandbox error other than an install error gives an empty review and exit code 0.** Tickets 44, 49, 51, 52, 53, 54, and 55 are done. Then do 42, 48, and 10, in the order below.
+
+## Plan to the deadline (set on 2026-10-17)
+
+The goal is an overall prize. The judges score 4 criteria (1 to 5, equal weight): Technological Implementation, Design, Potential Impact, and Quality of the Idea. The submission needs a working demo URL.
+
+| Days | Dates | Work |
+|---|---|---|
+| 1 to 3 | 2026-10-17 to 10-20 | The benchmark headline: tickets 60, 42, 48, then 10 with 10 to 15 instances. |
+| 3 | 2026-10-20 | **Decision point.** Read the acceptance rate and the silent-break rate of ticket 10. If the gate proves few rewrites, the headline becomes the precision of the gate and the write-time hook: do ticket 65 before ticket 64. |
+| 4 to 6 | 2026-10-21 to 10-23 | Ticket 64: the hosted demo on a Nebius Serverless Endpoint. |
+| 7 to 9 | 2026-10-24 to 10-26 | Ticket 65: the hook on and off with a Nemotron coding agent, only if tickets 10 and 64 are done. |
+| 10 to 12 | 2026-10-27 to 10-29 | Ticket 11: README, video, feedback, public repos. Submit on 2026-10-29. |
+
+Fix a slop kind (tickets 45, 50, 43) only if the numbers of ticket 10 show that the fix changes the headline. Otherwise turn that kind off in the gate.
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -38,20 +52,25 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 24 | [55 — The test agent passes only with changes that the judge does not keep](55-agent-run-differs-from-judge-run.md) | done | — | Found by ticket 49: 4 of 7 external candidates. The agent moved `conftest.py` or set an environment variable, and the judge did not. Do it together with ticket 52: both change how the agent is prompted or how its session behaves, so one live comparison on the same functions answers both. Test a rule that says "run the test file after each rewrite" too (the pylint trace of ticket 53 never ran its last rewrite). |
 | 25 | [52 — The test agent uses its steps to read code](52-agent-reads-code-step-by-step.md) | done | — | Found by ticket 49: 77 of 201 agent commands only read code. External: 1 of 7. Do it together with ticket 55 (one live comparison). The traces of ticket 53 show 2 of 4 agent runs ended at the step limit after 3 to 8 steps of reading or experiments. |
 | 26 | [51 — The proof accepts a rewrite that changes a comparison](51-proof-misses-changed-comparison.md) | done | — | Moved up on 2026-10-12. A wrong suggestion that passes the proof costs more than a slow gate. Ticket 10 needs it first: the benchmark must not count wrong rewrites. An Opus review (see the ticket Comments) says: measure the false accepts of the current proof first (no model call), then build the comparison rule. |
-| 27 | [57 — Building the function index takes more than 80 s on a large repository](57-faster-function-index.md) | ready-for-agent | — | Found by ticket 49: `gate.index` took 82 s to 163 s on sympy and django. Speed only. |
-| 28 | [56 — The test-file rule misses `tests.py`, and django tests do not run under pytest](56-django-test-layout.md) | ready-for-agent | — | Found by ticket 49 on django#21736: a django test method got an agent run instead of a note. |
-| 29 | [48 — Compare the repo suite with a baseline run of the original code](48-repo-suite-baseline.md) | ready-for-agent | — | A repo test that fails on the original code rejects every rewrite: 2 of 8 sympy rewrites in the ticket 38 run. |
-| 30 | [45 — The test agent cannot characterize large functions](45-characterize-large-functions.md) | ready-for-agent | 41 (done) | The agent proved no function of complexity 17 or more. Ticket 49: 7 of 12 wrong results on this repository's pull requests, 0 of 7 on external pull requests. |
-| 31 | [50 — The gate cannot fix `swallowed_error` around a call to other code](50-swallowed-error-external-call.md) | ready-for-agent | — | Found by ticket 49 on this repository's pull requests: 2 of 12. 0 of 164 external functions got `swallowed_error`. |
-| 32 | [43 — The gate cannot prove a `redundant_check` rewrite](43-dead-branch-of-redundant-check.md) | ready-for-agent | 39 (done) | No rewrite of this kind can pass the branch coverage rule. |
-| 33 | [40 — Limit the output tokens of `decide`](40-limit-decide-output.md) | ready-for-agent | — | 5 of 1,407 runs took 60 s to 110 s. Speed only. |
-| 34 | [47 — `parse` splits lines on a form feed, so later functions get the wrong source](47-parse-splits-on-form-feed.md) | ready-for-agent | — | Not seen in the 12 SWE-bench Lite repos. |
-| 35 | [27 — Run the gate automatically on a self-hosted runner](27-gate-on-self-hosted-runner.md) | needs-live-check | 26 (done) | Turn the Slopgate workflow on again only when the user says so. Then do the live check on a real pull request. It also checks ticket 46 on GitHub. |
-| 36 | [42 — Benchmark statistics: label agreement, run metadata, and pass@k](42-benchmark-statistics.md) | ready-for-agent | 37 (done) | Do it before ticket 10. |
-| 37 | [10 — Benchmark on SWE-bench with injected slop](10-benchmark.md) | ready-for-agent | 37, 41 | Stage 2: the full gate. The results go into the submission. Ticket 11 needs it. |
-| 38 | [08 — Live duplicate flag at plan time](08-live-flag-plan-time.md) | ready-for-agent | 07 (done) | Moved after the gate work on 2026-10-11. Ticket 11 needs it, or the submission leaves it out. |
-| 39 | [09 — Jev classifier backend and comparison](09-jev-backend-and-comparison.md) | ready-for-agent | 07 (done) | Lowest priority. Skip it if time runs short. |
-| 40 | [11 — Hackathon submission package](11-submission-package.md) | ready-for-agent | 06, 08, 10 | Last. It describes the finished project. Before the repo is public, set the Slopgate workflow back to `ubuntu-latest` (ticket 27). |
+| 27 | [60 — A sandbox error other than an install error gives an empty review and exit code 0](60-silent-exit-on-sandbox-error.md) | ready-for-agent | — | Moved up on 2026-10-17 to come before ticket 10: a sandbox error that looks like "no slop found" lowers the detection recall. |
+| 28 | [42 — Benchmark statistics: label agreement, run metadata, and pass@k](42-benchmark-statistics.md) | ready-for-agent | 37 (done) | Moved up on 2026-10-17. Ticket 10 uses its metadata and pass@k functions. |
+| 29 | [48 — Compare the repo suite with a baseline run of the original code](48-repo-suite-baseline.md) | ready-for-agent | — | Moved up on 2026-10-17. A repo test that fails on the original code lowers the acceptance rate of ticket 10. |
+| 30 | [58 — A repo that takes its version from the git history does not install in the sandbox](58-setuptools-scm-needs-version.md) | ready-for-agent | — | Do it only if the instances of ticket 10 include `pytest-dev/pytest`. |
+| 31 | [59 — A commit from before 2020 needs an older Python than 3.10](59-commits-before-2020-need-old-python.md) | ready-for-agent | — | Do it only if the instances of ticket 10 include commits from 2019 or earlier. |
+| 32 | [10 — Benchmark on SWE-bench with injected slop](10-benchmark.md) | ready-for-agent | 37, 41 (done) | Moved up on 2026-10-17. Its four numbers are the headline of the submission, and they judge every later ticket. First step: confirm that ConTree can run the SWE-bench images (the SDK has `images.pull` and `images.oci`, but no list of preloaded images). |
+| 33 | [64 — Hosted demo: review a public pull request from a web page](64-hosted-demo-on-serverless-endpoint.md) | ready-for-agent | 10 | Added on 2026-10-17. The submission needs a working demo URL, and Design is 1 of 4 criteria. |
+| 34 | [65 — Measure the write-time hook on a Nemotron coding agent](65-hook-on-off-experiment.md) | ready-for-agent | 10 | Added on 2026-10-17. After ticket 64, if time is left by 2026-10-26. Moves before 64 if the decision point says so. |
+| 35 | [45 — The test agent cannot characterize large functions](45-characterize-large-functions.md) | ready-for-agent | 41 (done) | After ticket 10. The numbers of each kind decide: fix the kind, or turn it off in the gate. |
+| 36 | [50 — The gate cannot fix `swallowed_error` around a call to other code](50-swallowed-error-external-call.md) | ready-for-agent | — | After ticket 10, for the same reason as ticket 45. |
+| 37 | [43 — The gate cannot prove a `redundant_check` rewrite](43-dead-branch-of-redundant-check.md) | ready-for-agent | 39 (done) | After ticket 10, for the same reason as ticket 45. |
+| 38 | [56 — The test-file rule misses `tests.py`, and django tests do not run under pytest](56-django-test-layout.md) | ready-for-agent | — | Found by ticket 49 on django#21736: a django test method got an agent run instead of a note. |
+| 39 | [27 — Run the gate automatically on a self-hosted runner](27-gate-on-self-hosted-runner.md) | needs-live-check | 26 (done) | Turn the Slopgate workflow on again only when the user says so. Then do the live check on a real pull request. It also checks ticket 46 on GitHub. |
+| 40 | [08 — Live duplicate flag at plan time](08-live-flag-plan-time.md) | ready-for-agent | 07 (done) | Ticket 11 needs it for the live-flag scene of the video. If time runs short, the user decides whether to cut it. |
+| 41 | [11 — Hackathon submission package](11-submission-package.md) | ready-for-agent | 06, 08, 10 | Last. It describes the finished project. Before the repo is public, set the Slopgate workflow back to `ubuntu-latest` (ticket 27). |
+| 42 | [57 — Building the function index takes more than 80 s on a large repository](57-faster-function-index.md) | ready-for-agent | — | Moved to the end on 2026-10-17. Speed only. |
+| 43 | [40 — Limit the output tokens of `decide`](40-limit-decide-output.md) | ready-for-agent | — | 5 of 1,407 runs took 60 s to 110 s. Speed only. |
+| 44 | [47 — `parse` splits lines on a form feed, so later functions get the wrong source](47-parse-splits-on-form-feed.md) | ready-for-agent | — | Not seen in the 12 SWE-bench Lite repos. |
+| 45 | [09 — Jev classifier backend and comparison](09-jev-backend-and-comparison.md) | ready-for-agent | 07 (done) | Lowest priority. Skip it if time runs short. |
 
 Added after the order was set:
 
@@ -61,14 +80,12 @@ Added after the order was set:
 | [38 — A comment at column 0 inside a method crashes `classify`](38-column-zero-comment-crash.md) | done | Found by ticket 37. Also fixes two more `index.build` crashes: a backslash continuation into a comment, and a file that is not UTF-8. |
 | [39 — Design: better detection for `redundant_check` and `nesting`; remove `filler_comment`](39-detection-precision.md) | done | Found by ticket 37. On the held-out set, the false-kind rate on clean function runs fell from 0.117 to 0.013. |
 | [41 — Characterization tests by an agent in a ConTree sandbox](41-characterization-agent-in-contree.md) | done | A plain tool loop (design D) proved 24 of 36 functions; the old flow proved 7. `characterize` uses it now. Tickets 29, 30, 31, and 35 are wontfix. |
-| [58 — A repo that takes its version from the git history does not install in the sandbox](58-setuptools-scm-needs-version.md) | ready-for-agent | Found by ticket 53 on `pytest-dev/pytest` (1 of 5 SWE-bench repos). Do it after ticket 55. |
-| [59 — A commit from before 2020 needs an older Python than 3.10](59-commits-before-2020-need-old-python.md) | ready-for-agent | Found by ticket 53 on `pydata/xarray` 2019 (1 of 5 SWE-bench repos). Do it before ticket 10 if the benchmark uses commits from 2019 or earlier. |
-| [60 — A sandbox error other than an install error gives an empty review and exit code 0](60-silent-exit-on-sandbox-error.md) | ready-for-agent | Found by ticket 44 on 2026-10-12: a ConTree timeout looked like "no slop found". Do it before ticket 10: a silent error lowers its detection recall. |
 | [61 — Each model call gets 8 nested spans when the first span opens in a thread pool](61-trace-setup-race.md) | ready-for-agent | Found by ticket 51: a script that opens its first span in a thread pool registers the tracer 8 times. The gate does not open its first span in a thread pool. |
 | [62 — The test agent runs filler commands until the step limit after its test file passes](62-agent-cannot-stop.md) | ready-for-agent | Found by ticket 51: 41 of 48 hint rounds stopped at the step limit. Filler commands are 5% to 19% of the agent commands in the traces. |
 | [46 — Find the changed functions from the merge-base, not from the base tip](46-diff-from-merge-base.md) | done | Found by the code review of ticket 34. An inline comment on a line outside the pull request diff makes GitHub reject the whole review. Do it before the Slopgate workflow is on again. |
+| [63 — CrossHair as a second equivalence check](63-crosshair-equivalence-check.md) | wontfix | Measured on 2026-10-17. It finds the PR #23 change only with stub callees, not with the real callees. |
 
-Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, 44, 46, 49, 51, 52, 53, 54, and 55 are done. Tickets 23, 24, 29, 30, 31, and 35 are wontfix.
+Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, 44, 46, 49, 51, 52, 53, 54, and 55 are done. Tickets 23, 24, 29, 30, 31, 35, and 63 are wontfix.
 
 ## Rules for the order
 
@@ -77,7 +94,8 @@ Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, 44, 46, 
 3. Ticket 24 edits only `action.yml`, the workflow, and `README.md`. It can run in parallel with any other ticket.
 4. If a ticket is blocked, take the next open row whose blockers are all done.
 5. Ticket 41 comes before tickets 30, 35, 29, and 31. Its comparison decides whether an agent in the sandbox replaces their fixes.
-6. Before the submission (ticket 11), make the `slopgate` and `slopgate-demo` repos public. They stay private until then.
+6. Ticket 10 comes before the tickets that fix one slop kind (45, 50, 43). Its numbers for each kind decide whether a kind gets a fix or is turned off. Speed-only tickets (57, 40) and ticket 47 come last.
+7. Before the submission (ticket 11), make the `slopgate` and `slopgate-demo` repos public. They stay private until then.
 
 ## How to do a ticket
 
