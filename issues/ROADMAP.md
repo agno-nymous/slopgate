@@ -65,9 +65,10 @@ Added after the order was set:
 | [59 — A commit from before 2020 needs an older Python than 3.10](59-commits-before-2020-need-old-python.md) | ready-for-agent | Found by ticket 53 on `pydata/xarray` 2019 (1 of 5 SWE-bench repos). Do it before ticket 10 if the benchmark uses commits from 2019 or earlier. |
 | [60 — A sandbox error other than an install error gives an empty review and exit code 0](60-silent-exit-on-sandbox-error.md) | ready-for-agent | Found by ticket 44 on 2026-10-12: a ConTree timeout looked like "no slop found". Do it before ticket 10: a silent error lowers its detection recall. |
 | [61 — Each model call gets 8 nested spans when the first span opens in a thread pool](61-trace-setup-race.md) | ready-for-agent | Found by ticket 51: a script that opens its first span in a thread pool registers the tracer 8 times. The gate does not open its first span in a thread pool. |
+| [62 — The test agent runs filler commands until the step limit after its test file passes](62-agent-cannot-stop.md) | ready-for-agent | Found by ticket 51: 41 of 48 hint rounds stopped at the step limit. Filler commands are 5% to 19% of the agent commands in the traces. |
 | [46 — Find the changed functions from the merge-base, not from the base tip](46-diff-from-merge-base.md) | done | Found by the code review of ticket 34. An inline comment on a line outside the pull request diff makes GitHub reject the whole review. Do it before the Slopgate workflow is on again. |
 
-Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, 44, 46, 49, 52, 53, 54, and 55 are done. Tickets 23, 24, 29, 30, 31, and 35 are wontfix.
+Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, 44, 46, 49, 51, 52, 53, 54, and 55 are done. Tickets 23, 24, 29, 30, 31, and 35 are wontfix.
 
 ## Rules for the order
 
