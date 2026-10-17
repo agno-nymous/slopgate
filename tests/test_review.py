@@ -379,6 +379,40 @@ def test_install_failure_is_one_notice_with_last_20_lines(make_repo, fake_llm, c
     assert fake_llm.calls == []
 
 
+def test_other_prepare_error_is_one_notice_with_the_error_text(make_repo, fake_llm, capsys, monkeypatch):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+
+    def prepare(self, repo, ref, setup, image=None):
+        raise Exception("timeout")
+
+    monkeypatch.setattr(Local, "prepare", prepare)
+
+    result = review(capsys, repo)
+
+    assert result["suggestions"] == [] and result["followup"] == []
+    [rejected] = result["rejected"]
+    assert rejected["reason"].startswith("could not build test environment") and "timeout" in rejected["reason"]
+    assert result["notes"] == [{**REJECTED_NOTE, "body": REJECTED_NOTE["body"].replace(REJECTED, NO_ENVIRONMENT)}]
+    assert fake_llm.calls == []
+
+
+def test_review_error_prints_the_result_and_exits_1(make_repo, capsys, monkeypatch):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+
+    def boom(*args):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr("slopgate.review.review", boom)
+
+    with pytest.raises(SystemExit) as exit:
+        main(["review", "--repo", repo, "--base", "HEAD~1", "--head", "HEAD", "--dry-run", "--sandbox", "local"])
+
+    out, err = capsys.readouterr()
+    assert exit.value.code == 1
+    assert json.loads(out) == {"suggestions": [], "followup": [], "rejected": [], "notes": []}
+    assert "boom" in err
+
+
 KINDS_SOURCE = NESTED + '''
 
 def total(prices):
