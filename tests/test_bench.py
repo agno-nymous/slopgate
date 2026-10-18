@@ -13,6 +13,14 @@ from bench.transforms import after_return, negate, transform, unused_local
 from slopgate import kinds
 from slopgate.functions import parse
 
+COMMIT = "a" * 40
+
+
+@pytest.fixture(autouse=True)
+def fake_git(monkeypatch):
+    monkeypatch.setattr("bench.score.git_output", lambda *args: COMMIT if args[0] == "rev-parse" else "")
+
+
 NESTED = '''\
 def load(path, strict):
     if not path:
@@ -417,7 +425,7 @@ def meta(**prompts):
 def test_metadata_records_the_setup_and_hashes_the_prompts():
     first, changed = meta(P="one", Q="two"), meta(P="one!", Q="two")
 
-    assert len(first["commit"]) == 40 and isinstance(first["dirty"], bool) and len(first["date"]) == 10
+    assert first["commit"] == COMMIT and first["dirty"] is False and len(first["date"]) == 10
     assert first["models"] == {"a": "model"} and first["runs_per_item"] == 3 and first["usd"] == 0.5
     assert first["prompts"]["Q"] == changed["prompts"]["Q"] != first["prompts"]["P"]
     assert changed["prompts"]["P"] != first["prompts"]["P"]
