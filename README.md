@@ -39,13 +39,15 @@ To let Slopgate open follow-up pull requests, turn on **Settings > Actions > Gen
 
 Slopgate never fails CI. A pull request without findings gets no comment. If the sandbox cannot install the repo, the pull request gets one notice comment.
 
-The sandbox runs `pip install -e .` (or `pip install -r requirements.txt`) and `python -m pytest -q`. To change either, add `.slopgate.toml`:
+The sandbox runs `pip install -e .` (or `pip install -r requirements.txt`) and `python -m pytest -q -rfE`. To change either, add `.slopgate.toml`:
 
 ```toml
 [sandbox]
 setup = "pip install -e '.[test]'"
 test = "python -m pytest -q tests/unit"
 ```
+
+Slopgate runs the `test` command once on the original code. A test that fails there does not reject a rewrite. The `test` command must be one pytest run. Do not chain commands with `&&`: a failure in the first run stops the second run, and Slopgate cannot see that. Do not use `-x`. Keep `f` and `E` in `-r` (pytest 5.4 and later show them by default). If a run cannot be compared, every failing test rejects the rewrite.
 
 GitHub does not start workflows for pull requests that the workflow token opens, so CI does not run on the follow-up pull request until someone pushes to it.
 

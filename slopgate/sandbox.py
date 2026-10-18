@@ -75,7 +75,7 @@ def commands(repo, ref, since=None) -> tuple[str | None, str, str | None]:
         setup = None
     if "setup" in override:
         setup, image = override["setup"], None
-    return setup, override.get("test", "python -m pytest -q"), image
+    return setup, override.get("test", "python -m pytest -q -rfE"), image
 
 
 def bounded(cmd: str, seconds: int) -> str:

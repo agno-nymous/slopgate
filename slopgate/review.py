@@ -411,12 +411,12 @@ def removal(repo, head, function, text, node, inner) -> dict | None:
     return {"caller": caller, "inner": callee, "files": files, "rule": wrapper_rule(trees, files, function)}
 
 
-def inline(sandbox, checkpoint, function, plan, tests, test, test_path, cmd) -> tuple[dict | None, str | None]:
+def inline(sandbox, checkpoint, function, plan, tests, suite, test_path, cmd) -> tuple[dict | None, str | None]:
     code, output = sandbox.run(checkpoint, {**plan["files"], test_path: tests}, cmd)
     if code:
         return None, f"rewrite fails characterization tests: {tail(output)}"
-    repo_code, repo_output = sandbox.run(checkpoint, plan["files"], test)
-    if repo_code not in (0, 5):
+    ok, repo_output = suite(plan["files"])
+    if not ok:
         return None, f"rewrite fails repo tests: {tail(repo_output)}"
     caller = plan["caller"]
     passed = re.search(r"(\d+) passed", output)[1]
@@ -652,7 +652,7 @@ def characterize(sandbox, checkpoint, function, test_path, cmd) -> tuple[str | N
         return tests, None
 
 
-def deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, test_path, cmd) -> tuple[dict | None, str | None]:
+def deduplicate(repo, head, sandbox, checkpoint, function, match, tests, suite, test_path, cmd) -> tuple[dict | None, str | None]:
     helper = match["helper"]
     reason = f"`{function.qualname}` does the same job as `{helper['qualname']}` in {helper['path']} ({match['note']})."
     if tests is not None:
@@ -673,8 +673,8 @@ def deduplicate(repo, head, sandbox, checkpoint, function, match, tests, test, t
             failed = ", ".join(re.findall(r"^FAILED \S+::(\w+)", output, re.M))
             reason += f" Difference: {match['difference'].rstrip('.')}. Differential tests that fail on the helper: {failed}."
     files = replace_calls(repo, head, function, helper)
-    code, output = sandbox.run(checkpoint, files, test)
-    if code not in (0, 5):
+    ok, output = suite(files)
+    if not ok:
         return None, f"rewrite fails repo tests: {tail(output)}"
     return {"function": function.qualname, "kinds": ["duplicate"], "reason": reason, "files": files}, None
 
@@ -712,11 +712,11 @@ class Rewrite(NamedTuple):
     suggested: str
 
 
-def prove(repo, head, sandbox, checkpoint, test, n, candidate) -> tuple[str, dict, str | None]:
+def prove(repo, head, sandbox, checkpoint, suite, n, candidate) -> tuple[str, dict, str | None]:
     function, _, kinds, _, _ = candidate
     with trace.span("gate.function", path=function.path, qualname=function.qualname, slop_kinds=list(kinds)):
         try:
-            outcome = trial(repo, head, sandbox, checkpoint, test, n, candidate)
+            outcome = trial(repo, head, sandbox, checkpoint, suite, n, candidate)
         except llm.CutOff:
             outcome = "rejected", rejection(function, kinds, "reply cut off"), None
         # One broken candidate must not lose the results of the others (the review of PR #15 was lost this way).
@@ -727,7 +727,7 @@ def prove(repo, head, sandbox, checkpoint, test, n, candidate) -> tuple[str, dic
     return outcome
 
 
-def trial(repo, head, sandbox, checkpoint, test, n, candidate) -> tuple[str, dict, str | None]:
+def trial(repo, head, sandbox, checkpoint, suite, n, candidate) -> tuple[str, dict, str | None]:
     function, added, kinds, text, found = candidate
     test_path = f"tests/test_slopgate_{n}.py"
     cmd = f"python -m coverage run --branch -m pytest -q {test_path}"
@@ -747,9 +747,9 @@ def trial(repo, head, sandbox, checkpoint, test, n, candidate) -> tuple[str, dic
     if found:
         with trace.span("gate.proof", attempt=1):
             if wrapper:
-                followup, failure = inline(sandbox, checkpoint, function, found, tests, test, test_path, cmd)
+                followup, failure = inline(sandbox, checkpoint, function, found, tests, suite, test_path, cmd)
             else:
-                followup, failure = deduplicate(repo, head, sandbox, checkpoint, function, found, tests, test, test_path, cmd)
+                followup, failure = deduplicate(repo, head, sandbox, checkpoint, function, found, tests, suite, test_path, cmd)
             trace.output(failure or "passed")
         if failure:
             return "rejected", rejection(function, kinds, failure), None
@@ -809,15 +809,59 @@ def splice(text: str, function, suggested: str) -> str:
     return "".join(lines[: function.start - 1]) + suggested + "".join(lines[function.end :])
 
 
-def repo_suite(sandbox, checkpoint, test, accepted: list[Rewrite], threads) -> dict:
+SUMMARY_LINE = re.compile(r"^(FAILED|ERROR) ([^\s\[]+(?:\[[^\]]*\])?)(?: - .*)?$", re.M)
+TOTALS_LINE = re.compile(r"^.*\b\d+ (?:failed|passed|errors?)\b.* in [\d.]+ ?s(?:econds)?\b.*$", re.M)
+COUNT = re.compile(r"(\d+) (failed|passed|errors?|skipped|xfailed|xpassed)\b")
+
+
+def pytest_result(code: int, output: str) -> tuple[frozenset, int] | None:
+    # None: the run cannot be compared with another run. -x and a collection error stop before the other tests ran.
+    if code != 1 or re.search(r"^!+ (stopping after|Interrupted)", output, re.M) or "short test summary info" not in output:
+        return None
+    # Only the last summary: a FAILED line in the captured output of a test is not a result.
+    summary = output.rsplit("short test summary info", 1)[1]
+    totals = TOTALS_LINE.findall(summary)
+    if not totals:
+        return None
+    counts = {kind.rstrip("s"): int(n) for n, kind in COUNT.findall(totals[-1])}
+    keys = SUMMARY_LINE.findall(summary)
+    # Each failure and error needs its line, else a new failure can hide (-r without E, an old pytest).
+    if len(keys) != counts.get("failed", 0) + counts.get("error", 0):
+        return None
+    return frozenset(keys), sum(counts.values())
+
+
+def baseline(sandbox, checkpoint, test) -> tuple[frozenset, int] | None:
+    with trace.span("gate.baseline"):
+        try:
+            code, output = sandbox.run(checkpoint, {}, test)
+        except Exception as error:
+            # Without a baseline, every failing repo test rejects the rewrite.
+            print(f"slopgate: baseline run failed: {error!r}", file=sys.stderr)
+            base = None
+        else:
+            base = pytest_result(code, output)
+        trace.output(f"{sorted(base[0])} of {base[1]} tests" if base else "not comparable")
+    return base
+
+
+def suite_run(sandbox, checkpoint, test, baseline_outcome, files) -> tuple[bool, str]:
+    code, output = sandbox.run(checkpoint, files, test)
+    if code in (0, 5):
+        return True, output
+    # A repo test that also fails on the original code does not reject the rewrite. The same total shows that the same tests ran.
+    run, base = pytest_result(code, output), baseline_outcome()
+    return run is not None and base is not None and run[1] == base[1] and run[0] <= base[0], output
+
+
+def repo_suite(suite, accepted: list[Rewrite], threads) -> dict:
     def run(rewrites):
         files = {}
         # Bottom up, so that the line numbers of the other rewrites in one file stay valid.
         for rewrite in sorted(rewrites, key=lambda rewrite: rewrite.function.start, reverse=True):
             path = rewrite.function.path
             files[path] = splice(files.get(path, rewrite.text), rewrite.function, rewrite.suggested)
-        code, output = sandbox.run(checkpoint, files, test)
-        return code in (0, 5), output
+        return suite(files)
 
     failures = {}
     with trace.span("gate.repo_suite", rewrites=len(accepted)):
@@ -923,12 +967,15 @@ def review(repo, base, head, sandbox) -> dict:
         result["rejected"].append({"reason": f"could not build test environment\n{detail}"})
         result["notes"] += unproven(candidates, patterns, NO_ENVIRONMENT)
         return result
-    worker = trace.bind(partial(prove, repo, head, sandbox, checkpoint, test))
-    with ThreadPoolExecutor(WORKERS) as threads:
+    with ThreadPoolExecutor(1) as single, ThreadPoolExecutor(WORKERS) as threads:
+        # The baseline runs alongside the characterization, in its own thread: `inline` and `deduplicate` wait for it inside a worker.
+        base_run = single.submit(trace.bind(partial(baseline, sandbox, checkpoint, test)))
+        suite = partial(suite_run, sandbox, checkpoint, test, base_run.result)
+        worker = trace.bind(partial(prove, repo, head, sandbox, checkpoint, suite))
         outcomes = list(threads.map(worker, range(len(candidates)), candidates))
         accepted = [Rewrite(function, text, suggested) for (function, _, _, text, _), (_, _, suggested) in zip(candidates, outcomes) if suggested]
         try:
-            failures = repo_suite(sandbox, checkpoint, test, accepted, threads) if accepted else {}
+            failures = repo_suite(suite, accepted, threads) if accepted else {}
         except Exception as error:
             failures = {rewrite.function: f"internal error: {error!r}" for rewrite in accepted}
     for (function, _, kinds, _, _), (into, entry, _) in zip(candidates, outcomes):

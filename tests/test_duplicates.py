@@ -137,7 +137,25 @@ def test_renamed_exact_copy_is_replaced_by_the_helper_without_llm(make_repo, fak
             "make_slug(", "slugify("
         ),
     }
-    assert ran.read_text() == "ok\n"
+    assert ran.read_text() == "ok\n" * 2
+
+
+def test_duplicate_is_replaced_although_a_repo_test_fails_on_the_original_code(make_repo, fake_llm, capsys):
+    repo = make_repo(
+        {"app/__init__.py": "", "app/text.py": SLUGIFY},
+        {
+            "app/posts.py": RENAMED_COPY + POST_PATH,
+            "app/views.py": VIEWS,
+            "tests/test_views.py": VIEW_TESTS,
+            "tests/test_suite.py": "def test_suite_is_red():\n    assert False\n",
+        },
+    )
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == []
+    [followup] = result["followup"]
+    assert followup["function"] == "make_slug" and followup["kinds"] == ["duplicate"]
 
 
 @pytest.mark.parametrize(
