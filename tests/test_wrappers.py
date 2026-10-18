@@ -59,6 +59,35 @@ def test_same_file_wrapper_is_inlined_into_its_caller(make_repo, fake_llm, capsy
     ]
 
 
+def test_wrapper_is_inlined_although_a_repo_test_fails_on_the_original_code(make_repo, fake_llm, capsys):
+    repo = make_repo(
+        {"app/__init__.py": "", "app/billing.py": COMPUTE_TAX, "tests/test_suite.py": "def test_suite_is_red():\n    assert False\n"},
+        {"app/billing.py": COMPUTE_TAX + TAX_FOR + INVOICE_TOTAL},
+    )
+    fake_llm.replies += [OTHER_JOB, fenced(INVOICE_TESTS)]
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == []
+    [followup] = result["followup"]
+    assert followup["function"] == "tax_for"
+
+
+def test_wrapper_inlining_that_breaks_a_repo_test_is_rejected_beside_a_red_one(make_repo, fake_llm, capsys):
+    keeps_wrapper = "from app import billing\n\n\ndef test_wrapper_stays():\n    assert not hasattr(billing, 'invoice_total') or hasattr(billing, 'tax_for')\n"
+    repo = make_repo(
+        {"app/__init__.py": "", "app/billing.py": COMPUTE_TAX, "tests/test_suite.py": "def test_suite_is_red():\n    assert False\n", "tests/test_wrapper.py": keeps_wrapper},
+        {"app/billing.py": COMPUTE_TAX + TAX_FOR + INVOICE_TOTAL},
+    )
+    fake_llm.replies += [OTHER_JOB, OTHER_JOB, fenced(INVOICE_TESTS)]
+
+    result = review(capsys, repo)
+
+    assert result["followup"] == []
+    [rejected] = result["rejected"]
+    assert rejected["reason"].startswith("rewrite fails repo tests") and "test_wrapper_stays" in rejected["reason"]
+
+
 def test_wrapper_review_skips_a_file_that_is_not_utf_8(make_repo, fake_llm, capsys, tmp_path):
     (tmp_path / "app").mkdir()
     (tmp_path / "app/latin.py").write_bytes("# -*- coding: latin-1 -*-\ndef caf():\n    return 'café'\n".encode("latin-1"))

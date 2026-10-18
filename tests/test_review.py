@@ -21,7 +21,7 @@ from slopgate.cli import main
 from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, HINT_MUTANTS, HINT_STEPS, MUTANT_SECONDS, OLD_COMMIT_IMAGE, SUPER, ULTRA
 from slopgate.functions import dedent, is_test_file, parse, pytest_patterns, structure_hash
 from slopgate.kinds import KINDS, classify, flattenable, has_dead_code, leftover, problems, repeated_checks
-from slopgate.review import COVERAGE, EXECUTE, NO_ENVIRONMENT, REJECTED, boundary_mutants, broken_rule, characterize, same_code, strip_fence, survivors
+from slopgate.review import COVERAGE, EXECUTE, NO_ENVIRONMENT, REJECTED, boundary_mutants, broken_rule, characterize, pytest_result, same_code, strip_fence, suite_run, survivors
 from slopgate.sandbox import Contree, ContreeSession, Local, LocalSession
 
 NESTED = '''\
@@ -362,6 +362,83 @@ def test_passing_test_override_replaces_red_repo_suite(make_repo, fake_llm, caps
     assert suggested_code(suggestion["body"]) == FLAT
 
 
+RED_SUITE = "def test_suite_is_red():\n    assert False\n"
+KEEPS_NESTING = "import inspect\n\nfrom app import perms\n\n\ndef test_keeps_nesting():\n    assert 'else' in inspect.getsource(perms.can_edit)\n"
+
+
+def test_repo_test_that_fails_on_the_original_code_does_not_reject_the_rewrite(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": "", "tests/test_suite.py": RED_SUITE}, {"app/perms.py": NESTED})
+    fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == []
+    [suggestion] = result["suggestions"]
+    assert suggested_code(suggestion["body"]) == FLAT
+
+
+def test_rewrite_that_breaks_a_passing_repo_test_is_rejected_beside_a_red_one(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": "", "tests/test_suite.py": RED_SUITE, "tests/test_nesting.py": KEEPS_NESTING}, {"app/perms.py": NESTED})
+    fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit")), fenced(FLAT)]
+
+    result = review(capsys, repo)
+
+    assert result["suggestions"] == []
+    [rejected] = result["rejected"]
+    assert rejected["reason"].startswith("rewrite fails repo tests") and "test_keeps_nesting" in rejected["reason"]
+
+
+def pytest_output(lines, totals, before=""):
+    return f"{before}=== short test summary info ===\n" + "\n".join(lines) + f"\n=== {totals} in 0.12s ==="
+
+
+OLD = "FAILED t.py::test_old - AssertionError"
+NEW = "FAILED t.py::test_new - assert 0"
+BASE = (frozenset({("FAILED", "t.py::test_old")}), 4)
+
+
+@pytest.mark.parametrize(
+    "code, output, base, ok",
+    [
+        (0, "3 passed", BASE, True),
+        (5, "no tests ran", BASE, True),
+        (1, pytest_output([OLD], "1 failed, 3 passed"), BASE, True),
+        (1, pytest_output([OLD, NEW], "2 failed, 2 passed"), BASE, False),
+        (1, pytest_output([OLD], "1 failed, 3 passed") + "\n!!!!!!!! stopping after 1 failures !!!!!!!!", BASE, False),
+        (2, pytest_output(["ERROR t.py"], "1 error") + "\n!!!!!!!! Interrupted: 1 error during collection !!!!!!!!", BASE, False),
+        (124, pytest_output([OLD], "1 failed, 3 passed") + "\ntimed out after 7 s", BASE, False),
+        (1, "1 failed, 3 passed in 0.12s", BASE, False),
+        (1, pytest_output([OLD], "1 failed, 1 error, 2 passed"), BASE, False),
+        (1, pytest_output([OLD], "1 failed, 1 passed"), BASE, False),
+        (1, pytest_output([OLD], "1 failed, 3 passed"), None, False),
+        # pytest before 5.0 ends the totals line with "seconds".
+        (1, f"=== short test summary info ===\n{OLD}\n=== 1 failed, 3 passed in 0.06 seconds ===", BASE, True),
+        (1, pytest_output([OLD], "1 failed, 3 passed", before="FAILED t.py::test_new - printed by a test\n"), BASE, True),
+    ],
+)
+def test_suite_run_rejects_only_a_test_missing_from_the_baseline(code, output, base, ok):
+    box = SimpleNamespace(run=lambda checkpoint, files, cmd: (code, output))
+
+    assert suite_run(box, None, SUITE, lambda: base, {}) == (ok, output)
+
+
+def test_pytest_result_keeps_the_whole_id_and_separates_a_failure_from_an_error():
+    output = pytest_output(
+        [
+            "FAILED t.py::test_p[a - c] - AssertionError: x",
+            "FAILED t.py::test_d[a b] - boom",
+            "FAILED t.py::test_e",
+            "ERROR t.py::test_e - teardown",
+        ],
+        "3 failed, 1 error, 2 passed, 1 skipped, 1 warning",
+    )
+
+    assert pytest_result(1, output) == (
+        frozenset({("FAILED", "t.py::test_p[a - c]"), ("FAILED", "t.py::test_d[a b]"), ("FAILED", "t.py::test_e"), ("ERROR", "t.py::test_e")}),
+        7,
+    )
+
+
 def test_install_failure_is_one_notice_with_last_20_lines(make_repo, fake_llm, capsys):
     setup = "echo boom; for i in $(seq 1 30); do echo line$i; done; exit 1"
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED, ".slopgate.toml": f"[sandbox]\nsetup = '{setup}'\n"})
@@ -674,7 +751,8 @@ def trials(monkeypatch):
     run = Local.run
 
     def spy(self, checkpoint, files, cmd):
-        commands.append(cmd)
+        if files:
+            commands.append(cmd)
         return run(self, checkpoint, files, cmd)
 
     monkeypatch.setattr(Local, "run", spy)
@@ -1931,12 +2009,12 @@ def flat(name):
     return FLAT.replace("can_edit", name)
 
 
-SUITE = "python -m pytest -q"
+SUITE = "python -m pytest -q -rfE"
 
 
 class SlowSandbox:
-    def __init__(self, delay=lambda cmd: 0.25, suite=lambda code: True):
-        self.delay, self.suite, self.suites = delay, suite, []
+    def __init__(self, delay=lambda cmd: 0.25, failing=lambda code: set()):
+        self.delay, self.failing, self.suites, self.baselines = delay, failing, [], 0
         self.lock, self.active, self.peak = threading.Lock(), 0, 0
 
     def busy(self, cmd):
@@ -1963,11 +2041,21 @@ class SlowSandbox:
         return "def test_placeholder():\n    pass\n"
 
     def run(self, checkpoint, files, cmd, seconds=None):
-        self.busy(cmd)
         if cmd != SUITE:
+            self.busy(cmd)
             return 0, f"5 passed\n{COVERAGE}\n[]"
-        self.suites.append(files)
-        return (0, "1 passed") if self.suite(files["app/perms.py"]) else (1, "FAILED tests/test_app.py::test_app")
+        if files:
+            self.busy(cmd)
+            self.suites.append(files)
+            failing = self.failing(files["app/perms.py"])
+        else:
+            # The baseline runs beside the first worker, so it takes no part in the peak count.
+            self.baselines += 1
+            failing = self.failing(None)
+        if not failing:
+            return 0, "5 passed in 0.1s"
+        lines = "\n".join(f"FAILED {test} - assert 0" for test in sorted(failing))
+        return 1, f"=== short test summary info ===\n{lines}\n{len(failing)} failed, {5 - len(failing)} passed in 0.1s"
 
 
 @pytest.fixture
@@ -2028,22 +2116,70 @@ def test_accepted_rewrites_share_one_repo_suite_run(gate_review):
 
     assert rewritten(result) == THREE and result["rejected"] == []
     assert sandbox.suites == [{"app/perms.py": "\n\n".join(map(flat, THREE))}]
+    assert sandbox.baselines == 1
+
+
+class GatedSandbox(SlowSandbox):
+    def __init__(self):
+        super().__init__(delay=lambda cmd: 0)
+        self.characterizing, self.overlapped = threading.Event(), None
+
+    def execute(self, command, timeout):
+        self.characterizing.set()
+        return super().execute(command, timeout)
+
+    def run(self, checkpoint, files, cmd, seconds=None):
+        if cmd == SUITE and not files:
+            self.overlapped = self.characterizing.wait(5)
+        return super().run(checkpoint, files, cmd, seconds)
+
+
+def test_baseline_runs_beside_the_characterization(gate_review):
+    sandbox = GatedSandbox()
+
+    gate_review(["can_edit"], sandbox)
+
+    assert sandbox.overlapped is True
+
+
+OLD_RED = "tests/test_app.py::test_old"
+APP_RED = "tests/test_app.py::test_app"
+
+
+def test_repo_test_that_fails_on_the_original_code_rejects_no_rewrite(gate_review):
+    sandbox = SlowSandbox(delay=lambda cmd: 0, failing=lambda code: {OLD_RED})
+
+    result = gate_review(THREE, sandbox)
+
+    assert rewritten(result) == THREE and result["rejected"] == []
+    assert sandbox.baselines == 1
+
+
+def test_rewrite_that_breaks_one_more_repo_test_is_rejected_beside_a_baseline_failure(gate_review):
+    sandbox = SlowSandbox(delay=lambda cmd: 0, failing=lambda code: {OLD_RED} | ({APP_RED} if code and flat("can_view") in code else set()))
+
+    result = gate_review(THREE, sandbox)
+
+    assert rewritten(result) == ["can_edit", "can_delete"]
+    [rejected] = result["rejected"]
+    assert rejected["function"] == "can_view"
+    assert rejected["reason"].startswith("rewrite fails repo tests") and APP_RED in rejected["reason"]
 
 
 def test_rewrite_that_breaks_the_repo_suite_alone_is_the_only_one_rejected(gate_review):
-    sandbox = SlowSandbox(delay=lambda cmd: 0, suite=lambda code: flat("can_view") not in code)
+    sandbox = SlowSandbox(delay=lambda cmd: 0, failing=lambda code: {APP_RED} if code and flat("can_view") in code else set())
 
     result = gate_review(THREE, sandbox)
 
     assert rewritten(result) == ["can_edit", "can_delete"]
     [rejected] = result["rejected"]
     assert (rejected["function"], rejected["path"], rejected["kinds"]) == ("can_view", "app/perms.py", ["nesting"])
-    assert rejected["reason"] == "rewrite fails repo tests: FAILED tests/test_app.py::test_app"
+    assert rejected["reason"].startswith("rewrite fails repo tests") and APP_RED in rejected["reason"]
     assert [note["function"] for note in result["notes"]] == ["can_view"]
 
 
 def test_rewrites_that_pass_alone_but_fail_together_keep_the_first(gate_review):
-    sandbox = SlowSandbox(delay=lambda cmd: 0, suite=lambda code: not (flat("can_edit") in code and flat("can_view") in code))
+    sandbox = SlowSandbox(delay=lambda cmd: 0, failing=lambda code: {APP_RED} if code and flat("can_edit") in code and flat("can_view") in code else set())
 
     result = gate_review(THREE, sandbox)
 
@@ -2072,7 +2208,7 @@ def test_broken_repo_suite_run_rejects_the_accepted_rewrites_and_keeps_the_other
     def broken(code):
         raise RuntimeError("sandbox down")
 
-    result = gate_review(THREE, SlowSandbox(delay=lambda cmd: 0, suite=broken), refuse=["can_view"])
+    result = gate_review(THREE, SlowSandbox(delay=lambda cmd: 0, failing=broken), refuse=["can_view"])
 
     error = "internal error: RuntimeError('sandbox down')"
     assert result["suggestions"] == [] and result["followup"] == []
@@ -2127,7 +2263,7 @@ def test_old_commit_installs_the_versions_of_its_date_on_the_old_image(make_repo
 def test_recent_commit_installs_the_newest_versions(make_repo):
     repo = make_repo({"pyproject.toml": ""}, {"app.py": ""})
 
-    assert sandbox.commands(repo, "HEAD", RECENT) == ("pip install -e .", "python -m pytest -q", None)
+    assert sandbox.commands(repo, "HEAD", RECENT) == ("pip install -e .", "python -m pytest -q -rfE", None)
 
 
 def test_install_is_not_pinned_without_a_date(make_repo):
@@ -2139,13 +2275,13 @@ def test_install_is_not_pinned_without_a_date(make_repo):
 def test_setup_override_wins_over_the_old_image(make_repo):
     repo = make_repo({"pyproject.toml": "", ".slopgate.toml": '[sandbox]\nsetup = "make dev"\n'}, {"app.py": ""})
 
-    assert sandbox.commands(repo, "HEAD", OLD) == ("make dev", "python -m pytest -q", None)
+    assert sandbox.commands(repo, "HEAD", OLD) == ("make dev", "python -m pytest -q -rfE", None)
 
 
 def test_old_repo_with_requirements_only_keeps_the_default_image(make_repo):
     repo = make_repo({"requirements.txt": ""}, {"app.py": ""})
 
-    assert sandbox.commands(repo, "HEAD", OLD) == ("pip install -r requirements.txt", "python -m pytest -q", None)
+    assert sandbox.commands(repo, "HEAD", OLD) == ("pip install -r requirements.txt", "python -m pytest -q -rfE", None)
 
 
 def test_only_the_contree_sandbox_pins():
