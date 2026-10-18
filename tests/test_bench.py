@@ -1,13 +1,25 @@
 import ast
+import json
 from collections import Counter
+from pathlib import Path
 
 import pytest
 
+from bench import label
 from bench.detect import Item, accept, from_reply, function, measured, splice
-from bench.score import compare, outcomes, score, split
+from bench.paths import meta_path
+from bench.score import agreement, compare, kappa, markdown, metadata, mismatch, outcomes, passes, score, split
 from bench.transforms import after_return, negate, transform, unused_local
 from slopgate import kinds
 from slopgate.functions import parse
+
+COMMIT = "a" * 40
+
+
+@pytest.fixture(autouse=True)
+def fake_git(monkeypatch):
+    monkeypatch.setattr("bench.score.git_output", lambda *args: COMMIT if args[0] == "rev-parse" else "")
+
 
 NESTED = '''\
 def load(path, strict):
@@ -344,3 +356,205 @@ def test_from_reply_accepts_and_reindents_a_valid_reply():
 )
 def test_from_reply_rejects_a_labelled_or_renamed_reply(code):
     assert from_reply(METHOD, reply(code), "dead") is None
+
+
+def test_kappa():
+    assert kappa([True, False, True], [True, False, True]) == 1.0
+    assert kappa([True, True, False, False], [True, False, False, False]) == 0.5
+    assert kappa([True, False], [False, True]) == -1.0
+    assert kappa([True, True], [True, True]) is None
+    assert kappa([], []) is None
+
+
+def test_agreement_per_kind_and_total():
+    pairs = [("dead", True, True), ("dead", True, False), ("nesting", False, False), ("nesting", True, True)]
+
+    assert agreement(pairs) == {
+        "dead": {"rows": 2, "agree": 0.5, "kappa": 0.0},
+        "nesting": {"rows": 2, "agree": 1.0, "kappa": 1.0},
+        "total": {"rows": 4, "agree": 0.75, "kappa": 0.5},
+    }
+    assert agreement([("dead", True, True)]) == {"dead": {"rows": 1, "agree": 1.0, "kappa": None}, "total": {"rows": 1, "agree": 1.0, "kappa": None}}
+
+
+def test_passes_counts_items_found_in_any_and_in_all_runs():
+    hits = [[True, True, True], [True, False, False], [False, False, False], []]
+
+    assert passes(hits) == {"items": 3, "unit": "items", "any": 0.667, "all": 0.333}
+    assert passes([], "item-kinds") == {"items": 0, "unit": "item-kinds", "any": None, "all": None}
+
+
+def test_score_reports_pass_at_3_and_pass_hat_3():
+    items = [make("c1", "clean"), make("s1", "source"), make("t1", "transform", ["dead"], "s1")]
+    labels = {"c1": {"nesting": {"decision": "false_positive"}}}
+    runs = {
+        "c1": [{"kinds": {"nesting": []}} | MEASURE, {"kinds": {}} | MEASURE, {"kinds": {"nesting": []}} | MEASURE],
+        "s1": [{"kinds": {}} | MEASURE],
+        "t1": [{"kinds": {"dead": []}} | MEASURE, {"kinds": {}} | MEASURE, {"kinds": {"dead": []}} | MEASURE],
+    }
+
+    found = score(items, runs, {"labels": labels, "injections": {}})["passes"]
+
+    assert found["dead"]["found"] == {"items": 1, "unit": "items", "any": 1.0, "all": 0.0}
+    assert found["total"]["found"] == {"items": 1, "unit": "item-kinds", "any": 1.0, "all": 0.0}
+    assert found["nesting"]["found"] == {"items": 0, "unit": "items", "any": None, "all": None}
+    assert found["nesting"]["clean_false"] == {"items": 1, "unit": "items", "any": 1.0, "all": 0.0}
+    assert found["total"]["clean_false"] == {"items": 1, "unit": "items", "any": 1.0, "all": 0.0}
+    assert found["dead"]["clean_false"] == {"items": 1, "unit": "items", "any": 0.0, "all": 0.0}
+
+
+def test_an_error_run_counts_as_a_miss():
+    items = [make("c1", "clean"), make("s1", "source"), make("t1", "transform", ["dead"], "s1")]
+    labels = {"c1": {"nesting": {"decision": "false_positive"}}}
+    runs = {
+        "c1": [{"error": "boom"} | MEASURE, {"error": "boom"} | MEASURE, {"kinds": {"nesting": []}} | MEASURE],
+        "s1": [{"kinds": {}} | MEASURE],
+        "t1": [{"error": "boom"} | MEASURE, {"error": "boom"} | MEASURE, {"kinds": {"dead": []}} | MEASURE],
+    }
+
+    found = score(items, runs, {"labels": labels, "injections": {}})["passes"]
+
+    assert found["dead"]["found"] == {"items": 1, "unit": "items", "any": 1.0, "all": 0.0}
+    assert found["nesting"]["clean_false"] == {"items": 1, "unit": "items", "any": 1.0, "all": 0.0}
+
+
+def meta(**prompts):
+    return metadata({"a": "model"}, prompts, {"sample": 1}, 3, {"clean": 2}, 0.5)
+
+
+def test_metadata_records_the_setup_and_hashes_the_prompts():
+    first, changed = meta(P="one", Q="two"), meta(P="one!", Q="two")
+
+    assert first["commit"] == COMMIT and first["dirty"] is False and len(first["date"]) == 10
+    assert first["models"] == {"a": "model"} and first["runs_per_item"] == 3 and first["usd"] == 0.5
+    assert first["prompts"]["Q"] == changed["prompts"]["Q"] != first["prompts"]["P"]
+    assert changed["prompts"]["P"] != first["prompts"]["P"]
+    assert {"counts", "usd", "runs_per_item"}.isdisjoint(metadata({}, {}, {}))
+
+
+def test_mismatch_names_each_difference():
+    first = meta(P="one", Q="two")
+
+    assert mismatch(first, meta(P="one", Q="two")) == []
+    assert mismatch(first, meta(P="one!", Q="two")) == [f"prompt P: {first['prompts']['P']} against {meta(P='one!')['prompts']['P']}"]
+    assert mismatch({}, {"prompts": {"P": "x"}, "runs_per_item": 3}) == ["prompt P: missing against x", "runs_per_item: None against 3"]
+    assert mismatch({"models": {"check": "a"}}, {"models": {}}) == ["models: {'check': 'a'} against {}"]
+    assert mismatch(first, first | {"seeds": {"sample": 2}, "counts": {"clean": 3}}) == ["seeds: {'sample': 1} against {'sample': 2}", "counts: {'clean': 2} against {'clean': 3}"]
+
+
+GROUND = [
+    {"id": "c1", "path": "m.py", "source": "    def f(x):\n        return x\n", "changed_lines": []},
+    {"id": "t1:nemotron:dead", "path": "m.py", "source": "def g():\n    return 1\n", "changed_lines": ["unused = 1"]},
+]
+REVIEW = {
+    "labels": {"c1": {"nesting": {"decision": "slop", "reason": "FIRST_REASON_ONE"}, "filler_comment": {"decision": "slop", "reason": "gone"}}},
+    "injections": {"t1:nemotron:dead": {"valid": False, "reason": "FIRST_REASON_TWO"}},
+}
+
+
+def test_label_rows_join_the_label_the_source_and_the_evidence():
+    runs = [{"c1": [{"error": "boom"}, {"kinds": {"nesting": ["if a:"]}}]}]
+
+    found = label.rows(GROUND, REVIEW, runs)
+
+    assert [(r["key"], r["origin"], r["first"], r["evidence"]) for r in found] == [
+        ("c1|nesting", "label", True, ["if a:"]),
+        ("t1:nemotron:dead|dead", "injection", False, ["unused = 1"]),
+    ]
+    assert found[0]["source"] == "def f(x):\n    return x"
+    assert label.rows(GROUND, REVIEW, [])[0]["evidence"] == [label.NO_EVIDENCE]
+
+
+def test_label_prompt_hides_the_first_label_and_reason():
+    for r in label.rows(GROUND, REVIEW, []):
+        text = label.prompt(r)
+
+        assert "FIRST_REASON" not in text and r["first_reason"] not in text
+        assert kinds.KINDS[r["kind"]] in text and r["source"] in text and r["path"] in text
+    assert label.NO_EVIDENCE in label.prompt(label.rows(GROUND, REVIEW, [])[0])
+
+
+def test_definition_variant_prompt_adds_the_definition_and_hides_the_first_reason():
+    for r in label.rows(GROUND, REVIEW, []):
+        text = label.prompt(r, "definition")
+
+        assert f"The full definition of this kind: {label.DEFINITIONS[r['kind']]}" in text and kinds.KINDS[r["kind"]] in text
+        assert "FIRST_REASON" not in text
+
+
+def test_main_refuses_a_cache_made_with_other_prompts(tmp_path, monkeypatch):
+    file = tmp_path / "labels.json"
+    file.write_text(json.dumps({"metadata": label.setup("definition") | {"prompts": {"LABEL_PROMPT": "0" * 12}}, "usage": {}, "rows": {}}))
+    monkeypatch.setattr(label, "cache", lambda variant: file)
+    monkeypatch.setattr(label.llm, "decide", lambda *args: pytest.fail("the model was called"))
+
+    with pytest.raises(SystemExit, match="definition.*move the file aside"):
+        label.main("definition")
+
+
+def test_label_setup_hashes_the_definitions_only_for_the_definition_variant():
+    assert "DEFINITIONS" in label.setup("definition")["prompts"] and "DEFINITIONS" not in label.setup("rule")["prompts"]
+    assert label.setup("rule")["prompts"]["LABEL_PROMPT"] == label.setup("definition")["prompts"]["LABEL_PROMPT"]
+
+
+def test_summary_uses_only_the_rows_of_the_given_items(tmp_path, monkeypatch):
+    file = tmp_path / "rule.json"
+    usage = {"calls": 2, "input_tokens": 1000, "output_tokens": 100}
+    rows = {"c1|nesting": {"slop": False, "reason": "no"}, "t1:nemotron:dead|dead": {"slop": True, "reason": "yes"}}
+    file.write_text(json.dumps({"usage": usage, "rows": rows}))
+    monkeypatch.setattr(label, "cache", lambda variant: file if variant == "rule" else tmp_path / "none.json")
+
+    by_variant, text, tokens = label.summary(GROUND[:1], REVIEW, [])
+
+    assert by_variant["rule"]["total"] == {"rows": 1, "agree": 0.0, "kappa": 0.0}
+    assert "| c1 | nesting | label |" in text and "t1:nemotron" not in text
+    assert [(t["use"], t["input_tokens"]) for t in tokens] == [("second labeller (rule)", 1000)]
+    monkeypatch.setattr(label, "cache", lambda variant: tmp_path / "none.json")
+    assert label.summary(GROUND, REVIEW, []) == ({}, None, [])
+
+
+def test_meta_path_sits_next_to_the_file():
+    assert meta_path(Path("results/runs.json")) == Path("results/runs.meta.json")
+    assert meta_path(Path("results/runs-t39.json")).name == "runs-t39.meta.json"
+
+
+def test_label_cache_paths_by_variant():
+    assert label.cache("rule").name == "labels-ultra.json" and label.cache("definition").name == "labels-ultra-definition.json"
+    assert set(label.DEFINITIONS) == set(kinds.KINDS)
+
+
+def test_markdown_shows_the_new_sections_when_the_report_has_them():
+    items = [make("c1", "clean")]
+    report = {"runs": "r", "set": "all", "tokens": [], "metadata": {"report": meta(P="one"), "groundtruth": None}, "mismatch": ["prompt P: a against b"]}
+    report |= score(items, {"c1": [{"kinds": {}} | MEASURE]}, {"labels": {}, "injections": {}}) | {"agreement": {"rule": agreement([("dead", True, False)])}}
+
+    text = markdown(report)
+
+    for heading in ("## Run metadata", "## Setup differences", "## Label agreement (Cohen's kappa)", "## Found in at least 1 of 3 runs and in all 3 runs"):
+        assert heading in text
+    assert "- prompt P: a against b" in text
+    assert "| kind | rows (rule) | agreement (rule) | kappa (rule) |" in text
+    assert "| groundtruth | not recorded |" not in text and "| field | report | groundtruth |" in text and "| models | a: model | not recorded |" in text
+    for heading in ("## Run metadata", "## Setup differences", "## Label agreement", "## Found in at least"):
+        assert heading not in markdown({k: v for k, v in report.items() if k not in ("metadata", "mismatch", "agreement", "passes")})
+
+
+def test_markdown_shows_both_kappa_columns():
+    items = [make("c1", "clean")]
+    report = {"runs": "r", "set": "all", "tokens": []} | score(items, {"c1": [{"kinds": {}} | MEASURE]}, {"labels": {}, "injections": {}})
+    report["agreement"] = {"rule": agreement([("dead", True, False), ("dead", True, True)]), "definition": agreement([("dead", True, True), ("dead", False, False)])}
+
+    text = markdown(report)
+
+    assert "| kind | rows (rule) | agreement (rule) | kappa (rule) | rows (definition) | agreement (definition) | kappa (definition) |" in text
+    assert "| dead | 2 | 0.5 | 0.0 | 2 | 1.0 | 1.0 |" in text
+
+
+def test_disagreements_lists_only_rows_where_the_labellers_differ():
+    rows = label.rows(GROUND, REVIEW, [])
+    second = {"c1|nesting": {"slop": True, "reason": "same"}, "t1:nemotron:dead|dead": {"slop": True, "reason": "a | b"}}
+
+    text = label.disagreements(rows, second, "rule")
+
+    assert "c1" not in text
+    assert "| t1:nemotron:dead | dead | injection | invalid: FIRST_REASON_TWO | valid: a \\| b |" in text

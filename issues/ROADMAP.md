@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**42 — Benchmark statistics: label agreement, run metadata, and pass@k.** Tickets 44, 49, 51, 52, 53, 54, 55, and 60 are done. Then do 48 and 10, in the order below.
+**48 — Compare the repo suite with a baseline run of the original code.** Tickets 42, 44, 49, 51, 52, 53, 54, 55, and 60 are done. Then do 10, in the order below.
 
 ## Plan to the deadline (set on 2026-10-17)
 
@@ -53,7 +53,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 25 | [52 — The test agent uses its steps to read code](52-agent-reads-code-step-by-step.md) | done | — | Found by ticket 49: 77 of 201 agent commands only read code. External: 1 of 7. Do it together with ticket 55 (one live comparison). The traces of ticket 53 show 2 of 4 agent runs ended at the step limit after 3 to 8 steps of reading or experiments. |
 | 26 | [51 — The proof accepts a rewrite that changes a comparison](51-proof-misses-changed-comparison.md) | done | — | Moved up on 2026-10-12. A wrong suggestion that passes the proof costs more than a slow gate. Ticket 10 needs it first: the benchmark must not count wrong rewrites. An Opus review (see the ticket Comments) says: measure the false accepts of the current proof first (no model call), then build the comparison rule. |
 | 27 | [60 — A sandbox error other than an install error gives an empty review and exit code 0](60-silent-exit-on-sandbox-error.md) | done | — | Moved up on 2026-10-17 to come before ticket 10: a sandbox error that looks like "no slop found" lowers the detection recall. |
-| 28 | [42 — Benchmark statistics: label agreement, run metadata, and pass@k](42-benchmark-statistics.md) | ready-for-agent | 37 (done) | Moved up on 2026-10-17. Ticket 10 uses its metadata and pass@k functions. |
+| 28 | [42 — Benchmark statistics: label agreement, run metadata, and pass@k](42-benchmark-statistics.md) | done | 37 (done) | Moved up on 2026-10-17. Ticket 10 uses its metadata and pass@k functions. |
 | 29 | [48 — Compare the repo suite with a baseline run of the original code](48-repo-suite-baseline.md) | ready-for-agent | — | Moved up on 2026-10-17. A repo test that fails on the original code lowers the acceptance rate of ticket 10. |
 | 30 | [58 — A repo that takes its version from the git history does not install in the sandbox](58-setuptools-scm-needs-version.md) | ready-for-agent | — | Do it only if the instances of ticket 10 include `pytest-dev/pytest`. |
 | 31 | [59 — A commit from before 2020 needs an older Python than 3.10](59-commits-before-2020-need-old-python.md) | ready-for-agent | — | Do it only if the instances of ticket 10 include commits from 2019 or earlier. |
@@ -78,6 +78,7 @@ Added after the order was set:
 |---|---|---|
 | [26 — Review a pull request on the local machine](26-review-a-pr-locally.md) | done | Adds `slopgate review --pr <number>`. |
 | [38 — A comment at column 0 inside a method crashes `classify`](38-column-zero-comment-crash.md) | done | Found by ticket 37. Also fixes two more `index.build` crashes: a backslash continuation into a comment, and a file that is not UTF-8. |
+| [66 — Some injected items of the detection benchmark change behavior or are not the kind they name](66-injection-items-defects.md) | ready-for-agent | Found by the label review of ticket 42. Do it before the detection numbers go into the submission (ticket 11). |
 | [39 — Design: better detection for `redundant_check` and `nesting`; remove `filler_comment`](39-detection-precision.md) | done | Found by ticket 37. On the held-out set, the false-kind rate on clean function runs fell from 0.117 to 0.013. |
 | [41 — Characterization tests by an agent in a ConTree sandbox](41-characterization-agent-in-contree.md) | done | A plain tool loop (design D) proved 24 of 36 functions; the old flow proved 7. `characterize` uses it now. Tickets 29, 30, 31, and 35 are wontfix. |
 | [61 — Each model call gets 8 nested spans when the first span opens in a thread pool](61-trace-setup-race.md) | ready-for-agent | Found by ticket 51: a script that opens its first span in a thread pool registers the tracer 8 times. The gate does not open its first span in a thread pool. |
