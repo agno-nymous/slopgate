@@ -1,0 +1,1375 @@
+{
+ "pytest-dev__pytest-5227": {
+  "instance_id": "pytest-dev__pytest-5227",
+  "seconds": 28.2,
+  "gate_seconds": 28.2,
+  "error": null,
+  "gate_errors": [
+   "could not build test environment\n      LookupError: setuptools-scm was unable to detect version for /repo.\n      \n      Make sure you're either building from a fully intact git repository or PyPI tarballs. Most other sources (such as GitHub's tarballs, a git checkout without the .git folder) don't contain the necessary metadata and will not work.\n      \n      For example, if you're using pip, instead of https://github.com/user/proj/archive/master.zip use git+https://github.com/user/proj.git#egg=proj\n      \n      Alternatively, set the version in the environment with SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PYTEST or VCS_VERSIONING_PRETEND_VERSION_FOR_PYTEST, as described in https://setuptools-scm.readthedocs.io/en/latest/config/\n      [end of output]\n  \n  note: This error originates from a subprocess, and is likely not a problem with pip.\nerror: metadata-generation-failed\n\n\u00d7 Encountered error while generating package metadata.\n\u2570\u2500> See above for output.\n\nnote: This is an issue with the package mentioned above, not pip.\nhint: See above for details.\n\n[notice] A new release of pip is available: 23.0.1 -> 26.2.1\n[notice] To update, run: pip install --upgrade pip"
+  ],
+  "tokens": {},
+  "usd": 0,
+  "items": [
+   {
+    "id": "pytest-dev__pytest-5227:src/_pytest/mark/evaluate.py:MarkEvaluator._istrue:nesting",
+    "kind": "nesting",
+    "detected": true,
+    "gate_kinds": [
+     "nesting"
+    ],
+    "outcome": "no_environment",
+    "reason": "**nesting** (not rewritten): `MarkEvaluator._istrue`: It nests blocks deeply. Flatten it with guard clauses or a single boolean expression. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "accepted": false,
+    "complexity": {
+     "original": 10,
+     "injected": 10
+    },
+    "nesting": {
+     "original": 5,
+     "injected": 6
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-5227:src/_pytest/terminal.py:TerminalReporter._get_progress_information_message:redundant_check",
+    "kind": "redundant_check",
+    "detected": true,
+    "gate_kinds": [
+     "redundant_check"
+    ],
+    "outcome": "no_environment",
+    "reason": "**redundant_check** (not rewritten): `TerminalReporter._get_progress_information_message`: It repeats a check that an earlier check already guarantees. Remove the repeated check. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "accepted": false,
+    "complexity": {
+     "original": 4,
+     "injected": 5
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-5227:src/_pytest/junitxml.py:pytest_unconfigure:swallowed_error",
+    "kind": "swallowed_error",
+    "detected": true,
+    "gate_kinds": [
+     "swallowed_error"
+    ],
+    "outcome": "no_environment",
+    "reason": "**swallowed_error** (not rewritten): `pytest_unconfigure`: It catches broad exceptions or wraps code that cannot raise in a try block. Narrow each except to the exceptions that the code in its try block raises, and remove try blocks around code that cannot raise. Every input must still give the same result. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "accepted": false,
+    "complexity": {
+     "original": 2,
+     "injected": 3
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pytest-dev__pytest-7220": {
+  "instance_id": "pytest-dev__pytest-7220",
+  "seconds": 30.6,
+  "gate_seconds": 30.6,
+  "error": null,
+  "gate_errors": [
+   "could not build test environment\n      LookupError: setuptools-scm was unable to detect version for /repo.\n      \n      Make sure you're either building from a fully intact git repository or PyPI tarballs. Most other sources (such as GitHub's tarballs, a git checkout without the .git folder) don't contain the necessary metadata and will not work.\n      \n      For example, if you're using pip, instead of https://github.com/user/proj/archive/master.zip use git+https://github.com/user/proj.git#egg=proj\n      \n      Alternatively, set the version in the environment with SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PYTEST or VCS_VERSIONING_PRETEND_VERSION_FOR_PYTEST, as described in https://setuptools-scm.readthedocs.io/en/latest/config/\n      [end of output]\n  \n  note: This error originates from a subprocess, and is likely not a problem with pip.\nerror: metadata-generation-failed\n\n\u00d7 Encountered error while generating package metadata.\n\u2570\u2500> See above for output.\n\nnote: This is an issue with the package mentioned above, not pip.\nhint: See above for details.\n\n[notice] A new release of pip is available: 23.0.1 -> 26.2.1\n[notice] To update, run: pip install --upgrade pip"
+  ],
+  "tokens": {},
+  "usd": 0,
+  "items": [
+   {
+    "id": "pytest-dev__pytest-7220:src/_pytest/config/__init__.py:PytestPluginManager._getconftestmodules:redundant_check",
+    "kind": "redundant_check",
+    "detected": true,
+    "gate_kinds": [
+     "redundant_check"
+    ],
+    "outcome": "no_environment",
+    "reason": "**redundant_check** (not rewritten): `PytestPluginManager._getconftestmodules`: It repeats a check that an earlier check already guarantees. Remove the repeated check. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "accepted": false,
+    "complexity": {
+     "original": 7,
+     "injected": 8
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-7220:src/_pytest/runner.py:pytest_terminal_summary:swallowed_error",
+    "kind": "swallowed_error",
+    "detected": true,
+    "gate_kinds": [
+     "swallowed_error"
+    ],
+    "outcome": "no_environment",
+    "reason": "**swallowed_error** (not rewritten): `pytest_terminal_summary`: It catches broad exceptions or wraps code that cannot raise in a try block. Narrow each except to the exceptions that the code in its try block raises, and remove try blocks around code that cannot raise. Every input must still give the same result. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "accepted": false,
+    "complexity": {
+     "original": 10,
+     "injected": 11
+    },
+    "nesting": {
+     "original": 3,
+     "injected": 4
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-7220:src/_pytest/capture.py:_get_multicapture:dead",
+    "kind": "dead",
+    "detected": true,
+    "gate_kinds": [
+     "dead"
+    ],
+    "outcome": "no_environment",
+    "reason": "**dead** (not rewritten): `_get_multicapture`: It has unreachable code or unused variables. Remove them. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "accepted": false,
+    "complexity": {
+     "original": 5,
+     "injected": 5
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 1
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pytest-dev__pytest-7432": {
+  "instance_id": "pytest-dev__pytest-7432",
+  "seconds": 35.1,
+  "gate_seconds": 35.1,
+  "error": null,
+  "gate_errors": [
+   "could not build test environment\n      LookupError: setuptools-scm was unable to detect version for /repo.\n      \n      Make sure you're either building from a fully intact git repository or PyPI tarballs. Most other sources (such as GitHub's tarballs, a git checkout without the .git folder) don't contain the necessary metadata and will not work.\n      \n      For example, if you're using pip, instead of https://github.com/user/proj/archive/master.zip use git+https://github.com/user/proj.git#egg=proj\n      \n      Alternatively, set the version in the environment with SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PYTEST or VCS_VERSIONING_PRETEND_VERSION_FOR_PYTEST, as described in https://setuptools-scm.readthedocs.io/en/latest/config/\n      [end of output]\n  \n  note: This error originates from a subprocess, and is likely not a problem with pip.\nerror: metadata-generation-failed\n\n\u00d7 Encountered error while generating package metadata.\n\u2570\u2500> See above for output.\n\nnote: This is an issue with the package mentioned above, not pip.\nhint: See above for details.\n\n[notice] A new release of pip is available: 23.0.1 -> 26.2.1\n[notice] To update, run: pip install --upgrade pip"
+  ],
+  "tokens": {},
+  "usd": 0,
+  "items": [
+   {
+    "id": "pytest-dev__pytest-7432:src/_pytest/_code/code.py:TracebackEntry.getsource:dead",
+    "kind": "dead",
+    "detected": true,
+    "gate_kinds": [
+     "dead"
+    ],
+    "outcome": "no_environment",
+    "reason": "**dead** (not rewritten): `TracebackEntry.getsource`: It has unreachable code or unused variables. Remove them. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "accepted": false,
+    "complexity": {
+     "original": 7,
+     "injected": 7
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-7432:src/_pytest/compat.py:_iscoroutinefunction_impl:wrapper",
+    "kind": "wrapper",
+    "detected": true,
+    "gate_kinds": [
+     "wrapper"
+    ],
+    "outcome": "no_environment",
+    "reason": "**wrapper** (not rewritten): `_iscoroutinefunction_impl` only forwards to `iscoroutinefunction`. Inline it into its single caller. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "accepted": false,
+    "complexity": {
+     "original": 2,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 0,
+     "injected": 0
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-7432:src/_pytest/main.py:wrap_session_alt:duplicate",
+    "kind": "duplicate",
+    "detected": true,
+    "gate_kinds": [
+     "duplicate"
+    ],
+    "outcome": "no_environment",
+    "reason": "**duplicate** (not rewritten): `wrap_session_alt` does the same job as `wrap_session` in src/_pytest/main.py. Call it instead. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "accepted": false,
+    "complexity": {
+     "original": 16,
+     "injected": 16
+    },
+    "nesting": {
+     "original": 4,
+     "injected": 4
+    },
+    "after": null,
+    "removed": false,
+    "exact": true,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pytest-dev__pytest-5692": {
+  "instance_id": "pytest-dev__pytest-5692",
+  "seconds": 37.5,
+  "gate_seconds": 37.5,
+  "error": null,
+  "gate_errors": [
+   "could not build test environment\n      LookupError: setuptools-scm was unable to detect version for /repo.\n      \n      Make sure you're either building from a fully intact git repository or PyPI tarballs. Most other sources (such as GitHub's tarballs, a git checkout without the .git folder) don't contain the necessary metadata and will not work.\n      \n      For example, if you're using pip, instead of https://github.com/user/proj/archive/master.zip use git+https://github.com/user/proj.git#egg=proj\n      \n      Alternatively, set the version in the environment with SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PYTEST or VCS_VERSIONING_PRETEND_VERSION_FOR_PYTEST, as described in https://setuptools-scm.readthedocs.io/en/latest/config/\n      [end of output]\n  \n  note: This error originates from a subprocess, and is likely not a problem with pip.\nerror: metadata-generation-failed\n\n\u00d7 Encountered error while generating package metadata.\n\u2570\u2500> See above for output.\n\nnote: This is an issue with the package mentioned above, not pip.\nhint: See above for details.\n\n[notice] A new release of pip is available: 23.0.1 -> 26.2.1\n[notice] To update, run: pip install --upgrade pip"
+  ],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 727,
+    "output_tokens": 66
+   }
+  },
+  "usd": 0.0003,
+  "items": [
+   {
+    "id": "pytest-dev__pytest-5692:src/_pytest/terminal.py:MoreQuietAction.__init__:dead",
+    "kind": "dead",
+    "detected": true,
+    "gate_kinds": [
+     "dead"
+    ],
+    "outcome": "no_environment",
+    "reason": "**dead** (not rewritten): `MoreQuietAction.__init__`: It has unreachable code or unused variables. Remove them. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "accepted": false,
+    "complexity": {
+     "original": 1,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 0,
+     "injected": 0
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-5692:src/_pytest/skipping.py:_check_xfail_no_run_impl:wrapper",
+    "kind": "wrapper",
+    "detected": true,
+    "gate_kinds": [
+     "wrapper"
+    ],
+    "outcome": "no_environment",
+    "reason": "**wrapper** (not rewritten): `_check_xfail_no_run_impl` only forwards to `check_xfail_no_run`. Inline it into its single caller. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "accepted": false,
+    "complexity": {
+     "original": 4,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 3,
+     "injected": 0
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-5692:src/_pytest/pathlib.py:register_cleanup_lock_removal_alt:duplicate",
+    "kind": "duplicate",
+    "detected": true,
+    "gate_kinds": [
+     "duplicate"
+    ],
+    "outcome": "no_environment",
+    "reason": "**duplicate** (not rewritten): `register_cleanup_lock_removal_alt` does the same job as `register_cleanup_lock_removal` in src/_pytest/pathlib.py. Call it instead. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "accepted": false,
+    "complexity": {
+     "original": 1,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pytest-dev__pytest-8365": {
+  "instance_id": "pytest-dev__pytest-8365",
+  "seconds": 39.3,
+  "gate_seconds": 39.2,
+  "error": null,
+  "gate_errors": [
+   "could not build test environment\n      LookupError: setuptools-scm was unable to detect version for /repo.\n      \n      Make sure you're either building from a fully intact git repository or PyPI tarballs. Most other sources (such as GitHub's tarballs, a git checkout without the .git folder) don't contain the necessary metadata and will not work.\n      \n      For example, if you're using pip, instead of https://github.com/user/proj/archive/master.zip use git+https://github.com/user/proj.git#egg=proj\n      \n      Alternatively, set the version in the environment with SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PYTEST or VCS_VERSIONING_PRETEND_VERSION_FOR_PYTEST, as described in https://setuptools-scm.readthedocs.io/en/latest/config/\n      [end of output]\n  \n  note: This error originates from a subprocess, and is likely not a problem with pip.\nerror: metadata-generation-failed\n\n\u00d7 Encountered error while generating package metadata.\n\u2570\u2500> See above for output.\n\nnote: This is an issue with the package mentioned above, not pip.\nhint: See above for details.\n\n[notice] A new release of pip is available: 23.0.1 -> 26.2.1\n[notice] To update, run: pip install --upgrade pip"
+  ],
+  "tokens": {},
+  "usd": 0,
+  "items": [
+   {
+    "id": "pytest-dev__pytest-8365:src/_pytest/main.py:pytest_runtestloop:swallowed_error",
+    "kind": "swallowed_error",
+    "detected": true,
+    "gate_kinds": [
+     "swallowed_error"
+    ],
+    "outcome": "no_environment",
+    "reason": "**swallowed_error** (not rewritten): `pytest_runtestloop`: It catches broad exceptions or wraps code that cannot raise in a try block. Narrow each except to the exceptions that the code in its try block raises, and remove try blocks around code that cannot raise. Every input must still give the same result. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "accepted": false,
+    "complexity": {
+     "original": 9,
+     "injected": 10
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 3
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-8365:src/_pytest/assertion/rewrite.py:rewrite_asserts:dead",
+    "kind": "dead",
+    "detected": true,
+    "gate_kinds": [
+     "dead"
+    ],
+    "outcome": "no_environment",
+    "reason": "**dead** (not rewritten): `rewrite_asserts`: It has unreachable code or unused variables. Remove them. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "accepted": false,
+    "complexity": {
+     "original": 1,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 0,
+     "injected": 0
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-8365:src/_pytest/compat.py:_get_real_func_impl:wrapper",
+    "kind": "wrapper",
+    "detected": true,
+    "gate_kinds": [
+     "wrapper"
+    ],
+    "outcome": "no_environment",
+    "reason": "**wrapper** (not rewritten): `_get_real_func_impl` only forwards to `get_real_func`. Inline it into its single caller. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "accepted": false,
+    "complexity": {
+     "original": 6,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 0
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pallets__flask-4992": {
+  "instance_id": "pallets__flask-4992",
+  "seconds": 125.0,
+  "gate_seconds": 120.7,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 285659,
+    "output_tokens": 12492
+   }
+  },
+  "usd": 0.0969,
+  "items": [
+   {
+    "id": "pallets__flask-4992:src/flask/app.py:Flask.auto_find_instance_path:dead",
+    "kind": "dead",
+    "detected": true,
+    "gate_kinds": [
+     "dead"
+    ],
+    "outcome": "followup",
+    "reason": "Slopgate (`dead`) rewrite of `Flask.auto_find_instance_path`.\nnesting 1 -> 1, complexity 2 -> 2. 3 characterization tests passed in sandbox.",
+    "accepted": true,
+    "complexity": {
+     "original": 2,
+     "injected": 2
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 1
+    },
+    "after": {
+     "complexity": 2,
+     "nesting": 1
+    },
+    "removed": false,
+    "exact": false,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pallets__flask-4992:src/flask/scaffold.py:_path_is_relative_to_impl:wrapper",
+    "kind": "wrapper",
+    "detected": true,
+    "gate_kinds": [
+     "wrapper"
+    ],
+    "outcome": "rejected",
+    "reason": "token limit: characterization tests fail on original:                     with patch('flask.scaffold._path_is_relative_to_impl', return_value=False):\n                        result = find_package('mypackage')\n                        print(f\"Other venv test result: {result}\")\n                        # Should go through virtualenv other path: prefix/site-packages\n                        site_parent, site_folder = os.path.split('/opt/myenv/site-packages/mypackage')\n                        print(f\"site_parent: {site_parent}, site_folder: {site_folder}\")\n>                       assert site_folder.lower() == \"site-packages\"\nE                       AssertionError: assert 'mypackage' == 'site-packages'\nE                         - site-packages\nE                         + mypackage\n\ntests/test_slopgate_2.py:69: AssertionError\n----------------------------- Captured stdout call -----------------------------\nOther venv test result: (None, '/opt/myenv/site-packages/mypackage')\nsite_parent: /opt/myenv/site-packages, site_folder: mypackage\n=========================== short test summary info ============================\nFAILED tests/test_slopgate_2.py::test_find_package_virtualenv_windows - Asser...\nFAILED tests/test_slopgate_2.py::test_find_package_virtualenv_unix - Assertio...\nFAILED tests/test_slopgate_2.py::test_find_package_virtualenv_other - Asserti...\n3 failed, 2 passed in 0.09s",
+    "accepted": false,
+    "complexity": {
+     "original": 2,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 0
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pallets__flask-4992:src/flask/config.py:Config.get_namespace:nesting",
+    "kind": "nesting",
+    "detected": true,
+    "gate_kinds": [
+     "nesting"
+    ],
+    "outcome": "followup",
+    "reason": "Slopgate (`nesting`) rewrite of `Config.get_namespace`.\nnesting 3 -> 2, complexity 5 -> 5. 9 characterization tests passed in sandbox.",
+    "accepted": true,
+    "complexity": {
+     "original": 5,
+     "injected": 5
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 3
+    },
+    "after": {
+     "complexity": 5,
+     "nesting": 2
+    },
+    "removed": false,
+    "exact": false,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "psf__requests-3362": {
+  "instance_id": "psf__requests-3362",
+  "seconds": 97.5,
+  "gate_seconds": 97.5,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 107717,
+    "output_tokens": 4427
+   }
+  },
+  "usd": 0.0363,
+  "items": [
+   {
+    "id": "psf__requests-3362:requests/packages/urllib3/util/retry.py:Retry._is_read_error:dead",
+    "kind": "dead",
+    "detected": true,
+    "gate_kinds": [
+     "dead"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests fail on original:   File \"/usr/local/lib/python3.10/site-packages/_pytest/main.py\", line 14, in <module>\n    from UserDict import DictMixin as MappingMixin\nModuleNotFoundError: No module named 'UserDict'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.10/site-packages/pytest.py\", line 16, in <module>\n    import pytest\n  File \"/usr/local/lib/python3.10/site-packages/pytest.py\", line 27, in <module>\n    _preloadplugins() # to populate pytest.* namespace so help(pytest) works\n  File \"/usr/local/lib/python3.10/site-packages/_pytest/config.py\", line 76, in _preloadplugins\n    _preinit.append(get_config())\n  File \"/usr/local/lib/python3.10/site-packages/_pytest/config.py\", line 85, in get_config\n    pluginmanager.import_plugin(spec)\n  File \"/usr/local/lib/python3.10/site-packages/_pytest/config.py\", line 392, in import_plugin\n    raise new_exc\nImportError: Error importing plugin \"main\": No module named 'UserDict'\n/usr/local/lib/python3.10/site-packages/coverage/control.py:967: CoverageWarning: No data was collected. (no-data-collected); see https://coverage.readthedocs.io/en/7.16.2/messages.html#warning-no-data-collected\n  self._warn(\"No data was collected.\", slug=\"no-data-collected\")",
+    "accepted": false,
+    "complexity": {
+     "original": 1,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 0,
+     "injected": 0
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "psf__requests-3362:requests/utils.py:_unquote_unreserved_impl:wrapper",
+    "kind": "wrapper",
+    "detected": true,
+    "gate_kinds": [
+     "wrapper"
+    ],
+    "outcome": "rejected",
+    "reason": "characterization tests fail on original:   File \"/usr/local/lib/python3.10/site-packages/_pytest/main.py\", line 14, in <module>\n    from UserDict import DictMixin as MappingMixin\nModuleNotFoundError: No module named 'UserDict'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.10/site-packages/pytest.py\", line 16, in <module>\n    import pytest\n  File \"/usr/local/lib/python3.10/site-packages/pytest.py\", line 27, in <module>\n    _preloadplugins() # to populate pytest.* namespace so help(pytest) works\n  File \"/usr/local/lib/python3.10/site-packages/_pytest/config.py\", line 76, in _preloadplugins\n    _preinit.append(get_config())\n  File \"/usr/local/lib/python3.10/site-packages/_pytest/config.py\", line 85, in get_config\n    pluginmanager.import_plugin(spec)\n  File \"/usr/local/lib/python3.10/site-packages/_pytest/config.py\", line 392, in import_plugin\n    raise new_exc\nImportError: Error importing plugin \"main\": No module named 'UserDict'\n/usr/local/lib/python3.10/site-packages/coverage/control.py:967: CoverageWarning: No data was collected. (no-data-collected); see https://coverage.readthedocs.io/en/7.16.2/messages.html#warning-no-data-collected\n  self._warn(\"No data was collected.\", slug=\"no-data-collected\")",
+    "accepted": false,
+    "complexity": {
+     "original": 6,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 3,
+     "injected": 0
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "psf__requests-3362:requests/api.py:request_alt:duplicate",
+    "kind": "duplicate",
+    "detected": true,
+    "gate_kinds": [
+     "duplicate"
+    ],
+    "outcome": "rejected",
+    "reason": "rewrite fails repo tests: ModuleNotFoundError: No module named 'UserDict'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.10/runpy.py\", line 196, in _run_module_as_main\n    return _run_code(code, main_globals, None,\n  File \"/usr/local/lib/python3.10/runpy.py\", line 86, in _run_code\n    exec(code, run_globals)\n  File \"/usr/local/lib/python3.10/site-packages/pytest.py\", line 16, in <module>\n    import pytest\n  File \"/usr/local/lib/python3.10/site-packages/pytest.py\", line 27, in <module>\n    _preloadplugins() # to populate pytest.* namespace so help(pytest) works\n  File \"/usr/local/lib/python3.10/site-packages/_pytest/config.py\", line 76, in _preloadplugins\n    _preinit.append(get_config())\n  File \"/usr/local/lib/python3.10/site-packages/_pytest/config.py\", line 85, in get_config\n    pluginmanager.import_plugin(spec)\n  File \"/usr/local/lib/python3.10/site-packages/_pytest/config.py\", line 392, in import_plugin\n    raise new_exc\nImportError: Error importing plugin \"main\": No module named 'UserDict'",
+    "accepted": false,
+    "complexity": {
+     "original": 1,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 1
+    },
+    "after": null,
+    "removed": false,
+    "exact": true,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pallets__flask-5063": {
+  "instance_id": "pallets__flask-5063",
+  "seconds": 110.7,
+  "gate_seconds": 107.5,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 162333,
+    "output_tokens": 4636
+   }
+  },
+  "usd": 0.0529,
+  "items": [
+   {
+    "id": "pallets__flask-5063:src/flask/cli.py:_find_best_app_impl:wrapper",
+    "kind": "wrapper",
+    "detected": true,
+    "gate_kinds": [
+     "wrapper"
+    ],
+    "outcome": "rejected",
+    "reason": "rewrite fails characterization tests:             original = target.__dict__[name]\n        except (AttributeError, KeyError):\n            original = getattr(target, name, DEFAULT)\n        else:\n            local = True\n    \n        if name in _builtins and isinstance(target, ModuleType):\n            self.create = True\n    \n        if not self.create and original is DEFAULT:\n>           raise AttributeError(\n                \"%s does not have the attribute %r\" % (target, name)\n            )\nE           AttributeError: <module 'flask.cli' from '/repo/src/flask/cli.py'> does not have the attribute '_find_best_app_impl'\n\n/usr/local/lib/python3.10/unittest/mock.py:1420: AttributeError\n=========================== short test summary info ============================\nFAILED tests/test_slopgate_0.py::test_locate_app_successful_import_and_find_best_app\nFAILED tests/test_slopgate_0.py::test_locate_app_no_exception_path - Attribut...\n2 failed, 4 passed in 0.19s",
+    "accepted": false,
+    "complexity": {
+     "original": 12,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 4,
+     "injected": 0
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pallets__flask-5063:src/flask/scaffold.py:_path_is_relative_to_alt:duplicate",
+    "kind": "duplicate",
+    "detected": true,
+    "gate_kinds": [
+     "duplicate"
+    ],
+    "outcome": "followup",
+    "reason": "`_path_is_relative_to_alt` does the same job as `_path_is_relative_to` in src/flask/scaffold.py (exact structural copy).",
+    "accepted": true,
+    "complexity": {
+     "original": 2,
+     "injected": 2
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 1
+    },
+    "after": null,
+    "removed": true,
+    "exact": true,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pallets__flask-5063:src/flask/ctx.py:AppContext.pop:nesting",
+    "kind": "nesting",
+    "detected": false,
+    "gate_kinds": [],
+    "outcome": "missed",
+    "reason": "",
+    "accepted": false,
+    "complexity": {
+     "original": 4,
+     "injected": 4
+    },
+    "nesting": {
+     "original": 3,
+     "injected": 3
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "sphinx-doc__sphinx-8627": {
+  "instance_id": "sphinx-doc__sphinx-8627",
+  "seconds": 162.2,
+  "gate_seconds": 162.2,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 266948,
+    "output_tokens": 11436
+   }
+  },
+  "usd": 0.0904,
+  "items": [
+   {
+    "id": "sphinx-doc__sphinx-8627:sphinx/util/matching.py:_translate_pattern_impl:wrapper",
+    "kind": "wrapper",
+    "detected": true,
+    "gate_kinds": [
+     "wrapper"
+    ],
+    "outcome": "rejected",
+    "reason": "characterization tests fail on original: ImportError while loading conftest '/repo/tests/conftest.py'.\nTypeError: required field \"lineno\" missing from alias\n/usr/local/lib/python3.10/site-packages/coverage/control.py:967: CoverageWarning: No data was collected. (no-data-collected); see https://coverage.readthedocs.io/en/7.16.2/messages.html#warning-no-data-collected\n  self._warn(\"No data was collected.\", slug=\"no-data-collected\")",
+    "accepted": false,
+    "complexity": {
+     "original": 16,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 4,
+     "injected": 0
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "sphinx-doc__sphinx-8627:sphinx/util/typing.py:_stringify_py37_alt:duplicate",
+    "kind": "duplicate",
+    "detected": false,
+    "gate_kinds": [
+     "nesting"
+    ],
+    "outcome": "missed",
+    "reason": "",
+    "accepted": false,
+    "complexity": {
+     "original": 21,
+     "injected": 21
+    },
+    "nesting": {
+     "original": 4,
+     "injected": 4
+    },
+    "after": null,
+    "removed": false,
+    "exact": true,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "sphinx-doc__sphinx-8627:sphinx/locale/__init__.py:_TranslationProxy.__new__:redundant_check",
+    "kind": "redundant_check",
+    "detected": true,
+    "gate_kinds": [
+     "redundant_check"
+    ],
+    "outcome": "rejected",
+    "reason": "characterization tests fail on original: ImportError while loading conftest '/repo/tests/conftest.py'.\nTypeError: required field \"lineno\" missing from alias\n/usr/local/lib/python3.10/site-packages/coverage/control.py:967: CoverageWarning: No data was collected. (no-data-collected); see https://coverage.readthedocs.io/en/7.16.2/messages.html#warning-no-data-collected\n  self._warn(\"No data was collected.\", slug=\"no-data-collected\")",
+    "accepted": false,
+    "complexity": {
+     "original": 2,
+     "injected": 3
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 1
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "sphinx-doc__sphinx-7975": {
+  "instance_id": "sphinx-doc__sphinx-7975",
+  "seconds": 162.2,
+  "gate_seconds": 162.2,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 229098,
+    "output_tokens": 12057
+   }
+  },
+  "usd": 0.0796,
+  "items": [
+   {
+    "id": "sphinx-doc__sphinx-7975:sphinx/registry.py:SphinxComponentRegistry.load_extension:nesting",
+    "kind": "nesting",
+    "detected": true,
+    "gate_kinds": [
+     "nesting"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests fail on original: ImportError while loading conftest '/repo/tests/conftest.py'.\nTypeError: required field \"lineno\" missing from alias\n/usr/local/lib/python3.10/site-packages/coverage/control.py:967: CoverageWarning: No data was collected. (no-data-collected); see https://coverage.readthedocs.io/en/7.16.2/messages.html#warning-no-data-collected\n  self._warn(\"No data was collected.\", slug=\"no-data-collected\")",
+    "accepted": false,
+    "complexity": {
+     "original": 8,
+     "injected": 8
+    },
+    "nesting": {
+     "original": 3,
+     "injected": 5
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "sphinx-doc__sphinx-7975:sphinx/util/nodes.py:apply_source_workaround:redundant_check",
+    "kind": "redundant_check",
+    "detected": true,
+    "gate_kinds": [
+     "redundant_check"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests fail on original: ImportError while loading conftest '/repo/tests/conftest.py'.\nTypeError: required field \"lineno\" missing from alias\n/usr/local/lib/python3.10/site-packages/coverage/control.py:967: CoverageWarning: No data was collected. (no-data-collected); see https://coverage.readthedocs.io/en/7.16.2/messages.html#warning-no-data-collected\n  self._warn(\"No data was collected.\", slug=\"no-data-collected\")",
+    "accepted": false,
+    "complexity": {
+     "original": 17,
+     "injected": 19
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "sphinx-doc__sphinx-7975:sphinx/transforms/__init__.py:SphinxSmartQuotes.apply:swallowed_error",
+    "kind": "swallowed_error",
+    "detected": true,
+    "gate_kinds": [
+     "swallowed_error"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests fail on original: ImportError while loading conftest '/repo/tests/conftest.py'.\nTypeError: required field \"lineno\" missing from alias\n/usr/local/lib/python3.10/site-packages/coverage/control.py:967: CoverageWarning: No data was collected. (no-data-collected); see https://coverage.readthedocs.io/en/7.16.2/messages.html#warning-no-data-collected\n  self._warn(\"No data was collected.\", slug=\"no-data-collected\")",
+    "accepted": false,
+    "complexity": {
+     "original": 2,
+     "injected": 3
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "sphinx-doc__sphinx-8506": {
+  "instance_id": "sphinx-doc__sphinx-8506",
+  "seconds": 159.2,
+  "gate_seconds": 159.2,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 70656,
+    "output_tokens": 5520
+   }
+  },
+  "usd": 0.0262,
+  "items": [
+   {
+    "id": "sphinx-doc__sphinx-8506:sphinx/config.py:eval_config_file_alt:duplicate",
+    "kind": "duplicate",
+    "detected": false,
+    "gate_kinds": [],
+    "outcome": "missed",
+    "reason": "",
+    "accepted": false,
+    "complexity": {
+     "original": 5,
+     "injected": 5
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": true,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "sphinx-doc__sphinx-8506:sphinx/environment/collectors/asset.py:DownloadFileCollector.process_doc:nesting",
+    "kind": "nesting",
+    "detected": false,
+    "gate_kinds": [],
+    "outcome": "missed",
+    "reason": "",
+    "accepted": false,
+    "complexity": {
+     "original": 4,
+     "injected": 4
+    },
+    "nesting": {
+     "original": 3,
+     "injected": 3
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "sphinx-doc__sphinx-8506:sphinx/deprecation.py:_ModuleWrapper.__getattr__:redundant_check",
+    "kind": "redundant_check",
+    "detected": true,
+    "gate_kinds": [
+     "redundant_check"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests fail on original: ImportError while loading conftest '/repo/tests/conftest.py'.\nTypeError: required field \"lineno\" missing from alias\n/usr/local/lib/python3.10/site-packages/coverage/control.py:967: CoverageWarning: No data was collected. (no-data-collected); see https://coverage.readthedocs.io/en/7.16.2/messages.html#warning-no-data-collected\n  self._warn(\"No data was collected.\", slug=\"no-data-collected\")",
+    "accepted": false,
+    "complexity": {
+     "original": 3,
+     "injected": 4
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 1
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pylint-dev__pylint-5859": {
+  "instance_id": "pylint-dev__pylint-5859",
+  "seconds": 238.5,
+  "gate_seconds": 234.6,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 142849,
+    "output_tokens": 5539
+   },
+   "nvidia/Nemotron-3-Ultra-550b-a55b": {
+    "input_tokens": 750,
+    "output_tokens": 146
+   }
+  },
+  "usd": 0.049,
+  "items": [
+   {
+    "id": "pylint-dev__pylint-5859:pylint/reporters/reports_handler_mix_in.py:ReportsHandlerMixIn.register_report:swallowed_error",
+    "kind": "swallowed_error",
+    "detected": true,
+    "gate_kinds": [
+     "swallowed_error"
+    ],
+    "outcome": "rejected",
+    "reason": "rewrite leaves the slop: swallowed_error",
+    "accepted": false,
+    "complexity": {
+     "original": 1,
+     "injected": 2
+    },
+    "nesting": {
+     "original": 0,
+     "injected": 1
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pylint-dev__pylint-5859:pylint/message/message_definition_store.py:MessageDefinitionStore.register_message:dead",
+    "kind": "dead",
+    "detected": true,
+    "gate_kinds": [
+     "dead"
+    ],
+    "outcome": "followup",
+    "reason": "Slopgate (`dead`) rewrite of `MessageDefinitionStore.register_message`.\nnesting 0 -> 0, complexity 1 -> 1. 2 characterization tests passed in sandbox.",
+    "accepted": true,
+    "complexity": {
+     "original": 1,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 0,
+     "injected": 0
+    },
+    "after": {
+     "complexity": 1,
+     "nesting": 0
+    },
+    "removed": false,
+    "exact": false,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pylint-dev__pylint-5859:pylint/config/find_default_config_files.py:_find_default_config_files_impl:wrapper",
+    "kind": "wrapper",
+    "detected": true,
+    "gate_kinds": [
+     "wrapper"
+    ],
+    "outcome": "rejected",
+    "reason": "rewrite fails characterization tests:         except (AttributeError, KeyError):\n            original = getattr(target, name, DEFAULT)\n        else:\n            local = True\n    \n        if name in _builtins and isinstance(target, ModuleType):\n            self.create = True\n    \n        if not self.create and original is DEFAULT:\n>           raise AttributeError(\n                \"%s does not have the attribute %r\" % (target, name)\n            )\nE           AttributeError: <module 'pylint.config.find_default_config_files' from '/repo/pylint/config/find_default_config_files.py'> does not have the attribute '_find_default_config_files_impl'\n\n/usr/local/lib/python3.10/unittest/mock.py:1420: AttributeError\n=========================== short test summary info ============================\nFAILED tests/test_slopgate_0.py::test_find_pylintrc_returns_first_match - Att...\nFAILED tests/test_slopgate_0.py::test_find_pylintrc_returns_none_when_no_match\nFAILED tests/test_slopgate_0.py::test_find_pylintrc_handles_empty_iterator - ...\n3 failed in 0.33s",
+    "accepted": false,
+    "complexity": {
+     "original": 18,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 4,
+     "injected": 0
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pydata__xarray-4248": {
+  "instance_id": "pydata__xarray-4248",
+  "seconds": 165.0,
+  "gate_seconds": 158.5,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 210969,
+    "output_tokens": 6870
+   }
+  },
+  "usd": 0.0695,
+  "items": [
+   {
+    "id": "pydata__xarray-4248:xarray/core/ops.py:inject_binary_ops_alt:duplicate",
+    "kind": "duplicate",
+    "detected": true,
+    "gate_kinds": [
+     "duplicate"
+    ],
+    "outcome": "followup",
+    "reason": "`inject_binary_ops_alt` does the same job as `inject_binary_ops` in xarray/core/ops.py (exact structural copy).",
+    "accepted": true,
+    "complexity": {
+     "original": 5,
+     "injected": 5
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 2
+    },
+    "after": null,
+    "removed": true,
+    "exact": true,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pydata__xarray-4248:xarray/core/variable.py:Variable._inplace_binary_op:nesting",
+    "kind": "nesting",
+    "detected": true,
+    "gate_kinds": [
+     "nesting"
+    ],
+    "outcome": "rejected",
+    "reason": "rule: adds a class",
+    "accepted": false,
+    "complexity": {
+     "original": 1,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 3
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pydata__xarray-4248:xarray/core/merge.py:_get_priority_vars_and_indexes:redundant_check",
+    "kind": "redundant_check",
+    "detected": true,
+    "gate_kinds": [
+     "redundant_check"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests miss branches: 1",
+    "accepted": false,
+    "complexity": {
+     "original": 3,
+     "injected": 4
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 1
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pylint-dev__pylint-7993": {
+  "instance_id": "pylint-dev__pylint-7993",
+  "seconds": 330.2,
+  "gate_seconds": 326.4,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 252408,
+    "output_tokens": 12688
+   }
+  },
+  "usd": 0.0871,
+  "items": [
+   {
+    "id": "pylint-dev__pylint-7993:pylint/message/message_id_store.py:MessageIdStore.check_msgid_and_symbol:redundant_check",
+    "kind": "redundant_check",
+    "detected": true,
+    "gate_kinds": [
+     "nesting",
+     "redundant_check"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests miss branches: 1",
+    "accepted": false,
+    "complexity": {
+     "original": 7,
+     "injected": 9
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 3
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pylint-dev__pylint-7993:pylint/config/_pylint_config/utils.py:should_retry_after_invalid_input:swallowed_error",
+    "kind": "swallowed_error",
+    "detected": true,
+    "gate_kinds": [
+     "swallowed_error"
+    ],
+    "outcome": "rejected",
+    "reason": "time limit: characterization tests fail on original:             elif call_count == 2:\n                # Second call: \"exit()\" should trigger exit because called_once=True\n                raise InvalidUserInput(\"yes, no\", \"exit()\")\n    \n        with patch('builtins.print'):\n            with patch('sys.exit') as mock_exit:\n                try:\n                    flag_test_func()\n                except SystemExit:\n                    pass\n    \n>       assert call_count == 2\nE       assert 3 == 2\n\ntests/test_slopgate_1.py:143: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_slopgate_1.py::test_decorator_exception_then_exit - assert ...\nFAILED tests/test_slopgate_1.py::test_decorator_multiple_attempts_before_exit\nFAILED tests/test_slopgate_1.py::test_decorator_called_once_flag_logic - asse...\n3 failed, 5 passed in 0.11s",
+    "accepted": false,
+    "complexity": {
+     "original": 1,
+     "injected": 2
+    },
+    "nesting": {
+     "original": 3,
+     "injected": 4
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pylint-dev__pylint-7993:pylint/checkers/base/name_checker/naming_style.py:NamingStyle.get_regex:lookup_table",
+    "kind": "lookup_table",
+    "detected": true,
+    "gate_kinds": [
+     "lookup_table"
+    ],
+    "outcome": "followup",
+    "reason": "Slopgate (`lookup_table`) rewrite of `NamingStyle.get_regex`.\nnesting 1 -> 1, complexity 12 -> 2. 14 characterization tests passed in sandbox.",
+    "accepted": true,
+    "complexity": {
+     "original": 1,
+     "injected": 12
+    },
+    "nesting": {
+     "original": 0,
+     "injected": 1
+    },
+    "after": {
+     "complexity": 2,
+     "nesting": 1
+    },
+    "removed": false,
+    "exact": false,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "mwaskom__seaborn-3190": {
+  "instance_id": "mwaskom__seaborn-3190",
+  "seconds": 322.6,
+  "gate_seconds": 318.7,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 209782,
+    "output_tokens": 15572
+   },
+   "nvidia/Nemotron-3-Ultra-550b-a55b": {
+    "input_tokens": 1141,
+    "output_tokens": 481
+   }
+  },
+  "usd": 0.0795,
+  "items": [
+   {
+    "id": "mwaskom__seaborn-3190:seaborn/_core/scales.py:Continuous.tick:nesting",
+    "kind": "nesting",
+    "detected": true,
+    "gate_kinds": [
+     "nesting"
+    ],
+    "outcome": "followup",
+    "reason": "Slopgate (`nesting`) rewrite of `Continuous.tick`.\nnesting 4 -> 2, complexity 8 -> 8. 9 characterization tests passed in sandbox.",
+    "accepted": true,
+    "complexity": {
+     "original": 8,
+     "injected": 8
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 4
+    },
+    "after": {
+     "complexity": 8,
+     "nesting": 2
+    },
+    "removed": false,
+    "exact": false,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "mwaskom__seaborn-3190:seaborn/palettes.py:_parse_cubehelix_args:redundant_check",
+    "kind": "redundant_check",
+    "detected": true,
+    "gate_kinds": [
+     "redundant_check"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests miss branches: 1",
+    "accepted": false,
+    "complexity": {
+     "original": 11,
+     "injected": 12
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 1
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "mwaskom__seaborn-3190:seaborn/_core/properties.py:ObjectProperty.get_mapping:swallowed_error",
+    "kind": "swallowed_error",
+    "detected": true,
+    "gate_kinds": [
+     "swallowed_error"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests fail on original: .........F                                                               [100%]\n=================================== FAILURES ===================================\n______________________ test_get_mapping_asarray_exception ______________________\n\n    def test_get_mapping_asarray_exception():\n        prop = DummyObjectProperty()\n        scale = make_scale(values={\"a\": 1}, order=[\"a\"])\n        data = pd.Series([\"a\"])\n        with patch('seaborn._core.properties.categorical_order', return_value=[\"a\"]):\n            with patch('numpy.asarray', side_effect=RuntimeError(\"bad\")):\n                mapping = prop.get_mapping(scale, data)\n>               assert mapping is None\nE               assert <function ObjectProperty.get_mapping.<locals>.mapping at 0x7fffe6be93f0> is None\n\ntests/test_slopgate_0.py:123: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_slopgate_0.py::test_get_mapping_asarray_exception - assert ...\n1 failed, 9 passed in 1.30s",
+    "accepted": false,
+    "complexity": {
+     "original": 6,
+     "injected": 7
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ }
+}
