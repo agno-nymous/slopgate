@@ -18,6 +18,8 @@ from slopgate import trace
 from slopgate.config import OLD_COMMIT_BEFORE, OLD_COMMIT_IMAGE, SANDBOX_TIMEOUT
 from slopgate.diff import git
 
+OUTPUT_LIMIT = 10 * 1024 * 1024
+
 
 class InstallError(Exception):
     pass
@@ -136,7 +138,7 @@ class ContreeSession:
                 timeout=timeout + 60,
                 disposable=False,
                 # The default cut at 65,535 bytes would hide the end of a long pytest run; stage 1 of ticket 41 measured 10 MiB.
-                truncate_output_at=10 * 1024 * 1024,
+                truncate_output_at=OUTPUT_LIMIT,
             ).wait()
             output = done.stdout + done.stderr
             if done.result.truncated:
@@ -204,7 +206,8 @@ class Contree:
         with trace.span("sandbox.run", input={"cmd": cmd, "files": files}):
             files = {f"/repo/{rel}": content.encode() for rel, content in files.items()}
             began = time.monotonic()
-            result = checkpoint.run(shell=bounded(cmd, seconds), cwd="/repo", files=files, timeout=seconds + 60).wait()
+            # Without the limit, the cut at 65,535 bytes drops the pytest summary of a long suite, and the baseline cannot compare (ticket 10).
+            result = checkpoint.run(shell=bounded(cmd, seconds), cwd="/repo", files=files, timeout=seconds + 60, truncate_output_at=OUTPUT_LIMIT).wait()
             code, output = result.exit_code, result.stdout + result.stderr
             # The exit code cannot tell a timeout: a command may exit 124 itself, and one that ignores SIGTERM ends with 137.
             if time.monotonic() - began >= seconds:

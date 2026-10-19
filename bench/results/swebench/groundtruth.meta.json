@@ -1,0 +1,23 @@
+{
+ "models": {
+  "injection": "nvidia/nemotron-3-super-120b-a12b"
+ },
+ "commit": "548ae7bcb1dcc32011296c43cd61e6835b29c0d3",
+ "dirty": true,
+ "date": "2026-10-18",
+ "seeds": {
+  "select": 10
+ },
+ "prompts": {
+  "DUPLICATE_PROMPT": "e05822b5889f"
+ },
+ "counts": {
+  "redundant_check": 8,
+  "swallowed_error": 7,
+  "dead": 7,
+  "wrapper": 8,
+  "nesting": 7,
+  "duplicate": 7,
+  "lookup_table": 1
+ }
+}

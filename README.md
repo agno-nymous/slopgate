@@ -151,3 +151,17 @@ uv run --env-file .env python -m bench.detect
 The command clones the repos into `~/.cache/slopgate/bench/` and skips each stage that is already done. To run one stage only, add `sample`, `inject`, `run`, or `report`. A person records a decision for each kind that the gate finds on a clean function in `bench/labels.json`. The same file records whether each Nemotron injection contains its kind. The report leaves out the invalid injections.
 
 The results are in [`bench/results/detection.md`](bench/results/detection.md) and [`bench/results/detection.json`](bench/results/detection.json). Ticket 37 explains them.
+
+## Gate benchmark on SWE-bench (development of this repo only)
+
+The gate benchmark runs the whole gate (`slopgate review`) on SWE-bench Lite instances with injected slop. The gate builds its own sandbox with its normal install, as it does for a user. The hidden tests run on the SWE-bench Docker image of each instance in ConTree. The benchmark injects one slop kind into each of up to 3 functions whose body the instance's hidden tests run. It keeps an injection only if a `raise` at the start of the function breaks a hidden test. Then it runs the gate on the injected commit. The hidden tests (the files of the instance's test patch) are deleted from the commit, so the gate never sees them. After the gate, the benchmark runs the hidden tests on each accepted rewrite.
+
+Run it with one command:
+
+```sh
+uv run --env-file .env python -m bench.swebench
+```
+
+The command skips each stage that is already done. To run one stage only, add `select`, `run`, or `report`. `select` writes the ground truth (kind, function, file) before the gate runs.
+
+The results are in [`bench/results/swebench/swebench.md`](bench/results/swebench/swebench.md) and [`bench/results/swebench/swebench.json`](bench/results/swebench/swebench.json). They give the detection recall, the complexity change, the acceptance rate, the silent-break rate, and the token cost, for each slop kind and in total. [`bench/results/swebench/image-sandbox/`](bench/results/swebench/image-sandbox/swebench.md) holds an earlier run in which the gate also used the SWE-bench image. Ticket 10 explains them.

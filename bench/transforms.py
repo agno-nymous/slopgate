@@ -4,7 +4,8 @@ import textwrap
 import zlib
 
 from slopgate.config import NESTING
-from slopgate.functions import nesting
+from slopgate.functions import dedent, nesting, parse
+from slopgate.review import DEFS, apply, forwarded, scope
 
 INVERSE = {ast.Is: ast.IsNot, ast.IsNot: ast.Is, ast.Eq: ast.NotEq, ast.NotEq: ast.Eq, ast.In: ast.NotIn, ast.NotIn: ast.In}
 SYMBOL = {ast.Is: "is", ast.IsNot: "is not", ast.Eq: "==", ast.NotEq: "!=", ast.In: "in", ast.NotIn: "not in"}
@@ -194,3 +195,75 @@ def transform(kind: str, source: str, text: str) -> str | None:
     source = source if source.endswith("\n") else source + "\n"
     new = TRANSFORMS[kind](textwrap.dedent(source), text)
     return new and textwrap.indent(new, indent_of(source))
+
+
+def sites(text: str, function, covered: set[int], top: bool = False) -> list[ast.Name]:
+    tree = ast.parse(text)
+    outside = [node for node in ast.walk(tree) if isinstance(node, DEFS) and not function.start <= node.lineno <= function.end]
+    # the gate inlines a wrapper only into a call that sits directly in a top-level function
+    nodes = [n for fn in outside if fn in tree.body for n in scope(fn)] if top else [n for fn in outside for n in ast.walk(fn)]
+    found = {
+        id(n.func): n.func
+        for n in nodes
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == function.qualname and n.lineno in covered
+    }
+    return sorted(found.values(), key=lambda name: (name.lineno, name.col_offset))
+
+
+def unbound(text: str, name: str) -> bool:
+    tree = ast.parse(text)
+    bound = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
+    bound |= {node.name for node in ast.walk(tree) if isinstance(node, (*DEFS, ast.ClassDef))}
+    bound |= {(a.asname or a.name).split(".")[0] for node in ast.walk(tree) if isinstance(node, (ast.Import, ast.ImportFrom)) for a in node.names}
+    return name not in bound
+
+
+def insert_after(text: str, function, code: str) -> str:
+    lines = text.splitlines(keepends=True)
+    head = "".join(lines[: function.end])
+    return head + ("" if head.endswith("\n") else "\n") + "\n\n" + code + "".join(lines[function.end :])
+
+
+def rename(text: str, names: list[ast.Name], new: str) -> str:
+    return apply(text, [(n.lineno, n.col_offset, n.end_lineno, n.end_col_offset, new) for n in names])
+
+
+def wrapper(text: str, function, covered: set[int]) -> tuple[str, str] | None:
+    node = next((n for n in ast.parse(text).body if isinstance(n, ast.FunctionDef) and n.lineno == function.start), None)
+    if node is None or node.decorator_list or node.args.vararg or node.args.kwarg:
+        return None
+    new, found = f"_{function.qualname.lstrip('_')}_impl", sites(text, function, covered, top=True)
+    if not found or not unbound(text, new):
+        return None
+    args = node.args
+    forward = [*(a.arg for a in (*args.posonlyargs, *args.args)), *(f"{a.arg}={a.arg}" for a in args.kwonlyargs)]
+    code = f"def {new}({ast.unparse(args)}):\n    return {function.qualname}({', '.join(forward)})\n"
+    if forwarded(ast.parse(code).body[0]) is None:
+        return None
+    return insert_after(rename(text, found[:1], new), function, code), new
+
+
+def duplicate(text: str, function, code: str, name: str, covered: set[int]) -> str | None:
+    found = sites(text, function, covered)
+    if not found or not unbound(text, name):
+        return None
+    return insert_after(rename(text, found, name), function, code)
+
+
+def body_line(function) -> int | None:
+    code = dedent(function.source)
+    try:
+        first = ast.parse(code).body[0].body[0]
+    except SyntaxError:
+        return None
+    return function.start + first.lineno - 1 if not code.splitlines()[first.lineno - 1][: first.col_offset].strip() else None
+
+
+def control(text: str, qualname: str) -> str:
+    function = next(f for f in parse("", text) if f.qualname == qualname)
+    line = body_line(function)
+    if line is None:
+        raise ValueError(f"{qualname} has no body line of its own")
+    lines = text.splitlines(keepends=True)
+    lines.insert(line - 1, indent_of(lines[line - 1]) + "raise RuntimeError('control')\n")
+    return "".join(lines)

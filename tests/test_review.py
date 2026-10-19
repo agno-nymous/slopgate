@@ -439,6 +439,18 @@ def test_pytest_result_keeps_the_whole_id_and_separates_a_failure_from_an_error(
     )
 
 
+def test_pytest_result_keeps_a_line_that_the_short_form_does_not_match():
+    nested = "FAILED t.py::test_o[['fixt', 'val']]"
+    long = "FAILED t.py::test_r[2-Index([1, 2],\\n   dtype='object')]"
+    cut = "FAILED t.py::test_r[4-Index([1, 2,\\n   3],\\n           "
+    output = pytest_output([nested, "FAILED t.py::test_p - boom", long, cut], "4 failed, 2 passed")
+
+    assert pytest_result(1, output) == (
+        frozenset({("FAILED", nested[7:]), ("FAILED", "t.py::test_p"), ("FAILED", long[7:]), ("FAILED", cut[7:].rstrip())}),
+        6,
+    )
+
+
 def test_install_failure_is_one_notice_with_last_20_lines(make_repo, fake_llm, capsys):
     setup = "echo boom; for i in $(seq 1 30); do echo line$i; done; exit 1"
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED, ".slopgate.toml": f"[sandbox]\nsetup = '{setup}'\n"})
@@ -1664,7 +1676,7 @@ def test_contree_run_bounds_the_command_and_reports_a_run_that_reached_the_time_
 
     assert box.run(run(137, 12), {"tests/test_x.py": "x = 1\n"}, "pytest -q") == (124, "partial\ntimed out after 7 s")
     assert box.run(run(124, 1), {}, "exit 124") == (124, "partial")
-    assert runs[0] == {"shell": "timeout -k 5 7 sh -c 'pytest -q'", "cwd": "/repo", "files": {"/repo/tests/test_x.py": b"x = 1\n"}, "timeout": 67}
+    assert runs[0] == {"shell": "timeout -k 5 7 sh -c 'pytest -q'", "cwd": "/repo", "files": {"/repo/tests/test_x.py": b"x = 1\n"}, "timeout": 67, "truncate_output_at": 10 * 1024 * 1024}
 
 
 LOOPS = TESTS.format(name="can_edit", call="can_edit").replace("assert can_edit(False, True, False, False) is False", "while True: pass")
