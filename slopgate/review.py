@@ -824,7 +824,13 @@ def pytest_result(code: int, output: str) -> tuple[frozenset, int] | None:
     if not totals:
         return None
     counts = {kind.rstrip("s"): int(n) for n, kind in COUNT.findall(totals[-1])}
-    keys = SUMMARY_LINE.findall(summary)
+    keys = []
+    for line in summary.splitlines():
+        if line.startswith(("FAILED ", "ERROR ")):
+            match = SUMMARY_LINE.match(line)
+            # A "]" inside the parameters, or a line that pytest cut off: the whole line is the key, and each run prints the same line for the same test.
+            kind, _, rest = line.rstrip().partition(" ")
+            keys.append(match.groups() if match else (kind, rest))
     # Each failure and error needs its line, else a new failure can hide (-r without E, an old pytest).
     if len(keys) != counts.get("failed", 0) + counts.get("error", 0):
         return None
