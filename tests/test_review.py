@@ -2296,6 +2296,108 @@ def test_old_repo_with_requirements_only_keeps_the_default_image(make_repo):
     assert sandbox.commands(repo, "HEAD", OLD) == ("pip install -r requirements.txt", "python -m pytest -q -rfE", None)
 
 
+def tag(repo, name):
+    subprocess.run(["git", "tag", name], cwd=repo, check=True)
+
+
+SCM_TOML = '[build-system]\nrequires = ["setuptools>=64", "setuptools-scm"]\n'
+EXPORT = "export SETUPTOOLS_SCM_PRETEND_VERSION="
+
+
+def test_setuptools_scm_repo_installs_with_the_last_tag_as_version(make_repo):
+    repo = make_repo({"pyproject.toml": SCM_TOML}, {"app.py": ""})
+    tag(repo, "v1.2.3")
+
+    assert sandbox.commands(repo, "HEAD")[0] == f"{EXPORT}1.2.3; pip install -e ."
+    assert sandbox.commands(repo, "HEAD", RECENT)[0] == f"{EXPORT}1.2.3; pip install -e ."
+
+
+def test_scm_version_reaches_the_plain_fallback_of_the_pinned_installs(make_repo):
+    locked = make_repo({"pyproject.toml": SCM_TOML, "uv.lock": ""}, {"app.py": ""})
+    tag(locked, "2.0.0rc1")
+    setup = sandbox.commands(locked, "HEAD", RECENT)[0]
+    assert setup.startswith(f"{EXPORT}2.0.0rc1; pip install -q uv && R=$(mktemp)")
+    assert setup.endswith("|| pip install -e .")
+    assert shell_syntax_ok(setup)
+
+
+def test_scm_version_reaches_the_plain_fallback_of_the_old_commit_install(make_repo):
+    repo = make_repo({"pyproject.toml": SCM_TOML}, {"app.py": ""})
+    tag(repo, "2.0.0rc1")
+    setup = sandbox.commands(repo, "HEAD", OLD)[0]
+    assert setup.startswith(f"{EXPORT}2.0.0rc1; pip install -q uv && uv pip install")
+    assert setup.endswith("|| pip install -e .")
+    assert shell_syntax_ok(setup)
+
+
+def test_setup_py_that_is_not_utf8_does_not_break_the_install(make_repo):
+    repo = make_repo({"app.py": ""}, {"app.py": "x = 1\n"})
+    Path(repo, "setup.py").write_bytes(b"# -*- coding: latin-1 -*-\nsetup(author='M\xfcller')\n")
+    subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "setup"], cwd=repo, check=True)
+
+    assert sandbox.commands(repo, "HEAD")[0] == "pip install -e ."
+
+
+def test_a_nearer_tag_that_is_not_a_version_does_not_hide_the_release_tag(make_repo):
+    repo = make_repo({"pyproject.toml": SCM_TOML}, {"app.py": ""})
+    tag(repo, "v1.2.3")
+    Path(repo, "app.py").write_text("x = 1\n")
+    subprocess.run(["git", "commit", "-q", "-am", "later"], cwd=repo, check=True)
+    tag(repo, "latest")
+
+    assert sandbox.commands(repo, "HEAD")[0] == f"{EXPORT}1.2.3; pip install -e ."
+
+
+def test_scm_named_only_in_setup_cfg_gets_the_version(make_repo):
+    repo = make_repo({"setup.py": "", "setup.cfg": "[options]\nsetup_requires = setuptools_scm\n"}, {"app.py": ""})
+    tag(repo, "v1.2.3")
+
+    assert sandbox.commands(repo, "HEAD")[0] == f"{EXPORT}1.2.3; pip install -e ."
+
+
+def test_git_archival_file_with_describe_name_skips_the_version(make_repo):
+    archival = "node: $Format:%H$\ndescribe-name: $Format:%(describe:tags=true,match=*[0-9]*)$\n"
+    repo = make_repo({"pyproject.toml": SCM_TOML, ".git_archival.txt": archival}, {"app.py": ""})
+    tag(repo, "v1.2.3")
+
+    assert sandbox.commands(repo, "HEAD")[0] == "pip install -e ."
+
+
+def test_scm_repo_without_a_tag_uses_version_zero(make_repo):
+    repo = make_repo({"setup.py": "setup(use_scm_version=True)\n"}, {"app.py": ""})
+
+    assert sandbox.commands(repo, "HEAD")[0] == f"{EXPORT}0.0.0; pip install -e ."
+
+
+def test_hatch_vcs_repo_gets_the_version(make_repo):
+    repo = make_repo({"pyproject.toml": 'requires = ["hatchling", "hatch-vcs"]\n'}, {"app.py": ""})
+    tag(repo, "0.9")
+
+    assert sandbox.commands(repo, "HEAD")[0] == f"{EXPORT}0.9; pip install -e ."
+
+
+def test_tag_that_is_not_a_version_gives_version_zero(make_repo):
+    repo = make_repo({"pyproject.toml": SCM_TOML}, {"app.py": ""})
+    tag(repo, "release-x")
+
+    assert sandbox.commands(repo, "HEAD")[0] == f"{EXPORT}0.0.0; pip install -e ."
+
+
+def test_setup_override_wins_over_the_scm_version(make_repo):
+    repo = make_repo({"pyproject.toml": SCM_TOML, ".slopgate.toml": '[sandbox]\nsetup = "make dev"\n'}, {"app.py": ""})
+    tag(repo, "v1.2.3")
+
+    assert sandbox.commands(repo, "HEAD", OLD)[0] == "make dev"
+
+
+def test_repo_without_scm_keeps_the_plain_install(make_repo):
+    repo = make_repo({"pyproject.toml": "[project]\nname = 'app'\n"}, {"app.py": ""})
+    tag(repo, "v1.2.3")
+
+    assert sandbox.commands(repo, "HEAD")[0] == "pip install -e ."
+
+
 def test_only_the_contree_sandbox_pins():
     assert Contree.pins and not Local.pins
 

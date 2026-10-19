@@ -1,5 +1,6 @@
 import fnmatch
 import os
+import re
 import shlex
 import shutil
 import signal
@@ -62,6 +63,23 @@ def pinned_install(names, since) -> tuple[str, str | None]:
     return f"pip install -q uv && {pinned} || {plain}", image
 
 
+VERSION = re.compile(r"\d+(\.\d+)*((a|b|rc)\d+)?(\.post\d+)?(\.dev\d+)?")
+
+
+def has(repo, ref, pattern, *paths) -> bool:
+    # `git grep` reads bytes: `git show` would raise on a file that is not UTF-8.
+    return subprocess.run(["git", "grep", "-q", "-E", pattern, ref, "--", *paths], cwd=repo, capture_output=True).returncode == 0
+
+
+def scm_version(repo, ref) -> str:
+    # The archive has no .git, so the version comes from the last tag. 0.0.0 is only the fallback: pytest's own `minversion` refuses it.
+    try:
+        tag = git(repo, "describe", "--tags", "--abbrev=0", "--match", "v[0-9]*", "--match", "[0-9]*", ref).strip().removeprefix("v")
+    except subprocess.CalledProcessError:
+        return "0.0.0"
+    return tag if VERSION.fullmatch(tag) else "0.0.0"
+
+
 def commands(repo, ref, since=None) -> tuple[str | None, str, str | None]:
     # `since` is the commit date of the merge-base. Without it the install is not pinned: the Local sandbox installs into this venv.
     names = git(repo, "ls-tree", "--name-only", ref).splitlines()
@@ -71,6 +89,11 @@ def commands(repo, ref, since=None) -> tuple[str | None, str, str | None]:
     image = None
     if {"pyproject.toml", "setup.py"} & set(names):
         setup, image = pinned_install(names, since) if since else ("pip install -e .", None)
+        scm = has(repo, ref, r"setuptools[_-]scm|use_scm_version|hatch[_-]vcs", "pyproject.toml", "setup.py", "setup.cfg")
+        # An archive of a repo with `.git_archival.txt` carries the exact version already: the prefix would only make it less exact.
+        if scm and not has(repo, ref, "^describe-name:", ".git_archival.txt"):
+            # shortcut: the variable also reaches dependencies built from an sdist with setuptools-scm, upgrade to SETUPTOOLS_SCM_PRETEND_VERSION_FOR_<NAME> if one fails.
+            setup = f"export SETUPTOOLS_SCM_PRETEND_VERSION={scm_version(repo, ref)}; {setup}"
     elif requirements:
         setup = "pip install " + " ".join(f"-r {name}" for name in requirements)
     else:
