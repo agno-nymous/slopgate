@@ -2283,7 +2283,7 @@ def test_old_commit_installs_the_versions_of_its_date_on_the_old_image(make_repo
 
     assert f"--exclude-newer {OLD}" in setup
     assert "{" not in setup
-    assert "--exclude-newer-package setuptools=" in setup
+    assert "--exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 " in setup
     assert "-e . pytest --reinstall " in setup
     assert "--reinstall-package pytest" not in setup
     assert setup.startswith("pip install -q --ignore-requires-python uv && ")
@@ -2376,6 +2376,20 @@ def test_scm_version_reaches_the_plain_fallback_of_the_old_commit_install(make_r
     assert setup.startswith(f"{EXPORT}2.0.0rc1; pip install -q --ignore-requires-python uv && uv pip install")
     assert setup.endswith("|| pip install -e .")
     assert shell_syntax_ok(setup)
+
+
+def test_old_scm_commit_limits_setuptools_to_the_first_one_with_build_editable(make_repo):
+    repo = make_repo({"pyproject.toml": SCM_TOML}, {"app.py": ""})
+    setup = sandbox.commands(repo, "HEAD", OLD)[0]
+    assert "--exclude-newer-package setuptools=2022-08-12T00:00:00+00:00 --exclude-newer-package atomicwrites=2100-01-01 " in setup
+    assert "setuptools=2100-01-01" not in setup
+    assert shell_syntax_ok(setup)
+
+
+@pytest.mark.parametrize("date", ["2023-05-01T00:00:00+00:00", "2022-08-11T23:00:00-05:00"])
+def test_scm_commit_after_the_floor_limits_setuptools_to_its_date(make_repo, date):
+    repo = make_repo({"pyproject.toml": SCM_TOML}, {"app.py": ""})
+    assert f"--exclude-newer-package setuptools={date} " in sandbox.commands(repo, "HEAD", date)[0]
 
 
 def test_setup_py_that_is_not_utf8_does_not_break_the_install(make_repo):
