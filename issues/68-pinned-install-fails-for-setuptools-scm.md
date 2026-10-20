@@ -46,3 +46,15 @@ A second probe also took setuptools-scm out of the date limit (`--exclude-newer-
 - [ ] The Comments give the result of each option on the 4 commits.
 - [ ] On the 4 commits, the pinned install builds the environment, and the fallback does not run.
 - [ ] `uv run pytest -q` passes.
+
+## Comments
+
+### 2026-10-19 — what ticket 59 changes for this ticket
+
+Ticket 59 builds each old commit on the Python of its date. It measured 3 of the 4 commits of this ticket:
+
+- pytest-7220 (2020-05-30) now gets `python:3.8-slim`. The pinned install builds the environment, and the fallback does not run. The newest setuptools for 3.8 still has `pkg_resources`, so the error of this ticket does not occur. The environment has pluggy 0.13.1, and `testing/test_mark.py` gives 89 passed, 1 failed.
+- xarray v0.16.0 (`56769263`, 2020-07-11) now gets `python:3.8-slim`. The pinned install builds the environment, and the fallback does not run. `xarray/tests/test_utils.py` gives 34 passed.
+- pytest-5227 (2019-05-07) now gets `python:3.7-slim`. The pinned install still fails, but with a new cause: `there are no versions of atomicwrites`. PyPI now has only `atomicwrites` 1.4.1 (2022-07-08), so `--exclude-newer 2019-05-07` leaves no version. A fix is `--exclude-newer-package atomicwrites=2100-01-01`, or a general retry that removes the date limit of a package that has no version before the date.
+
+So 2 of the 4 commits need no fix now, and 1 has a new cause. pluggy 0.13.1 (2019-11) was not measured again: probe it first. On the code of ticket 59 it gets `python:3.7-slim`, and the newest setuptools for 3.7 (68.0) still has `pkg_resources`.
