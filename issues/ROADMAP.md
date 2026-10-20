@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**59 — A commit from before 2020 needs an older Python than 3.10.** Then 68, then 67. Ticket 10 is `needs-live-check` (the Serverless Job and the instance count are open). Its run with the gate's own install (2026-10-18) gave a working environment on 6 of 15 instances: 5 failed with setuptools-scm (58, done), and 4 need a Python older than 3.10 (59). With ticket 58, the 5 pytest instances install, but only through the unpinned fallback (68), and their tests do not run on Python 3.10 (59). Ticket 67 adds an agent that installs from the repo's own instructions, and the ticket 10 benchmark measures it.
+**68 — The old-commit install fails for every repo that uses setuptools-scm.** Then 67. Ticket 59 (done, 2026-10-19) builds each old commit on the Python of its date: on 14 old commits, 12 now build and pass a small test (on 3.10: 4), with all 4 ticket 10 instances that it named (sphinx-7975, sphinx-8506, sphinx-8627, requests-3362). Ticket 68 has new findings from ticket 59: pytest-7220 and xarray v0.16.0 need no fix now, pytest-5227 fails on `atomicwrites`, and pluggy 0.13.1 is not measured again. Ticket 10 is `needs-live-check` (the Serverless Job and the instance count are open). Ticket 67 adds an agent that installs from the repo's own instructions, and the ticket 10 benchmark measures it.
 
 ## Plan to the deadline (set on 2026-10-17)
 
@@ -56,7 +56,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 28 | [42 — Benchmark statistics: label agreement, run metadata, and pass@k](42-benchmark-statistics.md) | done | 37 (done) | Moved up on 2026-10-17. Ticket 10 uses its metadata and pass@k functions. |
 | 29 | [48 — Compare the repo suite with a baseline run of the original code](48-repo-suite-baseline.md) | done | — | Moved up on 2026-10-17. A repo test that fails on the original code lowers the acceptance rate of ticket 10. |
 | 30 | [58 — A repo that takes its version from the git history does not install in the sandbox](58-setuptools-scm-needs-version.md) | done | — | Ticket 10 needs it: all 5 pytest instances fail the install with the gate's own install (2026-10-18). |
-| 31 | [59 — A commit from before 2020 needs an older Python than 3.10](59-commits-before-2020-need-old-python.md) | ready-for-agent | — | Ticket 10 needs it: sphinx-7975, sphinx-8506, sphinx-8627, and requests-3362 install on Python 3.10, but their tests cannot run (2026-10-18). Ticket 67 section 0 proposes the Python of the commit date. |
+| 31 | [59 — A commit from before 2020 needs an older Python than 3.10](59-commits-before-2020-need-old-python.md) | done | — | Ticket 10 needs it: sphinx-7975, sphinx-8506, sphinx-8627, and requests-3362 install on Python 3.10, but their tests cannot run (2026-10-18). Ticket 67 section 0 proposes the Python of the commit date. |
 | 32 | [68 — The old-commit install fails for every repo that uses setuptools-scm](68-pinned-install-fails-for-setuptools-scm.md) | ready-for-agent | 58 (done) | Found by ticket 58 on 2026-10-18: a date-limited setuptools-scm imports `pkg_resources`, and the newest setuptools does not have it. The fallback then installs the newest dependencies, so the tests of old commits fail. Do it after 59: both change the old-commit install. |
 | 33 | [10 — Benchmark on SWE-bench with injected slop](10-benchmark.md) | needs-live-check | 37, 41 (done) | Moved up on 2026-10-17. Its four numbers are the headline of the submission, and they judge every later ticket. First step: confirm that ConTree can run the SWE-bench images (the SDK has `images.pull` and `images.oci`, but no list of preloaded images). |
 | 34 | [67 — An agent installs the test environment from the repo's own instructions](67-install-agent.md) | ready-for-agent | 58, 59 | Added on 2026-10-18 by the user. With the gate's own install, ticket 10 has a working environment on 6 of 15 instances. The agent reads the README and CI files and installs the rest. |
@@ -87,8 +87,9 @@ Added after the order was set:
 | [62 — The test agent runs filler commands until the step limit after its test file passes](62-agent-cannot-stop.md) | ready-for-agent | Found by ticket 51: 41 of 48 hint rounds stopped at the step limit. Filler commands are 5% to 19% of the agent commands in the traces. |
 | [46 — Find the changed functions from the merge-base, not from the base tip](46-diff-from-merge-base.md) | done | Found by the code review of ticket 34. An inline comment on a line outside the pull request diff makes GitHub reject the whole review. Do it before the Slopgate workflow is on again. |
 | [63 — CrossHair as a second equivalence check](63-crosshair-equivalence-check.md) | wontfix | Measured on 2026-10-17. It finds the PR #23 change only with stub callees, not with the real callees. |
+| [69 — Some commits from before 2018 do not build or test on Python 3.6](69-commits-before-2018-on-python-36.md) | ready-for-agent | Found by ticket 59: sympy 2016-07 and requests 2014-03 fail on 3.6. Do it if a benchmark uses SWE-bench instances from before 2018. |
 
-Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, 44, 46, 48, 49, 51, 52, 53, 54, 55, 58, and 60 are done. Tickets 23, 24, 29, 30, 31, 35, and 63 are wontfix.
+Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, 44, 46, 48, 49, 51, 52, 53, 54, 55, 58, 59, and 60 are done. Tickets 23, 24, 29, 30, 31, 35, and 63 are wontfix.
 
 ## Rules for the order
 

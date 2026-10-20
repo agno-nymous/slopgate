@@ -31,7 +31,10 @@ MUTANT_SECONDS = 60
 # this repo's own test suite in ConTree.
 SANDBOX_TIMEOUT = 600
 
-# A commit from before Python 3.12 runs on Python 3.10 with the dependencies of its own time (ticket 53). On 3.12 the old pytest
+# A commit from before Python 3.12 runs on an older Python with the dependencies of its own time (ticket 53). On 3.12 the old pytest
 # fails in the assertion rewriter, and some old packages have no wheel.
 OLD_COMMIT_BEFORE = "2023-10-02T00:00:00+00:00"
-OLD_COMMIT_IMAGE = "python:3.10-slim"
+# Release dates of the Python minors. An old commit gets the newest one released 90 days before its date, so its dependencies have
+# wheels for it (ticket 59). 3.6 is the floor: uv cannot install into an older Python.
+PYTHON_LAG_DAYS = 90
+PYTHONS = [("3.6", "2016-12-23"), ("3.7", "2018-06-27"), ("3.8", "2019-10-14"), ("3.9", "2020-10-05"), ("3.10", "2021-10-04"), ("3.11", "2022-10-24")]

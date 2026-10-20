@@ -9,14 +9,14 @@ import sys
 import tempfile
 import time
 import tomllib
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from contree_sdk import ContreeSync
 from contree_sdk.sdk.exceptions import NotFoundError
 
 from slopgate import trace
-from slopgate.config import OLD_COMMIT_BEFORE, OLD_COMMIT_IMAGE, SANDBOX_TIMEOUT
+from slopgate.config import OLD_COMMIT_BEFORE, PYTHON_LAG_DAYS, PYTHONS, SANDBOX_TIMEOUT
 from slopgate.diff import git
 
 OUTPUT_LIMIT = 10 * 1024 * 1024
@@ -42,6 +42,12 @@ def is_old(date: str) -> bool:
     return datetime.fromisoformat(date) < datetime.fromisoformat(OLD_COMMIT_BEFORE)
 
 
+def old_python(since: str) -> str:
+    # A Python gets wheels of numpy and pandas some weeks after its release: xarray at 2019-10-14 got 3.8 and numpy 1.17.2 had no wheel for it.
+    cutoff = (datetime.fromisoformat(since) - timedelta(days=PYTHON_LAG_DAYS)).date().isoformat()
+    return next((version for version, released in reversed(PYTHONS) if released <= cutoff), PYTHONS[0][0])
+
+
 # uv needs a path, not a name, to install into a Python that is not in a virtual environment.
 PYTHON = '"$(command -v python)"'
 
@@ -53,14 +59,20 @@ def pinned_install(names, since) -> tuple[str, str | None]:
         pinned = f"R=$(mktemp) && uv export --frozen --all-groups --no-hashes --no-emit-project -o $R && uv pip install --python {PYTHON} -q -r $R -e ."
         image = None
     elif is_old(since):
-        # The sandbox installs the newest pytest first: reinstall it with the date limit. A setuptools from before 2022 cannot build an
-        # editable install, so setuptools is limited to the date only after the build: the newest one warns in `pkg_resources`.
+        # The sandbox installs the newest pytest first: reinstall it with the date limit. `--reinstall` and not `--reinstall-package pytest`:
+        # the new `py` and `pluggy` satisfy the version ranges of an old pytest, and the package option would keep them. A setuptools from
+        # before 2022 cannot build an editable install, so setuptools is limited to the date only after the build: the newest one warns
+        # in `pkg_resources`.
+        python = old_python(since)
         install = f"uv pip install --python {PYTHON} -q --exclude-newer {since}"
-        pinned = f"{install} --exclude-newer-package setuptools=2100-01-01 -e . pytest --reinstall-package pytest && {install} setuptools --reinstall-package setuptools"
-        image = OLD_COMMIT_IMAGE
+        # The newest setuptools of Python 3.6 (59.6) has no `build_editable`: pip makes that install with `setup.py develop`.
+        project, editable = (".", " && pip install -q --no-deps -e .") if python == "3.6" else ("-e .", "")
+        pinned = f"{install} --exclude-newer-package setuptools=2100-01-01 {project} pytest --reinstall && {install} setuptools --reinstall-package setuptools{editable}"
+        image = f"python:{python}-slim"
     else:
         return plain, None
-    return f"pip install -q uv && {pinned} || {plain}", image
+    # The uv package declares Python 3.8 or later, but its binary runs on 3.6 and 3.7.
+    return f"pip install -q --ignore-requires-python uv && {pinned} || {plain}", image
 
 
 VERSION = re.compile(r"\d+(\.\d+)*((a|b|rc)\d+)?(\.post\d+)?(\.dev\d+)?")
@@ -214,8 +226,9 @@ class Contree:
 
     def prepare(self, repo, ref, setup: str | None, image=None):
         script = "mkdir -p /repo && tar -x -f /tmp/repo.tar -C /repo && cd /repo && pip install -q pytest coverage || exit\n"
+        # `oci` imports a tag that the account does not have from Docker Hub (about 11 s, once per account): accounts lack the old Pythons.
         result = (
-            self.client.images.use(image or self.image)
+            self.client.images.oci(image or self.image, timeout=SANDBOX_TIMEOUT)
             .run(shell=script + (setup or ""), files={"/tmp/repo.tar": archive(repo, ref)}, disposable=False)
             .wait()
         )
