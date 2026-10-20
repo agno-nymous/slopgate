@@ -18,7 +18,7 @@ from contree_sdk.sdk.exceptions import NotFoundError
 from slopgate import kinds, llm, sandbox
 from slopgate import review as gate
 from slopgate.cli import main
-from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, HINT_MUTANTS, HINT_STEPS, MUTANT_SECONDS, OLD_COMMIT_IMAGE, SUPER, ULTRA
+from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, HINT_MUTANTS, HINT_STEPS, MUTANT_SECONDS, SUPER, ULTRA
 from slopgate.functions import dedent, is_test_file, parse, pytest_patterns, structure_hash
 from slopgate.kinds import KINDS, classify, flattenable, has_dead_code, leftover, problems, repeated_checks
 from slopgate.review import COVERAGE, EXECUTE, NO_ENVIRONMENT, REJECTED, boundary_mutants, broken_rule, characterize, pytest_result, same_code, strip_fence, suite_run, survivors
@@ -1696,6 +1696,24 @@ def test_a_test_that_never_ends_rejects_the_function_and_the_review_goes_on(make
     assert suggested_code(suggestion["body"]) == FLAT_VIEW
 
 
+def test_contree_prepares_on_the_image_through_oci_which_imports_a_missing_tag(make_repo):
+    repo = make_repo({"README": ""}, {"app.py": ""})
+    calls = []
+
+    def oci(ref, timeout):
+        calls.append((ref, timeout))
+        return SimpleNamespace(run=lambda **kwargs: SimpleNamespace(wait=lambda: SimpleNamespace(exit_code=0, stdout="", stderr="")))
+
+    box = Contree.__new__(Contree)
+    box.image = "python:3.12-slim"
+    box.client = SimpleNamespace(images=SimpleNamespace(oci=oci))
+
+    box.prepare(repo, "HEAD", "true", "python:3.6-slim")
+    box.prepare(repo, "HEAD", "true")
+
+    assert calls == [("python:3.6-slim", 600), ("python:3.12-slim", 600)]
+
+
 def test_contree_session_bounds_each_command_in_the_sandbox_and_reads_a_missing_file_as_none():
     runs, reads = [], []
 
@@ -2266,10 +2284,40 @@ def test_old_commit_installs_the_versions_of_its_date_on_the_old_image(make_repo
     assert f"--exclude-newer {OLD}" in setup
     assert "{" not in setup
     assert "--exclude-newer-package setuptools=" in setup
-    assert "pytest --reinstall-package pytest" in setup
+    assert "-e . pytest --reinstall " in setup
+    assert "--reinstall-package pytest" not in setup
+    assert setup.startswith("pip install -q --ignore-requires-python uv && ")
     assert setup.endswith("|| pip install -e .")
     assert shell_syntax_ok(setup)
-    assert image == OLD_COMMIT_IMAGE
+    assert image == "python:3.10-slim"
+
+
+@pytest.mark.parametrize(
+    "date, python",
+    [
+        ("2015-03-01T00:00:00+00:00", "3.6"),
+        ("2018-09-24T10:00:00+00:00", "3.6"),
+        ("2018-09-25T10:00:00+00:00", "3.7"),
+        ("2019-10-14T11:06:53-07:00", "3.7"),
+        ("2020-01-12T00:00:00+00:00", "3.8"),
+        ("2023-09-30T00:00:00+00:00", "3.11"),
+    ],
+)
+def test_old_commit_gets_the_newest_python_released_90_days_before_its_date(date, python):
+    assert sandbox.old_python(date) == python
+
+
+def test_commit_of_2016_installs_on_python_36_with_a_legacy_editable_install(make_repo):
+    repo = make_repo({"pyproject.toml": ""}, {"app.py": ""})
+
+    setup, _, image = sandbox.commands(repo, "HEAD", "2016-06-28T10:00:00+00:00")
+
+    assert image == "python:3.6-slim"
+    assert ". pytest --reinstall" in setup
+    assert "-e . pytest" not in setup
+    assert " && pip install -q --no-deps -e . || " in setup
+    assert setup.endswith("|| pip install -e .")
+    assert shell_syntax_ok(setup)
 
 
 def test_recent_commit_installs_the_newest_versions(make_repo):
@@ -2316,7 +2364,7 @@ def test_scm_version_reaches_the_plain_fallback_of_the_pinned_installs(make_repo
     locked = make_repo({"pyproject.toml": SCM_TOML, "uv.lock": ""}, {"app.py": ""})
     tag(locked, "2.0.0rc1")
     setup = sandbox.commands(locked, "HEAD", RECENT)[0]
-    assert setup.startswith(f"{EXPORT}2.0.0rc1; pip install -q uv && R=$(mktemp)")
+    assert setup.startswith(f"{EXPORT}2.0.0rc1; pip install -q --ignore-requires-python uv && R=$(mktemp)")
     assert setup.endswith("|| pip install -e .")
     assert shell_syntax_ok(setup)
 
@@ -2325,7 +2373,7 @@ def test_scm_version_reaches_the_plain_fallback_of_the_old_commit_install(make_r
     repo = make_repo({"pyproject.toml": SCM_TOML}, {"app.py": ""})
     tag(repo, "2.0.0rc1")
     setup = sandbox.commands(repo, "HEAD", OLD)[0]
-    assert setup.startswith(f"{EXPORT}2.0.0rc1; pip install -q uv && uv pip install")
+    assert setup.startswith(f"{EXPORT}2.0.0rc1; pip install -q --ignore-requires-python uv && uv pip install")
     assert setup.endswith("|| pip install -e .")
     assert shell_syntax_ok(setup)
 
@@ -2427,7 +2475,7 @@ def test_review_dates_the_install_by_the_merge_base_not_the_head(make_repo, monk
 
     [(setup, image)] = seen
     assert f"--exclude-newer {OLD}" in setup
-    assert image == OLD_COMMIT_IMAGE
+    assert image == "python:3.10-slim"
 
 
 def test_setup_cfg_alone_is_not_a_manifest(make_repo):
