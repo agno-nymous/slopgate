@@ -34,6 +34,8 @@ SANDBOX_TIMEOUT = 600
 # A commit from before Python 3.12 runs on an older Python with the dependencies of its own time (ticket 53). On 3.12 the old pytest
 # fails in the assertion rewriter, and some old packages have no wheel.
 OLD_COMMIT_BEFORE = "2023-10-02T00:00:00+00:00"
+# setuptools 64.0 (2022-08-11) is the first with `build_editable`.
+SETUPTOOLS_EDITABLE = "2022-08-12T00:00:00+00:00"
 # Release dates of the Python minors. An old commit gets the newest one released 90 days before its date, so its dependencies have
 # wheels for it (ticket 59). 3.6 is the floor: uv cannot install into an older Python.
 PYTHON_LAG_DAYS = 90

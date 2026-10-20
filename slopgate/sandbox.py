@@ -16,7 +16,7 @@ from contree_sdk import ContreeSync
 from contree_sdk.sdk.exceptions import NotFoundError
 
 from slopgate import trace
-from slopgate.config import OLD_COMMIT_BEFORE, PYTHON_LAG_DAYS, PYTHONS, SANDBOX_TIMEOUT
+from slopgate.config import OLD_COMMIT_BEFORE, PYTHON_LAG_DAYS, PYTHONS, SANDBOX_TIMEOUT, SETUPTOOLS_EDITABLE
 from slopgate.diff import git
 
 OUTPUT_LIMIT = 10 * 1024 * 1024
@@ -52,7 +52,7 @@ def old_python(since: str) -> str:
 PYTHON = '"$(command -v python)"'
 
 
-def pinned_install(names, since) -> tuple[str, str | None]:
+def pinned_install(names, since, scm) -> tuple[str, str | None]:
     # Each variant falls back to the plain install: a failed pinned install must not become "could not build test environment".
     plain = "pip install -e ."
     if "uv.lock" in names and "pyproject.toml" in names:
@@ -60,14 +60,20 @@ def pinned_install(names, since) -> tuple[str, str | None]:
         image = None
     elif is_old(since):
         # The sandbox installs the newest pytest first: reinstall it with the date limit. `--reinstall` and not `--reinstall-package pytest`:
-        # the new `py` and `pluggy` satisfy the version ranges of an old pytest, and the package option would keep them. A setuptools from
-        # before 2022 cannot build an editable install, so setuptools is limited to the date only after the build: the newest one warns
-        # in `pkg_resources`.
+        # the new `py` and `pluggy` satisfy the version ranges of an old pytest, and the package option would keep them. The build uses the
+        # newest setuptools, because a setuptools older than 64.0 cannot build an editable install. For a setuptools-scm repo the build
+        # setuptools is at most the later of the commit date and the 64.0 date: an old setuptools-scm needs `pkg_resources` and an old
+        # `packaging`, and the newest setuptools breaks both (ticket 68). After the build, setuptools of the commit date is reinstalled: the
+        # newest one warns in `pkg_resources`.
         python = old_python(since)
         install = f"uv pip install --python {PYTHON} -q --exclude-newer {since}"
         # The newest setuptools of Python 3.6 (59.6) has no `build_editable`: pip makes that install with `setup.py develop`.
         project, editable = (".", " && pip install -q --no-deps -e .") if python == "3.6" else ("-e .", "")
-        pinned = f"{install} --exclude-newer-package setuptools=2100-01-01 {project} pytest --reinstall && {install} setuptools --reinstall-package setuptools{editable}"
+        limit = max(since, SETUPTOOLS_EDITABLE, key=datetime.fromisoformat) if scm else "2100-01-01"
+        # shortcut: PyPI re-uploaded all atomicwrites files on 2022-07-09, so the date limit hides them and uv picks a pytest older than 3.6;
+        # upgrade to a general retry if another package does this.
+        limits = f"--exclude-newer-package setuptools={limit} --exclude-newer-package atomicwrites=2100-01-01"
+        pinned = f"{install} {limits} {project} pytest --reinstall && {install} setuptools --reinstall-package setuptools{editable}"
         image = f"python:{python}-slim"
     else:
         return plain, None
@@ -100,8 +106,8 @@ def commands(repo, ref, since=None) -> tuple[str | None, str, str | None]:
     requirements = sorted(fnmatch.filter(names, "requirements*.txt"))
     image = None
     if {"pyproject.toml", "setup.py"} & set(names):
-        setup, image = pinned_install(names, since) if since else ("pip install -e .", None)
         scm = has(repo, ref, r"setuptools[_-]scm|use_scm_version|hatch[_-]vcs", "pyproject.toml", "setup.py", "setup.cfg")
+        setup, image = pinned_install(names, since, scm) if since else ("pip install -e .", None)
         # An archive of a repo with `.git_archival.txt` carries the exact version already: the prefix would only make it less exact.
         if scm and not has(repo, ref, "^describe-name:", ".git_archival.txt"):
             # shortcut: the variable also reaches dependencies built from an sdist with setuptools-scm, upgrade to SETUPTOOLS_SCM_PRETEND_VERSION_FOR_<NAME> if one fails.
