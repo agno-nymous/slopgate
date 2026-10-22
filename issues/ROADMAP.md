@@ -4,7 +4,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**67 — An agent installs the test environment from the repo's own instructions.** Ticket 68 (done, 2026-10-19) limits setuptools for the build of an old setuptools-scm commit to `max(commit date, 2022-08-12)`, and takes `atomicwrites` out of the date limit for every old commit. On 11 old commits, 10 now build with the pinned install and pass a small test (before: 5). pytest 6.2.0 still fails (ticket 71), and pluggy 1.0.0 builds but its `.coveragerc` hides the `src/` code from coverage (ticket 70). Ticket 10 is `needs-live-check` (the Serverless Job and the instance count are open). Ticket 67 adds an agent that installs from the repo's own instructions, and the ticket 10 benchmark measures it.
+**73 — A model rate limit rejects items of the gate.** Ticket 67 (done, 2026-10-21) added a collection check, a retry of transient ConTree faults, and the README install guide. The default install builds 18 of 28 instances. In the ticket 10 benchmark, the gate accepts 13 of 38 detected items (before: 7 of 26), and infrastructure errors fell from 15 to 3. 5 of 42 items were rejected for a Token Factory rate limit (ticket 73), and 3 for a pytest 2.9 flag in the bench test command (ticket 72). Fix both, rerun the benchmark, then do ticket 64. Ticket 10 is `needs-live-check` (the Serverless Job and the instance count are open). The install agent does not ship: it proved 0 of 72 attempts.
 
 ## Plan to the deadline (set on 2026-10-17)
 
@@ -59,7 +59,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 31 | [59 — A commit from before 2020 needs an older Python than 3.10](59-commits-before-2020-need-old-python.md) | done | — | Ticket 10 needs it: sphinx-7975, sphinx-8506, sphinx-8627, and requests-3362 install on Python 3.10, but their tests cannot run (2026-10-18). Ticket 67 section 0 proposes the Python of the commit date. |
 | 32 | [68 — The old-commit install fails for every repo that uses setuptools-scm](68-pinned-install-fails-for-setuptools-scm.md) | done | 58 (done) | Found by ticket 58 on 2026-10-18: a date-limited setuptools-scm imports `pkg_resources`, and the newest setuptools does not have it. The fallback then installs the newest dependencies, so the tests of old commits fail. Do it after 59: both change the old-commit install. |
 | 33 | [10 — Benchmark on SWE-bench with injected slop](10-benchmark.md) | needs-live-check | 37, 41 (done) | Moved up on 2026-10-17. Its four numbers are the headline of the submission, and they judge every later ticket. First step: confirm that ConTree can run the SWE-bench images (the SDK has `images.pull` and `images.oci`, but no list of preloaded images). |
-| 34 | [67 — An agent installs the test environment from the repo's own instructions](67-install-agent.md) | ready-for-agent | 58, 59 | Added on 2026-10-18 by the user. With the gate's own install, ticket 10 has a working environment on 6 of 15 instances. The agent reads the README and CI files and installs the rest. |
+| 34 | [67 — An agent installs the test environment from the repo's own instructions](67-install-agent.md) | done | 58, 59 | Added on 2026-10-18 by the user. With the gate's own install, ticket 10 has a working environment on 6 of 15 instances. The agent reads the README and CI files and installs the rest. |
 | 35 | [64 — Hosted demo: review a public pull request from a web page](64-hosted-demo-on-serverless-endpoint.md) | ready-for-agent | 10 | Added on 2026-10-17. The submission needs a working demo URL, and Design is 1 of 4 criteria. |
 | 36 | [65 — Measure the write-time hook on a Nemotron coding agent](65-hook-on-off-experiment.md) | ready-for-agent | 10 | Added on 2026-10-17. After ticket 64, if time is left by 2026-10-26. Moves before 64 if the decision point says so. |
 | 37 | [45 — The test agent cannot characterize large functions](45-characterize-large-functions.md) | ready-for-agent | 41 (done) | After ticket 10. The numbers of each kind decide: fix the kind, or turn it off in the gate. |
@@ -90,8 +90,11 @@ Added after the order was set:
 | [69 — Some commits from before 2018 do not build or test on Python 3.6](69-commits-before-2018-on-python-36.md) | ready-for-agent | Found by ticket 59: sympy 2016-07 and requests 2014-03 fail on 3.6. Do it if a benchmark uses SWE-bench instances from before 2018. |
 | [70 — A repo `.coveragerc` that does not match a `src/` layout gives "coverage has no data"](70-repo-coveragerc-hides-src-layout.md) | ready-for-agent | Found by ticket 68 on pluggy 1.0.0: `include = pluggy/*`, but the code is in `src/pluggy/`. The test agent sees no missed branches. |
 | [71 — An old commit with a malformed `setup_requires` does not build](71-legacy-specifier-in-setup-requires.md) | ready-for-agent | Found by ticket 68: pytest 6.2.0 has `setuptools>=>=42.0` in `setup.cfg`. All 5 measured setuptools options fail on it. |
+| [72 — The benchmark test command breaks pytest 2.9](72-bench-test-command-flag-breaks-old-pytest.md) | ready-for-agent | Found by ticket 67: all 3 remaining infrastructure errors are `psf__requests-3362`. Small fix. |
+| [73 — A model rate limit rejects items of the gate](73-rate-limit-rejects-items.md) | ready-for-agent | Found by ticket 67: 5 of 42 benchmark items were rejected with a 429 from Token Factory. Do it before the final benchmark run. |
+| [74 — The default install fails for compiled repos](74-default-install-fails-for-compiled-repos.md) | ready-for-agent | Found by ticket 67: 10 of 28 instances (scikit-learn, matplotlib, astropy, requests-1963). Research, plus a uv and pip A/B. Not needed for the headline. |
 
-Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, 44, 46, 48, 49, 51, 52, 53, 54, 55, 58, 59, 60, and 68 are done. Tickets 23, 24, 29, 30, 31, 35, and 63 are wontfix.
+Tickets 01 to 07, 12 to 22, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, 44, 46, 48, 49, 51, 52, 53, 54, 55, 58, 59, 60, 67, and 68 are done. Tickets 23, 24, 29, 30, 31, 35, and 63 are wontfix.
 
 ## Rules for the order
 
