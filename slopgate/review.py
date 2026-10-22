@@ -20,7 +20,7 @@ from slopgate import diff, index, llm, trace
 from slopgate.config import AGENT_SECONDS, AGENT_STEPS, AGENT_TOKENS, DUPLICATE_SCORE, HINT_MUTANTS, HINT_SECONDS, HINT_STEPS, MUTANT_SECONDS, SUPER, ULTRA, WORKERS
 from slopgate.functions import Function, complexity, dedent, is_test_file, nesting, parse, pytest_patterns, structure_hash
 from slopgate.kinds import FLIP, KINDS, classify, comments, leftover, problems
-from slopgate.sandbox import InstallError, commands, commit_date, tail
+from slopgate.sandbox import InstallError, collect_error, commands, commit_date, tail
 
 NONDETERMINISTIC = {"random", "secrets", "uuid", "time", "datetime"}
 DEFS = (ast.FunctionDef, ast.AsyncFunctionDef)
@@ -965,12 +965,18 @@ def review(repo, base, head, sandbox) -> dict:
         return result
     # The date of the merge-base, not of the head: the head of a benchmark case is a new commit on old code.
     setup, test, image = commands(repo, head, commit_date(repo, fork) if sandbox.pins else None)
+    install, failure = True, None
     try:
         with trace.span("sandbox.prepare", input=setup):
             checkpoint = sandbox.prepare(repo, head, setup, image)
+        with trace.span("gate.collect"):
+            failure = collect_error(sandbox, checkpoint, test) if sandbox.pins else None
+            trace.output(failure or "collects")
     except Exception as error:
-        detail = error if isinstance(error, InstallError) else repr(error)
-        result["rejected"].append({"reason": f"could not build test environment\n{detail}"})
+        install = isinstance(error, InstallError)
+        failure = (str(error) or "install failed with no output") if install else repr(error)
+    if failure is not None:
+        result["rejected"].append({"reason": f"could not build test environment\n{failure}", **({} if install else {"install": False})})
         result["notes"] += unproven(candidates, patterns, NO_ENVIRONMENT)
         return result
     with ThreadPoolExecutor(1) as single, ThreadPoolExecutor(WORKERS) as threads:

@@ -1,0 +1,528 @@
+{
+ "pytest-dev__pytest-8365": {
+  "instance_id": "pytest-dev__pytest-8365",
+  "repo": "pytest-dev/pytest",
+  "image": "python:3.9-slim",
+  "python": "3.9",
+  "setup": "export SETUPTOOLS_SCM_PRETEND_VERSION=6.3.0.dev0; uv pip install --python \"$(command -v python)\" -q --exclude-newer 2021-02-20T17:19:54+02:00 --exclude-newer-package setuptools=2022-08-12T00:00:00+00:00 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2021-02-20T17:19:54+02:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": {
+   "production": null,
+   "bench": null
+  },
+  "seconds": {
+   "build": 13.5,
+   "collect": 6.0,
+   "calibration": 9.2
+  }
+ },
+ "pytest-dev__pytest-5227": {
+  "instance_id": "pytest-dev__pytest-5227",
+  "repo": "pytest-dev/pytest",
+  "image": "python:3.7-slim",
+  "python": "3.7",
+  "setup": "export SETUPTOOLS_SCM_PRETEND_VERSION=4.4.1; uv pip install --python \"$(command -v python)\" -q --exclude-newer 2019-05-07T19:50:53-03:00 --exclude-newer-package setuptools=2022-08-12T00:00:00+00:00 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2019-05-07T19:50:53-03:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": {
+   "production": null,
+   "bench": null
+  },
+  "seconds": {
+   "build": 13.0,
+   "collect": 7.6,
+   "calibration": 9.1
+  }
+ },
+ "pytest-dev__pytest-5692": {
+  "instance_id": "pytest-dev__pytest-5692",
+  "repo": "pytest-dev/pytest",
+  "image": "python:3.7-slim",
+  "python": "3.7",
+  "setup": "export SETUPTOOLS_SCM_PRETEND_VERSION=5.0.1; uv pip install --python \"$(command -v python)\" -q --exclude-newer 2019-08-03T14:12:02+02:00 --exclude-newer-package setuptools=2022-08-12T00:00:00+00:00 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2019-08-03T14:12:02+02:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": {
+   "production": null,
+   "bench": null
+  },
+  "seconds": {
+   "build": 12.9,
+   "collect": 4.6,
+   "calibration": 14.0
+  }
+ },
+ "pytest-dev__pytest-7432": {
+  "instance_id": "pytest-dev__pytest-7432",
+  "repo": "pytest-dev/pytest",
+  "image": "python:3.8-slim",
+  "python": "3.8",
+  "setup": "export SETUPTOOLS_SCM_PRETEND_VERSION=5.4.0; uv pip install --python \"$(command -v python)\" -q --exclude-newer 2020-06-28T18:02:07+03:00 --exclude-newer-package setuptools=2022-08-12T00:00:00+00:00 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2020-06-28T18:02:07+03:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": {
+   "production": null,
+   "bench": null
+  },
+  "seconds": {
+   "build": 16.3,
+   "collect": 6.6,
+   "calibration": 9.8
+  }
+ },
+ "sphinx-doc__sphinx-8506": {
+  "instance_id": "sphinx-doc__sphinx-8506",
+  "repo": "sphinx-doc/sphinx",
+  "image": "python:3.8-slim",
+  "python": "3.8",
+  "setup": "uv pip install --python \"$(command -v python)\" -q --exclude-newer 2020-11-28T22:56:12+09:00 --exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2020-11-28T22:56:12+09:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": {
+   "production": null,
+   "bench": null
+  },
+  "seconds": {
+   "build": 16.7,
+   "collect": 7.5,
+   "calibration": 8.9
+  }
+ },
+ "pytest-dev__pytest-7220": {
+  "instance_id": "pytest-dev__pytest-7220",
+  "repo": "pytest-dev/pytest",
+  "image": "python:3.8-slim",
+  "python": "3.8",
+  "setup": "export SETUPTOOLS_SCM_PRETEND_VERSION=5.4.0; uv pip install --python \"$(command -v python)\" -q --exclude-newer 2020-05-30T14:33:22-03:00 --exclude-newer-package setuptools=2022-08-12T00:00:00+00:00 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2020-05-30T14:33:22-03:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": {
+   "production": null,
+   "bench": null
+  },
+  "seconds": {
+   "build": 16.4,
+   "collect": 7.2,
+   "calibration": 9.5
+  }
+ },
+ "sphinx-doc__sphinx-7975": {
+  "instance_id": "sphinx-doc__sphinx-7975",
+  "repo": "sphinx-doc/sphinx",
+  "image": "python:3.8-slim",
+  "python": "3.8",
+  "setup": "uv pip install --python \"$(command -v python)\" -q --exclude-newer 2020-07-18T12:47:36+09:00 --exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2020-07-18T12:47:36+09:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": {
+   "production": null,
+   "bench": null
+  },
+  "seconds": {
+   "build": 16.8,
+   "collect": 7.7,
+   "calibration": 8.9
+  }
+ },
+ "sphinx-doc__sphinx-8627": {
+  "instance_id": "sphinx-doc__sphinx-8627",
+  "repo": "sphinx-doc/sphinx",
+  "image": "python:3.8-slim",
+  "python": "3.8",
+  "setup": "uv pip install --python \"$(command -v python)\" -q --exclude-newer 2020-12-31T10:57:40+09:00 --exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2020-12-31T10:57:40+09:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": {
+   "production": null,
+   "bench": null
+  },
+  "seconds": {
+   "build": 17.0,
+   "collect": 7.5,
+   "calibration": 10.5
+  }
+ },
+ "psf__requests-1963": {
+  "instance_id": "psf__requests-1963",
+  "repo": "psf/requests",
+  "image": "python:3.6-slim",
+  "python": "3.6",
+  "setup": "uv pip install --python \"$(command -v python)\" -q --exclude-newer 2014-03-12T16:37:27-04:00 --exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 . pytest --reinstall && rm -rf build && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2014-03-12T16:37:27-04:00 setuptools --reinstall-package setuptools && pip install -q --no-deps -e . || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": false,
+  "error": "WARNING: Discarding file:///repo. Command errored out with exit status 1: python setup.py egg_info Check the logs for full command output.\nERROR: Command errored out with exit status 1: python setup.py egg_info Check the logs for full command output.\n    ERROR: Command errored out with exit status 1:\n     command: /usr/local/bin/python -c 'import io, os, sys, setuptools, tokenize; sys.argv[0] = '\"'\"'/repo/setup.py'\"'\"'; __file__='\"'\"'/repo/setup.py'\"'\"';f = getattr(tokenize, '\"'\"'open'\"'\"', open)(__file__) if os.path.exists(__file__) else io.StringIO('\"'\"'from setuptools import setup; setup()'\"'\"');code = f.read().replace('\"'\"'\\r\\n'\"'\"', '\"'\"'\\n'\"'\"');f.close();exec(compile(code, __file__, '\"'\"'exec'\"'\"'))' egg_info --egg-base /tmp/pip-pip-egg-info-q_srsk5e\n         cwd: /repo/\n    Complete output (11 lines):\n    Traceback (most recent call last):\n      File \"<string>\", line 1, in <module>\n      File \"/usr/local/lib/python3.6/site-packages/setuptools/__init__.py\", line 11, in <module>\n        from setuptools.extension import Extension\n      File \"/usr/local/lib/python3.6/site-packages/setuptools/extension.py\", line 5, in <module>\n        from setuptools.dist import _get_unpatched\n      File \"/usr/local/lib/python3.6/site-packages/setuptools/dist.py\", line 16, in <module>\n        import pkg_resources\n      File \"/usr/local/lib/python3.6/site-packages/pkg_resources.py\", line 1479, in <module>\n        register_loader_type(importlib_bootstrap.SourceFileLoader, DefaultProvider)\n    AttributeError: module 'importlib._bootstrap' has no attribute 'SourceFileLoader'\n    ----------------------------------------\nWARNING: Discarding file:///repo. Command errored out with exit status 1: python setup.py egg_info Check the logs for full command output.\nERROR: Command errored out with exit status 1: python setup.py egg_info Check the logs for full command output.",
+  "collects": false,
+  "reason": null,
+  "calibration": null,
+  "seconds": {
+   "build": 15.7
+  }
+ },
+ "pallets__flask-4992": {
+  "instance_id": "pallets__flask-4992",
+  "repo": "pallets/flask",
+  "image": "python:3.11-slim",
+  "python": "3.11",
+  "setup": "uv pip install --python \"$(command -v python)\" -q --exclude-newer 2023-02-23T10:59:28-08:00 --exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2023-02-23T10:59:28-08:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": {
+   "production": null,
+   "bench": null
+  },
+  "seconds": {
+   "build": 13.9,
+   "collect": 3.1,
+   "calibration": 4.7
+  }
+ },
+ "pallets__flask-5063": {
+  "instance_id": "pallets__flask-5063",
+  "repo": "pallets/flask",
+  "image": "python:3.11-slim",
+  "python": "3.11",
+  "setup": "uv pip install --python \"$(command -v python)\" -q --exclude-newer 2023-04-13T10:03:49-07:00 --exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2023-04-13T10:03:49-07:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": {
+   "production": null,
+   "bench": null
+  },
+  "seconds": {
+   "build": 13.9,
+   "collect": 3.3,
+   "calibration": 5.4
+  }
+ },
+ "psf__requests-3362": {
+  "instance_id": "psf__requests-3362",
+  "repo": "psf/requests",
+  "image": "python:3.6-slim",
+  "python": "3.6",
+  "setup": "uv pip install --python \"$(command -v python)\" -q --exclude-newer 2016-06-28T08:33:29+01:00 --exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 . pytest --reinstall && rm -rf build && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2016-06-28T08:33:29+01:00 setuptools --reinstall-package setuptools && pip install -q --no-deps -e . || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": {
+   "production": null,
+   "bench": null
+  },
+  "seconds": {
+   "build": 15.4,
+   "collect": 4.4,
+   "calibration": 4.6
+  }
+ },
+ "pylint-dev__pylint-5859": {
+  "instance_id": "pylint-dev__pylint-5859",
+  "repo": "pylint-dev/pylint",
+  "image": "python:3.10-slim",
+  "python": "3.10",
+  "setup": "uv pip install --python \"$(command -v python)\" -q --exclude-newer 2022-03-02T22:58:26+01:00 --exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2022-03-02T22:58:26+01:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": {
+   "production": null,
+   "bench": null
+  },
+  "seconds": {
+   "build": 14.5,
+   "collect": 5.1,
+   "calibration": 9.3
+  }
+ },
+ "pylint-dev__pylint-7993": {
+  "instance_id": "pylint-dev__pylint-7993",
+  "repo": "pylint-dev/pylint",
+  "image": "python:3.10-slim",
+  "python": "3.10",
+  "setup": "uv pip install --python \"$(command -v python)\" -q --exclude-newer 2022-12-26T19:16:46+01:00 --exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2022-12-26T19:16:46+01:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": {
+   "production": null,
+   "bench": null
+  },
+  "seconds": {
+   "build": 20.7,
+   "collect": 4.8,
+   "calibration": 11.1
+  }
+ },
+ "mwaskom__seaborn-3190": {
+  "instance_id": "mwaskom__seaborn-3190",
+  "repo": "mwaskom/seaborn",
+  "image": "python:3.10-slim",
+  "python": "3.10",
+  "setup": "uv pip install --python \"$(command -v python)\" -q --exclude-newer 2022-12-27T20:09:15-05:00 --exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2022-12-27T20:09:15-05:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": {
+   "production": null,
+   "bench": null
+  },
+  "seconds": {
+   "build": 15.3,
+   "collect": 6.9,
+   "calibration": 10.5
+  }
+ },
+ "pydata__xarray-3364": {
+  "instance_id": "pydata__xarray-3364",
+  "repo": "pydata/xarray",
+  "image": "python:3.7-slim",
+  "python": "3.7",
+  "setup": "uv pip install --python \"$(command -v python)\" -q --exclude-newer 2019-10-12T17:33:33-04:00 --exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2019-10-12T17:33:33-04:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": null,
+  "seconds": {
+   "build": 14.6,
+   "collect": 6.0
+  }
+ },
+ "pydata__xarray-4248": {
+  "instance_id": "pydata__xarray-4248",
+  "repo": "pydata/xarray",
+  "image": "python:3.8-slim",
+  "python": "3.8",
+  "setup": "export SETUPTOOLS_SCM_PRETEND_VERSION=0.16.0; uv pip install --python \"$(command -v python)\" -q --exclude-newer 2020-08-05T21:31:45Z --exclude-newer-package setuptools=2022-08-12T00:00:00+00:00 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2020-08-05T21:31:45Z setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": {
+   "production": null,
+   "bench": null
+  },
+  "seconds": {
+   "build": 13.6,
+   "collect": 7.5,
+   "calibration": 24.8
+  }
+ },
+ "astropy__astropy-6938": {
+  "instance_id": "astropy__astropy-6938",
+  "repo": "astropy/astropy",
+  "image": "python:3.6-slim",
+  "python": "3.6",
+  "setup": "uv pip install --python \"$(command -v python)\" -q --exclude-newer 2017-12-21T17:09:47-05:00 --exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 . pytest --reinstall && rm -rf build && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2017-12-21T17:09:47-05:00 setuptools --reinstall-package setuptools && pip install -q --no-deps -e . || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": false,
+  "error": "         If the problem persists consider installing astropy_helpers manually using pip\n         (`pip install astropy_helpers`) or by manually downloading the source archive,\n         extracting it, and installing by running `python setup.py install` from the\n         root of the extracted source code.\n    ERROR: Command errored out with exit status 1:\n     command: /usr/local/bin/python -c 'import io, os, sys, setuptools, tokenize; sys.argv[0] = '\"'\"'/repo/setup.py'\"'\"'; __file__='\"'\"'/repo/setup.py'\"'\"';f = getattr(tokenize, '\"'\"'open'\"'\"', open)(__file__) if os.path.exists(__file__) else io.StringIO('\"'\"'from setuptools import setup; setup()'\"'\"');code = f.read().replace('\"'\"'\\r\\n'\"'\"', '\"'\"'\\n'\"'\"');f.close();exec(compile(code, __file__, '\"'\"'exec'\"'\"'))' egg_info --egg-base /tmp/pip-pip-egg-info-xfnyl_bs\n         cwd: /repo/\n    Complete output (9 lines):\n    The requested path 'astropy_helpers' for importing astropy_helpers does not exist, or does not contain a copy of the astropy_helpers package.\n    Downloading 'astropy-helpers'; run setup.py with the --offline option to force offline installation.\n    No source found for the 'astropy_helpers' package; astropy_helpers must be available and importable as a prerequisite to building or installing this package.\n    \n    If the problem persists consider installing astropy_helpers manually using pip\n    (`pip install astropy_helpers`) or by manually downloading the source archive,\n    extracting it, and installing by running `python setup.py install` from the\n    root of the extracted source code.\n    \n    ----------------------------------------\nWARNING: Discarding file:///repo. Command errored out with exit status 1: python setup.py egg_info Check the logs for full command output.\nERROR: Command errored out with exit status 1: python setup.py egg_info Check the logs for full command output.",
+  "collects": false,
+  "reason": null,
+  "calibration": null,
+  "seconds": {
+   "build": 20.6
+  }
+ },
+ "scikit-learn__scikit-learn-10297": {
+  "instance_id": "scikit-learn__scikit-learn-10297",
+  "repo": "scikit-learn/scikit-learn",
+  "image": "python:3.6-slim",
+  "python": "3.6",
+  "setup": "uv pip install --python \"$(command -v python)\" -q --exclude-newer 2018-02-09T12:34:02+11:00 --exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 . pytest --reinstall && rm -rf build && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2018-02-09T12:34:02+11:00 setuptools --reinstall-package setuptools && pip install -q --no-deps -e . || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": false,
+  "error": "        setup_package()\n      File \"/repo/setup.py\", line 237, in setup_package\n        setup(**metadata)\n      File \"/usr/local/lib/python3.6/site-packages/numpy/distutils/core.py\", line 135, in setup\n        config = configuration()\n      File \"/repo/setup.py\", line 136, in configuration\n        config.add_subpackage('sklearn')\n      File \"/usr/local/lib/python3.6/site-packages/numpy/distutils/misc_util.py\", line 1020, in add_subpackage\n        caller_level = 2)\n      File \"/usr/local/lib/python3.6/site-packages/numpy/distutils/misc_util.py\", line 989, in get_subpackage\n        caller_level = caller_level + 1)\n      File \"/usr/local/lib/python3.6/site-packages/numpy/distutils/misc_util.py\", line 926, in _get_configuration_from_setup_py\n        config = setup_module.configuration(*args)\n      File \"sklearn/setup.py\", line 82, in configuration\n        maybe_cythonize_extensions(top_path, config)\n      File \"/repo/sklearn/_build_utils/__init__.py\", line 74, in maybe_cythonize_extensions\n        import Cython\n    ModuleNotFoundError: No module named 'Cython'\n    ----------------------------------------\nERROR: Command errored out with exit status 1: /usr/local/bin/python -c 'import io, os, sys, setuptools, tokenize; sys.argv[0] = '\"'\"'/repo/setup.py'\"'\"'; __file__='\"'\"'/repo/setup.py'\"'\"';f = getattr(tokenize, '\"'\"'open'\"'\"', open)(__file__) if os.path.exists(__file__) else io.StringIO('\"'\"'from setuptools import setup; setup()'\"'\"');code = f.read().replace('\"'\"'\\r\\n'\"'\"', '\"'\"'\\n'\"'\"');f.close();exec(compile(code, __file__, '\"'\"'exec'\"'\"'))' develop --no-deps Check the logs for full command output.",
+  "collects": false,
+  "reason": null,
+  "calibration": null,
+  "seconds": {
+   "build": 26.3
+  }
+ },
+ "scikit-learn__scikit-learn-10508": {
+  "instance_id": "scikit-learn__scikit-learn-10508",
+  "repo": "scikit-learn/scikit-learn",
+  "image": "python:3.6-slim",
+  "python": "3.6",
+  "setup": "uv pip install --python \"$(command -v python)\" -q --exclude-newer 2018-01-19T22:56:29+08:00 --exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 . pytest --reinstall && rm -rf build && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2018-01-19T22:56:29+08:00 setuptools --reinstall-package setuptools && pip install -q --no-deps -e . || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": false,
+  "error": "        setup_package()\n      File \"/repo/setup.py\", line 237, in setup_package\n        setup(**metadata)\n      File \"/usr/local/lib/python3.6/site-packages/numpy/distutils/core.py\", line 135, in setup\n        config = configuration()\n      File \"/repo/setup.py\", line 136, in configuration\n        config.add_subpackage('sklearn')\n      File \"/usr/local/lib/python3.6/site-packages/numpy/distutils/misc_util.py\", line 1020, in add_subpackage\n        caller_level = 2)\n      File \"/usr/local/lib/python3.6/site-packages/numpy/distutils/misc_util.py\", line 989, in get_subpackage\n        caller_level = caller_level + 1)\n      File \"/usr/local/lib/python3.6/site-packages/numpy/distutils/misc_util.py\", line 926, in _get_configuration_from_setup_py\n        config = setup_module.configuration(*args)\n      File \"sklearn/setup.py\", line 82, in configuration\n        maybe_cythonize_extensions(top_path, config)\n      File \"/repo/sklearn/_build_utils/__init__.py\", line 74, in maybe_cythonize_extensions\n        import Cython\n    ModuleNotFoundError: No module named 'Cython'\n    ----------------------------------------\nERROR: Command errored out with exit status 1: /usr/local/bin/python -c 'import io, os, sys, setuptools, tokenize; sys.argv[0] = '\"'\"'/repo/setup.py'\"'\"'; __file__='\"'\"'/repo/setup.py'\"'\"';f = getattr(tokenize, '\"'\"'open'\"'\"', open)(__file__) if os.path.exists(__file__) else io.StringIO('\"'\"'from setuptools import setup; setup()'\"'\"');code = f.read().replace('\"'\"'\\r\\n'\"'\"', '\"'\"'\\n'\"'\"');f.close();exec(compile(code, __file__, '\"'\"'exec'\"'\"'))' develop --no-deps Check the logs for full command output.",
+  "collects": false,
+  "reason": null,
+  "calibration": null,
+  "seconds": {
+   "build": 26.3
+  }
+ },
+ "scikit-learn__scikit-learn-11040": {
+  "instance_id": "scikit-learn__scikit-learn-11040",
+  "repo": "scikit-learn/scikit-learn",
+  "image": "python:3.6-slim",
+  "python": "3.6",
+  "setup": "uv pip install --python \"$(command -v python)\" -q --exclude-newer 2018-04-27T08:02:39+10:00 --exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 . pytest --reinstall && rm -rf build && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2018-04-27T08:02:39+10:00 setuptools --reinstall-package setuptools && pip install -q --no-deps -e . || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": false,
+  "error": "        setup_package()\n      File \"/repo/setup.py\", line 237, in setup_package\n        setup(**metadata)\n      File \"/usr/local/lib/python3.6/site-packages/numpy/distutils/core.py\", line 135, in setup\n        config = configuration()\n      File \"/repo/setup.py\", line 136, in configuration\n        config.add_subpackage('sklearn')\n      File \"/usr/local/lib/python3.6/site-packages/numpy/distutils/misc_util.py\", line 1020, in add_subpackage\n        caller_level = 2)\n      File \"/usr/local/lib/python3.6/site-packages/numpy/distutils/misc_util.py\", line 989, in get_subpackage\n        caller_level = caller_level + 1)\n      File \"/usr/local/lib/python3.6/site-packages/numpy/distutils/misc_util.py\", line 926, in _get_configuration_from_setup_py\n        config = setup_module.configuration(*args)\n      File \"sklearn/setup.py\", line 83, in configuration\n        maybe_cythonize_extensions(top_path, config)\n      File \"/repo/sklearn/_build_utils/__init__.py\", line 74, in maybe_cythonize_extensions\n        import Cython\n    ModuleNotFoundError: No module named 'Cython'\n    ----------------------------------------\nERROR: Command errored out with exit status 1: /usr/local/bin/python -c 'import io, os, sys, setuptools, tokenize; sys.argv[0] = '\"'\"'/repo/setup.py'\"'\"'; __file__='\"'\"'/repo/setup.py'\"'\"';f = getattr(tokenize, '\"'\"'open'\"'\"', open)(__file__) if os.path.exists(__file__) else io.StringIO('\"'\"'from setuptools import setup; setup()'\"'\"');code = f.read().replace('\"'\"'\\r\\n'\"'\"', '\"'\"'\\n'\"'\"');f.close();exec(compile(code, __file__, '\"'\"'exec'\"'\"'))' develop --no-deps Check the logs for full command output.",
+  "collects": false,
+  "reason": null,
+  "calibration": null,
+  "seconds": {
+   "build": 26.0
+  }
+ },
+ "matplotlib__matplotlib-18869": {
+  "instance_id": "matplotlib__matplotlib-18869",
+  "repo": "matplotlib/matplotlib",
+  "image": "python:3.9-slim",
+  "python": "3.9",
+  "setup": "export SETUPTOOLS_SCM_PRETEND_VERSION=3.4.2; uv pip install --python \"$(command -v python)\" -q --exclude-newer 2021-07-08T18:35:02-04:00 --exclude-newer-package setuptools=2022-08-12T00:00:00+00:00 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2021-07-08T18:35:02-04:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": false,
+  "error": "        super().run_command(command)\n      File \"/usr/local/lib/python3.9/site-packages/setuptools/_distutils/dist.py\", line 1021, in run_command\n        cmd_obj.run()\n      File \"/usr/local/lib/python3.9/site-packages/setuptools/command/build_ext.py\", line 99, in run\n        _build_ext.run(self)\n      File \"/usr/local/lib/python3.9/site-packages/setuptools/_distutils/command/build_ext.py\", line 368, in run\n        self.build_extensions()\n      File \"/repo/setup.py\", line 192, in build_extensions\n        package.do_custom_build(env)\n      File \"/repo/setupext.py\", line 591, in do_custom_build\n        subprocess.check_call(\n      File \"/usr/local/lib/python3.9/subprocess.py\", line 373, in check_call\n        raise CalledProcessError(retcode, cmd)\n    subprocess.CalledProcessError: Command '['./configure', '--with-zlib=no', '--with-bzip2=no', '--with-png=no', '--with-harfbuzz=no', '--enable-static', '--disable-shared']' returned non-zero exit status 1.\n    Extracting /project/freetype/freetype2/2.6.1/freetype-2.6.1.tar.gz\n    Building freetype in build/freetype-2.6.1\n    [end of output]\n\nnote: This error originates from a subprocess, and is likely not a problem with pip.\n",
+  "collects": false,
+  "reason": null,
+  "calibration": null,
+  "seconds": {
+   "build": 38.0
+  }
+ },
+ "astropy__astropy-12907": {
+  "instance_id": "astropy__astropy-12907",
+  "repo": "astropy/astropy",
+  "image": "python:3.10-slim",
+  "python": "3.10",
+  "setup": "export SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0; uv pip install --python \"$(command -v python)\" -q --exclude-newer 2022-03-03T13:21:56-05:00 --exclude-newer-package setuptools=2022-08-12T00:00:00+00:00 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2022-03-03T13:21:56-05:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": false,
+  "error": "        File \"/tmp/pip-build-env-7txxy317/overlay/lib/python3.10/site-packages/extension_helpers/_setup_helpers.py\", line 184, in iter_setup_packages\n          module = import_file(setup_package, name=packagename + \".setup_package\")\n        File \"/tmp/pip-build-env-7txxy317/overlay/lib/python3.10/site-packages/extension_helpers/_utils.py\", line 147, in import_file\n          loader.exec_module(mod)\n        File \"<frozen importlib._bootstrap_external>\", line 883, in exec_module\n        File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n        File \"astropy/wcs/setup_package.py\", line 12, in <module>\n          from setuptools.dep_util import newer_group\n      ModuleNotFoundError: No module named 'setuptools.dep_util'\n      [end of output]\n  \n  note: This error originates from a subprocess, and is likely not a problem with pip.\nerror: subprocess-exited-with-error\n\n\u00d7 Getting requirements to build editable did not run successfully.\n\u2502 exit code: 1\n\u2570\u2500> See above for output.\n\nnote: This error originates from a subprocess, and is likely not a problem with pip.\n",
+  "collects": false,
+  "reason": null,
+  "calibration": null,
+  "seconds": {
+   "build": 28.6
+  }
+ },
+ "astropy__astropy-14182": {
+  "instance_id": "astropy__astropy-14182",
+  "repo": "astropy/astropy",
+  "image": "python:3.10-slim",
+  "python": "3.10",
+  "setup": "export SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0; uv pip install --python \"$(command -v python)\" -q --exclude-newer 2022-12-15T23:36:33-05:00 --exclude-newer-package setuptools=2022-12-15T23:36:33-05:00 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2022-12-15T23:36:33-05:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": false,
+  "error": "        File \"/tmp/pip-build-env-cbvcxuaq/overlay/lib/python3.10/site-packages/extension_helpers/_setup_helpers.py\", line 184, in iter_setup_packages\n          module = import_file(setup_package, name=packagename + \".setup_package\")\n        File \"/tmp/pip-build-env-cbvcxuaq/overlay/lib/python3.10/site-packages/extension_helpers/_utils.py\", line 147, in import_file\n          loader.exec_module(mod)\n        File \"<frozen importlib._bootstrap_external>\", line 883, in exec_module\n        File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n        File \"astropy/wcs/setup_package.py\", line 13, in <module>\n          from setuptools.dep_util import newer_group\n      ModuleNotFoundError: No module named 'setuptools.dep_util'\n      [end of output]\n  \n  note: This error originates from a subprocess, and is likely not a problem with pip.\nerror: subprocess-exited-with-error\n\n\u00d7 Getting requirements to build editable did not run successfully.\n\u2502 exit code: 1\n\u2570\u2500> See above for output.\n\nnote: This error originates from a subprocess, and is likely not a problem with pip.\n",
+  "collects": false,
+  "reason": null,
+  "calibration": null,
+  "seconds": {
+   "build": 26.5
+  }
+ },
+ "matplotlib__matplotlib-22711": {
+  "instance_id": "matplotlib__matplotlib-22711",
+  "repo": "matplotlib/matplotlib",
+  "image": "python:3.10-slim",
+  "python": "3.10",
+  "setup": "export SETUPTOOLS_SCM_PRETEND_VERSION=3.5.0; uv pip install --python \"$(command -v python)\" -q --exclude-newer 2022-03-29T23:55:06+02:00 --exclude-newer-package setuptools=2022-08-12T00:00:00+00:00 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2022-03-29T23:55:06+02:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": false,
+  "error": "        super().run_command(command)\n      File \"/usr/local/lib/python3.10/site-packages/setuptools/_distutils/dist.py\", line 1021, in run_command\n        cmd_obj.run()\n      File \"/usr/local/lib/python3.10/site-packages/setuptools/command/build_ext.py\", line 99, in run\n        _build_ext.run(self)\n      File \"/usr/local/lib/python3.10/site-packages/setuptools/_distutils/command/build_ext.py\", line 368, in run\n        self.build_extensions()\n      File \"/repo/setup.py\", line 174, in build_extensions\n        package.do_custom_build(env)\n      File \"/repo/setupext.py\", line 639, in do_custom_build\n        subprocess.check_call(configure, env=env, cwd=src_path)\n      File \"/usr/local/lib/python3.10/subprocess.py\", line 369, in check_call\n        raise CalledProcessError(retcode, cmd)\n    subprocess.CalledProcessError: Command '['./configure', '--with-zlib=no', '--with-bzip2=no', '--with-png=no', '--with-harfbuzz=no', '--enable-static', '--disable-shared', '--host=x86_64-pc-linux-gnu']' returned non-zero exit status 1.\n    Extracting /project/freetype/freetype2/2.6.1/freetype-2.6.1.tar.gz\n    Building freetype in build/freetype-2.6.1\n    [end of output]\n\nnote: This error originates from a subprocess, and is likely not a problem with pip.\n",
+  "collects": false,
+  "reason": null,
+  "calibration": null,
+  "seconds": {
+   "build": 38.0
+  }
+ },
+ "matplotlib__matplotlib-23299": {
+  "instance_id": "matplotlib__matplotlib-23299",
+  "repo": "matplotlib/matplotlib",
+  "image": "python:3.10-slim",
+  "python": "3.10",
+  "setup": "export SETUPTOOLS_SCM_PRETEND_VERSION=3.5.2; uv pip install --python \"$(command -v python)\" -q --exclude-newer 2022-06-26T00:58:46+02:00 --exclude-newer-package setuptools=2022-08-12T00:00:00+00:00 --exclude-newer-package atomicwrites=2100-01-01 -e . pytest --reinstall && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2022-06-26T00:58:46+02:00 setuptools --reinstall-package setuptools || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": false,
+  "error": "        super().run_command(command)\n      File \"/usr/local/lib/python3.10/site-packages/setuptools/_distutils/dist.py\", line 1021, in run_command\n        cmd_obj.run()\n      File \"/usr/local/lib/python3.10/site-packages/setuptools/command/build_ext.py\", line 99, in run\n        _build_ext.run(self)\n      File \"/usr/local/lib/python3.10/site-packages/setuptools/_distutils/command/build_ext.py\", line 368, in run\n        self.build_extensions()\n      File \"/repo/setup.py\", line 174, in build_extensions\n        package.do_custom_build(env)\n      File \"/repo/setupext.py\", line 636, in do_custom_build\n        subprocess.check_call(configure, env=env, cwd=src_path)\n      File \"/usr/local/lib/python3.10/subprocess.py\", line 369, in check_call\n        raise CalledProcessError(retcode, cmd)\n    subprocess.CalledProcessError: Command '['./configure', '--with-zlib=no', '--with-bzip2=no', '--with-png=no', '--with-harfbuzz=no', '--enable-static', '--disable-shared', '--host=x86_64-pc-linux-gnu']' returned non-zero exit status 1.\n    Extracting /project/freetype/freetype2/2.6.1/freetype-2.6.1.tar.gz\n    Building freetype in build/freetype-2.6.1\n    [end of output]\n\nnote: This error originates from a subprocess, and is likely not a problem with pip.\n",
+  "collects": false,
+  "reason": null,
+  "calibration": null,
+  "seconds": {
+   "build": 34.5
+  }
+ },
+ "sympy__sympy-11400": {
+  "instance_id": "sympy__sympy-11400",
+  "repo": "sympy/sympy",
+  "image": "python:3.6-slim",
+  "python": "3.6",
+  "setup": "uv pip install --python \"$(command -v python)\" -q --exclude-newer 2016-07-16T14:05:08-05:00 --exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 . pytest --reinstall && rm -rf build && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2016-07-16T14:05:08-05:00 setuptools --reinstall-package setuptools && pip install -q --no-deps -e . || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": null,
+  "seconds": {
+   "build": 24.7,
+   "collect": 53.2
+  }
+ },
+ "sympy__sympy-12171": {
+  "instance_id": "sympy__sympy-12171",
+  "repo": "sympy/sympy",
+  "image": "python:3.6-slim",
+  "python": "3.6",
+  "setup": "uv pip install --python \"$(command -v python)\" -q --exclude-newer 2017-02-23T11:33:07+05:30 --exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 . pytest --reinstall && rm -rf build && uv pip install --python \"$(command -v python)\" -q --exclude-newer 2017-02-23T11:33:07+05:30 setuptools --reinstall-package setuptools && pip install -q --no-deps -e . || pip install -e .",
+  "test": "python -m pytest -q -rfE",
+  "built": true,
+  "error": null,
+  "collects": true,
+  "reason": null,
+  "calibration": null,
+  "seconds": {
+   "build": 21.4,
+   "collect": 50.8
+  }
+ }
+}

@@ -13,6 +13,7 @@ from slopgate.github import duration
 from slopgate.config import ULTRA
 from slopgate.kinds import KINDS
 from slopgate.review import REJECTED
+from slopgate.sandbox import Local
 
 SUMMARY = "One function got flatter."
 PR_URL = "https://github.com/acme/shop/pull/8"
@@ -282,13 +283,31 @@ def test_install_failure_posts_one_notice_and_a_note_per_candidate_without_a_sum
 
     _, call = calls()
     review = json.loads(call["stdin"])
-    assert review["body"] == "Slopgate could not build the test environment, so it proved nothing.\n\n```\nbroken\n```"
+    assert review["body"].startswith("Slopgate could not build the test environment, so it proved nothing.\n\n```\nbroken\n```\n\nTo fix this, add a `.slopgate.toml`")
     why = "Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing."
     assert review["comments"] == [
         {"path": "app/perms.py", "line": 14, "side": "RIGHT", "body": f"**nesting** (not rewritten): `can_edit`: {KINDS['nesting']} {why}"},
         {"path": "app/views.py", "line": 14, "side": "RIGHT", "body": f"**nesting** (not rewritten): `can_view`: {KINDS['nesting']} {why}"},
     ]
     assert fake_llm.calls == []
+
+
+def test_sandbox_error_posts_the_notice_without_the_install_hint(github, fake_llm, capsys, monkeypatch):
+    make, calls = github
+    repo, _ = make({"app/__init__.py": ""}, {"app/perms.py": NESTED})
+
+    def prepare(self, repo, ref, setup, image=None):
+        raise RuntimeError("HTTP 503 from ConTree")
+
+    monkeypatch.setattr(Local, "prepare", prepare)
+
+    post(repo)
+
+    _, call = calls()
+    body = json.loads(call["stdin"])["body"]
+    assert body.startswith("Slopgate could not build the test environment, so it proved nothing.\n\n```\n")
+    assert "HTTP 503 from ConTree" in body
+    assert "To fix this" not in body and ".slopgate.toml" not in body
 
 
 def test_install_failure_still_posts_the_notes_as_a_review(github, fake_llm, capsys):
@@ -300,7 +319,8 @@ def test_install_failure_still_posts_the_notes_as_a_review(github, fake_llm, cap
     _, call = calls()
     assert call["args"] == ["api", "--method", "POST", "repos/acme/shop/pulls/7/reviews", "--input", "-"]
     review = json.loads(call["stdin"])
-    assert review["body"] == "Slopgate could not build the test environment, so it proved nothing.\n\n```\nbroken\n```"
+    assert review["body"].startswith("Slopgate could not build the test environment, so it proved nothing.\n\n```\nbroken\n```\n\n")
+    assert 'setup = "pip install -e \'.[test]\'"' in review["body"]
     assert [c["path"] for c in review["comments"]] == ["tests/conftest.py", "app/perms.py"]
     assert ULTRA not in [model for model, _ in fake_llm.calls]
 

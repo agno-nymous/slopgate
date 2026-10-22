@@ -14,6 +14,15 @@ Results:
 
 {results}"""
 
+INSTALL_HINT = """To fix this, add a `.slopgate.toml` to the repository with the commands that install the test environment:
+
+```toml
+[sandbox]
+setup = "pip install -e '.[test]'"
+```
+
+The `setup` line replaces the install that Slopgate guessed."""
+
 
 def run(*args, stdin=None, **options) -> str:
     done = subprocess.run(args, input=stdin, capture_output=True, text=True, **options)
@@ -99,10 +108,11 @@ def publish(repo, result, event, seconds) -> None:
         return
     pr, target = event["pull_request"], event["repository"]["full_name"]
     number = str(pr["number"])
-    notice = next((r["reason"] for r in result["rejected"] if "function" not in r), None)
+    notice = next((r for r in result["rejected"] if "function" not in r), None)
     if notice:
-        output = notice.split("\n", 1)[1]
-        body = f"Slopgate could not build the test environment, so it proved nothing.\n\n```\n{output}\n```"
+        output = notice["reason"].split("\n", 1)[1]
+        hint = f"\n\n{INSTALL_HINT}" if notice.get("install", True) else ""
+        body = f"Slopgate could not build the test environment, so it proved nothing.\n\n```\n{output}\n```{hint}"
     else:
         followups = result["followup"]
         if not followups:

@@ -39,13 +39,32 @@ To let Slopgate open follow-up pull requests, turn on **Settings > Actions > Gen
 
 Slopgate never fails CI. A pull request without findings gets no comment. If the sandbox cannot install the repo, the pull request gets one notice comment.
 
-The sandbox runs `pip install -e .` (or `pip install -r requirements.txt`) and `python -m pytest -q -rfE`. To change either, add `.slopgate.toml`:
+### How Slopgate installs your repository
+
+The sandbox is a ConTree Linux container (Debian, root, network access) with Python 3.12, or an older Python for an old commit (rule 3). Slopgate installs pytest, coverage, and uv first. Then it installs your repository. Slopgate uses the first rule that applies:
+
+1. `setup` in `.slopgate.toml`. The sandbox uses Python 3.12 and runs only your `setup`. This override also replaces the old Python and the date pins of the other rules.
+2. `uv.lock` with `pyproject.toml`: the locked versions of all dependency groups, then the project itself.
+3. `pyproject.toml` or `setup.py`: `pip install -e .`. For a commit from before 2023-10-02, the sandbox installs the dependency versions released before the commit date. It uses the newest Python that was released at least 90 days before the commit (3.6 to 3.11).
+4. Only `requirements*.txt`: `pip install -r` for each file.
+5. None of these: no install.
+
+If the pinned install of rule 2 or 3 fails, the sandbox falls back to `pip install -e .`. If the repository takes its version from git (setuptools-scm, hatch-vcs), the sandbox has no `.git`, so Slopgate sets the version from the last tag. This export applies to rules 2 and 3. A `setup` override must set `SETUPTOOLS_SCM_PRETEND_VERSION` itself.
+
+After the install, Slopgate runs the `test` command once with `--collect-only` (only when `test` is a pytest command). If no test collects, or the conftest does not import, the gate stops and posts one notice. It writes no test and rewrites nothing. The check passes while at least one test collects. A test module that does not import (for example, a missing optional test dependency) does not stop the gate.
+
+If this install fails, put the install in `.slopgate.toml`. The `setup` text is one shell script. Join commands with `&&`: the sandbox reads only the exit code of the last command, so it can miss an earlier failure. Slopgate then runs `python -m pytest -q -rfE`, or your `test` command:
 
 ```toml
 [sandbox]
 setup = "pip install -e '.[test]'"
 test = "python -m pytest -q tests/unit"
 ```
+
+Two examples of `setup`:
+
+- Test extras: `pip install -e '.[test]'`
+- System libraries and extras: `apt-get update && apt-get install -y build-essential libfreetype6-dev && pip install -e '.[test]'`
 
 Slopgate runs the `test` command once on the original code. A test that fails there does not reject a rewrite. The `test` command must be one pytest run. Do not chain commands with `&&`: a failure in the first run stops the second run, and Slopgate cannot see that. Do not use `-x`. Keep `f` and `E` in `-r` (pytest 5.4 and later show them by default). If a run cannot be compared, every failing test rejects the rewrite.
 

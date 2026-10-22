@@ -9,7 +9,7 @@
 
 **Blocked by:** 58, 59
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Type:** feature.
 
@@ -309,10 +309,75 @@ Order (each unit ends in a check):
 
 ## Acceptance
 
-- [ ] The stage 0 probes ran: uv-managed Python 3.7 and 3.8 in ConTree, `PATH` in session commands, `--collect-only` exit codes on 2019 pytest, and whether Lightning makes tool calls.
-- [ ] `collect_error` runs before any characterization. When it fails and the agent fails, the gate posts `NO_ENVIRONMENT` without a Super call.
-- [ ] The `install` stage reports the guess install, Lightning, and Super on the same instances, 3 tries each.
-- [ ] The model choice follows the rule in section 8.
-- [ ] The PR summary shows the verified install script as a `.slopgate.toml` `setup` suggestion.
-- [ ] `run` and `report` are made again with the agent install, and the numbers are compared with ticket 10.
-- [ ] Offline tests cover the replay, the collection check, and the `CANNOT_INSTALL` line.
+- [x] The stage 0 probes ran: uv-managed Python 3.8 in ConTree (3.7 has no uv download), `PATH` in session commands, `--collect-only` exit codes on 2019 pytest, and whether Lightning makes tool calls. See the Comments of 2026-10-20.
+- [x] `collect_error` runs before any characterization. When it fails, the gate posts `NO_ENVIRONMENT` without a Super call. (The agent part of this box is void: no agent ships.)
+- [ ] The `install` stage reports the guess install, Lightning, and Super on the same instances, 3 tries each. Not met as written: the agent was measured with Super only (72 attempts, 0 successes), so Lightning was not run. The default install is reported on 28 instances.
+- [ ] The model choice follows the rule in section 8. Not met: the rule says that the agent does not ship when it is below the default on the default-fails subset. It proved 0 of 72 attempts, so no model was chosen.
+- [ ] The PR summary shows the verified install script as a `.slopgate.toml` `setup` suggestion. Not met: no agent writes a script. The gate shows a hint to set `setup` by hand (`INSTALL_HINT` in `github.py`), and the README describes the install ways.
+- [x] `run` and `report` are made again with the new install, and the numbers are compared with ticket 10.
+- [x] Offline tests cover the collection check, the retry of transient ConTree faults, and the notice hint. (The replay and `CANNOT_INSTALL` tests are void: no agent ships.)
+
+## Comments
+
+### 2026-10-20 — Stage 0 probes
+
+The probes ran on ConTree (`python:3.12-slim` with `pip install uv`) and on Token Factory. Scripts were in the scratchpad.
+
+- `uv python install 3.8` works (3 s). `uv venv --seed --python 3.8 /venv` works (6 s) and `pip` runs in it.
+- `uv python install 3.7` fails: `No download found for request: cpython-3.7-linux-x86_64-gnu`. The floor for the agent is Python 3.8. Ticket 59 already covers 3.6 and 3.7 in the guess install with `pip install --ignore-requires-python uv`.
+- `run(..., env={"PATH": VENV_PATH}, preserve_env=True)` keeps the PATH. In the next `image.run` and in two session commands in a row, `command -v python` gives `/venv/bin/python`. No `env` is needed on later commands.
+- `apt-get update && apt-get install -y build-essential` takes 24 s.
+- `pytest --collect-only -q` on pytest 4.6.11 (2019): exit 0 with one test, exit 2 with a module that does not import, exit 5 with no test. These are the same codes as in new pytest versions.
+- Lightning returns a tool call with the `execute` tool (`{"command":"ls /repo"}`), like Super.
+- Context window: Lightning accepted a prompt of 400,021 tokens. Super accepted 100,021 tokens. The next request for Super (200,021 tokens) failed with a rate limit (429, token quota), not with a context error. The quota is a limit for the eval: 8 parallel agent runs with long contexts can reach it.
+
+### 2026-10-21 — What shipped, and why no agent ships
+
+**Decision.** The install agent does not ship. The user chose this on 2026-10-21: a person writes the install instructions, and the gate does not guess with a model. The measured result supports it (section "The agent" below). The agent code was removed.
+
+**What was built (all deterministic, no model call):**
+
+- `collect_error` in `sandbox.py`. After the install, the gate runs `pytest --collect-only --continue-on-collection-errors` on `Contree`, only for pytest commands. Exit 0 passes. Exit 1 passes when at least one test id is listed (an optional test module can fail to import). Exit 4 (bad conftest) and 5 (no tests) fail. pytest before 3.0 has no such flag, so the check runs again without it. A failed check gives `NO_ENVIRONMENT` with the pytest output, and the gate makes no Super call.
+- `retried` in `sandbox.py`. `Contree.prepare` and `Contree.run` try again, with waits of 5 s and 15 s, on a timeout, a transport error, a 429, or a 5xx. Before, one ConTree fault rejected the whole instance.
+- `Contree.prepare` installs `uv`, so the pinned install needs no `uv` prefix. `tail` drops pip notices, so the real error is the last line of the notice. `commit_date` uses `git log -1` (`git show -s` failed with exit 128 on the merge commit of astropy-6938 in a blobless clone). The Python 3.6 build removes a stale `build/` folder (sympy-11400 failed with `ImportMismatchError`).
+- The `NO_ENVIRONMENT` notice shows `INSTALL_HINT`: how to set `setup` in `.slopgate.toml`. The README has the new section "How Slopgate installs your repository" with the ways to install, in order.
+- `bench/swebench.py`: stage `install` (default install, collection check, and calibration on the official SWE-bench image), 13 more Lite instances in `EXTRA`, and test directories for sympy, scikit-learn, matplotlib, and astropy.
+
+**Worked example.** `sphinx-doc__sphinx-7975`, function `SphinxComponentRegistry.load_extension` (commit of 2020-07).
+
+- Before (ticket 10 run, plain install on `python:3.10-slim`): the sandbox built, but the conftest raised `ImportError while loading conftest`. The gate spent Super calls and rejected the item: `step limit: characterization tests fail on original: ImportError while loading conftest`.
+- After: the install uses Python 3.8 (ticket 59). `collect_error` passes. The gate writes the tests, proves the rewrite, and posts it: `nesting 5 -> 3`.
+
+**Measured results.**
+
+- Default install, 28 instances (`bench/results/swebench/install.md`): 18 build and collect. 0 false triggers (a build where the tests do not collect). On the official SWE-bench images, the production command and the bench command both pass on 15 of 15, so the check is not too strict. Mean 32.9 s per instance.
+- The first version of the check (exit code 0 only) triggered on 8 of 14 working environments, because one optional test module failed to import. The final rule (exit 0, or exit 1 with a test id) gives 0 false triggers on the 18.
+- The 10 instances that fail are compiled repos: scikit-learn (3), matplotlib (3), astropy (3), and requests-1963. The image has no compiler. Ticket 74 follows.
+- Benchmark `run` and `report`, 15 instances, before (ticket 10 baseline, `swebench-plain-install.json`) and after (`swebench.json`):
+
+| Metric | Before | After |
+|---|---|---|
+| Items | 30 | 42 |
+| Detected | 26 | 38 |
+| Accepted | 7 | 13 |
+| Acceptance (accepted / detected) | 26.9% | 34.2% |
+| Infrastructure errors (`no_environment`) | 15 | 3 |
+| Silent breaks | 0 | 0 |
+| Gate cost (USD) | 0.67 | 0.79 |
+
+  The 3 remaining infrastructure errors are all `psf__requests-3362`: the bench test command carries `--continue-on-collection-errors`, and pytest 2.9 rejects it (ticket 72). 5 of 42 items were rejected with `RateLimitError` 429 on Token Factory (ticket 73). Items grew from 30 to 42 because 8 instances had no environment before, so the gate saw no candidates there.
+
+**The agent (measured, not shipped).** The agent had a tool loop in a ConTree session, `INSTALL_RULES` and `INSTALL_TASK`, and a replay of its script on a new image.
+
+- Run 1: 48 attempts with Super, 0 successes, USD 2.77. The causes: the agent wrote its script only at the end of the loop, the failure text was weak, and it did not read the README first.
+- Run 2: the prompt was fixed (script written early, the README named, a clearer failure text). 24 attempts, 0 successes, USD 1.49.
+- The decision rule of section 8 says that the agent does not ship if it is below the default on the default-fails subset. The agent got 0 of 72. The default got 18 of 28.
+- Not measured: Lightning as the install agent, and an agent with a compiler (`apt-get`) step.
+
+**Known limits.**
+
+- A repo whose install needs a compiler or a custom setup still gets `NO_ENVIRONMENT`. The notice tells the maintainer to set `setup` (ticket 74 measures the lines).
+- The collection check passes when at least one test collects. A repo can still have tests that fail at fixture time. The baseline run (ticket 48) shows these.
+- `retried` starts a whole `run` again after one failed poll. A 5xx near the end of a long suite runs the suite again, up to 3 times.
+- The check runs only on `Contree`. `Local` (offline tests and dry runs) runs no check.
+- Follow-up tickets: 72 (bench test command breaks pytest 2.9), 73 (rate limit rejects items), 74 (compiled repos, and a uv and pip A/B).

@@ -1,0 +1,18 @@
+{
+ "models": {
+  "install agent": "nvidia/Nemotron-3_5-Lightning, nvidia/nemotron-3-super-120b-a12b"
+ },
+ "commit": "1890fa62d2e366e151c89c9d7a660b21e5fbf5fc",
+ "dirty": true,
+ "date": "2026-10-20",
+ "seeds": {},
+ "prompts": {
+  "INSTALL_RULES": "1f912070f8e9",
+  "INSTALL_TASK": "27e3147b0954"
+ },
+ "counts": {
+  "attempts": 24,
+  "successes": 0
+ },
+ "usd": 1.4883
+}
