@@ -1,0 +1,17 @@
+{
+ "models": {},
+ "commit": "1890fa62d2e366e151c89c9d7a660b21e5fbf5fc",
+ "dirty": true,
+ "date": "2026-10-21",
+ "seeds": {},
+ "prompts": {},
+ "counts": {
+  "instances": 28,
+  "built": 18,
+  "collects": 18,
+  "false_triggers": 0,
+  "calibrated": 15,
+  "calibration_production": 15,
+  "calibration_bench": 15
+ }
+}

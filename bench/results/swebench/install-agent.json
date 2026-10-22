@@ -1,0 +1,458 @@
+{
+ "psf__requests-1963|nvidia/nemotron-3-super-120b-a12b|2": {
+  "instance_id": "psf__requests-1963",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 2,
+  "success": false,
+  "reason": "Unable to install due to vendored urllib3 compatibility with modern Python",
+  "script": "# CANNOT_INSTALL: Unable to install due to vendored urllib3 compatibility with modern Python\n",
+  "seconds": 128.6,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 220351,
+    "output_tokens": 2630
+   }
+  },
+  "usd": 0.0685,
+  "venv": false,
+  "apt": false
+ },
+ "psf__requests-1963|nvidia/nemotron-3-super-120b-a12b|1": {
+  "instance_id": "psf__requests-1963",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 1,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 137.0,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 227179,
+    "output_tokens": 2981
+   }
+  },
+  "usd": 0.0708,
+  "venv": false,
+  "apt": false
+ },
+ "psf__requests-1963|nvidia/nemotron-3-super-120b-a12b|3": {
+  "instance_id": "psf__requests-1963",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 138.2,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 254968,
+    "output_tokens": 4735
+   }
+  },
+  "usd": 0.0808,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10297|nvidia/Nemotron-3_5-Lightning|1": {
+  "instance_id": "scikit-learn__scikit-learn-10297",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 1,
+  "success": false,
+  "reason": "no script: agent stopped (agent error: ApiStatusCodeError(request=RequestInfo(url='https://api.tokenfactory.nebius.com/sandboxes/v1/operations/01a15c59-cd14-7673-85ad-4d3be32c3624', method='GET'), response=ResponseInfo(headers={'date': 'Wed, 21 Oct 2026 02:45:51 GMT', 'content-type': 'application/json; charset=utf-8', 'content-length': '49', 'connection': 'keep-alive', 'traceparent': '00-54676d030a6c6f5c2b5ce231b55aa337-673e135c3f4f9530-01', 'strict-transport-security': 'max-age=31536000; includeSubDomains'}), status=500, error='Internal Server Error'))",
+  "script": null,
+  "seconds": 178.6,
+  "steps": 15,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 105010,
+    "output_tokens": 532
+   }
+  },
+  "usd": 0.0064,
+  "venv": false,
+  "apt": false
+ },
+ "psf__requests-1963|nvidia/Nemotron-3_5-Lightning|1": {
+  "instance_id": "psf__requests-1963",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 1,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 212.5,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 239678,
+    "output_tokens": 1560
+   }
+  },
+  "usd": 0.0148,
+  "venv": false,
+  "apt": false
+ },
+ "psf__requests-1963|nvidia/Nemotron-3_5-Lightning|2": {
+  "instance_id": "psf__requests-1963",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 2,
+  "success": false,
+  "reason": "no script: agent stopped (agent error: ApiStatusCodeError(request=RequestInfo(url='https://api.tokenfactory.nebius.com/sandboxes/v1/operations/01a15c5a-5a8d-72a1-9633-6c0e960d7a2a', method='GET'), response=ResponseInfo(headers={'date': 'Wed, 21 Oct 2026 02:46:27 GMT', 'content-type': 'application/json; charset=utf-8', 'content-length': '49', 'connection': 'keep-alive', 'traceparent': '00-ea8cb605c48021a297c45dbd4680355d-97fbeb69eb52e4be-01', 'strict-transport-security': 'max-age=31536000; includeSubDomains'}), status=500, error='Internal Server Error'))",
+  "script": null,
+  "seconds": 215.0,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 241237,
+    "output_tokens": 1624
+   }
+  },
+  "usd": 0.0149,
+  "venv": false,
+  "apt": false
+ },
+ "psf__requests-1963|nvidia/Nemotron-3_5-Lightning|3": {
+  "instance_id": "psf__requests-1963",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 224.7,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 243827,
+    "output_tokens": 1777
+   }
+  },
+  "usd": 0.0151,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10297|nvidia/Nemotron-3_5-Lightning|3": {
+  "instance_id": "scikit-learn__scikit-learn-10297",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 102.0,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 303141,
+    "output_tokens": 1729
+   }
+  },
+  "usd": 0.0186,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10297|nvidia/Nemotron-3_5-Lightning|2": {
+  "instance_id": "scikit-learn__scikit-learn-10297",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 2,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 230.7,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 332031,
+    "output_tokens": 1662
+   }
+  },
+  "usd": 0.0203,
+  "venv": false,
+  "apt": false
+ },
+ "matplotlib__matplotlib-18869|nvidia/nemotron-3-super-120b-a12b|2": {
+  "instance_id": "matplotlib__matplotlib-18869",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 2,
+  "success": false,
+  "reason": "distutils missing in Python 3.12 and cannot be installed via uv due to no available package.",
+  "script": "# CANNOT_INSTALL: distutils missing in Python 3.12 and cannot be installed via uv due to no available package.\n",
+  "seconds": 80.7,
+  "steps": 16,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 89055,
+    "output_tokens": 1638
+   }
+  },
+  "usd": 0.0282,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10297|nvidia/nemotron-3-super-120b-a12b|1": {
+  "instance_id": "scikit-learn__scikit-learn-10297",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 1,
+  "success": false,
+  "reason": "no script: agent stopped (token limit)",
+  "script": null,
+  "seconds": 180.9,
+  "steps": 21,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 603679,
+    "output_tokens": 1756
+   }
+  },
+  "usd": 0.1827,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10297|nvidia/nemotron-3-super-120b-a12b|2": {
+  "instance_id": "scikit-learn__scikit-learn-10297",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 2,
+  "success": false,
+  "reason": "no script: agent stopped (token limit)",
+  "script": null,
+  "seconds": 187.0,
+  "steps": 20,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 634995,
+    "output_tokens": 2124
+   }
+  },
+  "usd": 0.1924,
+  "venv": false,
+  "apt": false
+ },
+ "matplotlib__matplotlib-18869|nvidia/Nemotron-3_5-Lightning|3": {
+  "instance_id": "matplotlib__matplotlib-18869",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 123.6,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 250584,
+    "output_tokens": 1876
+   }
+  },
+  "usd": 0.0155,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10297|nvidia/nemotron-3-super-120b-a12b|3": {
+  "instance_id": "scikit-learn__scikit-learn-10297",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (token limit)",
+  "script": null,
+  "seconds": 225.0,
+  "steps": 29,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 636528,
+    "output_tokens": 2665
+   }
+  },
+  "usd": 0.1934,
+  "venv": false,
+  "apt": false
+ },
+ "astropy__astropy-6938|nvidia/Nemotron-3_5-Lightning|2": {
+  "instance_id": "astropy__astropy-6938",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 2,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 114.7,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 478597,
+    "output_tokens": 1661
+   }
+  },
+  "usd": 0.0291,
+  "venv": false,
+  "apt": false
+ },
+ "astropy__astropy-6938|nvidia/Nemotron-3_5-Lightning|1": {
+  "instance_id": "astropy__astropy-6938",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 1,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 121.9,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 501568,
+    "output_tokens": 1814
+   }
+  },
+  "usd": 0.0305,
+  "venv": false,
+  "apt": false
+ },
+ "matplotlib__matplotlib-18869|nvidia/Nemotron-3_5-Lightning|2": {
+  "instance_id": "matplotlib__matplotlib-18869",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 2,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 231.8,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 199820,
+    "output_tokens": 1599
+   }
+  },
+  "usd": 0.0124,
+  "venv": false,
+  "apt": false
+ },
+ "matplotlib__matplotlib-18869|nvidia/Nemotron-3_5-Lightning|1": {
+  "instance_id": "matplotlib__matplotlib-18869",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 1,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 235.1,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 265955,
+    "output_tokens": 1888
+   }
+  },
+  "usd": 0.0164,
+  "venv": false,
+  "apt": false
+ },
+ "astropy__astropy-6938|nvidia/Nemotron-3_5-Lightning|3": {
+  "instance_id": "astropy__astropy-6938",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 122.5,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 425429,
+    "output_tokens": 1367
+   }
+  },
+  "usd": 0.0259,
+  "venv": false,
+  "apt": false
+ },
+ "matplotlib__matplotlib-18869|nvidia/nemotron-3-super-120b-a12b|3": {
+  "instance_id": "matplotlib__matplotlib-18869",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 187.1,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 242262,
+    "output_tokens": 4442
+   }
+  },
+  "usd": 0.0767,
+  "venv": false,
+  "apt": false
+ },
+ "matplotlib__matplotlib-18869|nvidia/nemotron-3-super-120b-a12b|1": {
+  "instance_id": "matplotlib__matplotlib-18869",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 1,
+  "success": false,
+  "reason": "no script: agent stopped (token limit)",
+  "script": null,
+  "seconds": 275.0,
+  "steps": 28,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 614859,
+    "output_tokens": 5375
+   }
+  },
+  "usd": 0.1893,
+  "venv": false,
+  "apt": false
+ },
+ "astropy__astropy-6938|nvidia/nemotron-3-super-120b-a12b|1": {
+  "instance_id": "astropy__astropy-6938",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 1,
+  "success": false,
+  "reason": "Python 3.6 required but not available",
+  "script": "# CANNOT_INSTALL: Python 3.6 required but not available\n",
+  "seconds": 129.5,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 225010,
+    "output_tokens": 2170
+   }
+  },
+  "usd": 0.0695,
+  "venv": false,
+  "apt": false
+ },
+ "astropy__astropy-6938|nvidia/nemotron-3-super-120b-a12b|2": {
+  "instance_id": "astropy__astropy-6938",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 2,
+  "success": false,
+  "reason": "no script: agent stopped (agent error: ApiStatusCodeError(request=RequestInfo(url='https://api.tokenfactory.nebius.com/sandboxes/v1/instances', method='POST'), response=ResponseInfo(headers={'date': 'Wed, 21 Oct 2026 02:51:51 GMT', 'content-type': 'application/json; charset=utf-8', 'content-length': '49', 'connection': 'keep-alive', 'traceparent': '00-6beac9e8cabc0b11173e5eafc0ba8d22-24976c56b352c510-01', 'strict-transport-security': 'max-age=31536000; includeSubDomains'}), status=500, error='Internal Server Error'))",
+  "script": null,
+  "seconds": 98.1,
+  "steps": 21,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 148272,
+    "output_tokens": 2553
+   }
+  },
+  "usd": 0.0468,
+  "venv": false,
+  "apt": false
+ },
+ "astropy__astropy-6938|nvidia/nemotron-3-super-120b-a12b|3": {
+  "instance_id": "astropy__astropy-6938",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 3,
+  "success": false,
+  "reason": "need imp module unavailable in Python 3.12",
+  "script": "# CANNOT_INSTALL: need imp module unavailable in Python 3.12\n",
+  "seconds": 129.5,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 223295,
+    "output_tokens": 2551
+   }
+  },
+  "usd": 0.0693,
+  "venv": false,
+  "apt": false
+ }
+}

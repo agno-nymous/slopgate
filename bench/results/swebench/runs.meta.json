@@ -3,9 +3,9 @@
   "tests and rewrites": "nvidia/nemotron-3-super-120b-a12b",
   "retry and summary": "nvidia/Nemotron-3-Ultra-550b-a55b"
  },
- "commit": "548ae7bcb1dcc32011296c43cd61e6835b29c0d3",
+ "commit": "1890fa62d2e366e151c89c9d7a660b21e5fbf5fc",
  "dirty": true,
- "date": "2026-10-18",
+ "date": "2026-10-21",
  "seeds": {},
  "prompts": {
   "AGENT_RULES": "e080e3cbd1fb",
@@ -18,5 +18,5 @@
  "counts": {
   "instances": 15
  },
- "usd": 0.6677
+ "usd": 0.7888
 }

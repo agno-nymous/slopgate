@@ -456,3 +456,56 @@ def test_body_line_is_none_when_the_body_starts_on_the_def_line(tmp_path):
     assert body_line(f) == 4
     (tmp_path / "m.py").write_text(ONE_LINE)
     assert eligible(tmp_path, {"m.py": {1, 2, 3}}, {}) == []
+
+
+def fake_install(monkeypatch, tmp_path, prepare, collect):
+    class Box:
+        image = "python:3.12-slim"
+        client = SimpleNamespace(images=SimpleNamespace(use=lambda uuid: "official"))
+
+        def prepare(self, *args):
+            return prepare(*args)
+
+    truth = {"instances": {"i": {"hidden_uuid": "12345678-1234-5678-1234-567812345678"}}}
+    (tmp_path / "truth.json").write_text(json.dumps(truth))
+    monkeypatch.setattr(swebench, "GROUNDTRUTH", tmp_path / "truth.json")
+    monkeypatch.setattr(swebench.trace, "start", lambda project: None)
+    monkeypatch.setattr(swebench, "commit_date", lambda clone, base: "2019-01-01T00:00:00+00:00")
+    monkeypatch.setattr(swebench, "commands", lambda clone, base, since: ("pip install -e .", "python -m pytest -q -rfE", "python:3.7-slim"))
+    monkeypatch.setattr(swebench, "Contree", Box)
+    monkeypatch.setattr(swebench, "collect_error", collect)
+
+
+SOURCE = {"instance_id": "i", "repo": "psf/requests", "base_commit": "abc"}
+
+
+def test_install_job_records_the_default_and_the_calibration(monkeypatch, tmp_path):
+    checks = []
+
+    def collect(box, checkpoint, test):
+        checks.append((checkpoint, test))
+        return None
+
+    fake_install(monkeypatch, tmp_path, lambda *args: "built", collect)
+    result = swebench.install_job(SOURCE)
+    assert (result["python"], result["built"], result["collects"], result["reason"]) == ("3.7", True, True, None)
+    assert result["calibration"] == {"production": None, "bench": None}
+    assert checks == [("built", "python -m pytest -q -rfE"), ("official", "python -m pytest -q -rfE"), ("official", "python -m pytest -q -rfE tests")]
+
+
+def test_install_job_records_a_failed_build_and_skips_calibration_without_a_hidden_image(monkeypatch, tmp_path):
+    def prepare(*args):
+        raise swebench.InstallError("no wheel")
+
+    fake_install(monkeypatch, tmp_path, prepare, lambda *args: "unused")
+    result = swebench.install_job(SOURCE | {"instance_id": "other"})
+    assert (result["built"], result["collects"], result["error"], result["calibration"]) == (False, False, "no wheel", None)
+    assert set(result["seconds"]) == {"build"}
+
+
+def test_install_summary_counts_a_false_trigger_and_the_calibration():
+    built = {"built": True, "collects": True, "seconds": {"build": 10.0}, "calibration": {"production": None, "bench": "tests do not collect"}}
+    results = [built, built | {"collects": False, "calibration": None}, {"built": False, "collects": False, "seconds": {"build": 4.0}, "calibration": None}]
+    summary = swebench.install_summary(results)
+    assert (summary["built"], summary["collects"], summary["false_triggers"]) == (2, 1, 1)
+    assert (summary["calibrated"], summary["calibration_production"], summary["calibration_bench"], summary["seconds"]) == (1, 1, 0, 8.0)

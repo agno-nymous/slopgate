@@ -4,6 +4,7 @@ import random
 import re
 import shutil
 import statistics
+import subprocess
 import sys
 import threading
 import time
@@ -26,12 +27,13 @@ from slopgate import diff, kinds, llm, review, trace
 from slopgate.config import SUPER, ULTRA
 from slopgate.functions import Function, complexity, dedent, is_test_file, nesting, parse, structure_hash
 from slopgate.review import strip_fence
-from slopgate.sandbox import Contree, InstallError, tail
+from slopgate.sandbox import Contree, InstallError, collect_error, commands, commit_date, tail
 
 SWEBENCH = RESULTS / "swebench"
 GROUNDTRUTH = SWEBENCH / "groundtruth.json"
 RUNS = SWEBENCH / "runs.json"
 REPORT = SWEBENCH / "swebench"
+INSTALL = SWEBENCH / "install"
 LITE = CACHE / "swebench-lite.json"
 REPLIES = CACHE / "swebench-super.json"
 CLONES = CACHE / "swebench"
@@ -53,6 +55,21 @@ INSTANCES = [
     "pydata__xarray-4248",
     "mwaskom__seaborn-3190",
 ]
+EXTRA = [
+    "psf__requests-1963",
+    "pydata__xarray-3364",
+    "sympy__sympy-11400",
+    "scikit-learn__scikit-learn-10297",
+    "matplotlib__matplotlib-18869",
+    "astropy__astropy-6938",
+    "scikit-learn__scikit-learn-10508",
+    "scikit-learn__scikit-learn-11040",
+    "matplotlib__matplotlib-22711",
+    "matplotlib__matplotlib-23299",
+    "astropy__astropy-12907",
+    "astropy__astropy-14182",
+    "sympy__sympy-12171",
+]
 TESTS = {
     "pytest-dev/pytest": "testing",
     "sphinx-doc/sphinx": "tests",
@@ -61,6 +78,10 @@ TESTS = {
     "pallets/flask": "tests",
     "pydata/xarray": "xarray/tests",
     "mwaskom/seaborn": "tests",
+    "sympy/sympy": "sympy",
+    "scikit-learn/scikit-learn": "sklearn",
+    "matplotlib/matplotlib": "lib/matplotlib/tests",
+    "astropy/astropy": "astropy",
 }
 FIELDS = ("repo", "instance_id", "base_commit", "patch", "test_patch", "PASS_TO_PASS")
 IMAGE = "docker.io/swebench/sweb.eval.x86_64.{}:latest"
@@ -76,6 +97,7 @@ ORDER = [*TRANSFORMS, "wrapper", "duplicate"]
 PATTERNS = ["test_*.py", "*_test.py"]
 OUTCOME = {"suggestions": "suggestion", "followup": "followup", "rejected": "rejected", "notes": "note"}
 INFRASTRUCTURE = ("error", "no_environment")
+BENCH_TEST = "python -m pytest -q -rfE {}"
 
 DUPLICATE_PROMPT = """Another coding agent works on the file {path}. That agent does not know that the function `{original}` exists.
 Write the function that this agent writes for the same job. Name it `{name}`. Use the same parameters. Write no comment that says it is a copy.
@@ -321,6 +343,14 @@ def commit(clone: Path, texts: dict[str, str], hidden_files: list[str], test: st
     return git("-C", str(clone), "rev-parse", "HEAD")
 
 
+def clone_at(instance_id: str, repo: str, base: str) -> Path:
+    clone = CLONES / instance_id
+    shutil.rmtree(clone, ignore_errors=True)
+    git("clone", "-q", "--shared", str(checkout(repo, base)), str(clone))
+    git("-C", str(clone), "checkout", "-q", "--detach", base)
+    return clone
+
+
 def select_one(source: dict) -> tuple[dict, list[Item]] | None:
     instance_id, repo, base = source["instance_id"], source["repo"], source["base_commit"]
     usage, began = Counter(), time.perf_counter()
@@ -345,10 +375,7 @@ def select_items(source: dict, instance: dict, usage: Counter) -> list[Item]:
     hidden_files, tests = patch_files(source["test_patch"])
     if not tests:
         raise InstallError("the test patch has no Python test file")
-    clone = CLONES / instance_id
-    shutil.rmtree(clone, ignore_errors=True)
-    git("clone", "-q", "--shared", str(checkout(repo, base)), str(clone))
-    git("-C", str(clone), "checkout", "-q", "--detach", base)
+    clone = clone_at(instance_id, repo, base)
 
     ref = IMAGE.format(instance_id.replace("__", "_1776_"))
     image = ContreeSync().images.oci(ref, timeout=3600)
@@ -680,11 +707,131 @@ def report() -> None:
     REPORT.with_suffix(".md").write_text(markdown(result))
 
 
-STAGES = {"select": select, "run": run, "report": report}
+def has_commit(clone: Path, commit: str) -> bool:
+    return subprocess.run(["git", "-C", str(clone), "rev-parse", "--verify", "-q", f"{commit}^{{commit}}"], capture_output=True).returncode == 0
+
+
+def elapsed(began: float) -> float:
+    return round(time.perf_counter() - began, 1)
+
+
+def install_job(source: dict) -> dict:
+    trace.start("slopgate-bench")
+    instance_id, repo, base = source["instance_id"], source["repo"], source["base_commit"]
+    clone = CLONES / instance_id
+    since = commit_date(clone, base)
+    setup, test, image = commands(clone, base, since)
+    box = Contree()
+    image = image or box.image
+    result = {
+        "instance_id": instance_id,
+        "repo": repo,
+        "image": image,
+        "python": image.rpartition(":")[2].split("-")[0],
+        "setup": setup,
+        "test": test,
+        "built": False,
+        "error": None,
+        "collects": False,
+        "reason": None,
+        "calibration": None,
+        "seconds": {},
+    }
+    stored = json.loads(GROUNDTRUTH.read_text())["instances"].get(instance_id, {}) if GROUNDTRUTH.exists() else {}
+    with trace.span("bench.install", instance=instance_id):
+        began = time.perf_counter()
+        try:
+            checkpoint = box.prepare(clone, base, setup, image)
+        except InstallError as error:
+            result["error"] = str(error)
+        else:
+            result["built"] = True
+        result["seconds"]["build"] = elapsed(began)
+        if result["built"]:
+            began = time.perf_counter()
+            reason = collect_error(box, checkpoint, test)
+            result |= {"collects": reason is None, "reason": reason}
+            result["seconds"]["collect"] = elapsed(began)
+        if stored.get("hidden_uuid"):
+            began = time.perf_counter()
+            official = box.client.images.use(UUID(stored["hidden_uuid"]))
+            result["calibration"] = {
+                "production": collect_error(box, official, test),
+                "bench": collect_error(box, official, BENCH_TEST.format(TESTS[repo])),
+            }
+            result["seconds"]["calibration"] = elapsed(began)
+    return result
+
+
+def install_summary(results: list[dict]) -> dict:
+    calibrated = [r["calibration"] for r in results if r["calibration"]]
+    return {
+        "instances": len(results),
+        "built": sum(r["built"] for r in results),
+        "collects": sum(r["collects"] for r in results),
+        "false_triggers": sum(r["built"] and not r["collects"] for r in results),
+        "calibrated": len(calibrated),
+        "calibration_production": sum(c["production"] is None for c in calibrated),
+        "calibration_bench": sum(c["bench"] is None for c in calibrated),
+        "seconds": mean([sum(r["seconds"].values()) for r in results]),
+    }
+
+
+def verdict(calibration: dict | None, key: str) -> str:
+    return "" if calibration is None else "pass" if calibration[key] is None else "fail"
+
+
+def install_markdown(results: list[dict], summary: dict, meta: dict) -> str:
+    out = ["# Default install of the test environment", ""]
+    out += run_metadata({"report": meta})
+    out += [
+        "## Results",
+        "",
+        f"- Instances: {summary['instances']}. Default built: {summary['built']}. Default succeeds (built, and the tests collect): {summary['collects']}.",
+        f"- False triggers (built, and the tests do not collect): {summary['false_triggers']}.",
+        f"- Calibration on the SWE-bench image, {summary['calibrated']} instances: the production command passes on {summary['calibration_production']}, the bench command on {summary['calibration_bench']}.",
+        f"- Mean seconds for each instance: {summary['seconds']}.",
+        "",
+    ]
+    out += ["## Instances", "", row("instance", "python", "built", "collects", "calibration production", "calibration bench", "seconds", "reason"), row(*["---"] * 8)]
+    for r in results:
+        reason = (r["reason"] or r["error"] or "")[-120:].replace("\n", " ").replace("|", "/")
+        out += [row(r["instance_id"], r["python"], r["built"], r["collects"], verdict(r["calibration"], "production"), verdict(r["calibration"], "bench"), round(sum(r["seconds"].values()), 1), reason)]
+    return "\n".join(out) + "\n"
+
+
+def install() -> None:
+    results = json.loads(INSTALL.with_suffix(".json").read_text()) if INSTALL.with_suffix(".json").exists() else {}
+    rows = dataset()
+    todo = [rows[i] for i in [*INSTANCES, *EXTRA] if i not in results]
+    # each base commit is checked out once and in turn: the per-instance clones share these objects
+    for source in todo:
+        if not has_commit(CLONES / source["instance_id"], source["base_commit"]):
+            clone_at(source["instance_id"], source["repo"], source["base_commit"])
+    with ProcessPoolExecutor(WORKERS) as workers:
+        futures = {workers.submit(install_job, source): source["instance_id"] for source in todo}
+        for done, future in enumerate(as_completed(futures), 1):
+            try:
+                result = future.result()
+            except Exception:
+                print(futures[future], file=sys.stderr)
+                traceback.print_exc()
+                continue
+            results[result["instance_id"]] = result
+            write(INSTALL.with_suffix(".json"), results)
+            print(f"{done}/{len(todo)} {result['instance_id']}: built {result['built']}, collects {result['collects']}, {sum(result['seconds'].values()):.0f} s", file=sys.stderr)
+    ordered = [results[i] for i in [*INSTANCES, *EXTRA] if i in results]
+    summary = install_summary(ordered)
+    meta = metadata({}, {}, {}, counts={key: value for key, value in summary.items() if key != "seconds"})
+    write(meta_path(INSTALL), meta)
+    INSTALL.with_suffix(".md").write_text(install_markdown(ordered, summary, meta))
+
+
+STAGES = {"select": select, "run": run, "report": report, "install": install}
 
 if __name__ == "__main__":
     if sys.argv[1:]:
         STAGES[sys.argv[1]]()
     else:
-        for stage in STAGES.values():
+        for stage in (select, run, report):
             stage()

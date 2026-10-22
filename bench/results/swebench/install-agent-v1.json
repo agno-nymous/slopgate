@@ -1,0 +1,914 @@
+{
+ "psf__requests-1963|nvidia/Nemotron-3_5-Lightning|2": {
+  "instance_id": "psf__requests-1963",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 2,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 95.5,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 193416,
+    "output_tokens": 1170
+   }
+  },
+  "usd": 0.0119,
+  "venv": false,
+  "apt": false
+ },
+ "psf__requests-1963|nvidia/Nemotron-3_5-Lightning|1": {
+  "instance_id": "psf__requests-1963",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 1,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 111.4,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 179590,
+    "output_tokens": 1464
+   }
+  },
+  "usd": 0.0111,
+  "venv": false,
+  "apt": false
+ },
+ "psf__requests-1963|nvidia/nemotron-3-super-120b-a12b|2": {
+  "instance_id": "psf__requests-1963",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 2,
+  "success": false,
+  "reason": "no script: agent stopped (agent error: ApiStatusCodeError(request=RequestInfo(url='https://api.tokenfactory.nebius.com/sandboxes/v1/operations/01a15c3b-b5f9-7036-8b49-b10feb1cbb54', method='GET'), response=ResponseInfo(headers={'date': 'Wed, 21 Oct 2026 02:13:01 GMT', 'content-type': 'application/json; charset=utf-8', 'content-length': '49', 'connection': 'keep-alive', 'traceparent': '00-3ab8fad960ff6d534fa12a1efc9f31f8-9e84fe1d367cff08-01', 'strict-transport-security': 'max-age=31536000; includeSubDomains'}), status=500, error='Internal Server Error'))",
+  "script": null,
+  "seconds": 119.3,
+  "steps": 17,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 134761,
+    "output_tokens": 1848
+   }
+  },
+  "usd": 0.0421,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10297|nvidia/Nemotron-3_5-Lightning|2": {
+  "instance_id": "scikit-learn__scikit-learn-10297",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 2,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 151.3,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 256735,
+    "output_tokens": 1737
+   }
+  },
+  "usd": 0.0158,
+  "venv": false,
+  "apt": false
+ },
+ "psf__requests-1963|nvidia/nemotron-3-super-120b-a12b|1": {
+  "instance_id": "psf__requests-1963",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 1,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 157.4,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 208504,
+    "output_tokens": 4714
+   }
+  },
+  "usd": 0.0668,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10297|nvidia/Nemotron-3_5-Lightning|1": {
+  "instance_id": "scikit-learn__scikit-learn-10297",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 1,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 163.5,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 264803,
+    "output_tokens": 1375
+   }
+  },
+  "usd": 0.0162,
+  "venv": false,
+  "apt": false
+ },
+ "psf__requests-1963|nvidia/Nemotron-3_5-Lightning|3": {
+  "instance_id": "psf__requests-1963",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (no tool call)",
+  "script": null,
+  "seconds": 170.3,
+  "steps": 27,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 165583,
+    "output_tokens": 1406
+   }
+  },
+  "usd": 0.0103,
+  "venv": false,
+  "apt": false
+ },
+ "psf__requests-1963|nvidia/nemotron-3-super-120b-a12b|3": {
+  "instance_id": "psf__requests-1963",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 176.0,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 214968,
+    "output_tokens": 4288
+   }
+  },
+  "usd": 0.0683,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10297|nvidia/Nemotron-3_5-Lightning|3": {
+  "instance_id": "scikit-learn__scikit-learn-10297",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 154.0,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 240296,
+    "output_tokens": 1252
+   }
+  },
+  "usd": 0.0147,
+  "venv": false,
+  "apt": false
+ },
+ "matplotlib__matplotlib-18869|nvidia/Nemotron-3_5-Lightning|2": {
+  "instance_id": "matplotlib__matplotlib-18869",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 2,
+  "success": false,
+  "reason": "tests do not collect:\n<frozen importlib._bootstrap>:1387: in _gcd_import\n    ???\n<frozen importlib._bootstrap>:1360: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:935: in _load_unlocked\n    ???\n/usr/local/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:188: in exec_module\n    exec(co, module.__dict__)\nlib/mpl_toolkits/tests/conftest.py:1: in <module>\n    from matplotlib.testing.conftest import (mpl_test_settings,\nlib/matplotlib/__init__.py:104: in <module>\n    import numpy\nE   ModuleNotFoundError: No module named 'numpy'\n=========================== short test summary info ============================\nERROR lib/matplotlib/testing - ModuleNotFoundError: No module named 'numpy'\nERROR lib/matplotlib/tests - ModuleNotFoundError: No module named 'numpy'\nERROR lib/mpl_toolkits/tests - ModuleNotFoundError: No module named 'numpy'\nno tests collected, 3 errors in 0.12s",
+  "script": "set -e\n\n# Install test dependencies\npython -m pip install -U pytest coverage | tail -5\n\n# Install the package from source with versions before 2021-07-08T18:35:02-04:00\n# The repository uses setuptools_scm for versioning, so we need to handle that\nexport SETUPTOOLS_SCM_PRETEND_VERSION=unknown\n\n# Install matplotlib from the local source\npython -m pip install -e . --no-build-isolation 2>&1 | tail -30\n",
+  "seconds": 126.1,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 355569,
+    "output_tokens": 1377
+   }
+  },
+  "usd": 0.0217,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10297|nvidia/nemotron-3-super-120b-a12b|2": {
+  "instance_id": "scikit-learn__scikit-learn-10297",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 2,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 179.0,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 212367,
+    "output_tokens": 3659
+   }
+  },
+  "usd": 0.067,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10297|nvidia/nemotron-3-super-120b-a12b|3": {
+  "instance_id": "scikit-learn__scikit-learn-10297",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 3,
+  "success": false,
+  "reason": "script fails on a new sandbox: WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.\n\nWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.\n\nUsing Python 3.12.13 environment at: /usr/local\nResolved 3 packages in 103ms\n   Building numpy==1.14.0\nerror: Failed to download and build `numpy==1.14.0`\n  cause: Failed to resolve requirements from `setup.py` build\n  cause: No solution found when resolving: `setuptools>=40.8.0`\n  cause: Because only setuptools<=38.5.1 is available and you require setuptools>=40.8.0, we can conclude that your requirements are unsatisfiable.\n\nhint: `setuptools` was filtered by `exclude-newer` to only include packages uploaded before 2018-02-09T01:34:02Z. The latest version satisfying the requirement is v84.2.1, published at 2026-10-20T19:01:35.678Z. Consider using `exclude-newer-package` to override the cutoff for this package.",
+  "script": "#!/bin/bash\nset -e\n# Install build dependencies with date constraint for numpy scipy cython\nuv pip install --python \"$(command -v python)\" --exclude-newer 2018-02-09T12:34:02+11:00 numpy scipy cython\n# Install setuptools (newer)\nuv pip install --python \"$(command -v python)\" setuptools\n# Ensure distutils available\nuv pip install --python \"$(command -v python)\" distutils\n# Install the package in development mode\npython setup.py develop --no-deps\n# Install test dependencies with date constraint\nuv pip install --python \"$(command -v python)\" --exclude-newer 2018-02-09T12:34:02+11:00 pytest coverage\n",
+  "seconds": 156.5,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 203976,
+    "output_tokens": 5010
+   }
+  },
+  "usd": 0.0657,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10297|nvidia/nemotron-3-super-120b-a12b|1": {
+  "instance_id": "scikit-learn__scikit-learn-10297",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 1,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 202.6,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 207467,
+    "output_tokens": 4141
+   }
+  },
+  "usd": 0.066,
+  "venv": false,
+  "apt": false
+ },
+ "matplotlib__matplotlib-18869|nvidia/Nemotron-3_5-Lightning|1": {
+  "instance_id": "matplotlib__matplotlib-18869",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 1,
+  "success": false,
+  "reason": "tests do not collect:\n<frozen importlib._bootstrap>:1360: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:935: in _load_unlocked\n    ???\n/usr/local/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:188: in exec_module\n    exec(co, module.__dict__)\nlib/mpl_toolkits/tests/conftest.py:1: in <module>\n    from matplotlib.testing.conftest import (mpl_test_settings,\nlib/matplotlib/__init__.py:109: in <module>\n    from . import _api, _version, cbook, docstring, rcsetup\nlib/matplotlib/cbook/__init__.py:30: in <module>\n    from matplotlib import _api, _c_internal_utils\nE   ImportError: cannot import name '_c_internal_utils' from partially initialized module 'matplotlib' (most likely due to a circular import) (/repo/lib/matplotlib/__init__.py)\n=========================== short test summary info ============================\nERROR lib/matplotlib/testing - ImportError: cannot import name '_c_internal_u...\nERROR lib/matplotlib/tests - ImportError: cannot import name '_c_internal_uti...\nERROR lib/mpl_toolkits/tests - ImportError: cannot import name '_c_internal_u...\nno tests collected, 3 errors in 0.33s",
+  "script": "set -e\n\n# Install basic build dependencies\napt-get update -qq\napt-get install -y -qq build-essential pkg-config libfreetype6-dev libpng-dev libjpeg-dev zlib1g-dev 2>/dev/null || true\n\n# Install Python packages needed for building\npython -m pip install -q --no-build-isolation numpy cycler kiwisolver pillow pyparsing python-dateutil pytest coverage setuptools_scm\n\n# Install matplotlib from source with the specific version\n# The repository is at a commit from 2021-07-08, so we need to use system freetype\n# Disable system_freetype since we have dev libraries installed\nexport MPLBUILD=1\n\n# Install with system freetype option\npython -m pip install -e /repo --no-build-isolation --config-settings=\"libs.system_freetype=True\" 2>&1 | tail -n 30\n\n",
+  "seconds": 203.1,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 344323,
+    "output_tokens": 1688
+   }
+  },
+  "usd": 0.0211,
+  "venv": false,
+  "apt": true
+ },
+ "matplotlib__matplotlib-18869|nvidia/nemotron-3-super-120b-a12b|1": {
+  "instance_id": "matplotlib__matplotlib-18869",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 1,
+  "success": false,
+  "reason": "Failed to build matplotlib due to freetype configure errors despite installing dev dependencies.",
+  "script": "# CANNOT_INSTALL: Failed to build matplotlib due to freetype configure errors despite installing dev dependencies.\n",
+  "seconds": 231.2,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 229845,
+    "output_tokens": 3134
+   }
+  },
+  "usd": 0.0718,
+  "venv": false,
+  "apt": false
+ },
+ "astropy__astropy-6938|nvidia/Nemotron-3_5-Lightning|1": {
+  "instance_id": "astropy__astropy-6938",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 1,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 114.3,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 412279,
+    "output_tokens": 1177
+   }
+  },
+  "usd": 0.025,
+  "venv": false,
+  "apt": false
+ },
+ "astropy__astropy-6938|nvidia/Nemotron-3_5-Lightning|3": {
+  "instance_id": "astropy__astropy-6938",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 102.6,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 401064,
+    "output_tokens": 1143
+   }
+  },
+  "usd": 0.0243,
+  "venv": false,
+  "apt": false
+ },
+ "astropy__astropy-6938|nvidia/Nemotron-3_5-Lightning|2": {
+  "instance_id": "astropy__astropy-6938",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 2,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 108.6,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 411411,
+    "output_tokens": 1161
+   }
+  },
+  "usd": 0.025,
+  "venv": false,
+  "apt": false
+ },
+ "matplotlib__matplotlib-18869|nvidia/Nemotron-3_5-Lightning|3": {
+  "instance_id": "matplotlib__matplotlib-18869",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 3,
+  "success": false,
+  "reason": "tests do not collect:\n<frozen importlib._bootstrap>:1360: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:935: in _load_unlocked\n    ???\n/usr/local/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:188: in exec_module\n    exec(co, module.__dict__)\nlib/mpl_toolkits/tests/conftest.py:1: in <module>\n    from matplotlib.testing.conftest import (mpl_test_settings,\nlib/matplotlib/__init__.py:109: in <module>\n    from . import _api, _version, cbook, docstring, rcsetup\nlib/matplotlib/cbook/__init__.py:30: in <module>\n    from matplotlib import _api, _c_internal_utils\nE   ImportError: cannot import name '_c_internal_utils' from partially initialized module 'matplotlib' (most likely due to a circular import) (/repo/lib/matplotlib/__init__.py)\n=========================== short test summary info ============================\nERROR lib/matplotlib/testing - ImportError: cannot import name '_c_internal_u...\nERROR lib/matplotlib/tests - ImportError: cannot import name '_c_internal_uti...\nERROR lib/mpl_toolkits/tests - ImportError: cannot import name '_c_internal_u...\nno tests collected, 3 errors in 0.32s",
+  "script": "set -e\n\n# Install basic build dependencies\napt-get update -qq\napt-get install -y -qq libfreetype6-dev libpng-dev libjpeg-dev zlib1g-dev python3-dev 2>/dev/null | tail -n 30\n\n# Install Python packages needed for build\npython -m pip install -q pytest coverage numpy kiwisolver cycler pillow pyparsing python-dateutil 2>&1 | tail -n 30\n\n# Install setuptools_scm for version management\npython -m pip install -q setuptools_scm>=4 2>&1 | tail -n 30\n\n# Configure setup.cfg to use system freetype and disable LTO\ncat > /repo/setup.cfg <<'SETCONFIG'\n[metadata]\nlicense_files = LICENSE/*\n\n[egg_info]\n\n[libs]\nsystem_freetype = True\nenable_lto = False\n\n[packages]\nSETCONFIG\n\n# Install the package in development mode\npython -m pip install -e /repo/ 2>&1 | tail -n 30\n",
+  "seconds": 289.5,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 414851,
+    "output_tokens": 2310
+   }
+  },
+  "usd": 0.0254,
+  "venv": false,
+  "apt": true
+ },
+ "matplotlib__matplotlib-18869|nvidia/nemotron-3-super-120b-a12b|2": {
+  "instance_id": "matplotlib__matplotlib-18869",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 2,
+  "success": false,
+  "reason": "no script: agent stopped (token limit)",
+  "script": null,
+  "seconds": 230.1,
+  "steps": 26,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 610700,
+    "output_tokens": 3659
+   }
+  },
+  "usd": 0.1865,
+  "venv": false,
+  "apt": false
+ },
+ "matplotlib__matplotlib-18869|nvidia/nemotron-3-super-120b-a12b|3": {
+  "instance_id": "matplotlib__matplotlib-18869",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 209.0,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 300316,
+    "output_tokens": 3595
+   }
+  },
+  "usd": 0.0933,
+  "venv": false,
+  "apt": false
+ },
+ "astropy__astropy-6938|nvidia/nemotron-3-super-120b-a12b|1": {
+  "instance_id": "astropy__astropy-6938",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 1,
+  "success": false,
+  "reason": "too many dependency issues",
+  "script": "# CANNOT_INSTALL: too many dependency issues\n",
+  "seconds": 147.0,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 225139,
+    "output_tokens": 3598
+   }
+  },
+  "usd": 0.0708,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10508|nvidia/Nemotron-3_5-Lightning|2": {
+  "instance_id": "scikit-learn__scikit-learn-10508",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 2,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 120.2,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 265307,
+    "output_tokens": 1233
+   }
+  },
+  "usd": 0.0162,
+  "venv": false,
+  "apt": false
+ },
+ "astropy__astropy-6938|nvidia/nemotron-3-super-120b-a12b|2": {
+  "instance_id": "astropy__astropy-6938",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 2,
+  "success": false,
+  "reason": "Cannot install due to incompatibility with Python 3.10 (missing imp module, HTMLParser.unescape) and lack of older Python versions in uv.",
+  "script": "# CANNOT_INSTALL: Cannot install due to incompatibility with Python 3.10 (missing imp module, HTMLParser.unescape) and lack of older Python versions in uv.\n",
+  "seconds": 144.9,
+  "steps": 29,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 223469,
+    "output_tokens": 4654
+   }
+  },
+  "usd": 0.0712,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10508|nvidia/Nemotron-3_5-Lightning|1": {
+  "instance_id": "scikit-learn__scikit-learn-10508",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 1,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 169.0,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 282797,
+    "output_tokens": 1293
+   }
+  },
+  "usd": 0.0173,
+  "venv": false,
+  "apt": false
+ },
+ "astropy__astropy-6938|nvidia/nemotron-3-super-120b-a12b|3": {
+  "instance_id": "astropy__astropy-6938",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 176.4,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 418685,
+    "output_tokens": 3683
+   }
+  },
+  "usd": 0.1289,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10508|nvidia/Nemotron-3_5-Lightning|3": {
+  "instance_id": "scikit-learn__scikit-learn-10508",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 158.6,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 326712,
+    "output_tokens": 1495
+   }
+  },
+  "usd": 0.02,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-11040|nvidia/Nemotron-3_5-Lightning|2": {
+  "instance_id": "scikit-learn__scikit-learn-11040",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 2,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 121.8,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 227442,
+    "output_tokens": 2176
+   }
+  },
+  "usd": 0.0142,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10508|nvidia/nemotron-3-super-120b-a12b|2": {
+  "instance_id": "scikit-learn__scikit-learn-10508",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 2,
+  "success": false,
+  "reason": "pkg_resources missing due to setuptools compatibility with Python 3.12",
+  "script": "# CANNOT_INSTALL: pkg_resources missing due to setuptools compatibility with Python 3.12\n",
+  "seconds": 180.8,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 226998,
+    "output_tokens": 4344
+   }
+  },
+  "usd": 0.072,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-11040|nvidia/Nemotron-3_5-Lightning|1": {
+  "instance_id": "scikit-learn__scikit-learn-11040",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 1,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 163.0,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 241453,
+    "output_tokens": 1343
+   }
+  },
+  "usd": 0.0148,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10508|nvidia/nemotron-3-super-120b-a12b|3": {
+  "instance_id": "scikit-learn__scikit-learn-10508",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 239.2,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 466590,
+    "output_tokens": 3821
+   }
+  },
+  "usd": 0.1434,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-11040|nvidia/Nemotron-3_5-Lightning|3": {
+  "instance_id": "scikit-learn__scikit-learn-11040",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 161.9,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 254444,
+    "output_tokens": 1595
+   }
+  },
+  "usd": 0.0156,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-10508|nvidia/nemotron-3-super-120b-a12b|1": {
+  "instance_id": "scikit-learn__scikit-learn-10508",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 1,
+  "success": false,
+  "reason": "script fails on a new sandbox:   \u00d7 python setup.py egg_info did not run successfully.\n  \u2502 exit code: 1\n  \u2570\u2500> [6 lines of output]\n      Traceback (most recent call last):\n        File \"<string>\", line 2, in <module>\n        File \"<pip-setuptools-caller>\", line 34, in <module>\n        File \"/repo/setup.py\", line 12, in <module>\n          from pkg_resources import parse_version\n      ModuleNotFoundError: No module named 'pkg_resources'\n      [end of output]\n  \n  note: This error originates from a subprocess, and is likely not a problem with pip.\n\nerror: metadata-generation-failed\n\n\u00d7 Encountered error while generating package metadata.\n\u2570\u2500> See above for output.\n\nnote: This is an issue with the package mentioned above, not pip.\nhint: See above for details.",
+  "script": "#!/bin/bash\nset -e\n# Install system numpy and scipy\napt-get update && apt-get install -y python3-numpy python3-scipy\n# Install cython, pytest, coverage, setuptools, wheel via pip\npython -m pip install --upgrade setuptools wheel\npython -m pip install cython pytest coverage\n# Install package in develop mode\npython -m pip install -e . --no-deps\n",
+  "seconds": 290.3,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 409657,
+    "output_tokens": 4208
+   }
+  },
+  "usd": 0.1267,
+  "venv": false,
+  "apt": true
+ },
+ "scikit-learn__scikit-learn-11040|nvidia/nemotron-3-super-120b-a12b|1": {
+  "instance_id": "scikit-learn__scikit-learn-11040",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 1,
+  "success": false,
+  "reason": "script fails on a new sandbox:            File \"/root/.cache/uv/builds-v0/.tmpJrINUS/lib/python3.8/site-packages/setuptools/build_meta.py\", line 319, in run_setup\n             exec(code, locals())\n           File \"<string>\", line 392, in <module>\n           File \"<string>\", line 371, in setup_package\n           File \"/root/.cache/uv/sdists-v10/pypi/numpy/1.13.3/drIT3vD1K2LcxxJO/src/numpy/distutils/__init__.py\", line 8, in <module>\n             from . import ccompiler\n           File \"/root/.cache/uv/sdists-v10/pypi/numpy/1.13.3/drIT3vD1K2LcxxJO/src/numpy/distutils/ccompiler.py\", line 17, in <module>\n             from numpy.distutils import log\n           File \"/root/.cache/uv/sdists-v10/pypi/numpy/1.13.3/drIT3vD1K2LcxxJO/src/numpy/distutils/log.py\", line 13, in <module>\n             from numpy.distutils.misc_util import (red_text, default_text, cyan_text,\n           File \"/root/.cache/uv/sdists-v10/pypi/numpy/1.13.3/drIT3vD1K2LcxxJO/src/numpy/distutils/misc_util.py\", line 15, in <module>\n             from distutils.msvccompiler import get_build_architecture\n         ModuleNotFoundError: No module named 'distutils.msvccompiler'\n\nhint: This error likely indicates that `numpy@1.13.3` depends on `distutils.msvccompiler`, but doesn't declare it as a build dependency. If `numpy` is a first-party package, consider adding `distutils.msvccompiler` to its `build-system.requires`. Otherwise, either add it to your `pyproject.toml` under:\n\n[tool.uv.extra-build-dependencies]\nnumpy = [\"distutils.msvccompiler\"]\n\nor `uv pip install distutils.msvccompiler` into the environment and re-run with `--no-build-isolation`.",
+  "script": "#!/bin/bash\nset -e\nDATE=2018-04-27T08:02:39+10:00\n# Create venv with Python 3.8\nuv venv --seed --python 3.8 --clear /venv\nexport PATH=\"/venv/bin:$PATH\"\n# Ensure setuptools available (newer)\nuv pip install setuptools\n# Install specific numpy and scipy versions\nuv pip install --exclude-newer $DATE --exclude-newer-package setuptools=false numpy==1.13.3 scipy==0.13.3\n# Install cython\nuv pip install --exclude-newer $DATE --exclude-newer-package setuptools=false cython==0.28.2\n# Install test tools\nuv pip install --exclude-newer $DATE --exclude-newer-package setuptools=false pytest coverage\n# Install package\npython -m pip install -e . --no-deps\n",
+  "seconds": 218.9,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 212975,
+    "output_tokens": 5215
+   }
+  },
+  "usd": 0.0686,
+  "venv": true,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-11040|nvidia/nemotron-3-super-120b-a12b|2": {
+  "instance_id": "scikit-learn__scikit-learn-11040",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 2,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 242.8,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 242525,
+    "output_tokens": 3378
+   }
+  },
+  "usd": 0.0758,
+  "venv": false,
+  "apt": false
+ },
+ "scikit-learn__scikit-learn-11040|nvidia/nemotron-3-super-120b-a12b|3": {
+  "instance_id": "scikit-learn__scikit-learn-11040",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 240.0,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 219605,
+    "output_tokens": 3053
+   }
+  },
+  "usd": 0.0686,
+  "venv": false,
+  "apt": false
+ },
+ "matplotlib__matplotlib-22711|nvidia/nemotron-3-super-120b-a12b|1": {
+  "instance_id": "matplotlib__matplotlib-22711",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 1,
+  "success": false,
+  "reason": "setuptools/pkg_resources requires Python <3.12 for ImpImporter; cannot install compatible Python version in time.",
+  "script": "# CANNOT_INSTALL: setuptools/pkg_resources requires Python <3.12 for ImpImporter; cannot install compatible Python version in time.\n",
+  "seconds": 189.8,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 391906,
+    "output_tokens": 3169
+   }
+  },
+  "usd": 0.1204,
+  "venv": false,
+  "apt": false
+ },
+ "matplotlib__matplotlib-22711|nvidia/Nemotron-3_5-Lightning|1": {
+  "instance_id": "matplotlib__matplotlib-22711",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 1,
+  "success": false,
+  "reason": "tests do not collect:\n<frozen importlib._bootstrap>:1387: in _gcd_import\n    ???\n<frozen importlib._bootstrap>:1360: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:935: in _load_unlocked\n    ???\n/usr/local/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:188: in exec_module\n    exec(co, module.__dict__)\nlib/mpl_toolkits/tests/conftest.py:1: in <module>\n    from matplotlib.testing.conftest import (mpl_test_settings,\nlib/matplotlib/__init__.py:104: in <module>\n    import numpy\nE   ModuleNotFoundError: No module named 'numpy'\n=========================== short test summary info ============================\nERROR lib/matplotlib/testing - ModuleNotFoundError: No module named 'numpy'\nERROR lib/matplotlib/tests - ModuleNotFoundError: No module named 'numpy'\nERROR lib/mpl_toolkits/tests - ModuleNotFoundError: No module named 'numpy'\nno tests collected, 3 errors in 0.15s",
+  "script": "set -e\n\n# Install basic build dependencies\napt-get update -qq\napt-get install -y -qq build-essential pkg-config libfreetype6-dev zlib1g-dev libbz2-dev libpng-dev libharfbuzz-dev 2>/dev/null || true\n\n# Install Python dependencies with version pinning before 2022-03-29\nuv pip install --python \"$(command -v python)\" --exclude-newer 2022-03-29T23:55:06+02:00 numpy>=1.19 certifi>=2020.06.20 setuptools_scm>=4 setuptools_scm_git_archive cycler>=0.10 fonttools>=4.22.0 kiwisolver>=1.0.1 pillow>=6.2.0 pyparsing>=2.2.1,<3.0.0 python-dateutil>=2.7 pytest coverage 2>&1 | tail -20\n\n# Install the package with system freetype option to avoid building freetype from source\ncd /repo\nMPLSYSTEM_FREETYPE=1 python -m pip install -e . 2>&1 | tail -30\n",
+  "seconds": 276.4,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 410220,
+    "output_tokens": 3245
+   }
+  },
+  "usd": 0.0254,
+  "venv": false,
+  "apt": true
+ },
+ "matplotlib__matplotlib-22711|nvidia/Nemotron-3_5-Lightning|3": {
+  "instance_id": "matplotlib__matplotlib-22711",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 3,
+  "success": false,
+  "reason": "tests do not collect:\n<frozen importlib._bootstrap>:1360: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:935: in _load_unlocked\n    ???\n/usr/local/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:188: in exec_module\n    exec(co, module.__dict__)\nlib/mpl_toolkits/tests/conftest.py:1: in <module>\n    from matplotlib.testing.conftest import (mpl_test_settings,\nlib/matplotlib/__init__.py:109: in <module>\n    from . import _api, _version, cbook, _docstring, rcsetup\nlib/matplotlib/cbook/__init__.py:31: in <module>\n    from matplotlib import _api, _c_internal_utils\nE   ImportError: cannot import name '_c_internal_utils' from partially initialized module 'matplotlib' (most likely due to a circular import) (/repo/lib/matplotlib/__init__.py)\n=========================== short test summary info ============================\nERROR lib/matplotlib/testing - ImportError: cannot import name '_c_internal_u...\nERROR lib/matplotlib/tests - ImportError: cannot import name '_c_internal_uti...\nERROR lib/mpl_toolkits/tests - ImportError: cannot import name '_c_internal_u...\nno tests collected, 3 errors in 0.33s",
+  "script": "set -e\n\n# Install basic build dependencies\napt-get update -qq | tail -n 60\napt-get install -y -qq build-essential pkg-config libfreetype6-dev libpng-dev zlib1g-dev | tail -n 60\n\n# Install Python packages needed for matplotlib\npython -m pip install -q pytest coverage numpy \"certifi>=2020.06.20\" \"setuptools_scm>=4\" 2>&1 | tail -n 20\n\n# Install matplotlib from the local repo with version pinning\n# The commit is from 2022-03-29, so we need to exclude packages newer than that\nuv pip install --python \"$(command -v python)\" --exclude-newer 2022-03-29T23:55:06+02:00 -e . 2>&1 | tail -n 60\n",
+  "seconds": 221.9,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 375919,
+    "output_tokens": 1653
+   }
+  },
+  "usd": 0.023,
+  "venv": false,
+  "apt": true
+ },
+ "matplotlib__matplotlib-22711|nvidia/nemotron-3-super-120b-a12b|2": {
+  "instance_id": "matplotlib__matplotlib-22711",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 2,
+  "success": false,
+  "reason": "Unable to resolve setuptools/sphinx-gallery compatibility with date constraints",
+  "script": "# CANNOT_INSTALL: Unable to resolve setuptools/sphinx-gallery compatibility with date constraints\n",
+  "seconds": 199.0,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 272585,
+    "output_tokens": 4635
+   }
+  },
+  "usd": 0.0859,
+  "venv": false,
+  "apt": false
+ },
+ "matplotlib__matplotlib-22711|nvidia/Nemotron-3_5-Lightning|2": {
+  "instance_id": "matplotlib__matplotlib-22711",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 2,
+  "success": false,
+  "reason": "tests do not collect:\n<frozen importlib._bootstrap>:1387: in _gcd_import\n    ???\n<frozen importlib._bootstrap>:1360: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:935: in _load_unlocked\n    ???\n/usr/local/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:188: in exec_module\n    exec(co, module.__dict__)\nlib/mpl_toolkits/tests/conftest.py:1: in <module>\n    from matplotlib.testing.conftest import (mpl_test_settings,\nlib/matplotlib/__init__.py:104: in <module>\n    import numpy\nE   ModuleNotFoundError: No module named 'numpy'\n=========================== short test summary info ============================\nERROR lib/matplotlib/testing - ModuleNotFoundError: No module named 'numpy'\nERROR lib/matplotlib/tests - ModuleNotFoundError: No module named 'numpy'\nERROR lib/mpl_toolkits/tests - ModuleNotFoundError: No module named 'numpy'\nno tests collected, 3 errors in 0.15s",
+  "script": "set -e\n\n# Install basic build dependencies\napt-get update -qq\napt-get install -y -qq build-essential pkg-config libfreetype6-dev zlib1g-dev libbz2-dev libpng-dev libharfbuzz-dev 2>/dev/null || true\n\n# Install Python dependencies with version pinning before 2022-03-29\nuv pip install --python \"$(command -v python)\" --exclude-newer 2022-03-29T23:55:06+02:00 numpy>=1.19 certifi>=2020.06.20 setuptools_scm>=4 setuptools_scm_git_archive cycler>=0.10 fonttools>=4.22.0 kiwisolver>=1.0.1 pillow>=6.2.0 pyparsing>=2.2.1,<3.0.0 python-dateutil>=2.7 pytest coverage 2>&1 | tail -20\n\n# Install the package with setuptools_scm version pretend\ncd /repo\nexport SETUPTOOLS_SCM_PRETEND_VERSION=2.6.1+local\npip install --no-build-isolation --no-deps -e \"git+https://github.com/matplotlib/matplotlib.git@2.6.1+local#egg=matplotlib\" 2>&1 | tail -30\n",
+  "seconds": 270.8,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 449902,
+    "output_tokens": 3787
+   }
+  },
+  "usd": 0.0279,
+  "venv": false,
+  "apt": true
+ },
+ "matplotlib__matplotlib-23299|nvidia/Nemotron-3_5-Lightning|2": {
+  "instance_id": "matplotlib__matplotlib-23299",
+  "model": "nvidia/Nemotron-3_5-Lightning",
+  "attempt": 2,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 135.7,
+  "steps": 30,
+  "tokens": {
+   "nvidia/Nemotron-3_5-Lightning": {
+    "input_tokens": 307447,
+    "output_tokens": 1711
+   }
+  },
+  "usd": 0.0189,
+  "venv": false,
+  "apt": false
+ },
+ "matplotlib__matplotlib-22711|nvidia/nemotron-3-super-120b-a12b|3": {
+  "instance_id": "matplotlib__matplotlib-22711",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (token limit)",
+  "script": null,
+  "seconds": 279.1,
+  "steps": 23,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 603432,
+    "output_tokens": 3402
+   }
+  },
+  "usd": 0.1841,
+  "venv": false,
+  "apt": false
+ },
+ "matplotlib__matplotlib-23299|nvidia/nemotron-3-super-120b-a12b|2": {
+  "instance_id": "matplotlib__matplotlib-23299",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 2,
+  "success": false,
+  "reason": "Python 3.12 missing distutils and setuptools pkg_resources issue",
+  "script": "# CANNOT_INSTALL: Python 3.12 missing distutils and setuptools pkg_resources issue\n",
+  "seconds": 155.9,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 175891,
+    "output_tokens": 2451
+   }
+  },
+  "usd": 0.055,
+  "venv": false,
+  "apt": false
+ },
+ "matplotlib__matplotlib-23299|nvidia/nemotron-3-super-120b-a12b|3": {
+  "instance_id": "matplotlib__matplotlib-23299",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 3,
+  "success": false,
+  "reason": "no script: agent stopped (step limit)",
+  "script": null,
+  "seconds": 201.7,
+  "steps": 30,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 365852,
+    "output_tokens": 3985
+   }
+  },
+  "usd": 0.1133,
+  "venv": false,
+  "apt": false
+ },
+ "matplotlib__matplotlib-23299|nvidia/nemotron-3-super-120b-a12b|1": {
+  "instance_id": "matplotlib__matplotlib-23299",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 1,
+  "success": false,
+  "reason": "no script: agent stopped (agent error: ApiStatusCodeError(request=RequestInfo(url='https://api.tokenfactory.nebius.com/sandboxes/v1/operations/01a15c4b-c5a2-75e0-a257-5571901f4bf1', method='GET'), response=ResponseInfo(headers={'date': 'Wed, 21 Oct 2026 02:30:33 GMT', 'content-type': 'application/json; charset=utf-8', 'content-length': '49', 'connection': 'keep-alive', 'traceparent': '00-cab400744dffdfdb7f74ea4ac381137c-9c4cd168e1f5f13a-01', 'strict-transport-security': 'max-age=31536000; includeSubDomains'}), status=500, error='Internal Server Error'))",
+  "script": null,
+  "seconds": 215.0,
+  "steps": 24,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 623918,
+    "output_tokens": 3469
+   }
+  },
+  "usd": 0.1903,
+  "venv": false,
+  "apt": false
+ },
+ "astropy__astropy-12907|nvidia/nemotron-3-super-120b-a12b|2": {
+  "instance_id": "astropy__astropy-12907",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 2,
+  "success": false,
+  "reason": "script fails on a new sandbox: Using Python 3.12.13 environment at: /usr/local\nChecked 2 packages in 45ms\nUsing Python 3.12.13 environment at: /usr/local\nResolved 1 package in 74ms\nPrepared 1 package in 285ms\nInstalled 1 package in 30ms\n + setuptools==59.8.0\nUsing Python 3.12.13 environment at: /usr/local\nerror: Failed to build `astropy @ file:///repo`\n  cause: Failed to install requirements from `build-system.requires`\n  cause: Failed to build `numpy==1.22.2`\n  cause: The build backend returned an error\n  cause: Call to `setuptools.build_meta:__legacy__.get_requires_for_build_wheel` failed (exit status: 1)\n\n         [stderr]\n         Traceback (most recent call last):\n           File \"<string>\", line 8, in <module>\n           File \"/root/.cache/uv/builds-v0/.tmpuPnaYf/lib/python3.12/site-packages/setuptools/__init__.py\", line 10, in <module>\n             import distutils.core\n         ModuleNotFoundError: No module named 'distutils'",
+  "script": "#!/bin/bash\nset -e\nuv pip install --python \"$(command -v python)\" --exclude-newer 2022-03-03T13:21:56-05:00 pytest coverage\nuv pip install --python \"$(command -v python)\" --exclude-newer 2022-03-03T13:21:56-05:00 'setuptools<60'\nuv pip install --python \"$(command -v python)\" --exclude-newer 2022-03-03T13:21:56-05:00 -e .\n",
+  "seconds": 76.4,
+  "steps": 11,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 38250,
+    "output_tokens": 1709
+   }
+  },
+  "usd": 0.013,
+  "venv": false,
+  "apt": false
+ },
+ "astropy__astropy-12907|nvidia/nemotron-3-super-120b-a12b|3": {
+  "instance_id": "astropy__astropy-12907",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "attempt": 3,
+  "success": false,
+  "reason": "script fails on a new sandbox:   Downloading setuptools-84.2.1-py3-none-any.whl.metadata (6.6 kB)\nDownloading setuptools-84.2.1-py3-none-any.whl (876 kB)\n   \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501 876.3/876.3 kB 82.1 MB/s eta 0:00:00\nInstalling collected packages: setuptools\nSuccessfully installed setuptools-84.2.1\nWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.\n\nWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.\n\nWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.\n\n\nUsage:   \n  /usr/local/bin/python -m pip install [options] <requirement specifier> [package-index-options] ...\n  /usr/local/bin/python -m pip install [options] -r <requirements file> [package-index-options] ...\n  /usr/local/bin/python -m pip install [options] [-e] <vcs project url> ...\n  /usr/local/bin/python -m pip install [options] [-e] <local project path> ...\n  /usr/local/bin/python -m pip install [options] <archive url/path> ...\n\nno such option: --exclude-newer",
+  "script": "#!/bin/bash\nset -e\npython -m pip install --upgrade setuptools\npython -m pip install --exclude-newer 2022-03-03T13:21:56-05:00 --no-build-isolation numpy pyerfa PyYAML\npython -m pip install --exclude-newer 2022-03-03T13:21:56-05:00 --no-build-isolation astropy\npip install pytest coverage\n",
+  "seconds": 136.1,
+  "steps": 22,
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 107078,
+    "output_tokens": 3444
+   }
+  },
+  "usd": 0.0352,
+  "venv": false,
+  "apt": false
+ }
+}
