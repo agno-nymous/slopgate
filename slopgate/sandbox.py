@@ -13,10 +13,10 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from contree_sdk import ContreeSync
-from contree_sdk.sdk.exceptions import NotFoundError
+from contree_sdk.sdk.exceptions import ApiStatusCodeError, ApiTimeoutError, ContreeTransportError, NotFoundError
 
 from slopgate import trace
-from slopgate.config import OLD_COMMIT_BEFORE, PYTHON_LAG_DAYS, PYTHONS, SANDBOX_TIMEOUT, SETUPTOOLS_EDITABLE
+from slopgate.config import OLD_COMMIT_BEFORE, PYTHON_LAG_DAYS, PYTHONS, RETRY_DELAYS, SANDBOX_TIMEOUT, SETUPTOOLS_EDITABLE
 from slopgate.diff import git
 
 OUTPUT_LIMIT = 10 * 1024 * 1024
@@ -26,8 +26,28 @@ class InstallError(Exception):
     pass
 
 
+# Pip on Python 3.6 prints its upgrade notice without the [notice] prefix, and it comes after the real error.
+PIP_NOTICES = ("[notice]", "WARNING: You are using pip version", "You should consider upgrading via")
+
+
 def tail(output: str) -> str:
-    return "\n".join(output.strip().splitlines()[-20:])
+    lines = [line for line in output.strip().splitlines() if not line.startswith(PIP_NOTICES)]
+    return "\n".join(lines[-20:])
+
+
+def collect_error(box, checkpoint, test) -> str | None:
+    if not re.match(r"(python -m )?pytest\b", test):
+        return None
+    for extra in (" --continue-on-collection-errors", ""):
+        code, output = box.run(checkpoint, {}, f"python -m coverage --version && {test} --collect-only{extra}")
+        # pytest before 3.0 has no such flag.
+        if "unrecognized arguments: --continue-on-collection-errors" not in output:
+            break
+    # An optional test dependency can break a few modules. The test agent needs only the target module and its own file.
+    # A collected test shows as `file::test` (-q), `file: count` (-qq), or a `<Function` tree node (no -q).
+    if code == 0 or (code == 1 and re.search(r"^\S+::\S|^\S+\.py: \d+$|<(Function|TestCaseFunction)\b", output, re.M)):
+        return None
+    return f"tests do not collect:\n{tail(output)}"
 
 
 def archive(repo, ref) -> bytes:
@@ -35,7 +55,8 @@ def archive(repo, ref) -> bytes:
 
 
 def commit_date(repo, ref) -> str:
-    return git(repo, "show", "-s", "--format=%cI", ref).strip()
+    # "git show -s" failed with exit 128 on the merge commit of astropy-6938 in a blobless clone. "git log -1" does not.
+    return git(repo, "log", "-1", "--format=%cI", ref).strip()
 
 
 def is_old(date: str) -> bool:
@@ -68,17 +89,17 @@ def pinned_install(names, since, scm) -> tuple[str, str | None]:
         python = old_python(since)
         install = f"uv pip install --python {PYTHON} -q --exclude-newer {since}"
         # The newest setuptools of Python 3.6 (59.6) has no `build_editable`: pip makes that install with `setup.py develop`.
-        project, editable = (".", " && pip install -q --no-deps -e .") if python == "3.6" else ("-e .", "")
+        # The non-editable build leaves `build/lib`, and pytest then imports each conftest.py twice from there.
+        project, built, editable = (".", " && rm -rf build", " && pip install -q --no-deps -e .") if python == "3.6" else ("-e .", "", "")
         limit = max(since, SETUPTOOLS_EDITABLE, key=datetime.fromisoformat) if scm else "2100-01-01"
         # shortcut: PyPI re-uploaded all atomicwrites files on 2022-07-09, so the date limit hides them and uv picks a pytest older than 3.6;
         # upgrade to a general retry if another package does this.
         limits = f"--exclude-newer-package setuptools={limit} --exclude-newer-package atomicwrites=2100-01-01"
-        pinned = f"{install} {limits} {project} pytest --reinstall && {install} setuptools --reinstall-package setuptools{editable}"
+        pinned = f"{install} {limits} {project} pytest --reinstall{built} && {install} setuptools --reinstall-package setuptools{editable}"
         image = f"python:{python}-slim"
     else:
         return plain, None
-    # The uv package declares Python 3.8 or later, but its binary runs on 3.6 and 3.7.
-    return f"pip install -q --ignore-requires-python uv && {pinned} || {plain}", image
+    return f"{pinned} || {plain}", image
 
 
 VERSION = re.compile(r"\d+(\.\d+)*((a|b|rc)\d+)?(\.post\d+)?(\.dev\d+)?")
@@ -223,6 +244,18 @@ class Local:
         return LocalSession(checkpoint)
 
 
+def retried(call):
+    # A 500 from the ConTree server is transient: a benchmark run lost 6 of 15 instances to it.
+    for delay in (*RETRY_DELAYS, None):
+        try:
+            return call()
+        except (ApiTimeoutError, ContreeTransportError, ApiStatusCodeError) as error:
+            transient = not isinstance(error, ApiStatusCodeError) or error.status == 429 or (error.status or 0) >= 500
+            if delay is None or not transient:
+                raise
+            time.sleep(delay)
+
+
 class Contree:
     pins = True
 
@@ -231,11 +264,19 @@ class Contree:
         self.image = image
 
     def prepare(self, repo, ref, setup: str | None, image=None):
-        script = "mkdir -p /repo && tar -x -f /tmp/repo.tar -C /repo && cd /repo && pip install -q pytest coverage || exit\n"
+        # The uv package declares Python 3.8 or later, but its binary runs on 3.6 and 3.7.
+        script = (
+            "mkdir -p /repo && tar -x -f /tmp/repo.tar -C /repo && cd /repo && pip install -q pytest coverage || exit\n"
+            "pip install -q --ignore-requires-python uv || exit\n"
+        )
         # `oci` imports a tag that the account does not have from Docker Hub (about 11 s, once per account): accounts lack the old Pythons.
-        result = (
-            self.client.images.oci(image or self.image, timeout=SANDBOX_TIMEOUT)
-            .run(shell=script + (setup or ""), files={"/tmp/repo.tar": archive(repo, ref)}, disposable=False)
+        result = retried(
+            lambda: self.client.images.oci(image or self.image, timeout=SANDBOX_TIMEOUT)
+            .run(
+                shell=script + (setup or ""),
+                files={"/tmp/repo.tar": archive(repo, ref)},
+                disposable=False,
+            )
             .wait()
         )
         if result.exit_code:
@@ -247,9 +288,14 @@ class Contree:
             seconds = SANDBOX_TIMEOUT
         with trace.span("sandbox.run", input={"cmd": cmd, "files": files}):
             files = {f"/repo/{rel}": content.encode() for rel, content in files.items()}
-            began = time.monotonic()
-            # Without the limit, the cut at 65,535 bytes drops the pytest summary of a long suite, and the baseline cannot compare (ticket 10).
-            result = checkpoint.run(shell=bounded(cmd, seconds), cwd="/repo", files=files, timeout=seconds + 60, truncate_output_at=OUTPUT_LIMIT).wait()
+
+            def attempt():
+                began = time.monotonic()
+                # Without the limit, the cut at 65,535 bytes drops the pytest summary of a long suite, and the baseline cannot compare (ticket 10).
+                result = checkpoint.run(shell=bounded(cmd, seconds), cwd="/repo", files=files, timeout=seconds + 60, truncate_output_at=OUTPUT_LIMIT).wait()
+                return result, began
+
+            result, began = retried(attempt)
             code, output = result.exit_code, result.stdout + result.stderr
             # The exit code cannot tell a timeout: a command may exit 124 itself, and one that ignores SIGTERM ends with 137.
             if time.monotonic() - began >= seconds:

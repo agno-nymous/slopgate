@@ -13,7 +13,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from contree_sdk.sdk.exceptions import NotFoundError
+from contree_sdk.sdk.exceptions import ApiStatusCodeError, NotFoundError
 
 from slopgate import kinds, llm, sandbox
 from slopgate import review as gate
@@ -481,8 +481,183 @@ def test_other_prepare_error_is_one_notice_with_the_error_text(make_repo, fake_l
     assert result["suggestions"] == [] and result["followup"] == []
     [rejected] = result["rejected"]
     assert rejected["reason"].startswith("could not build test environment") and "timeout" in rejected["reason"]
+    assert rejected["install"] is False
     assert result["notes"] == [{**REJECTED_NOTE, "body": REJECTED_NOTE["body"].replace(REJECTED, NO_ENVIRONMENT)}]
     assert fake_llm.calls == []
+
+
+def test_install_that_fails_with_no_output_is_one_notice_with_a_fixed_text(make_repo, fake_llm, capsys):
+    repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED, ".slopgate.toml": "[sandbox]\nsetup = 'false'\n"})
+
+    result = review(capsys, repo)
+
+    assert result["rejected"] == [{"reason": "could not build test environment\ninstall failed with no output"}]
+    assert result["notes"] == [{**REJECTED_NOTE, "body": REJECTED_NOTE["body"].replace(REJECTED, NO_ENVIRONMENT)}]
+    assert fake_llm.calls == []
+
+
+def test_tail_drops_pip_notices_so_the_error_stays_in_the_last_lines():
+    output = "ERROR: no matching distribution\n[notice] A new release of pip is available\n[notice] To update, run: pip install -U pip"
+
+    assert sandbox.tail(output) == "ERROR: no matching distribution"
+
+
+def test_tail_drops_the_pip_upgrade_warning_of_old_pip():
+    output = (
+        "ERROR: no matching distribution\n"
+        "WARNING: You are using pip version 21.3.1; however, version 22.0 is available.\n"
+        "You should consider upgrading via the '/usr/local/bin/python -m pip install --upgrade pip' command."
+    )
+
+    assert sandbox.tail(output) == "ERROR: no matching distribution"
+
+
+PYTEST = "python -m pytest -q"
+
+
+def checkpoint_of(make_repo, tests):
+    repo = make_repo(tests, {"README": ""})
+    return Local().prepare(repo, "HEAD", None)
+
+
+def test_collect_error_passes_a_repo_whose_tests_collect(make_repo):
+    checkpoint = checkpoint_of(make_repo, {"test_ok.py": "def test_ok():\n    assert True\n"})
+
+    assert sandbox.collect_error(Local(), checkpoint, PYTEST) is None
+
+
+def test_collect_error_names_an_import_error(make_repo):
+    checkpoint = checkpoint_of(make_repo, {"test_bad.py": "import nothing_here\n\n\ndef test_ok():\n    assert True\n"})
+
+    reason = sandbox.collect_error(Local(), checkpoint, PYTEST)
+
+    assert reason.startswith("tests do not collect")
+    assert "nothing_here" in reason
+
+
+def test_collect_error_passes_when_some_modules_do_not_import(make_repo):
+    checkpoint = checkpoint_of(
+        make_repo,
+        {
+            "test_ok.py": "def test_ok():\n    assert True\n",
+            "test_bad.py": "import nothing_here\n\n\ndef test_bad():\n    assert True\n",
+        },
+    )
+
+    assert sandbox.collect_error(Local(), checkpoint, PYTEST) is None
+
+
+@pytest.mark.parametrize("test", ["python -m pytest", "python -m pytest -v", "python -m pytest -qq"])
+def test_collect_error_passes_when_some_modules_do_not_import_in_every_verbosity(make_repo, test):
+    checkpoint = checkpoint_of(
+        make_repo,
+        {
+            "test_ok.py": "def test_ok():\n    assert True\n",
+            "test_bad.py": "import nothing_here\n\n\ndef test_bad():\n    assert True\n",
+        },
+    )
+
+    assert sandbox.collect_error(Local(), checkpoint, test) is None
+
+
+def test_collect_error_fails_on_a_conftest_that_does_not_import(make_repo):
+    checkpoint = checkpoint_of(
+        make_repo,
+        {"conftest.py": "import nothing_here\n", "test_ok.py": "def test_ok():\n    assert True\n"},
+    )
+
+    reason = sandbox.collect_error(Local(), checkpoint, PYTEST)
+
+    assert reason.startswith("tests do not collect")
+    assert "nothing_here" in reason
+
+
+def test_collect_error_names_a_repo_with_no_tests(make_repo):
+    checkpoint = checkpoint_of(make_repo, {"app.py": "X = 1\n"})
+
+    assert sandbox.collect_error(Local(), checkpoint, PYTEST).startswith("tests do not collect")
+
+
+def test_collect_error_skips_a_test_command_that_is_not_pytest():
+    class Never:
+        def run(self, *args):
+            raise AssertionError("must not run")
+
+    assert sandbox.collect_error(Never(), None, "make test") is None
+
+
+def test_collect_error_retries_without_the_flag_that_old_pytest_rejects():
+    class OldPytest:
+        def __init__(self):
+            self.commands = []
+
+        def run(self, checkpoint, files, cmd):
+            self.commands.append(cmd)
+            if "--continue-on-collection-errors" in cmd:
+                return 4, "pytest: error: unrecognized arguments: --continue-on-collection-errors"
+            return 0, "test_a.py::test_a"
+
+    old = OldPytest()
+
+    assert sandbox.collect_error(old, None, PYTEST) is None
+    assert len(old.commands) == 2
+    assert "--continue-on-collection-errors" not in old.commands[1]
+
+
+class PinnedLocal(Local):
+    pins = True
+
+
+def broken_collection_repo(make_repo):
+    return make_repo(
+        {"app/__init__.py": "", "tests/test_bad.py": "import nothing_here\n"},
+        {"app/perms.py": NESTED},
+    )
+
+
+def test_review_posts_no_environment_when_the_tests_do_not_collect(make_repo, fake_llm, monkeypatch):
+    repo = broken_collection_repo(make_repo)
+    monkeypatch.setattr(gate, "commands", lambda *args: (None, PYTEST, None))
+
+    result = gate.review(repo, "HEAD~1", "HEAD", PinnedLocal())
+
+    assert result["suggestions"] == [] and result["followup"] == []
+    [rejected] = result["rejected"]
+    assert rejected["reason"].startswith("could not build test environment\ntests do not collect")
+    assert "nothing_here" in rejected["reason"]
+    assert result["notes"] == [{**REJECTED_NOTE, "body": REJECTED_NOTE["body"].replace(REJECTED, NO_ENVIRONMENT)}]
+    assert fake_llm.calls == []
+
+
+def test_review_posts_no_environment_when_the_collect_check_raises(make_repo, fake_llm, monkeypatch):
+    repo = broken_collection_repo(make_repo)
+    monkeypatch.setattr(gate, "commands", lambda *args: (None, PYTEST, None))
+
+    def collect(*args):
+        raise RuntimeError("503 from ConTree")
+
+    monkeypatch.setattr(gate, "collect_error", collect)
+
+    result = gate.review(repo, "HEAD~1", "HEAD", PinnedLocal())
+
+    [rejected] = result["rejected"]
+    assert rejected["reason"].startswith("could not build test environment\n") and "503 from ConTree" in rejected["reason"]
+    assert rejected["install"] is False
+    assert result["notes"] == [{**REJECTED_NOTE, "body": REJECTED_NOTE["body"].replace(REJECTED, NO_ENVIRONMENT)}]
+    assert fake_llm.calls == []
+
+
+def test_review_on_local_runs_no_collect_check(make_repo, fake_llm, monkeypatch):
+    repo = broken_collection_repo(make_repo)
+    monkeypatch.setattr(gate, "commands", lambda *args: (None, PYTEST, None))
+    checked = []
+    monkeypatch.setattr(gate, "collect_error", lambda *args: checked.append(args))
+    fake_llm.replies[:] = ["CANNOT_TEST: skip"] * 20
+
+    result = gate.review(repo, "HEAD~1", "HEAD", Local())
+
+    assert checked == []
+    assert not any(r["reason"].startswith("could not build test environment") for r in result["rejected"])
 
 
 def test_review_error_prints_the_result_and_exits_1(make_repo, capsys, monkeypatch):
@@ -1679,6 +1854,59 @@ def test_contree_run_bounds_the_command_and_reports_a_run_that_reached_the_time_
     assert runs[0] == {"shell": "timeout -k 5 7 sh -c 'pytest -q'", "cwd": "/repo", "files": {"/repo/tests/test_x.py": b"x = 1\n"}, "timeout": 67, "truncate_output_at": 10 * 1024 * 1024}
 
 
+def flaky_run(outcomes, clock=None, seconds=0):
+    attempts = []
+
+    def start(**kwargs):
+        def wait():
+            attempts.append(1)
+            if clock:
+                clock[0] += seconds
+            outcome = outcomes.pop(0)
+            if isinstance(outcome, Exception):
+                raise outcome
+            return SimpleNamespace(exit_code=outcome, stdout="out", stderr="")
+
+        return SimpleNamespace(wait=wait)
+
+    return SimpleNamespace(run=start), attempts
+
+
+def test_contree_run_retries_a_server_error_after_five_seconds(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(sandbox.time, "sleep", sleeps.append)
+    checkpoint, attempts = flaky_run([ApiStatusCodeError(status=500), 0])
+
+    assert Contree.__new__(Contree).run(checkpoint, {}, "pytest -q") == (0, "out")
+    assert len(attempts) == 2
+    assert sleeps == [5]
+
+
+def test_contree_run_does_not_retry_a_not_found_status(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(sandbox.time, "sleep", sleeps.append)
+    checkpoint, attempts = flaky_run([ApiStatusCodeError(status=404), 0])
+
+    with pytest.raises(ApiStatusCodeError):
+        Contree.__new__(Contree).run(checkpoint, {}, "pytest -q")
+
+    assert len(attempts) == 1
+    assert sleeps == []
+
+
+def test_contree_run_times_only_the_last_attempt(monkeypatch):
+    monkeypatch.setattr("slopgate.sandbox.SANDBOX_TIMEOUT", 7)
+    clock = [0.0]
+    monkeypatch.setattr("slopgate.sandbox.time", SimpleNamespace(monotonic=lambda: clock[0], sleep=lambda delay: clock.__setitem__(0, clock[0] + delay)))
+    box = Contree.__new__(Contree)
+
+    checkpoint, _ = flaky_run([ApiStatusCodeError(status=500), 137], clock, 2)
+    assert box.run(checkpoint, {}, "pytest -q") == (137, "out")
+
+    checkpoint, _ = flaky_run([ApiStatusCodeError(status=500), 137], clock, 8)
+    assert box.run(checkpoint, {}, "pytest -q") == (124, "out\ntimed out after 7 s")
+
+
 LOOPS = TESTS.format(name="can_edit", call="can_edit").replace("assert can_edit(False, True, False, False) is False", "while True: pass")
 
 
@@ -1712,6 +1940,98 @@ def test_contree_prepares_on_the_image_through_oci_which_imports_a_missing_tag(m
     box.prepare(repo, "HEAD", "true")
 
     assert calls == [("python:3.6-slim", 600), ("python:3.12-slim", 600)]
+
+
+def test_contree_prepare_installs_uv(make_repo):
+    repo = make_repo({"README": ""}, {"app.py": ""})
+    runs = []
+
+    def run(**kwargs):
+        runs.append(kwargs)
+        return SimpleNamespace(wait=lambda: SimpleNamespace(exit_code=0, stdout="", stderr=""))
+
+    box = Contree.__new__(Contree)
+    box.image = "python:3.12-slim"
+    box.client = SimpleNamespace(images=SimpleNamespace(oci=lambda ref, timeout: SimpleNamespace(run=run)))
+
+    box.prepare(repo, "HEAD", "true")
+
+    [call] = runs
+    assert "pip install -q pytest coverage || exit\npip install -q --ignore-requires-python uv || exit\ntrue" in call["shell"]
+
+
+def flaky_box(outcomes):
+    attempts = []
+
+    def wait():
+        attempts.append(1)
+        outcome = outcomes.pop(0)
+        if isinstance(outcome, Exception):
+            raise outcome
+        return SimpleNamespace(exit_code=outcome, stdout="no module", stderr="")
+
+    box = Contree.__new__(Contree)
+    box.image = "python:3.12-slim"
+
+    def oci(ref, timeout):
+        return SimpleNamespace(run=lambda **kwargs: SimpleNamespace(wait=wait))
+
+    box.client = SimpleNamespace(images=SimpleNamespace(oci=oci))
+    return box, attempts
+
+
+def test_contree_prepare_retries_a_server_error_after_five_seconds(make_repo, monkeypatch):
+    repo = make_repo({"README": ""}, {"app.py": ""})
+    sleeps = []
+    monkeypatch.setattr(sandbox.time, "sleep", sleeps.append)
+    box, attempts = flaky_box([ApiStatusCodeError(status=500), 0])
+
+    result = box.prepare(repo, "HEAD", "true")
+
+    assert result.exit_code == 0
+    assert len(attempts) == 2
+    assert sleeps == [5]
+
+
+def test_contree_prepare_raises_the_last_error_after_three_attempts(make_repo, monkeypatch):
+    repo = make_repo({"README": ""}, {"app.py": ""})
+    sleeps = []
+    monkeypatch.setattr(sandbox.time, "sleep", sleeps.append)
+    last = ApiStatusCodeError(status=503)
+    box, attempts = flaky_box([ApiStatusCodeError(status=500), ApiStatusCodeError(status=502), last])
+
+    with pytest.raises(ApiStatusCodeError) as raised:
+        box.prepare(repo, "HEAD", "true")
+
+    assert raised.value is last
+    assert len(attempts) == 3
+    assert sleeps == [5, 15]
+
+
+def test_contree_prepare_does_not_retry_a_failed_install_script(make_repo, monkeypatch):
+    repo = make_repo({"README": ""}, {"app.py": ""})
+    sleeps = []
+    monkeypatch.setattr(sandbox.time, "sleep", sleeps.append)
+    box, attempts = flaky_box([1])
+
+    with pytest.raises(sandbox.InstallError):
+        box.prepare(repo, "HEAD", "false")
+
+    assert len(attempts) == 1
+    assert sleeps == []
+
+
+def test_contree_prepare_does_not_retry_a_not_found_error(make_repo, monkeypatch):
+    repo = make_repo({"README": ""}, {"app.py": ""})
+    sleeps = []
+    monkeypatch.setattr(sandbox.time, "sleep", sleeps.append)
+    box, attempts = flaky_box([NotFoundError()])
+
+    with pytest.raises(NotFoundError):
+        box.prepare(repo, "HEAD", "true")
+
+    assert len(attempts) == 1
+    assert sleeps == []
 
 
 def test_contree_session_bounds_each_command_in_the_sandbox_and_reads_a_missing_file_as_none():
@@ -2286,7 +2606,8 @@ def test_old_commit_installs_the_versions_of_its_date_on_the_old_image(make_repo
     assert "--exclude-newer-package setuptools=2100-01-01 --exclude-newer-package atomicwrites=2100-01-01 " in setup
     assert "-e . pytest --reinstall " in setup
     assert "--reinstall-package pytest" not in setup
-    assert setup.startswith("pip install -q --ignore-requires-python uv && ")
+    assert "ignore-requires-python" not in setup
+    assert "rm -rf build" not in setup
     assert setup.endswith("|| pip install -e .")
     assert shell_syntax_ok(setup)
     assert image == "python:3.10-slim"
@@ -2313,7 +2634,7 @@ def test_commit_of_2016_installs_on_python_36_with_a_legacy_editable_install(mak
     setup, _, image = sandbox.commands(repo, "HEAD", "2016-06-28T10:00:00+00:00")
 
     assert image == "python:3.6-slim"
-    assert ". pytest --reinstall" in setup
+    assert ". pytest --reinstall && rm -rf build && " in setup
     assert "-e . pytest" not in setup
     assert " && pip install -q --no-deps -e . || " in setup
     assert setup.endswith("|| pip install -e .")
@@ -2364,7 +2685,7 @@ def test_scm_version_reaches_the_plain_fallback_of_the_pinned_installs(make_repo
     locked = make_repo({"pyproject.toml": SCM_TOML, "uv.lock": ""}, {"app.py": ""})
     tag(locked, "2.0.0rc1")
     setup = sandbox.commands(locked, "HEAD", RECENT)[0]
-    assert setup.startswith(f"{EXPORT}2.0.0rc1; pip install -q --ignore-requires-python uv && R=$(mktemp)")
+    assert setup.startswith(f"{EXPORT}2.0.0rc1; R=$(mktemp)")
     assert setup.endswith("|| pip install -e .")
     assert shell_syntax_ok(setup)
 
@@ -2373,7 +2694,7 @@ def test_scm_version_reaches_the_plain_fallback_of_the_old_commit_install(make_r
     repo = make_repo({"pyproject.toml": SCM_TOML}, {"app.py": ""})
     tag(repo, "2.0.0rc1")
     setup = sandbox.commands(repo, "HEAD", OLD)[0]
-    assert setup.startswith(f"{EXPORT}2.0.0rc1; pip install -q --ignore-requires-python uv && uv pip install")
+    assert setup.startswith(f"{EXPORT}2.0.0rc1; uv pip install")
     assert setup.endswith("|| pip install -e .")
     assert shell_syntax_ok(setup)
 

@@ -30,6 +30,8 @@ MUTANT_SECONDS = 60
 # Seconds for one sandbox run (the check, the rewrite proof, the repo tests). The slowest normal run in ticket 33 took 159 s:
 # this repo's own test suite in ConTree.
 SANDBOX_TIMEOUT = 600
+# Seconds to wait before each retry of a ConTree call that failed with a timeout, a transport error, or a 429 or 5xx status.
+RETRY_DELAYS = (5, 15)
 
 # A commit from before Python 3.12 runs on an older Python with the dependencies of its own time (ticket 53). On 3.12 the old pytest
 # fails in the assertion rewriter, and some old packages have no wheel.
