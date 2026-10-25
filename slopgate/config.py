@@ -32,6 +32,8 @@ MUTANT_SECONDS = 60
 SANDBOX_TIMEOUT = 600
 # Seconds to wait before each retry of a ConTree call that failed with a timeout, a transport error, or a 429 or 5xx status.
 RETRY_DELAYS = (5, 15)
+# Seconds to wait between the tries of a Token Factory request after a 429. The Retry-After header wins, capped at 60 s.
+RATE_LIMIT_WAITS = (5, 15, 45)
 
 # A commit from before Python 3.12 runs on an older Python with the dependencies of its own time (ticket 53). On 3.12 the old pytest
 # fails in the assertion rewriter, and some old packages have no wheel.
