@@ -4,21 +4,44 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**73 — rerun the benchmark.** Ticket 72 (done, 2026-10-25) removed the pytest 2.9 flag for `psf__requests-3362`: its 3 items now reach the test agent but end with `coverage has no data` (ticket 75). Ticket 73 (needs-live-check, 2026-10-25) retries a Token Factory 429 in `slopgate/llm.py`; its benchmark box waits for the rerun. Ticket 67 (done, 2026-10-21) added a collection check, a retry of transient ConTree faults, and the README install guide. The default install builds 18 of 28 instances. In the ticket 10 benchmark, the gate accepts 13 of 38 detected items (before: 7 of 26), and infrastructure errors fell from 15 to 3. 5 of 42 items were rejected for a Token Factory rate limit (ticket 73), and 3 for a pytest 2.9 flag in the bench test command (ticket 72, fixed). Rerun the benchmark (it closes the open box of ticket 73), then do ticket 64. Ticket 10 is `needs-live-check` (the Serverless Job and the instance count are open). The install agent does not ship: it proved 0 of 72 attempts.
+**75 — The gate gets no coverage data on `psf__requests-3362`.** Time-box it to 1 hour. If the cause is not clear after 1 hour, remove the instance from the benchmark. Then do ticket 66, and then rerun the benchmark (ticket 10).
 
-## Plan to the deadline (set on 2026-10-17)
+State on 2026-10-25: ticket 72 (done) removed the pytest 2.9 flag for `psf__requests-3362`. Its 3 items now reach the test agent but end with `coverage has no data` (ticket 75). Ticket 73 (needs-live-check) retries a Token Factory 429 in `slopgate/llm.py`; its last box is the benchmark rerun. Ticket 67 (done) added a collection check, a retry of transient ConTree faults, and the README install guide. In the ticket 10 benchmark of 2026-10-21, the gate accepts 13 of 38 detected items (before: 7 of 26). The install agent does not ship: it proved 0 of 72 attempts.
+
+## Before the full benchmark rerun (set on 2026-10-25)
+
+Do these in this order.
+
+1. **Ticket 75.** Time-boxed (see above).
+2. **Ticket 66.** Some injected items change behavior or are not the kind they name. The fix changes the items, so it must come before the rerun and before the detection numbers go into the submission.
+3. **Ticket 10, open boxes.** Start the run as a Nebius Serverless Job (the README holds the job command). Use the preloaded sandbox image of each instance for the hidden tests.
+4. **Rerun the benchmark.** This closes the last box of ticket 73 (no `RateLimitError` rejection). Run `report` after it, because the report files still hold the old numbers for `psf__requests-3362`.
+
+Do not do tickets 70, 74, 45, 50, 43, and 56 before the rerun. They matter only if the per-kind numbers of ticket 10 show that a kind needs a fix.
+
+## Plan to the deadline (set on 2026-10-17, changed on 2026-10-25)
 
 The goal is an overall prize. The judges score 4 criteria (1 to 5, equal weight): Technological Implementation, Design, Potential Impact, and Quality of the Idea. The submission needs a working demo URL.
 
-| Days | Dates | Work |
-|---|---|---|
-| 1 to 3 | 2026-10-17 to 10-20 | The benchmark headline: tickets 60, 42, 48, then 10 with 10 to 15 instances. |
-| 3 | 2026-10-20 | **Decision point.** Read the acceptance rate and the silent-break rate of ticket 10. If the gate proves few rewrites, the headline becomes the precision of the gate and the write-time hook: do ticket 65 before ticket 64. |
-| 4 to 6 | 2026-10-21 to 10-23 | Ticket 64: the hosted demo on a Nebius Serverless Endpoint. |
-| 7 to 9 | 2026-10-24 to 10-26 | Ticket 65: the hook on and off with a Nemotron coding agent, only if tickets 10 and 64 are done. |
-| 10 to 12 | 2026-10-27 to 10-29 | Ticket 11: README, video, feedback, public repos. Submit on 2026-10-29. |
+| Date | Work |
+|---|---|
+| 2026-10-25 | Tickets 75 (time-boxed) and 66. |
+| 2026-10-26 | Ticket 10: the Serverless Job and the full rerun. Then `report`. **Decision point:** read the acceptance rate and the silent-break rate. If the gate proves few rewrites, the headline becomes the precision of the gate and the write-time hook: do ticket 65 before ticket 64. |
+| 2026-10-27 | Ticket 64: the hosted demo on a Nebius Serverless Endpoint. This is the largest item. |
+| 2026-10-28 | Ticket 08 (live flag at plan time, because the video needs it) and the live-check boxes of ticket 27. Ticket 65 only if tickets 10 and 64 are done. Cut ticket 65 first, then ticket 08, if time runs short. |
+| 2026-10-29 | Ticket 11: README, video, feedback, Devpost text. Public flip (see below). Submit on 2026-10-29. |
 
 Fix a slop kind (tickets 45, 50, 43) only if the numbers of ticket 10 show that the fix changes the headline. Otherwise turn that kind off in the gate.
+
+## Public flip (do on 2026-10-29, before 2026-10-30, 10:00 PT)
+
+Do the workflow edits first. On a public repo, a pull request from a fork can run its code on the Mac.
+
+1. In `.github/workflows/slopgate.yml`, set `runs-on: ubuntu-latest`.
+2. Remove the self-hosted runner.
+3. Remove the `PHOENIX_COLLECTOR_ENDPOINT` env line from the workflow.
+4. Turn the Slopgate workflow on again (`gh workflow enable Slopgate`) only when the user says so.
+5. Make both the `slopgate` and the `slopgate-demo` repo public.
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
