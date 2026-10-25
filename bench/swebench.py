@@ -88,6 +88,9 @@ IMAGE = "docker.io/swebench/sweb.eval.x86_64.{}:latest"
 # the default PATH of the image puts the base conda env first, and its python is not the one with the repo installed
 TESTBED_PATH = "/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 PYTEST = "-rA -p no:cacheprovider --continue-on-collection-errors"
+# the gate sandbox pins pytest 2.9 for this commit, and pytest before 3.0 has no --continue-on-collection-errors.
+# Add an instance here when its install report shows "unrecognized arguments: --continue-on-collection-errors".
+OLD_PYTEST = {"psf__requests-3362"}
 MARK = "--bench-coverage--"
 HIDDEN_SECONDS = 900
 PER_INSTANCE = 3
@@ -177,6 +180,11 @@ def hidden_command(tests: list[str], coverage: bool = False) -> str:
     if not coverage:
         return f"python -m pytest {PYTEST} {' '.join(tests)}"
     return f"python -m coverage run --source=/repo -m pytest {PYTEST} {' '.join(tests)}; echo {MARK}; {review.COMBINE}; python -m coverage json -q -o -"
+
+
+def gate_test_command(instance_id: str, repo: str) -> str:
+    flag = "" if instance_id in OLD_PYTEST else " --continue-on-collection-errors"
+    return f"python -m pytest -q -rfE -p no:cacheprovider{flag} {TESTS[repo]}"
 
 
 def patch_files(test_patch: str) -> tuple[list[str], list[str]]:
@@ -419,7 +427,7 @@ def select_items(source: dict, instance: dict, usage: Counter) -> list[Item]:
         slop_pass = together() if made else frozenset()
     if not made:
         raise InstallError("the injections together break the hidden tests")
-    test = f"python -m pytest -q -rfE -p no:cacheprovider --continue-on-collection-errors {TESTS[repo]}"
+    test = gate_test_command(instance_id, repo)
     instance |= {
         "head": commit(clone, {item.path: text for item, text in made}, [p for p in hidden_files if (clone / p).exists()], test),
         "clone": str(clone),
