@@ -472,32 +472,35 @@
  },
  "psf__requests-3362": {
   "instance_id": "psf__requests-3362",
-  "seconds": 20.0,
-  "gate_seconds": 20.0,
+  "seconds": 111.7,
+  "gate_seconds": 111.7,
   "error": null,
-  "gate_errors": [
-   "could not build test environment\ntests do not collect:\nCoverage.py, version 6.2 with C extension\nFull documentation is at https://coverage.readthedocs.io\nusage: pytest.py [options] [file_or_dir] [file_or_dir] [...]\npytest.py: error: unrecognized arguments: --continue-on-collection-errors\n  inifile: None\n  rootdir: /repo"
-  ],
-  "tokens": {},
-  "usd": 0,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 242270,
+    "output_tokens": 17825
+   }
+  },
+  "usd": 0.0887,
   "items": [
    {
-    "id": "psf__requests-3362:requests/packages/urllib3/util/retry.py:Retry._is_read_error:dead",
-    "kind": "dead",
+    "id": "psf__requests-3362:requests/adapters.py:HTTPAdapter.cert_verify:nesting",
+    "kind": "nesting",
     "detected": true,
     "gate_kinds": [
-     "dead"
+     "nesting"
     ],
-    "outcome": "no_environment",
-    "reason": "**dead** (not rewritten): `Retry._is_read_error`: It has unreachable code or unused variables. Remove them. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "outcome": "rejected",
+    "reason": "step limit: coverage has no data for requests/adapters.py",
     "accepted": false,
     "complexity": {
-     "original": 1,
-     "injected": 1
+     "original": 9,
+     "injected": 9
     },
     "nesting": {
-     "original": 0,
-     "injected": 0
+     "original": 2,
+     "injected": 3
     },
     "after": null,
     "removed": false,
@@ -507,22 +510,22 @@
     "flaky": []
    },
    {
-    "id": "psf__requests-3362:requests/utils.py:_unquote_unreserved_impl:wrapper",
-    "kind": "wrapper",
+    "id": "psf__requests-3362:requests/cookies.py:merge_cookies:redundant_check",
+    "kind": "redundant_check",
     "detected": true,
     "gate_kinds": [
-     "wrapper"
+     "redundant_check"
     ],
-    "outcome": "no_environment",
-    "reason": "**wrapper** (not rewritten): `_unquote_unreserved_impl` only forwards to `unquote_unreserved`. Inline it into its single caller. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "outcome": "rejected",
+    "reason": "step limit: coverage has no data for requests/cookies.py",
     "accepted": false,
     "complexity": {
      "original": 6,
-     "injected": 1
+     "injected": 7
     },
     "nesting": {
      "original": 3,
-     "injected": 0
+     "injected": 4
     },
     "after": null,
     "removed": false,
@@ -532,26 +535,26 @@
     "flaky": []
    },
    {
-    "id": "psf__requests-3362:requests/api.py:request_alt:duplicate",
-    "kind": "duplicate",
+    "id": "psf__requests-3362:requests/models.py:PreparedRequest.prepare_cookies:swallowed_error",
+    "kind": "swallowed_error",
     "detected": true,
     "gate_kinds": [
-     "duplicate"
+     "swallowed_error"
     ],
-    "outcome": "no_environment",
-    "reason": "**duplicate** (not rewritten): `request_alt` does the same job as `request` in requests/api.py. Call it instead. Slopgate could not build the test environment, so it could not prove a rewrite and changed nothing.",
+    "outcome": "rejected",
+    "reason": "step limit: coverage has no data for requests/models.py",
     "accepted": false,
     "complexity": {
-     "original": 1,
-     "injected": 1
+     "original": 3,
+     "injected": 4
     },
     "nesting": {
      "original": 1,
-     "injected": 1
+     "injected": 2
     },
     "after": null,
     "removed": false,
-    "exact": true,
+    "exact": false,
     "hidden": null,
     "broken": [],
     "flaky": []

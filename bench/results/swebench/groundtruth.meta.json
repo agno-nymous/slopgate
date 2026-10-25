@@ -12,12 +12,12 @@
   "DUPLICATE_PROMPT": "e05822b5889f"
  },
  "counts": {
-  "redundant_check": 8,
-  "swallowed_error": 7,
-  "dead": 7,
-  "wrapper": 8,
-  "nesting": 7,
-  "duplicate": 7,
+  "redundant_check": 9,
+  "swallowed_error": 8,
+  "dead": 6,
+  "wrapper": 7,
+  "nesting": 8,
+  "duplicate": 6,
   "lookup_table": 1
  }
 }

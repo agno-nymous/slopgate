@@ -11,6 +11,7 @@ from bench.swebench import (
     eligible,
     entry_kinds,
     executed,
+    gate_test_command,
     gold_spans,
     grade,
     hidden,
@@ -509,3 +510,8 @@ def test_install_summary_counts_a_false_trigger_and_the_calibration():
     summary = swebench.install_summary(results)
     assert (summary["built"], summary["collects"], summary["false_triggers"]) == (2, 1, 1)
     assert (summary["calibrated"], summary["calibration_production"], summary["calibration_bench"], summary["seconds"]) == (1, 1, 0, 8.0)
+
+
+def test_gate_test_command_drops_the_collection_flag_for_pytest_before_3():
+    assert "--continue-on-collection-errors" in gate_test_command("psf__requests-1963", "psf/requests")
+    assert gate_test_command("psf__requests-3362", "psf/requests") == "python -m pytest -q -rfE -p no:cacheprovider tests"

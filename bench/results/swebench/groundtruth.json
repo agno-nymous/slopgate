@@ -1,8 +1,8 @@
 {
  "super_usage": {
-  "calls": 9,
-  "input_tokens": 3378,
-  "output_tokens": 2381
+  "calls": 8,
+  "input_tokens": 2622,
+  "output_tokens": 1708
  },
  "instances": {
   "pytest-dev__pytest-7220": {
@@ -875,10 +875,10 @@
    "skipped": null,
    "rejected": {},
    "blind": {},
-   "head": "d32827767e9086244431d09a749bbf628b64139f",
+   "head": "2b471e021726c23f931b79ee154cfc510e0bb788",
    "clone": "/Users/ashishthomaschempolil/.cache/slopgate/bench/swebench/psf__requests-3362",
    "image": "docker.io/swebench/sweb.eval.x86_64.psf_1776_requests-3362:latest",
-   "hidden_uuid": "baa1f03f-685d-4962-b2a8-c6943ba6f490",
+   "hidden_uuid": "46097c37-3647-4e92-a159-fe04338483e3",
    "hidden_files": [
     "tests/test_requests.py"
    ],
@@ -1039,12 +1039,8 @@
     "tests/test_requests.py::test_proxy_env_vars_override_default[https_proxy-https://example.com-socks5://proxy.com:9876]",
     "tests/test_requests.py::test_vendor_aliases"
    ],
-   "seconds": 27.3,
-   "super_usage": {
-    "calls": 1,
-    "input_tokens": 756,
-    "output_tokens": 673
-   }
+   "seconds": 40.6,
+   "super_usage": {}
   },
   "pallets__flask-5063": {
    "instance_id": "pallets__flask-5063",
@@ -2349,109 +2345,6 @@
    "exact": false
   },
   {
-   "id": "psf__requests-3362:requests/packages/urllib3/util/retry.py:Retry._is_read_error:dead",
-   "instance": "psf__requests-3362",
-   "repo": "psf/requests",
-   "kind": "dead",
-   "path": "requests/packages/urllib3/util/retry.py",
-   "qualname": "Retry._is_read_error",
-   "source": "    def _is_read_error(self, err):\n        \"\"\" Errors that occur after the request has been started, so we should\n        assume that the server began processing it.\n        \"\"\"\n        return isinstance(err, (ReadTimeoutError, ProtocolError))\n",
-   "injected": "    def _is_read_error(self, err):\n        \"\"\" Errors that occur after the request has been started, so we should\n        assume that the server began processing it.\n        \"\"\"\n        original_err = err\n        return isinstance(err, (ReadTimeoutError, ProtocolError))\n",
-   "changed_lines": [
-    "original_err = err"
-   ],
-   "complexity": {
-    "original": 1,
-    "injected": 1
-   },
-   "nesting": {
-    "original": 0,
-    "injected": 0
-   },
-   "exact": false
-  },
-  {
-   "id": "psf__requests-3362:requests/utils.py:_unquote_unreserved_impl:wrapper",
-   "instance": "psf__requests-3362",
-   "repo": "psf/requests",
-   "kind": "wrapper",
-   "path": "requests/utils.py",
-   "qualname": "_unquote_unreserved_impl",
-   "source": "def unquote_unreserved(uri):\n    \"\"\"Un-escape any percent-escape sequences in a URI that are unreserved\n    characters. This leaves all reserved, illegal and non-ASCII bytes encoded.\n    \"\"\"\n    parts = uri.split('%')\n    for i in range(1, len(parts)):\n        h = parts[i][0:2]\n        if len(h) == 2 and h.isalnum():\n            try:\n                c = chr(int(h, 16))\n            except ValueError:\n                raise InvalidURL(\"Invalid percent-escape sequence: '%s'\" % h)\n\n            if c in UNRESERVED_SET:\n                parts[i] = c + parts[i][2:]\n            else:\n                parts[i] = '%' + parts[i]\n        else:\n            parts[i] = '%' + parts[i]\n    return ''.join(parts)\n",
-   "injected": "def _unquote_unreserved_impl(uri):\n    return unquote_unreserved(uri)\n",
-   "changed_lines": [
-    "def _unquote_unreserved_impl(uri):",
-    "return unquote_unreserved(uri)"
-   ],
-   "complexity": {
-    "original": 6,
-    "injected": 1
-   },
-   "nesting": {
-    "original": 3,
-    "injected": 0
-   },
-   "exact": false
-  },
-  {
-   "id": "psf__requests-3362:requests/api.py:request_alt:duplicate",
-   "instance": "psf__requests-3362",
-   "repo": "psf/requests",
-   "kind": "duplicate",
-   "path": "requests/api.py",
-   "qualname": "request_alt",
-   "source": "def request(method, url, **kwargs):\n    \"\"\"Constructs and sends a :class:`Request <Request>`.\n\n    :param method: method for the new :class:`Request` object.\n    :param url: URL for the new :class:`Request` object.\n    :param params: (optional) Dictionary or bytes to be sent in the query string for the :class:`Request`.\n    :param data: (optional) Dictionary, bytes, or file-like object to send in the body of the :class:`Request`.\n    :param json: (optional) json data to send in the body of the :class:`Request`.\n    :param headers: (optional) Dictionary of HTTP Headers to send with the :class:`Request`.\n    :param cookies: (optional) Dict or CookieJar object to send with the :class:`Request`.\n    :param files: (optional) Dictionary of ``'name': file-like-objects`` (or ``{'name': file-tuple}``) for multipart encoding upload.\n        ``file-tuple`` can be a 2-tuple ``('filename', fileobj)``, 3-tuple ``('filename', fileobj, 'content_type')``\n        or a 4-tuple ``('filename', fileobj, 'content_type', custom_headers)``, where ``'content-type'`` is a string\n        defining the content type of the given file and ``custom_headers`` a dict-like object containing additional headers\n        to add for the file.\n    :param auth: (optional) Auth tuple to enable Basic/Digest/Custom HTTP Auth.\n    :param timeout: (optional) How long to wait for the server to send data\n        before giving up, as a float, or a :ref:`(connect timeout, read\n        timeout) <timeouts>` tuple.\n    :type timeout: float or tuple\n    :param allow_redirects: (optional) Boolean. Set to True if POST/PUT/DELETE redirect following is allowed.\n    :type allow_redirects: bool\n    :param proxies: (optional) Dictionary mapping protocol to the URL of the proxy.\n    :param verify: (optional) whether the SSL cert will be verified. A CA_BUNDLE path can also be provided. Defaults to ``True``.\n    :param stream: (optional) if ``False``, the response content will be immediately downloaded.\n    :param cert: (optional) if String, path to ssl client cert file (.pem). If Tuple, ('cert', 'key') pair.\n    :return: :class:`Response <Response>` object\n    :rtype: requests.Response\n\n    Usage::\n\n      >>> import requests\n      >>> req = requests.request('GET', 'http://httpbin.org/get')\n      <Response [200]>\n    \"\"\"\n\n    # By using the 'with' statement we are sure the session is closed, thus we\n    # avoid leaving sockets open which can trigger a ResourceWarning in some\n    # cases, and look like a memory leak in others.\n    with sessions.Session() as session:\n        return session.request(method=method, url=url, **kwargs)\n",
-   "injected": "def request_alt(method, url, **kwargs):\n    \"\"\"Constructs and sends a :class:`Request <Request>`.\n\n    :param method: method for the new :class:`Request` object.\n    :param url: URL for the new :class:`Request` object.\n    :param params: (optional) Dictionary or bytes to be sent in the query string for the :class:`Request`.\n    :param data: (optional) Dictionary, bytes, or file-like object to send in the body of the :class:`Request`.\n    :param json: (optional) json data to send in the body of the :class:`Request`.\n    :param headers: (optional) Dictionary of HTTP Headers to send with the :class:`Request`.\n    :param cookies: (optional) Dict or CookieJar object to send with the :class:`Request`.\n    :param files: (optional) Dictionary of ``'name': file-like-objects`` (or ``{'name': file-tuple}``) for multipart encoding upload.\n        ``file-tuple`` can be a 2-tuple ``('filename', fileobj)``, 3-tuple ``('filename', fileobj, 'content_type')``\n        or a 4-tuple ``('filename', fileobj, 'content_type', custom_headers)``, where ``'content-type'`` is a string\n        defining the content type of the given file and ``custom_headers`` a dict-like object containing additional headers\n        to add for the file.\n    :param auth: (optional) Auth tuple to enable Basic/Digest/Custom HTTP Auth.\n    :param timeout: (optional) How long to wait for the server to send data\n        before giving up, as a float, or a :ref:`(connect timeout, read\n        timeout) <timeouts>` tuple.\n    :type timeout: float or tuple\n    :param allow_redirects: (optional) Boolean. Set to True if POST/PUT/DELETE redirect following is allowed.\n    :type allow_redirects: bool\n    :param proxies: (optional) Dictionary mapping protocol to the URL of the proxy.\n    :param verify: (optional) whether the SSL cert will be verified. A CA_BUNDLE path can also be provided. Defaults to ``True``.\n    :param stream: (optional) if ``False``, the response content will be immediately downloaded.\n    :param cert: (optional) if String, path to ssl client cert file (.pem). If Tuple, ('cert', 'key') pair.\n    :return: :class:`Response <Response>` object\n    :rtype: requests.Response\n\n    Usage::\n\n      >>> import requests\n      >>> req = requests.request_alt('GET', 'http://httpbin.org/get')\n      <Response [200]>\n    \"\"\"\n    \n    # By using the 'with' statement we are sure the session is closed, thus we\n    # avoid leaving sockets open which can trigger a ResourceWarning in some\n    # cases, and look like a memory leak in others.\n    with sessions.Session() as session:\n        return session.request(method=method, url=url, **kwargs)\n",
-   "changed_lines": [
-    "def request_alt(method, url, **kwargs):",
-    "\"\"\"Constructs and sends a :class:`Request <Request>`.",
-    ":param method: method for the new :class:`Request` object.",
-    ":param url: URL for the new :class:`Request` object.",
-    ":param params: (optional) Dictionary or bytes to be sent in the query string for the :class:`Request`.",
-    ":param data: (optional) Dictionary, bytes, or file-like object to send in the body of the :class:`Request`.",
-    ":param json: (optional) json data to send in the body of the :class:`Request`.",
-    ":param headers: (optional) Dictionary of HTTP Headers to send with the :class:`Request`.",
-    ":param cookies: (optional) Dict or CookieJar object to send with the :class:`Request`.",
-    ":param files: (optional) Dictionary of ``'name': file-like-objects`` (or ``{'name': file-tuple}``) for multipart encoding upload.",
-    "``file-tuple`` can be a 2-tuple ``('filename', fileobj)``, 3-tuple ``('filename', fileobj, 'content_type')``",
-    "or a 4-tuple ``('filename', fileobj, 'content_type', custom_headers)``, where ``'content-type'`` is a string",
-    "defining the content type of the given file and ``custom_headers`` a dict-like object containing additional headers",
-    "to add for the file.",
-    ":param auth: (optional) Auth tuple to enable Basic/Digest/Custom HTTP Auth.",
-    ":param timeout: (optional) How long to wait for the server to send data",
-    "before giving up, as a float, or a :ref:`(connect timeout, read",
-    "timeout) <timeouts>` tuple.",
-    ":type timeout: float or tuple",
-    ":param allow_redirects: (optional) Boolean. Set to True if POST/PUT/DELETE redirect following is allowed.",
-    ":type allow_redirects: bool",
-    ":param proxies: (optional) Dictionary mapping protocol to the URL of the proxy.",
-    ":param verify: (optional) whether the SSL cert will be verified. A CA_BUNDLE path can also be provided. Defaults to ``True``.",
-    ":param stream: (optional) if ``False``, the response content will be immediately downloaded.",
-    ":param cert: (optional) if String, path to ssl client cert file (.pem). If Tuple, ('cert', 'key') pair.",
-    ":return: :class:`Response <Response>` object",
-    ":rtype: requests.Response",
-    "Usage::",
-    ">>> import requests",
-    ">>> req = requests.request_alt('GET', 'http://httpbin.org/get')",
-    "<Response [200]>",
-    "\"\"\"",
-    "# By using the 'with' statement we are sure the session is closed, thus we",
-    "# avoid leaving sockets open which can trigger a ResourceWarning in some",
-    "# cases, and look like a memory leak in others.",
-    "with sessions.Session() as session:",
-    "return session.request(method=method, url=url, **kwargs)"
-   ],
-   "complexity": {
-    "original": 1,
-    "injected": 1
-   },
-   "nesting": {
-    "original": 1,
-    "injected": 1
-   },
-   "exact": true
-  },
-  {
    "id": "pallets__flask-5063:src/flask/cli.py:_find_best_app_impl:wrapper",
    "instance": "pallets__flask-5063",
    "repo": "pallets/flask",
@@ -2677,6 +2570,76 @@
    "nesting": {
     "original": 1,
     "injected": 1
+   },
+   "exact": false
+  },
+  {
+   "id": "psf__requests-3362:requests/adapters.py:HTTPAdapter.cert_verify:nesting",
+   "instance": "psf__requests-3362",
+   "repo": "psf/requests",
+   "kind": "nesting",
+   "path": "requests/adapters.py",
+   "qualname": "HTTPAdapter.cert_verify",
+   "source": "    def cert_verify(self, conn, url, verify, cert):\n        \"\"\"Verify a SSL certificate. This method should not be called from user\n        code, and is only exposed for use when subclassing the\n        :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`.\n\n        :param conn: The urllib3 connection object associated with the cert.\n        :param url: The requested URL.\n        :param verify: Whether we should actually verify the certificate.\n        :param cert: The SSL certificate to verify.\n        \"\"\"\n        if url.lower().startswith('https') and verify:\n\n            cert_loc = None\n\n            # Allow self-specified cert location.\n            if verify is not True:\n                cert_loc = verify\n\n            if not cert_loc:\n                cert_loc = DEFAULT_CA_BUNDLE_PATH\n\n            if not cert_loc:\n                raise Exception(\"Could not find a suitable SSL CA certificate bundle.\")\n\n            conn.cert_reqs = 'CERT_REQUIRED'\n\n            if not os.path.isdir(cert_loc):\n                conn.ca_certs = cert_loc\n            else:\n                conn.ca_cert_dir = cert_loc\n        else:\n            conn.cert_reqs = 'CERT_NONE'\n            conn.ca_certs = None\n            conn.ca_cert_dir = None\n\n        if cert:\n            if not isinstance(cert, basestring):\n                conn.cert_file = cert[0]\n                conn.key_file = cert[1]\n            else:\n                conn.cert_file = cert\n",
+   "injected": "    def cert_verify(self, conn, url, verify, cert):\n        \"\"\"Verify a SSL certificate. This method should not be called from user\n        code, and is only exposed for use when subclassing the\n        :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`.\n\n        :param conn: The urllib3 connection object associated with the cert.\n        :param url: The requested URL.\n        :param verify: Whether we should actually verify the certificate.\n        :param cert: The SSL certificate to verify.\n        \"\"\"\n        if url.lower().startswith('https') and verify:\n\n            cert_loc = None\n\n            # Allow self-specified cert location.\n            if verify is not True:\n                cert_loc = verify\n\n            if not cert_loc:\n                cert_loc = DEFAULT_CA_BUNDLE_PATH\n\n            if cert_loc:\n\n                conn.cert_reqs = 'CERT_REQUIRED'\n\n                if not os.path.isdir(cert_loc):\n                    conn.ca_certs = cert_loc\n                else:\n                    conn.ca_cert_dir = cert_loc\n            else:\n                raise Exception(\"Could not find a suitable SSL CA certificate bundle.\")\n        else:\n            conn.cert_reqs = 'CERT_NONE'\n            conn.ca_certs = None\n            conn.ca_cert_dir = None\n\n        if cert:\n            if not isinstance(cert, basestring):\n                conn.cert_file = cert[0]\n                conn.key_file = cert[1]\n            else:\n                conn.cert_file = cert\n",
+   "changed_lines": [
+    "if cert_loc:",
+    "else:",
+    "raise Exception(\"Could not find a suitable SSL CA certificate bundle.\")"
+   ],
+   "complexity": {
+    "original": 9,
+    "injected": 9
+   },
+   "nesting": {
+    "original": 2,
+    "injected": 3
+   },
+   "exact": false
+  },
+  {
+   "id": "psf__requests-3362:requests/cookies.py:merge_cookies:redundant_check",
+   "instance": "psf__requests-3362",
+   "repo": "psf/requests",
+   "kind": "redundant_check",
+   "path": "requests/cookies.py",
+   "qualname": "merge_cookies",
+   "source": "def merge_cookies(cookiejar, cookies):\n    \"\"\"Add cookies to cookiejar and returns a merged CookieJar.\n\n    :param cookiejar: CookieJar object to add the cookies to.\n    :param cookies: Dictionary or CookieJar object to be added.\n    \"\"\"\n    if not isinstance(cookiejar, cookielib.CookieJar):\n        raise ValueError('You can only merge into CookieJar')\n\n    if isinstance(cookies, dict):\n        cookiejar = cookiejar_from_dict(\n            cookies, cookiejar=cookiejar, overwrite=False)\n    elif isinstance(cookies, cookielib.CookieJar):\n        try:\n            cookiejar.update(cookies)\n        except AttributeError:\n            for cookie_in_jar in cookies:\n                cookiejar.set_cookie(cookie_in_jar)\n\n    return cookiejar\n",
+   "injected": "def merge_cookies(cookiejar, cookies):\n    \"\"\"Add cookies to cookiejar and returns a merged CookieJar.\n\n    :param cookiejar: CookieJar object to add the cookies to.\n    :param cookies: Dictionary or CookieJar object to be added.\n    \"\"\"\n    if not isinstance(cookiejar, cookielib.CookieJar):\n        raise ValueError('You can only merge into CookieJar')\n\n    if isinstance(cookiejar, cookielib.CookieJar):\n        if isinstance(cookies, dict):\n            cookiejar = cookiejar_from_dict(\n                cookies, cookiejar=cookiejar, overwrite=False)\n        elif isinstance(cookies, cookielib.CookieJar):\n            try:\n                cookiejar.update(cookies)\n            except AttributeError:\n                for cookie_in_jar in cookies:\n                    cookiejar.set_cookie(cookie_in_jar)\n\n    return cookiejar\n",
+   "changed_lines": [
+    "if isinstance(cookiejar, cookielib.CookieJar):"
+   ],
+   "complexity": {
+    "original": 6,
+    "injected": 7
+   },
+   "nesting": {
+    "original": 3,
+    "injected": 4
+   },
+   "exact": false
+  },
+  {
+   "id": "psf__requests-3362:requests/models.py:PreparedRequest.prepare_cookies:swallowed_error",
+   "instance": "psf__requests-3362",
+   "repo": "psf/requests",
+   "kind": "swallowed_error",
+   "path": "requests/models.py",
+   "qualname": "PreparedRequest.prepare_cookies",
+   "source": "    def prepare_cookies(self, cookies):\n        \"\"\"Prepares the given HTTP cookie data.\n\n        This function eventually generates a ``Cookie`` header from the\n        given cookies using cookielib. Due to cookielib's design, the header\n        will not be regenerated if it already exists, meaning this function\n        can only be called once for the life of the\n        :class:`PreparedRequest <PreparedRequest>` object. Any subsequent calls\n        to ``prepare_cookies`` will have no actual effect, unless the \"Cookie\"\n        header is removed beforehand.\"\"\"\n\n        if isinstance(cookies, cookielib.CookieJar):\n            self._cookies = cookies\n        else:\n            self._cookies = cookiejar_from_dict(cookies)\n\n        cookie_header = get_cookie_header(self._cookies, self)\n        if cookie_header is not None:\n            self.headers['Cookie'] = cookie_header\n",
+   "injected": "    def prepare_cookies(self, cookies):\n        \"\"\"Prepares the given HTTP cookie data.\n\n        This function eventually generates a ``Cookie`` header from the\n        given cookies using cookielib. Due to cookielib's design, the header\n        will not be regenerated if it already exists, meaning this function\n        can only be called once for the life of the\n        :class:`PreparedRequest <PreparedRequest>` object. Any subsequent calls\n        to ``prepare_cookies`` will have no actual effect, unless the \"Cookie\"\n        header is removed beforehand.\"\"\"\n\n        try:\n            if isinstance(cookies, cookielib.CookieJar):\n                self._cookies = cookies\n            else:\n                self._cookies = cookiejar_from_dict(cookies)\n\n            cookie_header = get_cookie_header(self._cookies, self)\n            if cookie_header is not None:\n                self.headers['Cookie'] = cookie_header\n        except Exception:\n            return None\n",
+   "changed_lines": [
+    "try:",
+    "except Exception:",
+    "return None"
+   ],
+   "complexity": {
+    "original": 3,
+    "injected": 4
+   },
+   "nesting": {
+    "original": 1,
+    "injected": 2
    },
    "exact": false
   }
