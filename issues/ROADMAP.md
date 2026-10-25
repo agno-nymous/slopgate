@@ -4,15 +4,15 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**75 — The gate gets no coverage data on `psf__requests-3362`.** Time-box it to 1 hour. If the cause is not clear after 1 hour, remove the instance from the benchmark. Then do ticket 66, and then rerun the benchmark (ticket 10).
+**66 — Some injected items of the detection benchmark change behavior or are not the kind they name.** Then do ticket 10 (open boxes), and then rerun the benchmark.
 
-State on 2026-10-25: ticket 72 (done) removed the pytest 2.9 flag for `psf__requests-3362`. Its 3 items now reach the test agent but end with `coverage has no data` (ticket 75). Ticket 73 (needs-live-check) retries a Token Factory 429 in `slopgate/llm.py`; its last box is the benchmark rerun. Ticket 67 (done) added a collection check, a retry of transient ConTree faults, and the README install guide. In the ticket 10 benchmark of 2026-10-21, the gate accepts 13 of 38 detected items (before: 7 of 26). The install agent does not ship: it proved 0 of 72 attempts.
+State on 2026-10-25: ticket 72 (done) removed the pytest 2.9 flag for `psf__requests-3362`. Ticket 75 (done) fixed `coverage has no data` for it: coverage 6.2 has no `missing_branches` key in its JSON, so the gate now reads the branches through the coverage API. Ticket 73 (needs-live-check) retries a Token Factory 429 in `slopgate/llm.py`; its last box is the benchmark rerun. Ticket 67 (done) added a collection check, a retry of transient ConTree faults, and the README install guide. In the ticket 10 benchmark of 2026-10-21, the gate accepts 13 of 38 detected items (before: 7 of 26). The install agent does not ship: it proved 0 of 72 attempts.
 
 ## Before the full benchmark rerun (set on 2026-10-25)
 
 Do these in this order.
 
-1. **Ticket 75.** Time-boxed (see above).
+1. **Ticket 75.** Done on 2026-10-25.
 2. **Ticket 66.** Some injected items change behavior or are not the kind they name. The fix changes the items, so it must come before the rerun and before the detection numbers go into the submission.
 3. **Ticket 10, open boxes.** Start the run as a Nebius Serverless Job (the README holds the job command). Use the preloaded sandbox image of each instance for the hidden tests.
 4. **Rerun the benchmark.** This closes the last box of ticket 73 (no `RateLimitError` rejection). Run `report` after it, because the report files still hold the old numbers for `psf__requests-3362`.
@@ -115,10 +115,10 @@ Added after the order was set:
 | [71 — An old commit with a malformed `setup_requires` does not build](71-legacy-specifier-in-setup-requires.md) | ready-for-agent | Found by ticket 68: pytest 6.2.0 has `setuptools>=>=42.0` in `setup.cfg`. All 5 measured setuptools options fail on it. |
 | [72 — The benchmark test command breaks pytest 2.9](72-bench-test-command-flag-breaks-old-pytest.md) | done | Found by ticket 67: all 3 remaining infrastructure errors are `psf__requests-3362`. The benchmark now leaves the flag out for that instance (2026-10-25). |
 | [73 — A model rate limit rejects items of the gate](73-rate-limit-rejects-items.md) | needs-live-check | Found by ticket 67: 5 of 42 benchmark items were rejected with a 429 from Token Factory. Do it before the final benchmark run. |
-| [75 — The gate gets no coverage data on `psf__requests-3362`](75-requests-3362-coverage-has-no-data.md) | ready-for-agent | Found by ticket 72: the 3 items of the instance now reach the test agent and end at the step limit with `coverage has no data`. The repo has no coverage configuration file. |
+| [75 — The gate gets no coverage data on `psf__requests-3362`](75-requests-3362-coverage-has-no-data.md) | done | Found by ticket 72: the 3 items of the instance now reach the test agent and end at the step limit with `coverage has no data`. The repo has no coverage configuration file. |
 | [74 — The default install fails for compiled repos](74-default-install-fails-for-compiled-repos.md) | ready-for-agent | Found by ticket 67: 10 of 28 instances (scikit-learn, matplotlib, astropy, requests-1963). Research, plus a uv and pip A/B. Not needed for the headline. |
 
-Tickets 01 to 07, 12 to 22, 72, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, 44, 46, 48, 49, 51, 52, 53, 54, 55, 58, 59, 60, 67, and 68 are done. Tickets 23, 24, 29, 30, 31, 35, and 63 are wontfix.
+Tickets 01 to 07, 12 to 22, 72, 75, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, 44, 46, 48, 49, 51, 52, 53, 54, 55, 58, 59, 60, 67, and 68 are done. Tickets 23, 24, 29, 30, 31, 35, and 63 are wontfix.
 
 ## Rules for the order
 
