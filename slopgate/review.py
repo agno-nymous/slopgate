@@ -27,9 +27,10 @@ DEFS = (ast.FunctionDef, ast.AsyncFunctionDef)
 BOOL_CALLS = {"bool", "isinstance", "issubclass", "callable", "hasattr", "all", "any"}
 MIRROR = {ast.Gt: ast.Lt, ast.GtE: ast.LtE}
 COVERAGE = "--slopgate-coverage--"
-# a repo .coveragerc with parallel = 1 writes .coverage.<host>.<pid>.<suffix>, and coverage json reads only .coverage
+# a repo .coveragerc with parallel = 1 writes .coverage.<host>.<pid>.<suffix>, and coverage reads only .coverage
 COMBINE = "python -m coverage combine -q >/dev/null 2>&1"
-MISSED = "import json, sys; print(json.dumps(json.load(sys.stdin)['files'][sys.argv[1]]['missing_branches'], separators=(',', ':')))"
+# coverage json has no per-file missing_branches before coverage 7 (Python 3.6 gets 6.2), and no public call gives the missed arcs
+MISSED = "import coverage, json, sys; c = coverage.Coverage(); c.load(); coverage.files.abs_file(sys.argv[1]) in map(coverage.files.abs_file, c.get_data().measured_files()) or sys.exit('coverage has no data for ' + sys.argv[1]); print(json.dumps([[a, b] for a, bs in sorted(c._analyze(sys.argv[1]).missing_branch_arcs().items()) for b in bs], separators=(',', ':')))"
 
 AGENT_RULES = """You write characterization tests in a sandbox. Commands run in the root of the repository, and its dependencies are installed.
 
@@ -57,7 +58,7 @@ PYTHONHASHSEED=1 {cmd}
 
 Then show the missed branches of {path} as [from line, to line] pairs (a negative target means the function exits there):
 
-{combine}; python -m coverage json -q -o - | python -c "{missed}" {path}"""
+{combine}; python -c "{missed}" {path}"""
 
 HINT_TASK = """The test file {test_path} records what the Python function `{qualname}` in {path} does now. It passes and covers every branch.
 
@@ -472,7 +473,7 @@ def replace_calls(repo, head, function, helper) -> dict[str, str]:
 
 def check(sandbox, checkpoint, function, test_path, cmd, tests) -> str | None:
     code, output = sandbox.run(
-        checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && {{ {COMBINE}; python -m coverage json -q -o - | python -c \"{MISSED}\" {shlex.quote(function.path)}; }}"
+        checkpoint, {test_path: tests}, f"PYTHONHASHSEED=1 {cmd} && echo {COVERAGE} && {{ {COMBINE}; python -c \"{MISSED}\" {shlex.quote(function.path)}; }}"
     )
     if code == 124:
         return f"characterization tests time out: {tail(output)}"

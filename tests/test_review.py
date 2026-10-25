@@ -2330,6 +2330,20 @@ def test_rewrite_and_retry_prompts_hold_code_in_python_blocks(make_repo, fake_ll
     assert "This earlier rewrite failed:\n\n```python\n" + DROPS_LOCKED + "\n```" in retry_prompt
 
 
+def test_missed_script_reads_the_missed_branches_from_the_coverage_data(tmp_path):
+    (tmp_path / "m.py").write_text("def f(x):\n    if x > 1:\n        return 1\n    return 2\n")
+    (tmp_path / "test_m.py").write_text("from m import f\n\n\ndef test_f():\n    assert f(2) == 1\n")
+    subprocess.run([sys.executable, "-m", "coverage", "run", "--branch", "-m", "pytest", "-q", "test_m.py"], cwd=tmp_path, check=True, capture_output=True)
+
+    missed = subprocess.run([sys.executable, "-c", gate.MISSED, "m.py"], cwd=tmp_path, capture_output=True, text=True)
+    assert (missed.returncode, missed.stdout) == (0, "[[2,4]]\n")
+
+    subprocess.run([sys.executable, "-m", "coverage", "erase"], cwd=tmp_path, check=True)
+    no_data = subprocess.run([sys.executable, "-c", gate.MISSED, "m.py"], cwd=tmp_path, capture_output=True, text=True)
+    assert (no_data.returncode, no_data.stdout) == (1, "")
+    assert "coverage has no data for m.py" in no_data.stderr
+
+
 def test_coverage_that_omits_the_file_is_not_called_nondeterministic(make_repo, fake_llm, capsys):
     repo = make_repo({"app/__init__.py": ""}, {"app/perms.py": NESTED, ".coveragerc": "[run]\nomit = app/perms.py\n"})
     fake_llm.replies += [fenced(TESTS.format(name="can_edit", call="can_edit"))]
