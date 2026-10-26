@@ -13,7 +13,6 @@
    "rejected": {},
    "blind": {},
    "head": "3b26c9c40851c887a46f33a9ee7e937df71b6ce4",
-   "clone": "/Users/ashishthomaschempolil/.cache/slopgate/bench/swebench/pytest-dev__pytest-7220",
    "image": "docker.io/swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-7220:latest",
    "hidden_uuid": "55919a24-41d1-46c8-b53c-fd6cb5d50eaa",
    "hidden_files": [
@@ -59,7 +58,6 @@
    "rejected": {},
    "blind": {},
    "head": "5c848f9889a3a2d98e2f3055034cea20fcc1e17f",
-   "clone": "/Users/ashishthomaschempolil/.cache/slopgate/bench/swebench/pytest-dev__pytest-8365",
    "image": "docker.io/swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-8365:latest",
    "hidden_uuid": "42c29195-d233-4c3e-bb9a-0c5aaba13b2b",
    "hidden_files": [
@@ -147,7 +145,6 @@
    "rejected": {},
    "blind": {},
    "head": "9b45d15c853c51521e96b02c622e1c113fa7d038",
-   "clone": "/Users/ashishthomaschempolil/.cache/slopgate/bench/swebench/pytest-dev__pytest-5227",
    "image": "docker.io/swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-5227:latest",
    "hidden_uuid": "824d2744-54ef-4aab-91aa-90feb2aaf461",
    "hidden_files": [
@@ -233,7 +230,6 @@
    "rejected": {},
    "blind": {},
    "head": "235b2efb9316948086948fa35c4b001db6b54f57",
-   "clone": "/Users/ashishthomaschempolil/.cache/slopgate/bench/swebench/sphinx-doc__sphinx-8627",
    "image": "docker.io/swebench/sweb.eval.x86_64.sphinx-doc_1776_sphinx-8627:latest",
    "hidden_uuid": "56ecb60e-1cd8-40f3-beca-74642c974013",
    "hidden_files": [
@@ -295,7 +291,6 @@
    "rejected": {},
    "blind": {},
    "head": "d88a8c3545d6e0b1636fee94a53e798e2d5cf4e0",
-   "clone": "/Users/ashishthomaschempolil/.cache/slopgate/bench/swebench/sphinx-doc__sphinx-7975",
    "image": "docker.io/swebench/sweb.eval.x86_64.sphinx-doc_1776_sphinx-7975:latest",
    "hidden_uuid": "1c9ff4ee-7506-4f9d-beb4-b3c8cfa6295c",
    "hidden_files": [
@@ -333,7 +328,6 @@
    "rejected": {},
    "blind": {},
    "head": "1dbffd071b568d08794c8ba3ba4a838d491244db",
-   "clone": "/Users/ashishthomaschempolil/.cache/slopgate/bench/swebench/pytest-dev__pytest-7432",
    "image": "docker.io/swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-7432:latest",
    "hidden_uuid": "49027f4b-cfbf-4e9b-82cf-0b2d60f1fd15",
    "hidden_files": [
@@ -505,7 +499,6 @@
    "rejected": {},
    "blind": {},
    "head": "4e9f93c7672732fbe770a2bb0cb1939b50176a77",
-   "clone": "/Users/ashishthomaschempolil/.cache/slopgate/bench/swebench/pytest-dev__pytest-5692",
    "image": "docker.io/swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-5692:latest",
    "hidden_uuid": "84020acc-ed53-4b21-a03a-434151a2ee5b",
    "hidden_files": [
@@ -669,7 +662,6 @@
    "rejected": {},
    "blind": {},
    "head": "844fe87f7bcbc53485ddccd5760f6e9e73fecf37",
-   "clone": "/Users/ashishthomaschempolil/.cache/slopgate/bench/swebench/pallets__flask-4992",
    "image": "docker.io/swebench/sweb.eval.x86_64.pallets_1776_flask-4992:latest",
    "hidden_uuid": "b31d74d5-9b01-4fdd-a9f2-1d1d6850d2f1",
    "hidden_files": [
@@ -732,7 +724,6 @@
     "redundant_check": 1
    },
    "head": "2dc197b97599296e27c8b23afc5705065ef725bc",
-   "clone": "/Users/ashishthomaschempolil/.cache/slopgate/bench/swebench/sphinx-doc__sphinx-8506",
    "image": "docker.io/swebench/sweb.eval.x86_64.sphinx-doc_1776_sphinx-8506:latest",
    "hidden_uuid": "8c80ba74-235e-40fd-a5aa-aa1fecd22f44",
    "hidden_files": [
@@ -788,7 +779,6 @@
    "rejected": {},
    "blind": {},
    "head": "752019020c9704b4a49987257d13833cf5fd7b15",
-   "clone": "/Users/ashishthomaschempolil/.cache/slopgate/bench/swebench/pylint-dev__pylint-5859",
    "image": "docker.io/swebench/sweb.eval.x86_64.pylint-dev_1776_pylint-5859:latest",
    "hidden_uuid": "b11bd5f1-d93b-48ec-a57d-edb0085d4825",
    "hidden_files": [
@@ -832,7 +822,6 @@
    "rejected": {},
    "blind": {},
    "head": "d6702132961e5d2288657f17d475c001432542f0",
-   "clone": "/Users/ashishthomaschempolil/.cache/slopgate/bench/swebench/pylint-dev__pylint-7993",
    "image": "docker.io/swebench/sweb.eval.x86_64.pylint-dev_1776_pylint-7993:latest",
    "hidden_uuid": "a5aee46a-ee4b-4ea0-8d6a-9e174151b78b",
    "hidden_files": [
@@ -876,7 +865,6 @@
    "rejected": {},
    "blind": {},
    "head": "2b471e021726c23f931b79ee154cfc510e0bb788",
-   "clone": "/Users/ashishthomaschempolil/.cache/slopgate/bench/swebench/psf__requests-3362",
    "image": "docker.io/swebench/sweb.eval.x86_64.psf_1776_requests-3362:latest",
    "hidden_uuid": "46097c37-3647-4e92-a159-fe04338483e3",
    "hidden_files": [
@@ -1050,7 +1038,6 @@
    "rejected": {},
    "blind": {},
    "head": "a8db78a70500151ce3a1604ab93dff848c32aa09",
-   "clone": "/Users/ashishthomaschempolil/.cache/slopgate/bench/swebench/pallets__flask-5063",
    "image": "docker.io/swebench/sweb.eval.x86_64.pallets_1776_flask-5063:latest",
    "hidden_uuid": "833c9cc8-a9b0-4032-a4b5-4781ce7fe02f",
    "hidden_files": [
@@ -1184,7 +1171,6 @@
    },
    "blind": {},
    "head": "1abd74e39e4622e7782df73e2ea0216cf40fd846",
-   "clone": "/Users/ashishthomaschempolil/.cache/slopgate/bench/swebench/mwaskom__seaborn-3190",
    "image": "docker.io/swebench/sweb.eval.x86_64.mwaskom_1776_seaborn-3190:latest",
    "hidden_uuid": "1e9785bd-64e1-4e3a-a83e-ffdafa8c0b1d",
    "hidden_files": [
@@ -1376,7 +1362,6 @@
    "rejected": {},
    "blind": {},
    "head": "d1cc341b5e9544519745f4281b7b6660bab1cf85",
-   "clone": "/Users/ashishthomaschempolil/.cache/slopgate/bench/swebench/pydata__xarray-4248",
    "image": "docker.io/swebench/sweb.eval.x86_64.pydata_1776_xarray-4248:latest",
    "hidden_uuid": "83f83e67-cf19-4e14-a9be-e3d33b74d151",
    "hidden_files": [

@@ -14,6 +14,7 @@ from bench.swebench import (
     gate_test_command,
     gold_spans,
     grade,
+    has_commit,
     hidden,
     hidden_command,
     inject,
@@ -21,6 +22,7 @@ from bench.swebench import (
     make,
     passed,
     patch_files,
+    restore,
     splice_suggestion,
     summarize,
     tally,
@@ -362,7 +364,6 @@ def fake_checkpoints(monkeypatch, results):
 
 INSTANCE = {
     "instance_id": "i",
-    "clone": "c",
     "head": "h",
     "base": "b",
     "hidden_uuid": "00000000-0000-0000-0000-000000000002",
@@ -515,3 +516,33 @@ def test_install_summary_counts_a_false_trigger_and_the_calibration():
 def test_gate_test_command_drops_the_collection_flag_for_pytest_before_3():
     assert "--continue-on-collection-errors" in gate_test_command("psf__requests-1963", "psf/requests")
     assert gate_test_command("psf__requests-3362", "psf/requests") == "python -m pytest -q -rfE -p no:cacheprovider tests"
+
+
+def test_restore_fetches_the_head_from_its_bundle_when_the_source_repo_lacks_it(monkeypatch, tmp_path):
+    source, heads = tmp_path / "source", tmp_path / "heads"
+    source.mkdir()
+    heads.mkdir()
+
+    def git(*args):
+        return swebench.git("-C", str(source), "-c", "user.name=t", "-c", "user.email=t@example.invalid", *args)
+
+    git("init", "-q")
+    (source / "a.py").write_text("x = 1\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "base")
+    base = git("rev-parse", "HEAD")
+    git("checkout", "-q", "-b", "slop")
+    (source / "a.py").write_text("x = 2\n")
+    git("commit", "-q", "-am", "head")
+    head = git("rev-parse", "HEAD")
+    git("bundle", "create", "-q", str(heads / "i.bundle"), f"{base}..HEAD")
+    git("checkout", "-q", "--detach", base)
+    git("branch", "-q", "-D", "slop")
+    git("reflog", "expire", "--expire=now", "--all")
+    git("gc", "-q", "--prune=now")
+    assert not has_commit(source, head)
+    monkeypatch.setattr(swebench, "checkout", lambda repo, commit: source)
+    monkeypatch.setattr(swebench, "CLONES", tmp_path / "clones")
+    monkeypatch.setattr(swebench, "HEADS", heads)
+    restore({"instance_id": "i", "repo": "r/r", "base": base, "head": head})
+    assert swebench.git("-C", str(tmp_path / "clones" / "i"), "rev-parse", "HEAD") == head

@@ -34,6 +34,7 @@ GROUNDTRUTH = SWEBENCH / "groundtruth.json"
 RUNS = SWEBENCH / "runs.json"
 REPORT = SWEBENCH / "swebench"
 INSTALL = SWEBENCH / "install"
+HEADS = SWEBENCH / "heads"
 LITE = CACHE / "swebench-lite.json"
 REPLIES = CACHE / "swebench-super.json"
 CLONES = CACHE / "swebench"
@@ -428,9 +429,11 @@ def select_items(source: dict, instance: dict, usage: Counter) -> list[Item]:
     if not made:
         raise InstallError("the injections together break the hidden tests")
     test = gate_test_command(instance_id, repo)
+    head = commit(clone, {item.path: text for item, text in made}, [p for p in hidden_files if (clone / p).exists()], test)
+    HEADS.mkdir(exist_ok=True)
+    git("-C", str(clone), "bundle", "create", "-q", str(HEADS / f"{instance_id}.bundle"), f"{base}..HEAD")
     instance |= {
-        "head": commit(clone, {item.path: text for item, text in made}, [p for p in hidden_files if (clone / p).exists()], test),
-        "clone": str(clone),
+        "head": head,
         "image": ref,
         "hidden_uuid": str(checkpoint.uuid),
         "hidden_files": hidden_files,
@@ -571,7 +574,7 @@ def check(box: Contree, instance: dict, texts: dict[str, str], files: dict[str, 
 
 def job(instance: dict, items: list[dict]) -> dict:
     trace.start("slopgate-bench")
-    clone, head = instance["clone"], instance["head"]
+    clone, head = str(CLONES / instance["instance_id"]), instance["head"]
     texts = {path: diff.git(clone, "show", f"{head}:{path}") for path in dict.fromkeys(item["path"] for item in items)}
     used, began = len(llm.usage), time.perf_counter()
     failure, errors, found = None, [], []
@@ -608,11 +611,23 @@ def job(instance: dict, items: list[dict]) -> dict:
     }
 
 
+def restore(instance: dict) -> None:
+    clone, head = CLONES / instance["instance_id"], instance["head"]
+    if has_commit(clone, head):
+        return
+    clone_at(instance["instance_id"], instance["repo"], instance["base"])
+    git("-C", str(clone), "fetch", "-q", str(HEADS / f"{instance['instance_id']}.bundle"), "HEAD")
+    git("-C", str(clone), "checkout", "-q", "--detach", head)
+
+
 def run() -> None:
     truth = json.loads(GROUNDTRUTH.read_text())
     runs = json.loads(RUNS.read_text()) if RUNS.exists() else {}
     todo = [(instance, [i for i in truth["items"] if i["instance"] == instance_id]) for instance_id, instance in truth["instances"].items() if not instance["skipped"]]
     todo = [(instance, items) for instance, items in todo if instance["instance_id"] not in runs]
+    # serial: checkout() moves HEAD of the shared source repo
+    for instance, _ in todo:
+        restore(instance)
     with ProcessPoolExecutor(WORKERS) as workers:
         for done, future in enumerate(as_completed([workers.submit(job, instance, items) for instance, items in todo]), 1):
             result = future.result()
