@@ -5,12 +5,12 @@
 | field | report | groundtruth | runs | labels: rule | labels: definition |
 | --- | --- | --- | --- | --- | --- |
 | models | none | injection: nvidia/nemotron-3-super-120b-a12b | check: nvidia/Nemotron-3_5-Lightning | second_labeller: nvidia/Nemotron-3-Ultra-550b-a55b | second_labeller: nvidia/Nemotron-3-Ultra-550b-a55b |
-| commit | 58d9b5d1f3 (tree had changes) | be0d670fed | be0d670fed | 58d9b5d1f3 (tree had changes) | 58d9b5d1f3 (tree had changes) |
-| date | 2026-10-17 | 2026-10-09 | 2026-10-09 | 2026-10-17 | 2026-10-17 |
+| commit | b57be22c83 (tree had changes) | be0d670fed | be0d670fed | 58d9b5d1f3 (tree had changes) | 58d9b5d1f3 (tree had changes) |
+| date | 2026-10-25 | 2026-10-09 | 2026-10-09 | 2026-10-17 | 2026-10-17 |
 | seeds | split 39, bootstrap 39 | sample 37 | none | none | none |
 | runs per item | 3 |  | 3 | 1 | 1 |
-| counts | clean 200, source 129, transform 72, nemotron 40 |  |  |  |  |
-| cost (USD) | 0.2925 |  |  |  |  |
+| counts | clean 200, source 129, transform 72, nemotron 39 |  |  |  |  |
+| cost (USD) | 0.3016 |  |  |  |  |
 
 | prompt | stage | hash |
 | --- | --- | --- |
@@ -38,12 +38,12 @@
 
 | kind | items | TP | FP | FN | precision | recall |
 | --- | --- | --- | --- | --- | --- | --- |
-| nesting | 59 | 102 | 75 | 0 | 0.576 | 1.0 |
-| redundant_check | 43 | 30 | 35 | 36 | 0.462 | 0.455 |
+| nesting | 56 | 93 | 75 | 0 | 0.554 | 1.0 |
+| redundant_check | 42 | 30 | 33 | 36 | 0.476 | 0.455 |
 | swallowed_error | 30 | 87 | 3 | 0 | 0.967 | 1.0 |
-| lookup_table | 23 | 69 | 0 | 0 | 1.0 | 1.0 |
+| lookup_table | 22 | 66 | 0 | 0 | 1.0 | 1.0 |
 | dead | 28 | 84 | 0 | 0 | 1.0 | 1.0 |
-| total | 160 | 372 | 113 | 36 | 0.767 | 0.912 |
+| total | 156 | 360 | 111 | 36 | 0.764 | 0.909 |
 
 ## Precision and recall: transform
 
@@ -60,12 +60,12 @@
 
 | kind | items | TP | FP | FN | precision | recall |
 | --- | --- | --- | --- | --- | --- | --- |
-| nesting | 10 | 30 | 0 | 0 | 1.0 | 1.0 |
-| redundant_check | 6 | 1 | 3 | 11 | 0.25 | 0.083 |
+| nesting | 7 | 21 | 0 | 0 | 1.0 | 1.0 |
+| redundant_check | 5 | 1 | 1 | 11 | 0.5 | 0.083 |
 | swallowed_error | 10 | 30 | 0 | 0 | 1.0 | 1.0 |
-| lookup_table | 7 | 21 | 0 | 0 | 1.0 | 1.0 |
+| lookup_table | 6 | 18 | 0 | 0 | 1.0 | 1.0 |
 | dead | 10 | 30 | 0 | 0 | 1.0 | 1.0 |
-| total | 40 | 112 | 3 | 11 | 0.974 | 0.911 |
+| total | 36 | 100 | 1 | 11 | 0.99 | 0.901 |
 
 ## Precision and recall: two_kinds
 
@@ -99,12 +99,12 @@ A kappa below 0.6 means the labels of that kind are not reliable, and kappa is u
 
 | kind | rows (rule) | agreement (rule) | kappa (rule) | rows (definition) | agreement (definition) | kappa (definition) |
 | --- | --- | --- | --- | --- | --- | --- |
-| nesting | 43 | 0.651 | 0.34 | 43 | 0.767 | 0.53 |
-| redundant_check | 34 | 0.471 | 0.123 | 34 | 0.647 | 0.294 |
+| nesting | 43 | 0.628 | 0.306 | 43 | 0.744 | 0.481 |
+| redundant_check | 34 | 0.471 | 0.123 | 34 | 0.618 | 0.261 |
 | swallowed_error | 13 | 0.923 | 0.0 | 13 | 0.923 | 0.0 |
 | lookup_table | 7 | 1.0 |  | 7 | 1.0 |  |
 | dead | 12 | 0.917 | 0.0 | 12 | 0.917 | 0.0 |
-| total | 109 | 0.679 | 0.348 | 109 | 0.78 | 0.557 |
+| total | 109 | 0.67 | 0.336 | 109 | 0.761 | 0.522 |
 
 ## Found in at least 1 of 3 runs and in all 3 runs
 
@@ -112,18 +112,18 @@ An error run counts as a miss.
 
 | kind | found | found ≥1 of 3 | found 3 of 3 | clean items | false kind ≥1 of 3 | false kind 3 of 3 |
 | --- | --- | --- | --- | --- | --- | --- |
-| nesting | 34 items | 1.0 | 1.0 | 200 | 0.09 | 0.09 |
+| nesting | 31 items | 1.0 | 1.0 | 200 | 0.09 | 0.09 |
 | redundant_check | 22 items | 0.636 | 0.273 | 200 | 0.035 | 0.015 |
 | swallowed_error | 29 items | 1.0 | 1.0 | 200 | 0.005 | 0.005 |
-| lookup_table | 23 items | 1.0 | 1.0 | 200 | 0.0 | 0.0 |
+| lookup_table | 22 items | 1.0 | 1.0 | 200 | 0.0 | 0.0 |
 | dead | 28 items | 1.0 | 1.0 | 200 | 0.0 | 0.0 |
-| total | 136 item-kinds | 0.941 | 0.882 | 200 | 0.125 | 0.11 |
+| total | 132 item-kinds | 0.939 | 0.879 | 200 | 0.125 | 0.11 |
 
 ## Time for each function (seconds)
 
 | mean | median | p95 | max |
 | --- | --- | --- | --- |
-| 2.073 | 1.491 | 5.513 | 109.93 |
+| 2.063 | 1.471 | 5.573 | 109.93 |
 
 8 worker processes; times include queueing.
 
@@ -132,18 +132,18 @@ An error run counts as a miss.
 | model | use | input tokens | output tokens | USD |
 | --- | --- | --- | --- | --- |
 | nvidia/nemotron-3-super-120b-a12b | injection | 43585 | 38719 | 0.0479 |
-| nvidia/Nemotron-3-Ultra-550b-a55b | second labeller (rule) | 82714 | 9798 | 0.1121 |
-| nvidia/Nemotron-3-Ultra-550b-a55b | second labeller (definition) | 95020 | 12486 | 0.1325 |
+| nvidia/Nemotron-3-Ultra-550b-a55b | second labeller (rule) | 85810 | 10150 | 0.1163 |
+| nvidia/Nemotron-3-Ultra-550b-a55b | second labeller (definition) | 98581 | 12952 | 0.1374 |
 
 ## Stability (same kinds in all runs)
 
 | items | share |
 | --- | --- |
-| all | 0.943 |
+| all | 0.945 |
 | clean | 0.98 |
 | source | 0.946 |
 | transform | 0.847 |
-| nemotron | 0.925 |
+| nemotron | 0.944 |
 
 ## Counts
 
@@ -152,7 +152,7 @@ An error run counts as a miss.
 | clean | 200 |
 | source | 129 |
 | transform | 72 |
-| nemotron | 40 |
+| nemotron | 39 |
 
 | repo | items |
 | --- | --- |
@@ -162,7 +162,7 @@ An error run counts as a miss.
 | pallets/flask | 26 |
 | astropy/astropy | 56 |
 | scikit-learn/scikit-learn | 37 |
-| sphinx-doc/sphinx | 50 |
+| sphinx-doc/sphinx | 49 |
 | pytest-dev/pytest | 29 |
 | pylint-dev/pylint | 19 |
 | matplotlib/matplotlib | 46 |
@@ -203,7 +203,6 @@ An error run counts as a miss.
 | pytest-dev/pytest:src/_pytest/_py/path.py:LocalPath._ensuredirs | nesting | 3 |
 | pytest-dev/pytest:src/_pytest/_py/path.py:LocalPath._ensuredirs | redundant_check | 2 |
 | pytest-dev/pytest:src/_pytest/fixtures.py:FixtureRequest._getnextfixturedef | redundant_check | 1 |
-| pytest-dev/pytest:src/_pytest/tmpdir.py:pytest_configure:nemotron:nesting | redundant_check | 2 |
 | pytest-dev/pytest:src/_pytest/unittest.py:UnitTestCase.collect | nesting | 3 |
 | pytest-dev/pytest:src/_pytest/unittest.py:pytest_runtest_makereport | redundant_check | 1 |
 | scikit-learn/scikit-learn:sklearn/externals/joblib/_parallel_backends.py:SafeFunction.__call__ | swallowed_error | 3 |

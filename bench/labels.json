@@ -2,8 +2,8 @@
  "reviewed_by": "Drafted by Claude on 2026-10-09 (two Opus subagents and the main session; 16 subagent drafts spot-checked). The user accepted the drafts on 2026-10-09 without a review of each row. On 2026-10-17 (ticket 42), Nemotron Ultra labelled each row again without the first labels, and two Opus subagents reviewed every scored row (the 109 rows of kinds in slopgate.kinds.KINDS) from the source. The labels follow the human-reviewer standard: slop means that a reviewer wants the kind flagged, by the one-line rule in KINDS, not by what the gate's checks can find. The review changed 1 decision (AccumulationBounds.intersection nesting: its reason stated a false fact) and 8 reasons (numberformat.format:transform:dead redundant_check, and 7 Nemotron nesting injections whose reason named the depth check that ticket 39 removed). The user approved these changes.",
  "injections": {
   "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaration.__init__:nemotron:nesting": {
-   "valid": true,
-   "reason": "nesting() > 2 finds the injected kind; accept() checks this."
+   "valid": false,
+   "reason": "Every branch assigns `self.symbol: Symbol = None`, so the nested ifs are a duplicated branch that a reviewer deletes, not nesting that a reviewer flattens. The injection also calls `isinstance(self.declaration, DeclarationType)`, and `DeclarationType` is a Union of string forward references, so `isinstance` raises TypeError and every construction of the object fails. Ticket 66 changed this item from valid to invalid."
   },
   "matplotlib/matplotlib:lib/matplotlib/transforms.py:BboxTransformTo.get_matrix:nemotron:nesting": {
    "valid": true,
@@ -11,7 +11,7 @@
   },
   "astropy/astropy:astropy/coordinates/builtin_frames/galactic_transforms.py:fk5_to_gal:nemotron:nesting": {
    "valid": true,
-   "reason": "Depth 4: the else of 'if pmats is not None:' ends with 'return matrix_product(mat1, mat2, mat3, None)', so that branch can become a guard clause and the body can move out of the if."
+   "reason": "Depth 4: the else of 'if pmat is not None:' ends with 'return matrix_product(mat1, mat2, mat3, None)', so that branch can become a guard clause and the body can move out of the if. Ticket 66: the injection read `pmats`, which does not exist, and raised NameError. It reads `pmat` now."
   },
   "pylint-dev/pylint:pylint/checkers/variables.py:_is_type_checking_import:nemotron:nesting": {
    "valid": true,
@@ -27,7 +27,7 @@
   },
   "pytest-dev/pytest:src/_pytest/tmpdir.py:pytest_configure:nemotron:nesting": {
    "valid": true,
-   "reason": "Depth 5: 'if config is not None:' holds only \"if hasattr(config, 'add_cleanup'):\", which holds only \"if callable(getattr(config, 'add_cleanup')):\", so the three conditions can join with 'and'."
+   "reason": "Depth 5: 'if config is not None:' holds only \"if hasattr(config, 'add_cleanup'):\", which holds only \"if callable(getattr(config, 'add_cleanup')):\", so the three conditions can join with 'and'. Ticket 66: the guard `hasattr(config, '_tmp_path_factory')` was never true, so the function never set the attribute and `pytest_sessionfinish` raised AttributeError. The guard is `mp is not None` now."
   },
   "matplotlib/matplotlib:lib/matplotlib/axes/_axes.py:Axes._convert_dx:nemotron:nesting": {
    "valid": true,
@@ -127,7 +127,7 @@
   },
   "matplotlib/matplotlib:tutorials/intermediate/imshow_extent.py:index_to_coordinate:nemotron:lookup_table": {
    "valid": true,
-   "reason": "Ruff SIM116 finds the injected kind; accept() checks this."
+   "reason": "Ruff SIM116 finds the injected kind; accept() checks this. Ticket 66: the chain returned None for an unknown index, but the dict lookup raised KeyError. A `raise KeyError(index)` after the chain keeps that behavior."
   },
   "matplotlib/matplotlib:lib/matplotlib/axis.py:YAxis.get_ticks_position:nemotron:lookup_table": {
    "valid": true,
@@ -676,7 +676,7 @@
   "pytest-dev/pytest:src/_pytest/tmpdir.py:pytest_configure:nemotron:nesting": {
    "redundant_check": {
     "decision": "false_positive",
-    "reason": "The nested checks test new facts (config, its attributes, the factory result); no earlier check decides them."
+    "reason": "The nested checks test new facts (config, its attributes, the factory result, `mp`); no earlier check decides them."
    }
   },
   "pytest-dev/pytest:src/_pytest/unittest.py:UnitTestCase.collect": {

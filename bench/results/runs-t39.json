@@ -3046,22 +3046,22 @@
    "kinds": {
     "nesting": []
    },
-   "seconds": 0.059,
-   "source_sha": "6ced21d7d69e"
+   "seconds": 0.03,
+   "source_sha": "748dfcfdfcd2"
   },
   {
    "kinds": {
     "nesting": []
    },
-   "seconds": 0.049,
-   "source_sha": "6ced21d7d69e"
+   "seconds": 0.03,
+   "source_sha": "748dfcfdfcd2"
   },
   {
    "kinds": {
     "nesting": []
    },
-   "seconds": 0.062,
-   "source_sha": "6ced21d7d69e"
+   "seconds": 0.03,
+   "source_sha": "748dfcfdfcd2"
   }
  ],
  "matplotlib/matplotlib:lib/matplotlib/backend_tools.py:SetCursorBase.set_cursor:transform:swallowed_error+dead": [

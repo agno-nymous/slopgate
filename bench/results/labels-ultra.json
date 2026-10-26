@@ -1,461 +1,461 @@
 {
-  "metadata": {
-    "models": {
-      "second_labeller": "nvidia/Nemotron-3-Ultra-550b-a55b"
-    },
-    "commit": "58d9b5d1f3582dcb11062a1f186083366279d251",
-    "dirty": true,
-    "date": "2026-10-17",
-    "seeds": {},
-    "prompts": {
-      "LABEL_PROMPT": "34b76acfaa9b",
-      "Label": "a7084cceb6d8",
-      "KINDS": "36d181cd34ef"
-    },
-    "runs_per_item": 1,
-    "source": "backfilled on 2026-10-17; the run used the same prompt text"
+ "metadata": {
+  "models": {
+   "second_labeller": "nvidia/Nemotron-3-Ultra-550b-a55b"
   },
-  "usage": {
-    "calls": 109,
-    "input_tokens": 82714,
-    "output_tokens": 9798
+  "commit": "58d9b5d1f3582dcb11062a1f186083366279d251",
+  "dirty": true,
+  "date": "2026-10-17",
+  "seeds": {},
+  "prompts": {
+   "LABEL_PROMPT": "34b76acfaa9b",
+   "Label": "a7084cceb6d8",
+   "KINDS": "36d181cd34ef"
   },
-  "rows": {
-    "astropy/astropy:astropy/coordinates/baseframe.py:BaseCoordinateFrame._get_representation_info|nesting": {
-      "slop": true,
-      "reason": "The function contains a for-loop nested inside an if-block, and within that loop another for-loop with an if-block inside it, creating three levels of nesting (if \u2192 for \u2192 for \u2192 if). This deep nesting can be flattened using guard clauses or combined boolean expressions."
-    },
-    "astropy/astropy:astropy/coordinates/solar_system.py:get_body|redundant_check": {
-      "slop": true,
-      "reason": "The function first checks `if location is None:` and assigns `location = time.location`. Then it checks `if location is not None:` again. Since the first check guarantees that `location` is not None after the assignment (assuming `time.location` is not None), the second check is redundant. The second check repeats a condition that the first check already guarantees."
-    },
-    "astropy/astropy:astropy/modeling/fitting.py:model_to_fit_params|nesting": {
-      "slop": false,
-      "reason": "The function has a single if block that contains a for loop with an if statement inside, resulting in a maximum nesting depth of three levels (function \u2192 if \u2192 for \u2192 if). This is not considered deeply nested; the rule targets deeper nesting that should be flattened with guard clauses or a single boolean expression."
-    },
-    "astropy/astropy:astropy/samp/hub.py:SAMPHubServer._get_registered_clients|nesting": {
-      "slop": true,
-      "reason": "The function has a nesting depth of 3 (function -> if -> for -> if) which exceeds the recommended maximum of 2. The inner if statement inside the for loop could be flattened using a guard clause or combined into a single boolean expression."
-    },
-    "astropy/astropy:astropy/units/format/generic.py:Generic._format_unit_list|nesting": {
-      "slop": true,
-      "reason": "The function contains a for-loop with an if/else block, and inside the else branch there is another if/else block, creating two levels of nesting. This matches the rule's definition of nesting blocks deeply."
-    },
-    "django/django:django/contrib/postgres/fields/ranges.py:RangeField.to_python|nesting": {
-      "slop": false,
-      "reason": "The function has a maximum nesting depth of 2 (the outer if/elif and the inner for loop with an if statement), which does not constitute deep nesting that requires flattening with guard clauses or a single boolean expression."
-    },
-    "django/django:django/db/backends/mysql/base.py:DatabaseWrapper.check_constraints|redundant_check": {
-      "slop": false,
-      "reason": "The function does not contain redundant checks. The check `if table_names is None:` initializes the table_names variable, and the check `if not primary_key_column_name:` skips tables without a primary key. These checks serve different purposes and are not redundant with each other or with any earlier checks."
-    },
-    "django/django:django/db/backends/mysql/base.py:DatabaseWrapper.check_constraints|nesting": {
-      "slop": true,
-      "reason": "The function contains a for-loop over table_names, and inside it another for-loop over key_columns, and inside that a for-loop over cursor.fetchall(). This creates three levels of nested blocks (for \u2192 for \u2192 for) plus the surrounding with-block, which is deep nesting that could be flattened with guard clauses or combined boolean checks."
-    },
-    "django/django:django/db/backends/postgresql/base.py:DatabaseWrapper.get_connection_params|redundant_check": {
-      "slop": true,
-      "reason": "The first check `if settings_dict['NAME'] == '':` ensures that NAME is not an empty string. The second check `if len(settings_dict['NAME'] or '') > self.ops.max_name_length():` uses `settings_dict['NAME'] or ''`, which is redundant because NAME is already guaranteed to be non-empty. The `or ''` fallback is unnecessary and the length check could directly use `len(settings_dict['NAME'])`."
-    },
-    "django/django:django/db/migrations/executor.py:MigrationExecutor.migration_plan|nesting": {
-      "slop": true,
-      "reason": "The function contains deeply nested blocks: the outer loop over targets, then multiple if/elif/else branches, and inside those branches there are nested for-loops (e.g., for root in ..., for migration in ..., for node in ..., for migration in ...). This creates nesting levels of 4 or more, which matches the rule's definition of deep nesting that should be flattened with guard clauses or a single boolean expression."
-    },
-    "django/django:django/db/models/base.py:Model.clean_fields|redundant_check": {
-      "slop": false,
-      "reason": "The function does not contain any redundant checks. The 'if exclude is None' check initializes the exclude list, and the subsequent 'if f.name in exclude' uses that initialized list. The 'if f.blank and raw_value in f.empty_values' check is a distinct validation skip condition. The final 'if errors' check is necessary to raise the ValidationError only when errors exist. None of these checks repeat a guarantee made by an earlier check."
-    },
-    "django/django:django/forms/widgets.py:NullBooleanSelect.format_value:transform:lookup_table|redundant_check": {
-      "slop": true,
-      "reason": "The function checks `value == True` and `value == False` first, which already cover the boolean cases. The subsequent checks for `value == 'true'`, `value == 'false'`, `value == '2'`, and `value == '3'` are redundant because they are not mutually exclusive with the earlier boolean checks (e.g., `True == 'true'` is False, but the logic repeats the same return values). The rule states to remove repeated checks that an earlier check already guarantees, and here the boolean checks do not guarantee the string/integer checks, but the pattern shows redundant conditional branches for the same return values."
-    },
-    "django/django:django/template/base.py:Token.split_contents|nesting": {
-      "slop": true,
-      "reason": "The function contains a while loop nested inside an if block, which is itself nested inside a for loop, creating three levels of nesting. This can be flattened by using guard clauses or restructuring the logic."
-    },
-    "django/django:django/utils/numberformat.py:format|nesting": {
-      "slop": true,
-      "reason": "The function contains a deeply nested block inside the `if use_grouping:` guard (lines 45-60). Within that block, there is a `try/except` block, and inside the `try` block there is a `for` loop that contains an `if` statement with another nested `if`. This creates 4+ levels of indentation (function \u2192 if \u2192 try \u2192 for \u2192 if \u2192 if), which qualifies as deep nesting. The rule suggests flattening with guard clauses or a single boolean expression."
-    },
-    "django/django:django/utils/numberformat.py:format:transform:dead|redundant_check": {
-      "slop": true,
-      "reason": "The function contains two consecutive checks for `decimal_pos is not None` (lines 27 and 30). The first check already guarantees the condition for the second, making the second check redundant. The first check truncates `dec_part` to `decimal_pos` length, and the second check pads it with zeros if needed. Since the first check ensures `decimal_pos` is not None, the second check is unnecessary and can be removed."
-    },
-    "matplotlib/matplotlib:lib/matplotlib/figure.py:Figure.set_size_inches|nesting": {
-      "slop": false,
-      "reason": "The function has a maximum nesting depth of 3 (the `if forward:` block contains `if canvas is not None:` which contains `if manager is not None:`), which is not considered deeply nested. The logic is straightforward and does not require flattening with guard clauses or a single boolean expression."
-    },
-    "matplotlib/matplotlib:lib/matplotlib/font_manager.py:findSystemFonts|nesting": {
-      "slop": true,
-      "reason": "The function contains a nested if-else block inside the outer `if fontpaths is None:` block (lines 13-21), creating two levels of indentation. This nesting can be flattened by using guard clauses or combining conditions into a single boolean expression."
-    },
-    "matplotlib/matplotlib:lib/matplotlib/offsetbox.py:AnchoredOffsetbox.draw:nemotron:nesting|redundant_check": {
-      "slop": true,
-      "reason": "The function checks 'if renderer is not None:' inside the 'if child is not None:' block, but the renderer parameter is already guaranteed to be not None because it's used unconditionally in multiple earlier lines (renderer.points_to_pixels, self.get_window_extent(renderer), self.update_frame(bbox, fontsize), self.patch.draw(renderer), self.get_extent(renderer), self.get_offset(...)). Since renderer is used without any None checks before this point, the check 'if renderer is not None:' is redundant and can be removed."
-    },
-    "pallets/flask:src/flask/app.py:Flask.handle_url_build_error|nesting": {
-      "slop": true,
-      "reason": "The function contains a for loop with a try/except/else block nested inside it, creating two levels of nesting. The else block further contains an if statement, adding a third level. This deep nesting can be flattened by using guard clauses or restructuring the logic."
-    },
-    "pallets/flask:src/flask/debughelpers.py:_dump_loader_info|nesting": {
-      "slop": true,
-      "reason": "The function contains a for-loop with an if-elif chain that nests up to three levels deep (loop \u2192 if \u2192 if/elif), and the inner if has its own nested if and for-loop. This deep nesting can be flattened using guard clauses (early continues) or by combining conditions into a single boolean expression."
-    },
-    "pallets/flask:src/flask/templating.py:DispatchingJinjaLoader._get_source_explained|nesting": {
-      "slop": false,
-      "reason": "The function has a maximum nesting depth of 2 (the for loop contains a try-except block), which is not considered deeply nested. The rule for 'nesting' slop applies to deeply nested blocks that should be flattened with guard clauses or a single boolean expression, but this function's structure is simple and does not require such refactoring."
-    },
-    "psf/requests:requests/hooks.py:dispatch_hook|nesting": {
-      "slop": false,
-      "reason": "The function has a maximum nesting depth of 3 (function -> if -> for), which is not considered deeply nested. The control flow is straightforward without excessive indentation levels that would require flattening with guard clauses."
-    },
-    "psf/requests:requests/models.py:RequestEncodingMixin._encode_files|redundant_check": {
-      "slop": true,
-      "reason": "The function has a redundant check: it first checks `if (not files): raise ValueError(...)` and then later calls `files = to_key_val_list(files or {})`. The `or {}` fallback makes the second line safe even if `files` is empty/falsey, so the initial `if (not files):` check is unnecessary and repeats the same guarantee."
-    },
-    "psf/requests:requests/models.py:RequestEncodingMixin._encode_files|nesting": {
-      "slop": true,
-      "reason": "The function contains deeply nested conditional blocks, particularly in the file processing loop where there are multiple levels of if/elif/else statements (checking tuple/list length with 4 branches, then checking fp type with 2 more branches). This creates a nesting depth of at least 3-4 levels that could be flattened with guard clauses or combined boolean expressions."
-    },
-    "psf/requests:requests/models.py:Response.json|nesting": {
-      "slop": false,
-      "reason": "The function has a maximum nesting depth of 3 (if \u2192 if \u2192 try), which is not considered deeply nested. The structure uses early returns and a flat fallback, avoiding excessive indentation."
-    },
-    "psf/requests:requests/packages/chardet/charsetgroupprober.py:CharSetGroupProber.get_confidence|nesting": {
-      "slop": false,
-      "reason": "The function has a maximum nesting depth of 3 (the for-loop contains an if-statement which contains another if-statement), which is not considered deeply nested. The rule for flattening with guard clauses or a single boolean expression does not apply here."
-    },
-    "psf/requests:requests/packages/chardet/hebrewprober.py:HebrewProber.get_charset_name|redundant_check": {
-      "slop": true,
-      "reason": "The function checks `finalsub < 0.0` after already checking `finalsub <= -MIN_FINAL_CHAR_DISTANCE` (which implies `finalsub < 0` since MIN_FINAL_CHAR_DISTANCE is positive). The earlier check already guarantees the condition, making the later check redundant."
-    },
-    "psf/requests:requests/utils.py:get_encoding_from_headers|redundant_check": {
-      "slop": false,
-      "reason": "The function does not contain any redundant checks. The first check `if not content_type:` handles the case where the header is missing. The second check `if 'charset' in params:` looks for an explicit charset parameter. The third check `if 'text' in content_type:` is a fallback for text-based content types when no charset is specified. Each check serves a distinct purpose and none are repeated or guaranteed by earlier checks."
-    },
-    "pydata/xarray:xarray/backends/locks.py:_get_lock_maker:transform:lookup_table+filler_comment|redundant_check": {
-      "slop": false,
-      "reason": "The function checks `if scheduler == None:` and then `elif scheduler == 'threaded':`, both returning `_get_threaded_lock`. Since `None` and `'threaded'` are distinct values, the second check is not redundant\u2014it handles a different case. However, the logic could be simplified by combining them (e.g., `if scheduler in (None, 'threaded'):`), but the rule specifically asks about a repeated check that an earlier check already guarantees. Here, the earlier check (`scheduler == None`) does not guarantee the later one (`scheduler == 'threaded'`), so there is no redundant check by the given definition."
-    },
-    "pydata/xarray:xarray/core/duck_array_ops.py:_create_nan_agg_method|nesting": {
-      "slop": false,
-      "reason": "The function has a maximum nesting depth of 3 (the try block inside the outer function, and the nested try/except inside the except block). This is not considered deeply nested; the rule targets deeper nesting that should be flattened with guard clauses or a single boolean expression."
-    },
-    "pylint-dev/pylint:pylint/checkers/base.py:ComparisonChecker._check_logical_tautology|redundant_check": {
-      "slop": false,
-      "reason": "The function performs a single check `if left_operand == right_operand:` after normalizing the operands. There is no earlier check that guarantees this condition, so no redundant check exists."
-    },
-    "pylint-dev/pylint:pylint/checkers/base.py:NamingStyle.get_regex:transform:lookup_table|redundant_check": {
-      "slop": false,
-      "reason": "The function does not contain any redundant checks. Each 'elif' branch checks for a distinct 'name_type' value, and no earlier check guarantees the condition of a later one. The evidence lines ('class_attribute', 'class_const', 'inlinevar') are simply additional cases in the chain, not repetitions of prior conditions."
-    },
-    "pylint-dev/pylint:pylint/checkers/utils.py:safe_infer|redundant_check": {
-      "slop": true,
-      "reason": "The function checks `if value is not astroid.Uninferable:` before adding to `inferred_types`, but the `try/except astroid.InferenceError` block already guarantees `value` is a valid inferred node (not Uninferable). The `infer()` method raises `InferenceError` for Uninferable, so the explicit check is redundant."
-    },
-    "pylint-dev/pylint:pylint/checkers/utils.py:safe_infer|nesting": {
-      "slop": false,
-      "reason": "The function has a maximum nesting depth of 3 (try block inside function, for loop inside try, if statement inside for loop). This is not considered deeply nested by typical standards, and the structure is already relatively flat with guard clauses (early returns)."
-    },
-    "pytest-dev/pytest:src/_pytest/_py/path.py:LocalPath._ensuredirs|redundant_check": {
-      "slop": true,
-      "reason": "The function checks `self.check(dir=0)` twice: first at line 6 (`if self.check(dir=0):`) and again at line 11 (`if self.check(dir=0):`). The second check is redundant because if the first check passes (meaning the path does not exist as a directory), the second check will also pass unless the state changes between them. However, the only state change is the `self.mkdir()` call, which would create the directory. If `mkdir()` succeeds, the second check would fail (since the directory now exists), but the code only raises an error if the check passes (i.e., if it's not a directory). The logic is flawed, but the second check is indeed a repeated check of the same condition."
-    },
-    "pytest-dev/pytest:src/_pytest/_py/path.py:LocalPath._ensuredirs|nesting": {
-      "slop": false,
-      "reason": "The function has a maximum nesting depth of 2 (the try/except block inside the second if statement), which is not considered deeply nested. The rule about flattening with guard clauses or a single boolean expression does not apply here."
-    },
-    "pytest-dev/pytest:src/_pytest/fixtures.py:FixtureRequest._getnextfixturedef|redundant_check": {
-      "slop": true,
-      "reason": "The function first checks `if fixturedefs is None:` and in that block assigns `fixturedefs` a value from `self._fixturemanager.getfixturedefs(...)`. After that block, `fixturedefs` is guaranteed to be non-None. The later check `if fixturedefs is None or (-index > len(fixturedefs)):` repeats the `fixturedefs is None` test, which is now redundant."
-    },
-    "pytest-dev/pytest:src/_pytest/tmpdir.py:pytest_configure:nemotron:nesting|redundant_check": {
-      "slop": true,
-      "reason": "The function contains redundant checks: the outer `if config is not None:` is unnecessary because the function signature requires a `Config` object, and the inner `if hasattr(config, '_tmp_path_factory'):` is redundant because `mp.setattr(..., raising=False)` already handles missing attributes gracefully."
-    },
-    "pytest-dev/pytest:src/_pytest/unittest.py:UnitTestCase.collect|nesting": {
-      "slop": false,
-      "reason": "The function has a maximum nesting depth of 2 (the for-loop body contains an if-statement), which is not considered deeply nested. The rule for 'nesting' slop applies to code with excessive indentation levels (typically 3+), which this function does not exhibit."
-    },
-    "pytest-dev/pytest:src/_pytest/unittest.py:pytest_runtest_makereport|redundant_check": {
-      "slop": false,
-      "reason": "The first check `if isinstance(item, TestCaseFunction):` only guards the block that pops an exception from `item._excinfo` and assigns it to `call.excinfo`. The later check `if unittest and call.excinfo and isinstance(call.excinfo.value, unittest.SkipTest):` is a completely independent condition that converts a `unittest.SkipTest` exception into a pytest skip. It does not repeat the earlier `isinstance` check, nor does the earlier check guarantee anything about `call.excinfo` being a `SkipTest`. Therefore, the later check is not redundant."
-    },
-    "pytest-dev/pytest:src/_pytest/unittest.py:pytest_runtest_makereport|nesting": {
-      "slop": true,
-      "reason": "The function contains nested if statements: an outer `if isinstance(item, TestCaseFunction):` block containing an inner `if item._excinfo:` block, and later another nested structure with `if (unittest and call.excinfo and isinstance(...)):` containing an inner block that reassigns `call.excinfo`. This creates multiple levels of indentation that could be flattened using guard clauses or combined boolean expressions."
-    },
-    "scikit-learn/scikit-learn:sklearn/externals/joblib/_parallel_backends.py:SafeFunction.__call__|swallowed_error": {
-      "slop": true,
-      "reason": "The function catches a bare 'except:' clause (line 7) which captures all exceptions including system-exiting ones like SystemExit and KeyboardInterrupt (though KeyboardInterrupt is handled separately above). This is a broad exception handler that swallows the original exception type and wraps it in a TransportableException, losing the original exception class. The try block wraps a call to self.func(*args, **kwargs) which can raise any exception, so the bare except is overly broad."
-    },
-    "scikit-learn/scikit-learn:sklearn/metrics/classification.py:_check_targets|nesting": {
-      "slop": false,
-      "reason": "The function has a maximum nesting depth of 2 (e.g., the `if y_type in [\"binary\", \"multiclass\"]:` block contains a nested `if y_type == \"binary\":` block). This is shallow and does not constitute deep nesting that requires flattening with guard clauses or a single boolean expression."
-    },
-    "scikit-learn/scikit-learn:sklearn/mixture/gaussian_mixture.py:GaussianMixture._set_parameters|dead": {
-      "slop": true,
-      "reason": "The variable `n_features` is assigned on line 6 (`_, n_features = self.means_.shape`) but is never used anywhere in the function. This is an unused variable, which qualifies as dead code slop."
-    },
-    "scikit-learn/scikit-learn:sklearn/mixture/gmm.py:_log_multivariate_normal_density_full|nesting": {
-      "slop": true,
-      "reason": "The function contains a try-except block with a nested try-except inside the except clause, creating two levels of nesting. The inner try-except could be flattened by combining the error handling logic or using guard clauses."
-    },
-    "scikit-learn/scikit-learn:sklearn/utils/estimator_checks.py:check_estimators_dtypes|nesting": {
-      "slop": true,
-      "reason": "The function contains a nested loop structure: an outer loop iterating over four different X_train arrays, and an inner loop iterating over four method names. Inside the inner loop, there is a conditional check `if hasattr(estimator, method):` followed by a method call. This creates a nesting depth of three levels (outer loop \u2192 inner loop \u2192 conditional), which qualifies as deep nesting that could be flattened using guard clauses or combined boolean expressions."
-    },
-    "sphinx-doc/sphinx:sphinx/builders/xml.py:XMLBuilder.get_outdated_docs|swallowed_error": {
-      "slop": true,
-      "reason": "The first try block catches a broad Exception when calling path.getmtime(targetname), which could raise OSError (or its subclasses like FileNotFoundError). The second try block correctly catches only OSError for path.getmtime(self.env.doc2path(docname)). The first except should be narrowed to OSError to match the specific exception that getmtime can raise."
-    },
-    "sphinx-doc/sphinx:sphinx/builders/xml.py:XMLBuilder.get_outdated_docs|nesting": {
-      "slop": false,
-      "reason": "The function has a maximum nesting depth of 2 (the outer for-loop and one inner try/except block). The rule flags functions that \"nest blocks deeply\" and suggests flattening with guard clauses or a single boolean expression. A depth of 2 is not considered deep nesting, so the rule does not apply."
-    },
-    "sphinx-doc/sphinx:sphinx/domains/std.py:ProductionList.run|nesting": {
-      "slop": true,
-      "reason": "The function contains a for-loop with multiple nested if/else blocks and a try/except block inside it, creating deep nesting (up to 4 levels). The logic could be flattened using guard clauses (e.g., early continues) or combined boolean expressions."
-    },
-    "sphinx-doc/sphinx:sphinx/ext/inheritance_diagram.py:InheritanceDiagram.run|dead": {
-      "slop": false,
-      "reason": "The function has no unreachable code or unused variables. All variables (node, class_names, class_role, graph, refnodes, x, figure) are used in subsequent logic. The try/except block returns on error but continues normally on success. No dead code or unused variables exist."
-    },
-    "sphinx-doc/sphinx:sphinx/util/nodes.py:process_index_entry|nesting": {
-      "slop": true,
-      "reason": "The function contains deeply nested control flow with a for-else block containing another for-else block, which itself contains a for loop with nested if statements. This creates 4+ levels of indentation (for -> else -> for -> else -> for -> if -> if), violating the nesting rule. The structure could be flattened using guard clauses or combined boolean expressions."
-    },
-    "sympy/sympy:sympy/assumptions/handlers/sets.py:AskIntegerHandler.Mul|nesting": {
-      "slop": true,
-      "reason": "The function contains a for-loop with an else clause, and inside the loop there are multiple nested if/elif/else blocks (up to three levels deep). This deep nesting of conditional blocks matches the definition of nesting slop."
-    },
-    "sympy/sympy:sympy/calculus/util.py:AccumulationBounds.intersection|nesting": {
-      "slop": true,
-      "reason": "The function contains deeply nested if-statements, particularly in the final block where `if other.min <= self.min:` contains two nested `if` statements (`if other.max < self.max:` and `if other.max > self.max:`). This creates a nesting depth of 3 levels (outer `if`, then inner `if`, then innermost `if`), which violates the rule against deep nesting. The logic can be flattened using guard clauses or combined boolean expressions."
-    },
-    "sympy/sympy:sympy/calculus/util.py:AccumulationBounds.intersection|redundant_check": {
-      "slop": true,
-      "reason": "The function contains redundant checks in the intersection logic for AccumBounds objects. After the initial check `if self.max < other.min or self.min > other.max: return S.EmptySet`, we know the intervals overlap. The subsequent nested if-statements (`if self.min <= other.min:` and `if other.min <= self.min:`) both re-check the min/max relationships that are already constrained by the overlap condition. For example, when `self.min <= other.min` is true, the inner checks `if self.max <= other.max:` and `if self.max > other.max:` are exhaustive and mutually exclusive, making the final `if other.max > self.max:` check redundant since it's logically equivalent to the previous `else` case. The same redundancy exists in the `other.min <= self.min` branch."
-    },
-    "sympy/sympy:sympy/functions/combinatorial/numbers.py:genocchi._eval_is_negative|redundant_check": {
-      "slop": false,
-      "reason": "The function checks `n.is_odd` inside the block where `n.is_integer and n.is_positive` is already true. Since `n.is_positive` implies `n` is non-zero and `n.is_integer` implies it's an integer, the `n.is_odd` check is not redundant with the earlier check; it's a separate condition needed for the logic. The earlier check does not guarantee anything about oddness."
-    },
-    "sympy/sympy:sympy/functions/special/elliptic_integrals.py:elliptic_pi.fdiff:nemotron:dead|redundant_check": {
-      "slop": true,
-      "reason": "The function contains multiple redundant checks for `argindex == 1` in both branches of the outer `if len(self.args) == 3:` condition. In the first branch (when len(self.args) == 3), there are three separate checks for `argindex == 1` (lines 5, 7, and 9 in the evidence), but only the first one is actually used in the code. The subsequent checks are unreachable because the first `if argindex == 1:` returns a value, making the later checks redundant. Similarly, in the else branch, there is a check for `argindex == 1` that is not redundant with the first branch since it's in a different conditional path, but within each branch, the repeated checks for the same condition are redundant."
-    },
-    "sympy/sympy:sympy/integrals/risch.py:splitfactor|redundant_check": {
-      "slop": true,
-      "reason": "The function has a redundant check at the end: 'if s.degree(DE.t) == 0: return (p, One)'. This condition is already guaranteed by the earlier check 'if not p.has(DE.t):' which returns (n, s) where s is a constant polynomial (degree 0). When p.has(DE.t) is True, the code proceeds to compute s = h.exquo(g). If s.degree(DE.t) == 0, it means s is a constant, but this case is already handled by the earlier branch where p.has(DE.t) is False. The final check repeats a condition that is already covered by the logic flow."
-    },
-    "sympy/sympy:sympy/ntheory/factor_.py:udivisors:transform:nesting|redundant_check": {
-      "slop": true,
-      "reason": "The function contains redundant checks: `if n != 1:` and `if n != 0:` are both inside `if not (isprime(n)):`. Since `isprime(n)` returns False for n=0 and n=1, the outer condition already guarantees n is not prime, which includes n=0 and n=1. The inner checks repeat this guarantee. Additionally, `if generator:` is a simple boolean check that doesn't repeat any earlier condition."
-    },
-    "sympy/sympy:sympy/plotting/intervalmath/interval_arithmetic.py:interval.__pow__|redundant_check": {
-      "slop": false,
-      "reason": "The function contains a redundant check: `if int(other) == other:` is unnecessary because the preceding `elif isinstance(other, (float, int)):` already guarantees that `other` is either a float or an int. For ints, `int(other) == other` is always true; for floats, it checks if the float is an integer value, but this is not a type check\u2014it's a value check. However, the rule defines redundant_check as repeating a check that an earlier check already guarantees. The earlier check guarantees the type (float or int), not the value. The `int(other) == other` is a value check, not a type check, so it is not redundant by the rule. But wait: the rule says 'repeats a check that an earlier check already guarantees.' The earlier check `isinstance(other, (float, int))` guarantees that `other` is a float or int. The check `int(other) == other` does not repeat that; it checks if the value is integral. So it's not redundant. However, there is another potential redundancy: the `if not self.is_valid:` check at the start. But that's not repeated. The evidence lines include `if not self.is_valid:` and `if isinstance(other, interval):` etc. None of these are repeated. So no redundant_check."
-    },
-    "sympy/sympy:sympy/polys/densebasic.py:dup_deflate|redundant_check": {
-      "slop": false,
-      "reason": "The function first checks `if dup_degree(f) <= 0:` and returns early if true. Inside the loop, it checks `if g == 1:` and returns early. However, if `dup_degree(f) <= 0`, then `f` has at most one non-zero coefficient, so the loop will set `g` to the index of that coefficient (or 0 if all zero). The `g == 1` check is not redundant because `dup_degree(f) <= 0` does not guarantee `g == 1` (e.g., `f = [0, 0, 5]` has degree 2 > 0, but if `f = [5]` degree 0, then `g` becomes 0, not 1). The two checks guard different conditions: the first handles zero/constant polynomials, the second handles the case where the GCD of exponents becomes 1 during iteration. Neither check makes the other redundant."
-    },
-    "sympy/sympy:sympy/polys/densetools.py:_dup_decompose|nesting": {
-      "slop": true,
-      "reason": "The function contains a for-loop with two nested if-statements inside it, creating three levels of indentation (for \u2192 if \u2192 if). This matches the nesting slop pattern where blocks are deeply nested and could be flattened using guard clauses or combined boolean expressions."
-    },
-    "sympy/sympy:sympy/simplify/sqrtdenest.py:_sqrt_symbolic_denest|nesting": {
-      "slop": false,
-      "reason": "The function has a maximum nesting depth of 3 (inside the try block: if newa.degree() == 2: ... if _mexpand(...).equals(0): ...). This is not considered deeply nested; the rule targets deeper nesting that should be flattened with guard clauses or a single boolean expression."
-    },
-    "sympy/sympy:sympy/strategies/rl.py:rebuild|swallowed_error": {
-      "slop": true,
-      "reason": "The function catches the broad `Exception` class in its `except` block, which will swallow any exception raised by `type(expr)(*list(map(rebuild, expr.args)))`. This includes exceptions that may indicate real bugs (e.g., `TypeError`, `AttributeError`, `RecursionError`) rather than just expected failures. The rule requires narrowing the `except` clause to only the specific exceptions that the try block can raise, or removing the try block if the code cannot raise."
-    },
-    "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaration.__init__:nemotron:nesting|nesting": {
-      "slop": true,
-      "reason": "The function contains deeply nested if-else blocks (up to 4 levels deep) that all assign the same value (None) to self.symbol regardless of the conditions. The nested structure checks objectType and directiveType in multiple branches but always results in self.symbol = None. This can be flattened to a single assignment."
-    },
-    "matplotlib/matplotlib:lib/matplotlib/transforms.py:BboxTransformTo.get_matrix:nemotron:nesting|nesting": {
-      "slop": true,
-      "reason": "The function contains nested if-else blocks: an outer 'if self._invalid:' block, inside which there is an 'if DEBUG:' block, and inside that an 'if outw == 0 or outh == 0:' block. This creates three levels of nesting, which violates the rule against deep nesting. The structure could be flattened using guard clauses or a single boolean expression."
-    },
-    "astropy/astropy:astropy/coordinates/builtin_frames/galactic_transforms.py:fk5_to_gal:nemotron:nesting|nesting": {
-      "slop": true,
-      "reason": "The function contains a deeply nested if-else structure with four levels of nesting (pmats, mat1, mat2, mat3), each checking for None and calling matrix_product with different combinations of None arguments. This matches the rule's description of nesting blocks deeply that should be flattened with guard clauses or a single boolean expression."
-    },
-    "pylint-dev/pylint:pylint/checkers/variables.py:_is_type_checking_import:nemotron:nesting|nesting": {
-      "slop": true,
-      "reason": "The function contains a while loop with nested if-else blocks: an outer if checking isinstance(ancestor, nodes.If), and inside it another if checking test_str in TYPING_TYPE_CHECKS_GUARDS. Both if blocks have else: pass clauses, creating unnecessary nesting depth. This can be flattened using guard clauses (early continue/break) or a single boolean expression."
-    },
-    "matplotlib/matplotlib:lib/matplotlib/axes/_axes.py:Axes.semilogx:nemotron:nesting|nesting": {
-      "slop": true,
-      "reason": "The function contains deeply nested if-else blocks in both loops. The first loop nests an if-else inside the else branch (lines 5-10), and the second loop nests an if-else inside the if branch (lines 13-18). Both can be flattened using guard clauses or combined boolean expressions."
-    },
-    "pytest-dev/pytest:src/_pytest/warnings.py:pytest_collection:nemotron:nesting|nesting": {
-      "slop": true,
-      "reason": "The function contains two nested if statements (if config is not None: and if hook is not None:) that create a nesting depth of 2. According to the rule, this should be flattened using guard clauses or a single boolean expression."
-    },
-    "pytest-dev/pytest:src/_pytest/tmpdir.py:pytest_configure:nemotron:nesting|nesting": {
-      "slop": true,
-      "reason": "The function contains a chain of five nested if statements (config is not None \u2192 hasattr(config, 'add_cleanup') \u2192 callable(getattr(config, 'add_cleanup')) \u2192 _tmp_path_factory is not None \u2192 hasattr(config, '_tmp_path_factory')), creating deep nesting that could be flattened with guard clauses or combined boolean expressions."
-    },
-    "matplotlib/matplotlib:lib/matplotlib/axes/_axes.py:Axes._convert_dx:nemotron:nesting|nesting": {
-      "slop": true,
-      "reason": "The function contains deeply nested try/except/else blocks (up to 4 levels deep) with multiple else: pass patterns, creating complex control flow that could be flattened with guard clauses or combined boolean expressions."
-    },
-    "matplotlib/matplotlib:lib/matplotlib/offsetbox.py:AnchoredOffsetbox.draw:nemotron:nesting|nesting": {
-      "slop": true,
-      "reason": "The function has three levels of nesting: the outer if/else block, then an if child is not None block, and inside that an if renderer is not None block. This deep nesting can be flattened using guard clauses (early returns) or combined boolean expressions."
-    },
-    "django/django:django/core/checks/model_checks.py:check_all_models:nemotron:nesting|nesting": {
-      "slop": true,
-      "reason": "The function contains nested if statements at lines 'if model._meta.managed:' and 'if not model._meta.proxy:' which could be flattened using a guard clause or combined boolean expression."
-    },
-    "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaratorNameParam.describe_signature:nemotron:redundant_check|redundant_check": {
-      "slop": true,
-      "reason": "The condition 'if self.param and self.param is not None:' contains a redundant check. In Python, 'self.param' being truthy already guarantees it is not None, making the explicit 'is not None' check unnecessary."
-    },
-    "matplotlib/matplotlib:lib/matplotlib/projections/polar.py:PolarAxes._init_axis:nemotron:redundant_check|redundant_check": {
-      "slop": true,
-      "reason": "The function creates self.xaxis = ThetaAxis(self) on line 3, which guarantees that self.xaxis exists and is not None. The check on line 9 'if hasattr(self, 'xaxis') and self.xaxis is not None:' is therefore redundant because the earlier assignment already ensures both conditions are true."
-    },
-    "pallets/flask:src/flask/sessions.py:SessionInterface.make_null_session:nemotron:redundant_check|redundant_check": {
-      "slop": true,
-      "reason": "The function contains an `if hasattr(self, 'null_session_class'): pass` block that checks for the existence of the attribute but does nothing with the result. The very next line unconditionally accesses `self.null_session_class()`, which would raise an AttributeError if the attribute didn't exist. This makes the hasattr check completely redundant - it repeats a check that the subsequent access already guarantees (by failing if the attribute is missing). The check should be removed."
-    },
-    "astropy/astropy:astropy/coordinates/representation.py:PhysicsSphericalRepresentation.phi:nemotron:redundant_check|redundant_check": {
-      "slop": true,
-      "reason": "The function checks `if hasattr(self, '_phi'):` but then does nothing with the result (just `pass`), and unconditionally returns `self._phi` afterward. The `hasattr` check is redundant because the return statement will raise an `AttributeError` if `_phi` doesn't exist, making the check pointless. The earlier check does not guarantee anything useful; it's a no-op."
-    },
-    "astropy/astropy:astropy/modeling/powerlaws.py:ExponentialCutoffPowerLaw1D.fit_deriv:nemotron:redundant_check|redundant_check": {
-      "slop": false,
-      "reason": "The function contains an `if isinstance(amplitude, (int, float)) and amplitude is not None:` check followed by a `pass` statement. This check does not affect the function's behavior or return value, and it is not guaranteed by any earlier check in the function. Since the rule requires a repeated check that an earlier check already guarantees, and there is no earlier check on `amplitude`, this is not a redundant_check slop."
-    },
-    "astropy/astropy:astropy/coordinates/angle_formats.py:hours_to_hms:nemotron:redundant_check|redundant_check": {
-      "slop": true,
-      "reason": "The function contains an `if` statement checking `abs(h - int(h)) < 1e-10` followed by a `pass` statement. This check does not affect the function's output or control flow, as it is immediately followed by `pass` and the function proceeds to the return statement regardless. The check is redundant because it does not enforce any condition or modify any variable; it is effectively a no-op. The earlier operations (using `np.modf` and `np.abs`) already handle the decomposition of `h` into integer and fractional parts, making this explicit check unnecessary."
-    },
-    "astropy/astropy:astropy/modeling/core.py:Model._supports_unit_fitting:nemotron:redundant_check|redundant_check": {
-      "slop": true,
-      "reason": "The function checks `hasattr(self, '_parameter_units_for_data_units')` twice: once in the `if` statement (which does nothing but `pass`) and again in the `return` statement. The first check is redundant because the second check already determines the return value."
-    },
-    "astropy/astropy:astropy/cosmology/flrw.py:LambdaCDM._dS_comoving_distance_z1z2:nemotron:redundant_check|redundant_check": {
-      "slop": true,
-      "reason": "The function first uses `np.broadcast_arrays(z1, z2)` which guarantees that z1 and z2 have the same shape (or raises a ValueError). The subsequent check `if z1.shape == z2.shape:` is therefore redundant because the broadcast operation already ensures shape compatibility."
-    },
-    "sympy/sympy:sympy/integrals/risch.py:splitfactor:nemotron:redundant_check|redundant_check": {
-      "slop": true,
-      "reason": "The function calls splitfactor recursively and assigns the result to q_split. The condition `hasattr(q_split := splitfactor(...), '__len__') and len(q_split) >= 2` checks that q_split is a sequence of length at least 2. However, splitfactor always returns a tuple of two elements (as seen in all return statements: `(p, One)`, `(n, s)`, `(q_split[0], q_split[1]*s)`, `(p, One)`). Therefore, the check is redundant because the return type guarantees the condition. The subsequent lines directly index q_split[0] and q_split[1] without any fallback, confirming the check is unnecessary."
-    },
-    "sphinx-doc/sphinx:sphinx/transforms/post_transforms/code.py:setup:nemotron:swallowed_error|swallowed_error": {
-      "slop": true,
-      "reason": "The function uses a broad 'except Exception:' clause that catches all exceptions, including those that may not be raised by the code in the try block. The try block only calls 'app.add_post_transform' twice, which likely raises specific exceptions (e.g., AttributeError if 'app' lacks the method, or TypeError for invalid arguments). Catching 'Exception' is overly broad and swallows unexpected errors. The 'pass' in the except block silently ignores any caught exception, which is the definition of a swallowed error."
-    },
-    "sympy/sympy:sympy/polys/densearith.py:dmp_expand:nemotron:swallowed_error|swallowed_error": {
-      "slop": true,
-      "reason": "The function uses a broad `except Exception:` clause that catches all exceptions, including those that may not be expected from the operations inside the try block (e.g., `dmp_one`, `dmp_mul`). According to the rule, except clauses should be narrowed to only the exceptions that the code in the try block can actually raise. Additionally, the try block wraps the entire logic, but it's unclear if all contained operations can raise exceptions; if some cannot, the try block should be removed or narrowed. The function returns `None` on any exception, which constitutes a swallowed error."
-    },
-    "astropy/astropy:astropy/coordinates/baseframe.py:BaseCoordinateFrame.realize_frame:nemotron:swallowed_error|swallowed_error": {
-      "slop": true,
-      "reason": "The function catches a broad `Exception` in the `except` block, which is a broad exception catch. The `try` block calls `self._replicate(data, **kwargs)`, which could raise specific exceptions, but the `except Exception:` catches all exceptions, including those not intended to be handled here. This is a case of swallowed error slop."
-    },
-    "sympy/sympy:sympy/polys/polytools.py:Poly.trunc:nemotron:swallowed_error|swallowed_error": {
-      "slop": true,
-      "reason": "The function uses a broad 'except Exception:' clause that catches all exceptions, including those that may not be expected from the try block. The try block contains operations like 'f.rep.dom.convert(p)', 'hasattr(f.rep, 'trunc')', 'f.rep.trunc(p)', and 'f.per(result)', which could raise specific exceptions (e.g., AttributeError, TypeError, OperationNotSupported). Catching all exceptions with 'except Exception:' is too broad and violates the rule of narrowing except clauses to only the exceptions the try block can raise."
-    },
-    "sympy/sympy:sympy/plotting/pygletplot/managed_window.py:ManagedWindow.__init__:nemotron:swallowed_error|swallowed_error": {
-      "slop": true,
-      "reason": "The function uses a broad 'except Exception:' clause that catches all exceptions, and the 'pass' statement silently swallows any error that occurs during window initialization and thread startup. This prevents proper error handling and debugging."
-    },
-    "sympy/sympy:sympy/geometry/plane.py:Plane.p1:nemotron:swallowed_error|swallowed_error": {
-      "slop": true,
-      "reason": "The function uses a broad `except Exception:` clause to catch any exception when accessing `self.args[0]`. This is a swallowed error because it catches all exceptions, including those that might indicate a real problem (e.g., `self.args` being `None` or not indexable), and silently returns `None` instead of letting the error propagate. The `try` block wraps a simple index access that could raise `IndexError` or `TypeError`, but the broad catch hides these specific issues."
-    },
-    "django/django:django/templatetags/l10n.py:localize:nemotron:swallowed_error|swallowed_error": {
-      "slop": true,
-      "reason": "The function catches a broad 'Exception' in the except block, which violates the rule of narrowing except clauses to specific exceptions that the try block can raise. The try block calls 'formats.localize' and 'str', which could raise specific exceptions like 'TypeError' or 'ValueError', but the broad 'Exception' catch swallows all errors."
-    },
-    "django/django:django/utils/autoreload.py:WatchmanReloader.watched_roots:nemotron:swallowed_error|swallowed_error": {
-      "slop": true,
-      "reason": "The function catches a broad 'Exception' in the except block, which is a broad exception. The try block contains code that could raise various exceptions (e.g., AttributeError if watched_files elements lack 'parent', TypeError if directory_globs is not iterable, etc.), but the except clause catches all exceptions indiscriminately. According to the rule, the except should be narrowed to only the specific exceptions that the try block can raise, or the try block should be removed if the code cannot raise. Since the code can raise exceptions, the except should be narrowed."
-    },
-    "matplotlib/matplotlib:tools/gh_api.py:get_milestones:nemotron:swallowed_error|swallowed_error": {
-      "slop": true,
-      "reason": "The function catches a broad 'Exception' in the except block, which is a classic example of swallowed_error slop. The try block contains multiple operations (params.setdefault, string formatting, conditional header creation, and get_paged_request call) that could raise various specific exceptions (e.g., KeyError, AttributeError, requests exceptions), but the except clause catches all of them indiscriminately and returns an empty list, potentially masking real errors."
-    },
-    "pylint-dev/pylint:pylint/checkers/utils.py:safe_infer:nemotron:swallowed_error|swallowed_error": {
-      "slop": true,
-      "reason": "The function contains a broad 'except Exception:' clause that catches all exceptions, which violates the rule against catching broad exceptions. The try block around the for loop could raise various exceptions, but the except clause should be narrowed to only the specific exceptions that the code in the try block can raise (like astroid.InferenceError and StopIteration). The final 'except Exception:' is overly broad and should be removed or narrowed."
-    },
-    "django/django:django/forms/widgets.py:NullBooleanSelect.format_value:nemotron:lookup_table|lookup_table": {
-      "slop": true,
-      "reason": "The function uses a long if/elif chain to map various input values (True, False, 'true', 'false', '2', '3') to string outputs ('true', 'false', 'unknown'). This is a classic case for replacing the chain with a dictionary lookup for better readability and maintainability."
-    },
-    "sympy/sympy:sympy/ntheory/generate.py:prevprime:nemotron:lookup_table|lookup_table": {
-      "slop": true,
-      "reason": "The function contains a long if/elif chain mapping specific integer values (3, 4, 5, 6, 7) to their corresponding previous prime results (2, 3, 3, 5, 5). This chain can be replaced with a dictionary lookup for better readability and maintainability."
-    },
-    "matplotlib/matplotlib:tutorials/intermediate/imshow_extent.py:index_to_coordinate:nemotron:lookup_table|lookup_table": {
-      "slop": true,
-      "reason": "The function uses a long if/elif chain to map string index values ('[0, 0]', \"[M', 0]\", etc.) to coordinate tuples. This can be replaced with a dictionary lookup for cleaner and more maintainable code."
-    },
-    "matplotlib/matplotlib:lib/matplotlib/axis.py:YAxis.get_ticks_position:nemotron:lookup_table|lookup_table": {
-      "slop": true,
-      "reason": "The function uses a long if/elif chain to map values (1, 2, 'default', 'unknown') to string results ('left', 'right', 'default', 'unknown'). This can be replaced with a dictionary lookup for cleaner and more maintainable code."
-    },
-    "matplotlib/matplotlib:lib/matplotlib/axis.py:XAxis.get_ticks_position:nemotron:lookup_table|lookup_table": {
-      "slop": true,
-      "reason": "The function uses a long if/elif chain to map values (1, 2, 'default', 'unknown') to string results ('bottom', 'top', 'default', 'unknown'). This can be replaced with a dictionary lookup for cleaner and more maintainable code."
-    },
-    "matplotlib/matplotlib:lib/matplotlib/font_manager.py:get_fontext_synonyms:nemotron:lookup_table|lookup_table": {
-      "slop": true,
-      "reason": "The function uses a long if/elif chain to map input values ('afm', 'otf', 'ttc', 'ttf') to specific output lists. This pattern can be replaced with a dictionary lookup for better readability and maintainability."
-    },
-    "pydata/xarray:xarray/coding/times.py:_netcdf_to_numpy_timeunit:nemotron:lookup_table|lookup_table": {
-      "slop": true,
-      "reason": "The function uses a long if/elif chain to map string values like 'microseconds', 'milliseconds', etc., to their corresponding abbreviations ('us', 'ms', etc.). This is a classic case of a lookup table that should be replaced with a dictionary for better readability and performance."
-    },
-    "matplotlib/matplotlib:lib/matplotlib/axes/_base.py:_AxesBase.get_navigate:nemotron:dead|dead": {
-      "slop": true,
-      "reason": "The function contains an unused variable 'unused = 42' and unreachable code 'print(\"This line never executes\")' after the return statement."
-    },
-    "astropy/astropy:astropy/coordinates/angles.py:Angle.dms:nemotron:dead|dead": {
-      "slop": true,
-      "reason": "The variable 'unused = None' is assigned but never used anywhere in the function. This is an unused variable that should be removed according to the rule."
-    },
-    "astropy/astropy:astropy/io/misc/asdf/tags/coordinates/representation.py:RepresentationType.assert_equal:nemotron:dead|dead": {
-      "slop": true,
-      "reason": "The function contains an unused variable 'unused_var = 42' and an unreachable 'if False: pass' block, both of which are dead code according to the rule."
-    },
-    "sympy/sympy:sympy/strategies/rl.py:rebuild:nemotron:dead|dead": {
-      "slop": true,
-      "reason": "The variable 'unused' is assigned the value 42 on line 7 but is never used anywhere in the function. This is an unused variable, which qualifies as dead code slop."
-    },
-    "sympy/sympy:sympy/functions/special/elliptic_integrals.py:elliptic_pi.fdiff:nemotron:dead|dead": {
-      "slop": true,
-      "reason": "The variable 'unused_var' is assigned None but never used anywhere in the function. This is an unused variable that should be removed according to the rule."
-    },
-    "sympy/sympy:sympy/matrices/densetools.py:trace:nemotron:dead|dead": {
-      "slop": true,
-      "reason": "The function contains an unused variable 'unused_var = None' and an unreachable 'if False: pass' block, both of which are dead code."
-    },
-    "django/django:django/template/smartif.py:TokenBase.led:nemotron:dead|dead": {
-      "slop": true,
-      "reason": "The function contains an unused variable 'unused = 42' and unreachable code 'print(\"This line will never execute\")' after the raise statement."
-    },
-    "sympy/sympy:sympy/polys/ring_series.py:rs_cos_sin:nemotron:dead|dead": {
-      "slop": true,
-      "reason": "The function contains an unused variable 'unused_var = None' and unreachable code 'print(\"This line is unreachable\")' after the return statement."
-    },
-    "matplotlib/matplotlib:lib/matplotlib/afm.py:AFM.get_kern_dist_from_name:nemotron:dead|dead": {
-      "slop": true,
-      "reason": "The variable 'unused' is assigned None but never used anywhere in the function. This is an unused variable that should be removed according to the rule."
-    },
-    "matplotlib/matplotlib:lib/matplotlib/blocking_input.py:BlockingKeyMouseInput.post_event:nemotron:dead|dead": {
-      "slop": true,
-      "reason": "The function contains an unused variable 'unused_var = 42' which is assigned but never used, and the function always returns None without any meaningful computation. The variable 'unused_var' is dead code that should be removed."
-    }
+  "runs_per_item": 1,
+  "source": "backfilled on 2026-10-17; the run used the same prompt text"
+ },
+ "usage": {
+  "calls": 113,
+  "input_tokens": 85810,
+  "output_tokens": 10150
+ },
+ "rows": {
+  "astropy/astropy:astropy/coordinates/baseframe.py:BaseCoordinateFrame._get_representation_info|nesting": {
+   "slop": true,
+   "reason": "The function contains a for-loop nested inside an if-block, and within that loop another for-loop with an if-block inside it, creating three levels of nesting (if \u2192 for \u2192 for \u2192 if). This deep nesting can be flattened using guard clauses or combined boolean expressions."
+  },
+  "astropy/astropy:astropy/coordinates/solar_system.py:get_body|redundant_check": {
+   "slop": true,
+   "reason": "The function first checks `if location is None:` and assigns `location = time.location`. Then it checks `if location is not None:` again. Since the first check guarantees that `location` is not None after the assignment (assuming `time.location` is not None), the second check is redundant. The second check repeats a condition that the first check already guarantees."
+  },
+  "astropy/astropy:astropy/modeling/fitting.py:model_to_fit_params|nesting": {
+   "slop": false,
+   "reason": "The function has a single if block that contains a for loop with an if statement inside, resulting in a maximum nesting depth of three levels (function \u2192 if \u2192 for \u2192 if). This is not considered deeply nested; the rule targets deeper nesting that should be flattened with guard clauses or a single boolean expression."
+  },
+  "astropy/astropy:astropy/samp/hub.py:SAMPHubServer._get_registered_clients|nesting": {
+   "slop": true,
+   "reason": "The function has a nesting depth of 3 (function -> if -> for -> if) which exceeds the recommended maximum of 2. The inner if statement inside the for loop could be flattened using a guard clause or combined into a single boolean expression."
+  },
+  "astropy/astropy:astropy/units/format/generic.py:Generic._format_unit_list|nesting": {
+   "slop": true,
+   "reason": "The function contains a for-loop with an if/else block, and inside the else branch there is another if/else block, creating two levels of nesting. This matches the rule's definition of nesting blocks deeply."
+  },
+  "django/django:django/contrib/postgres/fields/ranges.py:RangeField.to_python|nesting": {
+   "slop": false,
+   "reason": "The function has a maximum nesting depth of 2 (the outer if/elif and the inner for loop with an if statement), which does not constitute deep nesting that requires flattening with guard clauses or a single boolean expression."
+  },
+  "django/django:django/db/backends/mysql/base.py:DatabaseWrapper.check_constraints|redundant_check": {
+   "slop": false,
+   "reason": "The function does not contain redundant checks. The check `if table_names is None:` initializes the table_names variable, and the check `if not primary_key_column_name:` skips tables without a primary key. These checks serve different purposes and are not redundant with each other or with any earlier checks."
+  },
+  "django/django:django/db/backends/mysql/base.py:DatabaseWrapper.check_constraints|nesting": {
+   "slop": true,
+   "reason": "The function contains a for-loop over table_names, and inside it another for-loop over key_columns, and inside that a for-loop over cursor.fetchall(). This creates three levels of nested blocks (for \u2192 for \u2192 for) plus the surrounding with-block, which is deep nesting that could be flattened with guard clauses or combined boolean checks."
+  },
+  "django/django:django/db/backends/postgresql/base.py:DatabaseWrapper.get_connection_params|redundant_check": {
+   "slop": true,
+   "reason": "The first check `if settings_dict['NAME'] == '':` ensures that NAME is not an empty string. The second check `if len(settings_dict['NAME'] or '') > self.ops.max_name_length():` uses `settings_dict['NAME'] or ''`, which is redundant because NAME is already guaranteed to be non-empty. The `or ''` fallback is unnecessary and the length check could directly use `len(settings_dict['NAME'])`."
+  },
+  "django/django:django/db/migrations/executor.py:MigrationExecutor.migration_plan|nesting": {
+   "slop": true,
+   "reason": "The function contains deeply nested blocks: the outer loop over targets, then multiple if/elif/else branches, and inside those branches there are nested for-loops (e.g., for root in ..., for migration in ..., for node in ..., for migration in ...). This creates nesting levels of 4 or more, which matches the rule's definition of deep nesting that should be flattened with guard clauses or a single boolean expression."
+  },
+  "django/django:django/db/models/base.py:Model.clean_fields|redundant_check": {
+   "slop": false,
+   "reason": "The function does not contain any redundant checks. The 'if exclude is None' check initializes the exclude list, and the subsequent 'if f.name in exclude' uses that initialized list. The 'if f.blank and raw_value in f.empty_values' check is a distinct validation skip condition. The final 'if errors' check is necessary to raise the ValidationError only when errors exist. None of these checks repeat a guarantee made by an earlier check."
+  },
+  "django/django:django/forms/widgets.py:NullBooleanSelect.format_value:transform:lookup_table|redundant_check": {
+   "slop": true,
+   "reason": "The function checks `value == True` and `value == False` first, which already cover the boolean cases. The subsequent checks for `value == 'true'`, `value == 'false'`, `value == '2'`, and `value == '3'` are redundant because they are not mutually exclusive with the earlier boolean checks (e.g., `True == 'true'` is False, but the logic repeats the same return values). The rule states to remove repeated checks that an earlier check already guarantees, and here the boolean checks do not guarantee the string/integer checks, but the pattern shows redundant conditional branches for the same return values."
+  },
+  "django/django:django/template/base.py:Token.split_contents|nesting": {
+   "slop": true,
+   "reason": "The function contains a while loop nested inside an if block, which is itself nested inside a for loop, creating three levels of nesting. This can be flattened by using guard clauses or restructuring the logic."
+  },
+  "django/django:django/utils/numberformat.py:format|nesting": {
+   "slop": true,
+   "reason": "The function contains a deeply nested block inside the `if use_grouping:` guard (lines 45-60). Within that block, there is a `try/except` block, and inside the `try` block there is a `for` loop that contains an `if` statement with another nested `if`. This creates 4+ levels of indentation (function \u2192 if \u2192 try \u2192 for \u2192 if \u2192 if), which qualifies as deep nesting. The rule suggests flattening with guard clauses or a single boolean expression."
+  },
+  "django/django:django/utils/numberformat.py:format:transform:dead|redundant_check": {
+   "slop": true,
+   "reason": "The function contains two consecutive checks for `decimal_pos is not None` (lines 27 and 30). The first check already guarantees the condition for the second, making the second check redundant. The first check truncates `dec_part` to `decimal_pos` length, and the second check pads it with zeros if needed. Since the first check ensures `decimal_pos` is not None, the second check is unnecessary and can be removed."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/figure.py:Figure.set_size_inches|nesting": {
+   "slop": false,
+   "reason": "The function has a maximum nesting depth of 3 (the `if forward:` block contains `if canvas is not None:` which contains `if manager is not None:`), which is not considered deeply nested. The logic is straightforward and does not require flattening with guard clauses or a single boolean expression."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/font_manager.py:findSystemFonts|nesting": {
+   "slop": true,
+   "reason": "The function contains a nested if-else block inside the outer `if fontpaths is None:` block (lines 13-21), creating two levels of indentation. This nesting can be flattened by using guard clauses or combining conditions into a single boolean expression."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/offsetbox.py:AnchoredOffsetbox.draw:nemotron:nesting|redundant_check": {
+   "slop": true,
+   "reason": "The function checks 'if renderer is not None:' inside the 'if child is not None:' block, but the renderer parameter is already guaranteed to be not None because it's used unconditionally in multiple earlier lines (renderer.points_to_pixels, self.get_window_extent(renderer), self.update_frame(bbox, fontsize), self.patch.draw(renderer), self.get_extent(renderer), self.get_offset(...)). Since renderer is used without any None checks before this point, the check 'if renderer is not None:' is redundant and can be removed."
+  },
+  "pallets/flask:src/flask/app.py:Flask.handle_url_build_error|nesting": {
+   "slop": true,
+   "reason": "The function contains a for loop with a try/except/else block nested inside it, creating two levels of nesting. The else block further contains an if statement, adding a third level. This deep nesting can be flattened by using guard clauses or restructuring the logic."
+  },
+  "pallets/flask:src/flask/debughelpers.py:_dump_loader_info|nesting": {
+   "slop": true,
+   "reason": "The function contains a for-loop with an if-elif chain that nests up to three levels deep (loop \u2192 if \u2192 if/elif), and the inner if has its own nested if and for-loop. This deep nesting can be flattened using guard clauses (early continues) or by combining conditions into a single boolean expression."
+  },
+  "pallets/flask:src/flask/templating.py:DispatchingJinjaLoader._get_source_explained|nesting": {
+   "slop": false,
+   "reason": "The function has a maximum nesting depth of 2 (the for loop contains a try-except block), which is not considered deeply nested. The rule for 'nesting' slop applies to deeply nested blocks that should be flattened with guard clauses or a single boolean expression, but this function's structure is simple and does not require such refactoring."
+  },
+  "psf/requests:requests/hooks.py:dispatch_hook|nesting": {
+   "slop": false,
+   "reason": "The function has a maximum nesting depth of 3 (function -> if -> for), which is not considered deeply nested. The control flow is straightforward without excessive indentation levels that would require flattening with guard clauses."
+  },
+  "psf/requests:requests/models.py:RequestEncodingMixin._encode_files|redundant_check": {
+   "slop": true,
+   "reason": "The function has a redundant check: it first checks `if (not files): raise ValueError(...)` and then later calls `files = to_key_val_list(files or {})`. The `or {}` fallback makes the second line safe even if `files` is empty/falsey, so the initial `if (not files):` check is unnecessary and repeats the same guarantee."
+  },
+  "psf/requests:requests/models.py:RequestEncodingMixin._encode_files|nesting": {
+   "slop": true,
+   "reason": "The function contains deeply nested conditional blocks, particularly in the file processing loop where there are multiple levels of if/elif/else statements (checking tuple/list length with 4 branches, then checking fp type with 2 more branches). This creates a nesting depth of at least 3-4 levels that could be flattened with guard clauses or combined boolean expressions."
+  },
+  "psf/requests:requests/models.py:Response.json|nesting": {
+   "slop": false,
+   "reason": "The function has a maximum nesting depth of 3 (if \u2192 if \u2192 try), which is not considered deeply nested. The structure uses early returns and a flat fallback, avoiding excessive indentation."
+  },
+  "psf/requests:requests/packages/chardet/charsetgroupprober.py:CharSetGroupProber.get_confidence|nesting": {
+   "slop": false,
+   "reason": "The function has a maximum nesting depth of 3 (the for-loop contains an if-statement which contains another if-statement), which is not considered deeply nested. The rule for flattening with guard clauses or a single boolean expression does not apply here."
+  },
+  "psf/requests:requests/packages/chardet/hebrewprober.py:HebrewProber.get_charset_name|redundant_check": {
+   "slop": true,
+   "reason": "The function checks `finalsub < 0.0` after already checking `finalsub <= -MIN_FINAL_CHAR_DISTANCE` (which implies `finalsub < 0` since MIN_FINAL_CHAR_DISTANCE is positive). The earlier check already guarantees the condition, making the later check redundant."
+  },
+  "psf/requests:requests/utils.py:get_encoding_from_headers|redundant_check": {
+   "slop": false,
+   "reason": "The function does not contain any redundant checks. The first check `if not content_type:` handles the case where the header is missing. The second check `if 'charset' in params:` looks for an explicit charset parameter. The third check `if 'text' in content_type:` is a fallback for text-based content types when no charset is specified. Each check serves a distinct purpose and none are repeated or guaranteed by earlier checks."
+  },
+  "pydata/xarray:xarray/backends/locks.py:_get_lock_maker:transform:lookup_table+filler_comment|redundant_check": {
+   "slop": false,
+   "reason": "The function checks `if scheduler == None:` and then `elif scheduler == 'threaded':`, both returning `_get_threaded_lock`. Since `None` and `'threaded'` are distinct values, the second check is not redundant\u2014it handles a different case. However, the logic could be simplified by combining them (e.g., `if scheduler in (None, 'threaded'):`), but the rule specifically asks about a repeated check that an earlier check already guarantees. Here, the earlier check (`scheduler == None`) does not guarantee the later one (`scheduler == 'threaded'`), so there is no redundant check by the given definition."
+  },
+  "pydata/xarray:xarray/core/duck_array_ops.py:_create_nan_agg_method|nesting": {
+   "slop": false,
+   "reason": "The function has a maximum nesting depth of 3 (the try block inside the outer function, and the nested try/except inside the except block). This is not considered deeply nested; the rule targets deeper nesting that should be flattened with guard clauses or a single boolean expression."
+  },
+  "pylint-dev/pylint:pylint/checkers/base.py:ComparisonChecker._check_logical_tautology|redundant_check": {
+   "slop": false,
+   "reason": "The function performs a single check `if left_operand == right_operand:` after normalizing the operands. There is no earlier check that guarantees this condition, so no redundant check exists."
+  },
+  "pylint-dev/pylint:pylint/checkers/base.py:NamingStyle.get_regex:transform:lookup_table|redundant_check": {
+   "slop": false,
+   "reason": "The function does not contain any redundant checks. Each 'elif' branch checks for a distinct 'name_type' value, and no earlier check guarantees the condition of a later one. The evidence lines ('class_attribute', 'class_const', 'inlinevar') are simply additional cases in the chain, not repetitions of prior conditions."
+  },
+  "pylint-dev/pylint:pylint/checkers/utils.py:safe_infer|redundant_check": {
+   "slop": true,
+   "reason": "The function checks `if value is not astroid.Uninferable:` before adding to `inferred_types`, but the `try/except astroid.InferenceError` block already guarantees `value` is a valid inferred node (not Uninferable). The `infer()` method raises `InferenceError` for Uninferable, so the explicit check is redundant."
+  },
+  "pylint-dev/pylint:pylint/checkers/utils.py:safe_infer|nesting": {
+   "slop": false,
+   "reason": "The function has a maximum nesting depth of 3 (try block inside function, for loop inside try, if statement inside for loop). This is not considered deeply nested by typical standards, and the structure is already relatively flat with guard clauses (early returns)."
+  },
+  "pytest-dev/pytest:src/_pytest/_py/path.py:LocalPath._ensuredirs|redundant_check": {
+   "slop": true,
+   "reason": "The function checks `self.check(dir=0)` twice: first at line 6 (`if self.check(dir=0):`) and again at line 11 (`if self.check(dir=0):`). The second check is redundant because if the first check passes (meaning the path does not exist as a directory), the second check will also pass unless the state changes between them. However, the only state change is the `self.mkdir()` call, which would create the directory. If `mkdir()` succeeds, the second check would fail (since the directory now exists), but the code only raises an error if the check passes (i.e., if it's not a directory). The logic is flawed, but the second check is indeed a repeated check of the same condition."
+  },
+  "pytest-dev/pytest:src/_pytest/_py/path.py:LocalPath._ensuredirs|nesting": {
+   "slop": false,
+   "reason": "The function has a maximum nesting depth of 2 (the try/except block inside the second if statement), which is not considered deeply nested. The rule about flattening with guard clauses or a single boolean expression does not apply here."
+  },
+  "pytest-dev/pytest:src/_pytest/fixtures.py:FixtureRequest._getnextfixturedef|redundant_check": {
+   "slop": true,
+   "reason": "The function first checks `if fixturedefs is None:` and in that block assigns `fixturedefs` a value from `self._fixturemanager.getfixturedefs(...)`. After that block, `fixturedefs` is guaranteed to be non-None. The later check `if fixturedefs is None or (-index > len(fixturedefs)):` repeats the `fixturedefs is None` test, which is now redundant."
+  },
+  "pytest-dev/pytest:src/_pytest/unittest.py:UnitTestCase.collect|nesting": {
+   "slop": false,
+   "reason": "The function has a maximum nesting depth of 2 (the for-loop body contains an if-statement), which is not considered deeply nested. The rule for 'nesting' slop applies to code with excessive indentation levels (typically 3+), which this function does not exhibit."
+  },
+  "pytest-dev/pytest:src/_pytest/unittest.py:pytest_runtest_makereport|redundant_check": {
+   "slop": false,
+   "reason": "The first check `if isinstance(item, TestCaseFunction):` only guards the block that pops an exception from `item._excinfo` and assigns it to `call.excinfo`. The later check `if unittest and call.excinfo and isinstance(call.excinfo.value, unittest.SkipTest):` is a completely independent condition that converts a `unittest.SkipTest` exception into a pytest skip. It does not repeat the earlier `isinstance` check, nor does the earlier check guarantee anything about `call.excinfo` being a `SkipTest`. Therefore, the later check is not redundant."
+  },
+  "pytest-dev/pytest:src/_pytest/unittest.py:pytest_runtest_makereport|nesting": {
+   "slop": true,
+   "reason": "The function contains nested if statements: an outer `if isinstance(item, TestCaseFunction):` block containing an inner `if item._excinfo:` block, and later another nested structure with `if (unittest and call.excinfo and isinstance(...)):` containing an inner block that reassigns `call.excinfo`. This creates multiple levels of indentation that could be flattened using guard clauses or combined boolean expressions."
+  },
+  "scikit-learn/scikit-learn:sklearn/externals/joblib/_parallel_backends.py:SafeFunction.__call__|swallowed_error": {
+   "slop": true,
+   "reason": "The function catches a bare 'except:' clause (line 7) which captures all exceptions including system-exiting ones like SystemExit and KeyboardInterrupt (though KeyboardInterrupt is handled separately above). This is a broad exception handler that swallows the original exception type and wraps it in a TransportableException, losing the original exception class. The try block wraps a call to self.func(*args, **kwargs) which can raise any exception, so the bare except is overly broad."
+  },
+  "scikit-learn/scikit-learn:sklearn/metrics/classification.py:_check_targets|nesting": {
+   "slop": false,
+   "reason": "The function has a maximum nesting depth of 2 (e.g., the `if y_type in [\"binary\", \"multiclass\"]:` block contains a nested `if y_type == \"binary\":` block). This is shallow and does not constitute deep nesting that requires flattening with guard clauses or a single boolean expression."
+  },
+  "scikit-learn/scikit-learn:sklearn/mixture/gaussian_mixture.py:GaussianMixture._set_parameters|dead": {
+   "slop": true,
+   "reason": "The variable `n_features` is assigned on line 6 (`_, n_features = self.means_.shape`) but is never used anywhere in the function. This is an unused variable, which qualifies as dead code slop."
+  },
+  "scikit-learn/scikit-learn:sklearn/mixture/gmm.py:_log_multivariate_normal_density_full|nesting": {
+   "slop": true,
+   "reason": "The function contains a try-except block with a nested try-except inside the except clause, creating two levels of nesting. The inner try-except could be flattened by combining the error handling logic or using guard clauses."
+  },
+  "scikit-learn/scikit-learn:sklearn/utils/estimator_checks.py:check_estimators_dtypes|nesting": {
+   "slop": true,
+   "reason": "The function contains a nested loop structure: an outer loop iterating over four different X_train arrays, and an inner loop iterating over four method names. Inside the inner loop, there is a conditional check `if hasattr(estimator, method):` followed by a method call. This creates a nesting depth of three levels (outer loop \u2192 inner loop \u2192 conditional), which qualifies as deep nesting that could be flattened using guard clauses or combined boolean expressions."
+  },
+  "sphinx-doc/sphinx:sphinx/builders/xml.py:XMLBuilder.get_outdated_docs|swallowed_error": {
+   "slop": true,
+   "reason": "The first try block catches a broad Exception when calling path.getmtime(targetname), which could raise OSError (or its subclasses like FileNotFoundError). The second try block correctly catches only OSError for path.getmtime(self.env.doc2path(docname)). The first except should be narrowed to OSError to match the specific exception that getmtime can raise."
+  },
+  "sphinx-doc/sphinx:sphinx/builders/xml.py:XMLBuilder.get_outdated_docs|nesting": {
+   "slop": false,
+   "reason": "The function has a maximum nesting depth of 2 (the outer for-loop and one inner try/except block). The rule flags functions that \"nest blocks deeply\" and suggests flattening with guard clauses or a single boolean expression. A depth of 2 is not considered deep nesting, so the rule does not apply."
+  },
+  "sphinx-doc/sphinx:sphinx/domains/std.py:ProductionList.run|nesting": {
+   "slop": true,
+   "reason": "The function contains a for-loop with multiple nested if/else blocks and a try/except block inside it, creating deep nesting (up to 4 levels). The logic could be flattened using guard clauses (e.g., early continues) or combined boolean expressions."
+  },
+  "sphinx-doc/sphinx:sphinx/ext/inheritance_diagram.py:InheritanceDiagram.run|dead": {
+   "slop": false,
+   "reason": "The function has no unreachable code or unused variables. All variables (node, class_names, class_role, graph, refnodes, x, figure) are used in subsequent logic. The try/except block returns on error but continues normally on success. No dead code or unused variables exist."
+  },
+  "sphinx-doc/sphinx:sphinx/util/nodes.py:process_index_entry|nesting": {
+   "slop": true,
+   "reason": "The function contains deeply nested control flow with a for-else block containing another for-else block, which itself contains a for loop with nested if statements. This creates 4+ levels of indentation (for -> else -> for -> else -> for -> if -> if), violating the nesting rule. The structure could be flattened using guard clauses or combined boolean expressions."
+  },
+  "sympy/sympy:sympy/assumptions/handlers/sets.py:AskIntegerHandler.Mul|nesting": {
+   "slop": true,
+   "reason": "The function contains a for-loop with an else clause, and inside the loop there are multiple nested if/elif/else blocks (up to three levels deep). This deep nesting of conditional blocks matches the definition of nesting slop."
+  },
+  "sympy/sympy:sympy/calculus/util.py:AccumulationBounds.intersection|nesting": {
+   "slop": true,
+   "reason": "The function contains deeply nested if-statements, particularly in the final block where `if other.min <= self.min:` contains two nested `if` statements (`if other.max < self.max:` and `if other.max > self.max:`). This creates a nesting depth of 3 levels (outer `if`, then inner `if`, then innermost `if`), which violates the rule against deep nesting. The logic can be flattened using guard clauses or combined boolean expressions."
+  },
+  "sympy/sympy:sympy/calculus/util.py:AccumulationBounds.intersection|redundant_check": {
+   "slop": true,
+   "reason": "The function contains redundant checks in the intersection logic for AccumBounds objects. After the initial check `if self.max < other.min or self.min > other.max: return S.EmptySet`, we know the intervals overlap. The subsequent nested if-statements (`if self.min <= other.min:` and `if other.min <= self.min:`) both re-check the min/max relationships that are already constrained by the overlap condition. For example, when `self.min <= other.min` is true, the inner checks `if self.max <= other.max:` and `if self.max > other.max:` are exhaustive and mutually exclusive, making the final `if other.max > self.max:` check redundant since it's logically equivalent to the previous `else` case. The same redundancy exists in the `other.min <= self.min` branch."
+  },
+  "sympy/sympy:sympy/functions/combinatorial/numbers.py:genocchi._eval_is_negative|redundant_check": {
+   "slop": false,
+   "reason": "The function checks `n.is_odd` inside the block where `n.is_integer and n.is_positive` is already true. Since `n.is_positive` implies `n` is non-zero and `n.is_integer` implies it's an integer, the `n.is_odd` check is not redundant with the earlier check; it's a separate condition needed for the logic. The earlier check does not guarantee anything about oddness."
+  },
+  "sympy/sympy:sympy/functions/special/elliptic_integrals.py:elliptic_pi.fdiff:nemotron:dead|redundant_check": {
+   "slop": true,
+   "reason": "The function contains multiple redundant checks for `argindex == 1` in both branches of the outer `if len(self.args) == 3:` condition. In the first branch (when len(self.args) == 3), there are three separate checks for `argindex == 1` (lines 5, 7, and 9 in the evidence), but only the first one is actually used in the code. The subsequent checks are unreachable because the first `if argindex == 1:` returns a value, making the later checks redundant. Similarly, in the else branch, there is a check for `argindex == 1` that is not redundant with the first branch since it's in a different conditional path, but within each branch, the repeated checks for the same condition are redundant."
+  },
+  "sympy/sympy:sympy/integrals/risch.py:splitfactor|redundant_check": {
+   "slop": true,
+   "reason": "The function has a redundant check at the end: 'if s.degree(DE.t) == 0: return (p, One)'. This condition is already guaranteed by the earlier check 'if not p.has(DE.t):' which returns (n, s) where s is a constant polynomial (degree 0). When p.has(DE.t) is True, the code proceeds to compute s = h.exquo(g). If s.degree(DE.t) == 0, it means s is a constant, but this case is already handled by the earlier branch where p.has(DE.t) is False. The final check repeats a condition that is already covered by the logic flow."
+  },
+  "sympy/sympy:sympy/ntheory/factor_.py:udivisors:transform:nesting|redundant_check": {
+   "slop": true,
+   "reason": "The function contains redundant checks: `if n != 1:` and `if n != 0:` are both inside `if not (isprime(n)):`. Since `isprime(n)` returns False for n=0 and n=1, the outer condition already guarantees n is not prime, which includes n=0 and n=1. The inner checks repeat this guarantee. Additionally, `if generator:` is a simple boolean check that doesn't repeat any earlier condition."
+  },
+  "sympy/sympy:sympy/plotting/intervalmath/interval_arithmetic.py:interval.__pow__|redundant_check": {
+   "slop": false,
+   "reason": "The function contains a redundant check: `if int(other) == other:` is unnecessary because the preceding `elif isinstance(other, (float, int)):` already guarantees that `other` is either a float or an int. For ints, `int(other) == other` is always true; for floats, it checks if the float is an integer value, but this is not a type check\u2014it's a value check. However, the rule defines redundant_check as repeating a check that an earlier check already guarantees. The earlier check guarantees the type (float or int), not the value. The `int(other) == other` is a value check, not a type check, so it is not redundant by the rule. But wait: the rule says 'repeats a check that an earlier check already guarantees.' The earlier check `isinstance(other, (float, int))` guarantees that `other` is a float or int. The check `int(other) == other` does not repeat that; it checks if the value is integral. So it's not redundant. However, there is another potential redundancy: the `if not self.is_valid:` check at the start. But that's not repeated. The evidence lines include `if not self.is_valid:` and `if isinstance(other, interval):` etc. None of these are repeated. So no redundant_check."
+  },
+  "sympy/sympy:sympy/polys/densebasic.py:dup_deflate|redundant_check": {
+   "slop": false,
+   "reason": "The function first checks `if dup_degree(f) <= 0:` and returns early if true. Inside the loop, it checks `if g == 1:` and returns early. However, if `dup_degree(f) <= 0`, then `f` has at most one non-zero coefficient, so the loop will set `g` to the index of that coefficient (or 0 if all zero). The `g == 1` check is not redundant because `dup_degree(f) <= 0` does not guarantee `g == 1` (e.g., `f = [0, 0, 5]` has degree 2 > 0, but if `f = [5]` degree 0, then `g` becomes 0, not 1). The two checks guard different conditions: the first handles zero/constant polynomials, the second handles the case where the GCD of exponents becomes 1 during iteration. Neither check makes the other redundant."
+  },
+  "sympy/sympy:sympy/polys/densetools.py:_dup_decompose|nesting": {
+   "slop": true,
+   "reason": "The function contains a for-loop with two nested if-statements inside it, creating three levels of indentation (for \u2192 if \u2192 if). This matches the nesting slop pattern where blocks are deeply nested and could be flattened using guard clauses or combined boolean expressions."
+  },
+  "sympy/sympy:sympy/simplify/sqrtdenest.py:_sqrt_symbolic_denest|nesting": {
+   "slop": false,
+   "reason": "The function has a maximum nesting depth of 3 (inside the try block: if newa.degree() == 2: ... if _mexpand(...).equals(0): ...). This is not considered deeply nested; the rule targets deeper nesting that should be flattened with guard clauses or a single boolean expression."
+  },
+  "sympy/sympy:sympy/strategies/rl.py:rebuild|swallowed_error": {
+   "slop": true,
+   "reason": "The function catches the broad `Exception` class in its `except` block, which will swallow any exception raised by `type(expr)(*list(map(rebuild, expr.args)))`. This includes exceptions that may indicate real bugs (e.g., `TypeError`, `AttributeError`, `RecursionError`) rather than just expected failures. The rule requires narrowing the `except` clause to only the specific exceptions that the try block can raise, or removing the try block if the code cannot raise."
+  },
+  "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaration.__init__:nemotron:nesting|nesting": {
+   "slop": true,
+   "reason": "The function contains deeply nested if-else blocks (up to 4 levels deep) that all assign the same value (None) to self.symbol regardless of the conditions. The nested structure checks objectType and directiveType in multiple branches but always results in self.symbol = None. This can be flattened to a single assignment."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/transforms.py:BboxTransformTo.get_matrix:nemotron:nesting|nesting": {
+   "slop": true,
+   "reason": "The function contains nested if-else blocks: an outer 'if self._invalid:' block, inside which there is an 'if DEBUG:' block, and inside that an 'if outw == 0 or outh == 0:' block. This creates three levels of nesting, which violates the rule against deep nesting. The structure could be flattened using guard clauses or a single boolean expression."
+  },
+  "pylint-dev/pylint:pylint/checkers/variables.py:_is_type_checking_import:nemotron:nesting|nesting": {
+   "slop": true,
+   "reason": "The function contains a while loop with nested if-else blocks: an outer if checking isinstance(ancestor, nodes.If), and inside it another if checking test_str in TYPING_TYPE_CHECKS_GUARDS. Both if blocks have else: pass clauses, creating unnecessary nesting depth. This can be flattened using guard clauses (early continue/break) or a single boolean expression."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/axes/_axes.py:Axes.semilogx:nemotron:nesting|nesting": {
+   "slop": true,
+   "reason": "The function contains deeply nested if-else blocks in both loops. The first loop nests an if-else inside the else branch (lines 5-10), and the second loop nests an if-else inside the if branch (lines 13-18). Both can be flattened using guard clauses or combined boolean expressions."
+  },
+  "pytest-dev/pytest:src/_pytest/warnings.py:pytest_collection:nemotron:nesting|nesting": {
+   "slop": true,
+   "reason": "The function contains two nested if statements (if config is not None: and if hook is not None:) that create a nesting depth of 2. According to the rule, this should be flattened using guard clauses or a single boolean expression."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/axes/_axes.py:Axes._convert_dx:nemotron:nesting|nesting": {
+   "slop": true,
+   "reason": "The function contains deeply nested try/except/else blocks (up to 4 levels deep) with multiple else: pass patterns, creating complex control flow that could be flattened with guard clauses or combined boolean expressions."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/offsetbox.py:AnchoredOffsetbox.draw:nemotron:nesting|nesting": {
+   "slop": true,
+   "reason": "The function has three levels of nesting: the outer if/else block, then an if child is not None block, and inside that an if renderer is not None block. This deep nesting can be flattened using guard clauses (early returns) or combined boolean expressions."
+  },
+  "django/django:django/core/checks/model_checks.py:check_all_models:nemotron:nesting|nesting": {
+   "slop": true,
+   "reason": "The function contains nested if statements at lines 'if model._meta.managed:' and 'if not model._meta.proxy:' which could be flattened using a guard clause or combined boolean expression."
+  },
+  "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaratorNameParam.describe_signature:nemotron:redundant_check|redundant_check": {
+   "slop": true,
+   "reason": "The condition 'if self.param and self.param is not None:' contains a redundant check. In Python, 'self.param' being truthy already guarantees it is not None, making the explicit 'is not None' check unnecessary."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/projections/polar.py:PolarAxes._init_axis:nemotron:redundant_check|redundant_check": {
+   "slop": true,
+   "reason": "The function creates self.xaxis = ThetaAxis(self) on line 3, which guarantees that self.xaxis exists and is not None. The check on line 9 'if hasattr(self, 'xaxis') and self.xaxis is not None:' is therefore redundant because the earlier assignment already ensures both conditions are true."
+  },
+  "pallets/flask:src/flask/sessions.py:SessionInterface.make_null_session:nemotron:redundant_check|redundant_check": {
+   "slop": true,
+   "reason": "The function contains an `if hasattr(self, 'null_session_class'): pass` block that checks for the existence of the attribute but does nothing with the result. The very next line unconditionally accesses `self.null_session_class()`, which would raise an AttributeError if the attribute didn't exist. This makes the hasattr check completely redundant - it repeats a check that the subsequent access already guarantees (by failing if the attribute is missing). The check should be removed."
+  },
+  "astropy/astropy:astropy/coordinates/representation.py:PhysicsSphericalRepresentation.phi:nemotron:redundant_check|redundant_check": {
+   "slop": true,
+   "reason": "The function checks `if hasattr(self, '_phi'):` but then does nothing with the result (just `pass`), and unconditionally returns `self._phi` afterward. The `hasattr` check is redundant because the return statement will raise an `AttributeError` if `_phi` doesn't exist, making the check pointless. The earlier check does not guarantee anything useful; it's a no-op."
+  },
+  "astropy/astropy:astropy/modeling/powerlaws.py:ExponentialCutoffPowerLaw1D.fit_deriv:nemotron:redundant_check|redundant_check": {
+   "slop": false,
+   "reason": "The function contains an `if isinstance(amplitude, (int, float)) and amplitude is not None:` check followed by a `pass` statement. This check does not affect the function's behavior or return value, and it is not guaranteed by any earlier check in the function. Since the rule requires a repeated check that an earlier check already guarantees, and there is no earlier check on `amplitude`, this is not a redundant_check slop."
+  },
+  "astropy/astropy:astropy/coordinates/angle_formats.py:hours_to_hms:nemotron:redundant_check|redundant_check": {
+   "slop": true,
+   "reason": "The function contains an `if` statement checking `abs(h - int(h)) < 1e-10` followed by a `pass` statement. This check does not affect the function's output or control flow, as it is immediately followed by `pass` and the function proceeds to the return statement regardless. The check is redundant because it does not enforce any condition or modify any variable; it is effectively a no-op. The earlier operations (using `np.modf` and `np.abs`) already handle the decomposition of `h` into integer and fractional parts, making this explicit check unnecessary."
+  },
+  "astropy/astropy:astropy/modeling/core.py:Model._supports_unit_fitting:nemotron:redundant_check|redundant_check": {
+   "slop": true,
+   "reason": "The function checks `hasattr(self, '_parameter_units_for_data_units')` twice: once in the `if` statement (which does nothing but `pass`) and again in the `return` statement. The first check is redundant because the second check already determines the return value."
+  },
+  "astropy/astropy:astropy/cosmology/flrw.py:LambdaCDM._dS_comoving_distance_z1z2:nemotron:redundant_check|redundant_check": {
+   "slop": true,
+   "reason": "The function first uses `np.broadcast_arrays(z1, z2)` which guarantees that z1 and z2 have the same shape (or raises a ValueError). The subsequent check `if z1.shape == z2.shape:` is therefore redundant because the broadcast operation already ensures shape compatibility."
+  },
+  "sympy/sympy:sympy/integrals/risch.py:splitfactor:nemotron:redundant_check|redundant_check": {
+   "slop": true,
+   "reason": "The function calls splitfactor recursively and assigns the result to q_split. The condition `hasattr(q_split := splitfactor(...), '__len__') and len(q_split) >= 2` checks that q_split is a sequence of length at least 2. However, splitfactor always returns a tuple of two elements (as seen in all return statements: `(p, One)`, `(n, s)`, `(q_split[0], q_split[1]*s)`, `(p, One)`). Therefore, the check is redundant because the return type guarantees the condition. The subsequent lines directly index q_split[0] and q_split[1] without any fallback, confirming the check is unnecessary."
+  },
+  "sphinx-doc/sphinx:sphinx/transforms/post_transforms/code.py:setup:nemotron:swallowed_error|swallowed_error": {
+   "slop": true,
+   "reason": "The function uses a broad 'except Exception:' clause that catches all exceptions, including those that may not be raised by the code in the try block. The try block only calls 'app.add_post_transform' twice, which likely raises specific exceptions (e.g., AttributeError if 'app' lacks the method, or TypeError for invalid arguments). Catching 'Exception' is overly broad and swallows unexpected errors. The 'pass' in the except block silently ignores any caught exception, which is the definition of a swallowed error."
+  },
+  "sympy/sympy:sympy/polys/densearith.py:dmp_expand:nemotron:swallowed_error|swallowed_error": {
+   "slop": true,
+   "reason": "The function uses a broad `except Exception:` clause that catches all exceptions, including those that may not be expected from the operations inside the try block (e.g., `dmp_one`, `dmp_mul`). According to the rule, except clauses should be narrowed to only the exceptions that the code in the try block can actually raise. Additionally, the try block wraps the entire logic, but it's unclear if all contained operations can raise exceptions; if some cannot, the try block should be removed or narrowed. The function returns `None` on any exception, which constitutes a swallowed error."
+  },
+  "astropy/astropy:astropy/coordinates/baseframe.py:BaseCoordinateFrame.realize_frame:nemotron:swallowed_error|swallowed_error": {
+   "slop": true,
+   "reason": "The function catches a broad `Exception` in the `except` block, which is a broad exception catch. The `try` block calls `self._replicate(data, **kwargs)`, which could raise specific exceptions, but the `except Exception:` catches all exceptions, including those not intended to be handled here. This is a case of swallowed error slop."
+  },
+  "sympy/sympy:sympy/polys/polytools.py:Poly.trunc:nemotron:swallowed_error|swallowed_error": {
+   "slop": true,
+   "reason": "The function uses a broad 'except Exception:' clause that catches all exceptions, including those that may not be expected from the try block. The try block contains operations like 'f.rep.dom.convert(p)', 'hasattr(f.rep, 'trunc')', 'f.rep.trunc(p)', and 'f.per(result)', which could raise specific exceptions (e.g., AttributeError, TypeError, OperationNotSupported). Catching all exceptions with 'except Exception:' is too broad and violates the rule of narrowing except clauses to only the exceptions the try block can raise."
+  },
+  "sympy/sympy:sympy/plotting/pygletplot/managed_window.py:ManagedWindow.__init__:nemotron:swallowed_error|swallowed_error": {
+   "slop": true,
+   "reason": "The function uses a broad 'except Exception:' clause that catches all exceptions, and the 'pass' statement silently swallows any error that occurs during window initialization and thread startup. This prevents proper error handling and debugging."
+  },
+  "sympy/sympy:sympy/geometry/plane.py:Plane.p1:nemotron:swallowed_error|swallowed_error": {
+   "slop": true,
+   "reason": "The function uses a broad `except Exception:` clause to catch any exception when accessing `self.args[0]`. This is a swallowed error because it catches all exceptions, including those that might indicate a real problem (e.g., `self.args` being `None` or not indexable), and silently returns `None` instead of letting the error propagate. The `try` block wraps a simple index access that could raise `IndexError` or `TypeError`, but the broad catch hides these specific issues."
+  },
+  "django/django:django/templatetags/l10n.py:localize:nemotron:swallowed_error|swallowed_error": {
+   "slop": true,
+   "reason": "The function catches a broad 'Exception' in the except block, which violates the rule of narrowing except clauses to specific exceptions that the try block can raise. The try block calls 'formats.localize' and 'str', which could raise specific exceptions like 'TypeError' or 'ValueError', but the broad 'Exception' catch swallows all errors."
+  },
+  "django/django:django/utils/autoreload.py:WatchmanReloader.watched_roots:nemotron:swallowed_error|swallowed_error": {
+   "slop": true,
+   "reason": "The function catches a broad 'Exception' in the except block, which is a broad exception. The try block contains code that could raise various exceptions (e.g., AttributeError if watched_files elements lack 'parent', TypeError if directory_globs is not iterable, etc.), but the except clause catches all exceptions indiscriminately. According to the rule, the except should be narrowed to only the specific exceptions that the try block can raise, or the try block should be removed if the code cannot raise. Since the code can raise exceptions, the except should be narrowed."
+  },
+  "matplotlib/matplotlib:tools/gh_api.py:get_milestones:nemotron:swallowed_error|swallowed_error": {
+   "slop": true,
+   "reason": "The function catches a broad 'Exception' in the except block, which is a classic example of swallowed_error slop. The try block contains multiple operations (params.setdefault, string formatting, conditional header creation, and get_paged_request call) that could raise various specific exceptions (e.g., KeyError, AttributeError, requests exceptions), but the except clause catches all of them indiscriminately and returns an empty list, potentially masking real errors."
+  },
+  "pylint-dev/pylint:pylint/checkers/utils.py:safe_infer:nemotron:swallowed_error|swallowed_error": {
+   "slop": true,
+   "reason": "The function contains a broad 'except Exception:' clause that catches all exceptions, which violates the rule against catching broad exceptions. The try block around the for loop could raise various exceptions, but the except clause should be narrowed to only the specific exceptions that the code in the try block can raise (like astroid.InferenceError and StopIteration). The final 'except Exception:' is overly broad and should be removed or narrowed."
+  },
+  "django/django:django/forms/widgets.py:NullBooleanSelect.format_value:nemotron:lookup_table|lookup_table": {
+   "slop": true,
+   "reason": "The function uses a long if/elif chain to map various input values (True, False, 'true', 'false', '2', '3') to string outputs ('true', 'false', 'unknown'). This is a classic case for replacing the chain with a dictionary lookup for better readability and maintainability."
+  },
+  "sympy/sympy:sympy/ntheory/generate.py:prevprime:nemotron:lookup_table|lookup_table": {
+   "slop": true,
+   "reason": "The function contains a long if/elif chain mapping specific integer values (3, 4, 5, 6, 7) to their corresponding previous prime results (2, 3, 3, 5, 5). This chain can be replaced with a dictionary lookup for better readability and maintainability."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/axis.py:YAxis.get_ticks_position:nemotron:lookup_table|lookup_table": {
+   "slop": true,
+   "reason": "The function uses a long if/elif chain to map values (1, 2, 'default', 'unknown') to string results ('left', 'right', 'default', 'unknown'). This can be replaced with a dictionary lookup for cleaner and more maintainable code."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/axis.py:XAxis.get_ticks_position:nemotron:lookup_table|lookup_table": {
+   "slop": true,
+   "reason": "The function uses a long if/elif chain to map values (1, 2, 'default', 'unknown') to string results ('bottom', 'top', 'default', 'unknown'). This can be replaced with a dictionary lookup for cleaner and more maintainable code."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/font_manager.py:get_fontext_synonyms:nemotron:lookup_table|lookup_table": {
+   "slop": true,
+   "reason": "The function uses a long if/elif chain to map input values ('afm', 'otf', 'ttc', 'ttf') to specific output lists. This pattern can be replaced with a dictionary lookup for better readability and maintainability."
+  },
+  "pydata/xarray:xarray/coding/times.py:_netcdf_to_numpy_timeunit:nemotron:lookup_table|lookup_table": {
+   "slop": true,
+   "reason": "The function uses a long if/elif chain to map string values like 'microseconds', 'milliseconds', etc., to their corresponding abbreviations ('us', 'ms', etc.). This is a classic case of a lookup table that should be replaced with a dictionary for better readability and performance."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/axes/_base.py:_AxesBase.get_navigate:nemotron:dead|dead": {
+   "slop": true,
+   "reason": "The function contains an unused variable 'unused = 42' and unreachable code 'print(\"This line never executes\")' after the return statement."
+  },
+  "astropy/astropy:astropy/coordinates/angles.py:Angle.dms:nemotron:dead|dead": {
+   "slop": true,
+   "reason": "The variable 'unused = None' is assigned but never used anywhere in the function. This is an unused variable that should be removed according to the rule."
+  },
+  "astropy/astropy:astropy/io/misc/asdf/tags/coordinates/representation.py:RepresentationType.assert_equal:nemotron:dead|dead": {
+   "slop": true,
+   "reason": "The function contains an unused variable 'unused_var = 42' and an unreachable 'if False: pass' block, both of which are dead code according to the rule."
+  },
+  "sympy/sympy:sympy/strategies/rl.py:rebuild:nemotron:dead|dead": {
+   "slop": true,
+   "reason": "The variable 'unused' is assigned the value 42 on line 7 but is never used anywhere in the function. This is an unused variable, which qualifies as dead code slop."
+  },
+  "sympy/sympy:sympy/functions/special/elliptic_integrals.py:elliptic_pi.fdiff:nemotron:dead|dead": {
+   "slop": true,
+   "reason": "The variable 'unused_var' is assigned None but never used anywhere in the function. This is an unused variable that should be removed according to the rule."
+  },
+  "sympy/sympy:sympy/matrices/densetools.py:trace:nemotron:dead|dead": {
+   "slop": true,
+   "reason": "The function contains an unused variable 'unused_var = None' and an unreachable 'if False: pass' block, both of which are dead code."
+  },
+  "django/django:django/template/smartif.py:TokenBase.led:nemotron:dead|dead": {
+   "slop": true,
+   "reason": "The function contains an unused variable 'unused = 42' and unreachable code 'print(\"This line will never execute\")' after the raise statement."
+  },
+  "sympy/sympy:sympy/polys/ring_series.py:rs_cos_sin:nemotron:dead|dead": {
+   "slop": true,
+   "reason": "The function contains an unused variable 'unused_var = None' and unreachable code 'print(\"This line is unreachable\")' after the return statement."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/afm.py:AFM.get_kern_dist_from_name:nemotron:dead|dead": {
+   "slop": true,
+   "reason": "The variable 'unused' is assigned None but never used anywhere in the function. This is an unused variable that should be removed according to the rule."
+  },
+  "matplotlib/matplotlib:lib/matplotlib/blocking_input.py:BlockingKeyMouseInput.post_event:nemotron:dead|dead": {
+   "slop": true,
+   "reason": "The function contains an unused variable 'unused_var = 42' which is assigned but never used, and the function always returns None without any meaningful computation. The variable 'unused_var' is dead code that should be removed."
+  },
+  "pytest-dev/pytest:src/_pytest/tmpdir.py:pytest_configure:nemotron:nesting|redundant_check": {
+   "slop": true,
+   "reason": "The function contains multiple redundant checks: (1) `if config is not None:` is unnecessary because the type hint `config: Config` and pytest's plugin architecture guarantee a valid Config object is always passed. (2) `if mp is not None:` is redundant because `mp = MonkeyPatch()` always creates a valid instance. (3) The nested `hasattr` and `callable` checks for `add_cleanup` could be simplified since the attribute's existence and callability are typically guaranteed by the Config interface, but the primary redundant checks are the explicit `None` checks on guaranteed-non-None objects."
+  },
+  "astropy/astropy:astropy/coordinates/builtin_frames/galactic_transforms.py:fk5_to_gal:nemotron:nesting|nesting": {
+   "slop": true,
+   "reason": "The function contains a deeply nested if-else structure with four levels of indentation (pmat, mat1, mat2, mat3), each checking for None and calling matrix_product with different combinations of None arguments. This matches the 'nesting' slop pattern where guard clauses or a single boolean expression could flatten the logic."
+  },
+  "pytest-dev/pytest:src/_pytest/tmpdir.py:pytest_configure:nemotron:nesting|nesting": {
+   "slop": true,
+   "reason": "The function contains five levels of nested if statements (config is not None \u2192 hasattr \u2192 callable \u2192 _tmp_path_factory is not None \u2192 mp is not None), which creates deep nesting that could be flattened using guard clauses or combined boolean expressions."
+  },
+  "matplotlib/matplotlib:tutorials/intermediate/imshow_extent.py:index_to_coordinate:nemotron:lookup_table|lookup_table": {
+   "slop": true,
+   "reason": "The function uses a long if/elif chain to map string index values like \"[0, 0]\" and \"[M', N']\" to coordinate tuples. This chain can be replaced with a dictionary lookup for better readability and performance."
   }
+ }
 }

@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from bench import label
+from bench.check_injections import new_names
 from bench.detect import Item, accept, from_reply, function, measured, splice
 from bench.paths import meta_path
 from bench.score import agreement, compare, kappa, markdown, metadata, mismatch, outcomes, passes, score, split
@@ -558,3 +559,48 @@ def test_disagreements_lists_only_rows_where_the_labellers_differ():
 
     assert "c1" not in text
     assert "| t1:nemotron:dead | dead | injection | invalid: FIRST_REASON_TWO | valid: a \\| b |" in text
+
+
+MODULE = "import os\n\nLIMIT = 3\n\n\ndef f():\n    pass\n"
+SOURCE_FUNCTION = "def gate(pmat, k):\n    return pmat[k]\n"
+
+
+def test_new_names_reports_a_name_that_nothing_binds():
+    new = "def gate(pmat, k):\n    return pmats[k]\n"
+
+    assert new_names(SOURCE_FUNCTION, new, MODULE) == {"pmats"}
+
+
+def test_new_names_skips_module_names_builtins_and_the_names_of_the_source():
+    source = "def gate(pmat, k):\n    return outer(pmat)\n"
+    new = "def gate(pmat, k):\n    return outer(len(os.listdir(pmat)) + LIMIT + k)\n"
+
+    assert new_names(source, new, MODULE) == set()
+
+
+def test_new_names_skips_local_bindings():
+    new = (
+        "def gate(pmat, *rest, **options):\n"
+        "    import json as js\n"
+        "    try:\n"
+        "        total = [x for x in rest]\n"
+        "    except ValueError as error:\n"
+        "        raise error\n"
+        "    def inner(z):\n"
+        "        return z\n"
+        "    return js, total, options, inner\n"
+    )
+
+    assert new_names(SOURCE_FUNCTION, new, MODULE) == set()
+
+
+def test_new_names_reports_a_name_bound_only_inside_another_function():
+    new = "def gate(pmat, k):\n    return hidden\n"
+
+    assert new_names(SOURCE_FUNCTION, new, "def other():\n    hidden = 1\n") == {"hidden"}
+
+
+def test_new_names_is_empty_when_the_module_has_a_star_import():
+    new = "def gate(pmat, k):\n    return pmats[k]\n"
+
+    assert new_names(SOURCE_FUNCTION, new, "from os import *\n") == set()

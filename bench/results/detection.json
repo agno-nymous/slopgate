@@ -4,19 +4,19 @@
  "groups": {
   "all": {
    "nesting": {
-    "items": 59,
-    "tp": 102,
+    "items": 56,
+    "tp": 93,
     "fp": 75,
     "fn": 0,
-    "precision": 0.576,
+    "precision": 0.554,
     "recall": 1.0
    },
    "redundant_check": {
-    "items": 43,
+    "items": 42,
     "tp": 30,
-    "fp": 35,
+    "fp": 33,
     "fn": 36,
-    "precision": 0.462,
+    "precision": 0.476,
     "recall": 0.455
    },
    "swallowed_error": {
@@ -28,8 +28,8 @@
     "recall": 1.0
    },
    "lookup_table": {
-    "items": 23,
-    "tp": 69,
+    "items": 22,
+    "tp": 66,
     "fp": 0,
     "fn": 0,
     "precision": 1.0,
@@ -44,12 +44,12 @@
     "recall": 1.0
    },
    "total": {
-    "items": 160,
-    "tp": 372,
-    "fp": 113,
+    "items": 156,
+    "tp": 360,
+    "fp": 111,
     "fn": 36,
-    "precision": 0.767,
-    "recall": 0.912
+    "precision": 0.764,
+    "recall": 0.909
    }
   },
   "transform": {
@@ -104,19 +104,19 @@
   },
   "nemotron": {
    "nesting": {
-    "items": 10,
-    "tp": 30,
+    "items": 7,
+    "tp": 21,
     "fp": 0,
     "fn": 0,
     "precision": 1.0,
     "recall": 1.0
    },
    "redundant_check": {
-    "items": 6,
+    "items": 5,
     "tp": 1,
-    "fp": 3,
+    "fp": 1,
     "fn": 11,
-    "precision": 0.25,
+    "precision": 0.5,
     "recall": 0.083
    },
    "swallowed_error": {
@@ -128,8 +128,8 @@
     "recall": 1.0
    },
    "lookup_table": {
-    "items": 7,
-    "tp": 21,
+    "items": 6,
+    "tp": 18,
     "fp": 0,
     "fn": 0,
     "precision": 1.0,
@@ -144,12 +144,12 @@
     "recall": 1.0
    },
    "total": {
-    "items": 40,
-    "tp": 112,
-    "fp": 3,
+    "items": 36,
+    "tp": 100,
+    "fp": 1,
     "fn": 11,
-    "precision": 0.974,
-    "recall": 0.911
+    "precision": 0.99,
+    "recall": 0.901
    }
   },
   "two_kinds": {
@@ -204,6 +204,7 @@
   }
  },
  "invalid_injections": {
+  "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaration.__init__:nemotron:nesting": "Every branch assigns `self.symbol: Symbol = None`, so the nested ifs are a duplicated branch that a reviewer deletes, not nesting that a reviewer flattens. The injection also calls `isinstance(self.declaration, DeclarationType)`, and `DeclarationType` is a Union of string forward references, so `isinstance` raises TypeError and every construction of the object fails. Ticket 66 changed this item from valid to invalid.",
   "matplotlib/matplotlib:lib/matplotlib/projections/polar.py:PolarAxes._init_axis:nemotron:redundant_check": "Super added `if hasattr(self, 'xaxis') and self.xaxis is not None: pass`. No earlier check guarantees it.",
   "pallets/flask:src/flask/sessions.py:SessionInterface.make_null_session:nemotron:redundant_check": "Super added `if hasattr(self, 'null_session_class'): pass`. No earlier check guarantees it.",
   "astropy/astropy:astropy/coordinates/representation.py:PhysicsSphericalRepresentation.phi:nemotron:redundant_check": "Super added `if hasattr(self, '_phi'): pass`. No earlier check guarantees it.",
@@ -361,11 +362,6 @@
    "id": "pytest-dev/pytest:src/_pytest/fixtures.py:FixtureRequest._getnextfixturedef",
    "kind": "redundant_check",
    "runs": 1
-  },
-  {
-   "id": "pytest-dev/pytest:src/_pytest/tmpdir.py:pytest_configure:nemotron:nesting",
-   "kind": "redundant_check",
-   "runs": 2
   },
   {
    "id": "pytest-dev/pytest:src/_pytest/unittest.py:UnitTestCase.collect",
@@ -544,23 +540,23 @@
   "any_kind_rate": 0.153
  },
  "seconds": {
-  "mean": 2.073,
-  "median": 1.491,
-  "p95": 5.513,
+  "mean": 2.063,
+  "median": 1.471,
+  "p95": 5.573,
   "max": 109.93
  },
  "errors": [],
  "stability": {
-  "all": 0.943,
+  "all": 0.945,
   "clean": 0.98,
   "source": 0.946,
   "transform": 0.847,
-  "nemotron": 0.925
+  "nemotron": 0.944
  },
  "passes": {
   "nesting": {
    "found": {
-    "items": 34,
+    "items": 31,
     "unit": "items",
     "any": 1.0,
     "all": 1.0
@@ -602,7 +598,7 @@
   },
   "lookup_table": {
    "found": {
-    "items": 23,
+    "items": 22,
     "unit": "items",
     "any": 1.0,
     "all": 1.0
@@ -630,10 +626,10 @@
   },
   "total": {
    "found": {
-    "items": 136,
+    "items": 132,
     "unit": "item-kinds",
-    "any": 0.941,
-    "all": 0.882
+    "any": 0.939,
+    "all": 0.879
    },
    "clean_false": {
     "items": 200,
@@ -648,7 +644,7 @@
    "clean": 200,
    "source": 129,
    "transform": 72,
-   "nemotron": 40
+   "nemotron": 39
   },
   "repo": {
    "django/django": 64,
@@ -657,7 +653,7 @@
    "pallets/flask": 26,
    "astropy/astropy": 56,
    "scikit-learn/scikit-learn": 37,
-   "sphinx-doc/sphinx": 50,
+   "sphinx-doc/sphinx": 49,
    "pytest-dev/pytest": 29,
    "pylint-dev/pylint": 19,
    "matplotlib/matplotlib": 46,
@@ -676,24 +672,24 @@
   {
    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
    "use": "second labeller (rule)",
-   "input_tokens": 82714,
-   "output_tokens": 9798,
-   "usd": 0.1121
+   "input_tokens": 85810,
+   "output_tokens": 10150,
+   "usd": 0.1163
   },
   {
    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
    "use": "second labeller (definition)",
-   "input_tokens": 95020,
-   "output_tokens": 12486,
-   "usd": 0.1325
+   "input_tokens": 98581,
+   "output_tokens": 12952,
+   "usd": 0.1374
   }
  ],
  "agreement": {
   "rule": {
    "nesting": {
     "rows": 43,
-    "agree": 0.651,
-    "kappa": 0.34
+    "agree": 0.628,
+    "kappa": 0.306
    },
    "redundant_check": {
     "rows": 34,
@@ -717,20 +713,20 @@
    },
    "total": {
     "rows": 109,
-    "agree": 0.679,
-    "kappa": 0.348
+    "agree": 0.67,
+    "kappa": 0.336
    }
   },
   "definition": {
    "nesting": {
     "rows": 43,
-    "agree": 0.767,
-    "kappa": 0.53
+    "agree": 0.744,
+    "kappa": 0.481
    },
    "redundant_check": {
     "rows": 34,
-    "agree": 0.647,
-    "kappa": 0.294
+    "agree": 0.618,
+    "kappa": 0.261
    },
    "swallowed_error": {
     "rows": 13,
@@ -749,17 +745,17 @@
    },
    "total": {
     "rows": 109,
-    "agree": 0.78,
-    "kappa": 0.557
+    "agree": 0.761,
+    "kappa": 0.522
    }
   }
  },
  "metadata": {
   "report": {
    "models": {},
-   "commit": "58d9b5d1f3582dcb11062a1f186083366279d251",
+   "commit": "b57be22c8301d3fd701aea25e46c9119607fe293",
    "dirty": true,
-   "date": "2026-10-17",
+   "date": "2026-10-25",
    "seeds": {
     "split": 39,
     "bootstrap": 39
@@ -770,9 +766,9 @@
     "clean": 200,
     "source": 129,
     "transform": 72,
-    "nemotron": 40
+    "nemotron": 39
    },
-   "usd": 0.2925
+   "usd": 0.3016
   },
   "groundtruth": {
    "models": {
@@ -788,7 +784,10 @@
     "INJECT_PROMPT": "eb6823b10cc5",
     "INJECT": "0a674837b4f3"
    },
-   "source": "backfilled on 2026-10-17 from commit be0d670fedfc4e945490ce9d731b394cc33ae2e6, the last commit that wrote groundtruth.json; the hashes are of INJECT_PROMPT and of INJECT as json with sorted keys in bench/detect.py at that commit (read with git show, parsed with ast.literal_eval); the sample seed is the literal 37 in random.Random(37) in that file"
+   "source": "backfilled on 2026-10-17 from commit be0d670fedfc4e945490ce9d731b394cc33ae2e6, the last commit that wrote groundtruth.json; the hashes are of INJECT_PROMPT and of INJECT as json with sorted keys in bench/detect.py at that commit (read with git show, parsed with ast.literal_eval); the sample seed is the literal 37 in random.Random(37) in that file",
+   "edits": [
+    "2026-10-25, ticket 66: edited the source of 3 Nemotron items by hand (fk5_to_gal: pmats to pmat; index_to_coordinate: trailing raise KeyError(index); pytest_configure: the guard hasattr(config, '_tmp_path_factory') to mp is not None). Each edited item passes accept()."
+   ]
   },
   "runs": {
    "models": {

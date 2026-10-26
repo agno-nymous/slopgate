@@ -6531,14 +6531,14 @@
    "qualname": "fk5_to_gal",
    "start": 18,
    "end": 26,
-   "source": "@frame_transform_graph.transform(DynamicMatrixTransform, FK5, Galactic)\ndef fk5_to_gal(fk5coord, galframe):\n    # need precess to J2000 first\n    pmat = fk5coord._precession_matrix(fk5coord.equinox, EQUINOX_J2000)\n    mat1 = rotation_matrix(180 - Galactic._lon0_J2000.degree, 'z')\n    mat2 = rotation_matrix(90 - Galactic._ngp_J2000.dec.degree, 'y')\n    mat3 = rotation_matrix(Galactic._ngp_J2000.ra.degree, 'z')\n\n    if pmats is not None:\n        if mat1 is not None:\n            if mat2 is not None:\n                if mat3 is not None:\n                    return matrix_product(mat1, mat2, mat3, pmat)\n                else:\n                    return matrix_product(mat1, mat2, None, pmat)\n            else:\n                return matrix_product(mat1, None, mat3, pmat)\n        else:\n            return matrix_product(None, mat2, mat3, pmat)\n    else:\n        return matrix_product(mat1, mat2, mat3, None)\n",
+   "source": "@frame_transform_graph.transform(DynamicMatrixTransform, FK5, Galactic)\ndef fk5_to_gal(fk5coord, galframe):\n    # need precess to J2000 first\n    pmat = fk5coord._precession_matrix(fk5coord.equinox, EQUINOX_J2000)\n    mat1 = rotation_matrix(180 - Galactic._lon0_J2000.degree, 'z')\n    mat2 = rotation_matrix(90 - Galactic._ngp_J2000.dec.degree, 'y')\n    mat3 = rotation_matrix(Galactic._ngp_J2000.ra.degree, 'z')\n\n    if pmat is not None:\n        if mat1 is not None:\n            if mat2 is not None:\n                if mat3 is not None:\n                    return matrix_product(mat1, mat2, mat3, pmat)\n                else:\n                    return matrix_product(mat1, mat2, None, pmat)\n            else:\n                return matrix_product(mat1, None, mat3, pmat)\n        else:\n            return matrix_product(None, mat2, mat3, pmat)\n    else:\n        return matrix_product(mat1, mat2, mat3, None)\n",
    "origin": "nemotron",
    "source_id": "astropy/astropy:astropy/coordinates/builtin_frames/galactic_transforms.py:fk5_to_gal",
    "injected": [
     "nesting"
    ],
    "changed_lines": [
-    "if pmats is not None:",
+    "if pmat is not None:",
     "if mat1 is not None:",
     "if mat2 is not None:",
     "if mat3 is not None:",
@@ -6650,7 +6650,7 @@
    "qualname": "pytest_configure",
    "start": 210,
    "end": 220,
-   "source": "def pytest_configure(config: Config) -> None:\n    \"\"\"Create a TempPathFactory and attach it to the config object.\n\n    This is to comply with existing plugins which expect the handler to be\n    available at pytest_configure time, but ideally should be moved entirely\n    to the tmp_path_factory session fixture.\n    \"\"\"\n    mp = MonkeyPatch()\n    if config is not None:\n        if hasattr(config, 'add_cleanup'):\n            if callable(getattr(config, 'add_cleanup')):\n                config.add_cleanup(mp.undo)\n                _tmp_path_factory = TempPathFactory.from_config(config, _ispytest=True)\n                if _tmp_path_factory is not None:\n                    if hasattr(config, '_tmp_path_factory'):\n                        mp.setattr(config, \"_tmp_path_factory\", _tmp_path_factory, raising=False)\n",
+   "source": "def pytest_configure(config: Config) -> None:\n    \"\"\"Create a TempPathFactory and attach it to the config object.\n\n    This is to comply with existing plugins which expect the handler to be\n    available at pytest_configure time, but ideally should be moved entirely\n    to the tmp_path_factory session fixture.\n    \"\"\"\n    mp = MonkeyPatch()\n    if config is not None:\n        if hasattr(config, 'add_cleanup'):\n            if callable(getattr(config, 'add_cleanup')):\n                config.add_cleanup(mp.undo)\n                _tmp_path_factory = TempPathFactory.from_config(config, _ispytest=True)\n                if _tmp_path_factory is not None:\n                    if mp is not None:\n                        mp.setattr(config, \"_tmp_path_factory\", _tmp_path_factory, raising=False)\n",
    "origin": "nemotron",
    "source_id": "pytest-dev/pytest:src/_pytest/tmpdir.py:pytest_configure",
    "injected": [
@@ -6661,7 +6661,7 @@
     "if hasattr(config, 'add_cleanup'):",
     "if callable(getattr(config, 'add_cleanup')):",
     "if _tmp_path_factory is not None:",
-    "if hasattr(config, '_tmp_path_factory'):"
+    "if mp is not None:"
    ]
   },
   {
@@ -7164,7 +7164,7 @@
    "qualname": "index_to_coordinate",
    "start": 30,
    "end": 47,
-   "source": "def index_to_coordinate(index, extent, origin):\n    \"\"\"Return the pixel center of an index.\"\"\"\n    left, right, bottom, top = extent\n\n    hshift = 0.5 * np.sign(right - left)\n    left, right = left + hshift, right - hshift\n    vshift = 0.5 * np.sign(top - bottom)\n    bottom, top = bottom + vshift, top - vshift\n\n    if origin == 'upper':\n        bottom, top = top, bottom\n\n    if index == \"[0, 0]\":\n        return (left, bottom)\n    elif index == \"[M', 0]\":\n        return (left, top)\n    elif index == \"[0, N']\":\n        return (right, bottom)\n    elif index == \"[M', N']\":\n        return (right, top)\n",
+   "source": "def index_to_coordinate(index, extent, origin):\n    \"\"\"Return the pixel center of an index.\"\"\"\n    left, right, bottom, top = extent\n\n    hshift = 0.5 * np.sign(right - left)\n    left, right = left + hshift, right - hshift\n    vshift = 0.5 * np.sign(top - bottom)\n    bottom, top = bottom + vshift, top - vshift\n\n    if origin == 'upper':\n        bottom, top = top, bottom\n\n    if index == \"[0, 0]\":\n        return (left, bottom)\n    elif index == \"[M', 0]\":\n        return (left, top)\n    elif index == \"[0, N']\":\n        return (right, bottom)\n    elif index == \"[M', N']\":\n        return (right, top)\n    raise KeyError(index)\n",
    "origin": "nemotron",
    "source_id": "matplotlib/matplotlib:tutorials/intermediate/imshow_extent.py:index_to_coordinate",
    "injected": [
@@ -7178,7 +7178,8 @@
     "elif index == \"[0, N']\":",
     "return (right, bottom)",
     "elif index == \"[M', N']\":",
-    "return (right, top)"
+    "return (right, top)",
+    "raise KeyError(index)"
    ]
   },
   {
