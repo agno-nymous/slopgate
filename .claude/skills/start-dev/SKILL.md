@@ -18,11 +18,7 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
 3. Read `issues/ROADMAP.md`. Find the ticket to work. Do not take tickets by number order.
 4. Read the whole ticket file. Each ticket has its context, design, prompt texts, and acceptance boxes.
 5. Check the `Blocked by:` line. Every listed ticket must have `Status: done`. If one does not, tell the user, and propose the next open ticket in the ROADMAP.md table whose blockers are all done. Then stop and wait for the user.
-6. Make sure that the self-hosted CI runner runs on this Mac. The `slopgate` check of every pull request runs on it (ticket 27).
-   - Run `make runner-status`. It must show `Started:` with a process number.
-   - Run `gh api repos/agno-nymous/slopgate/actions/runners -q '.runners[] | .name + " " + .status'`. The runner must be `online`.
-   - If the runner is stopped or offline, run `make runner-start` and check again. If it is still offline, tell the user. Show the user the output of `make runner-logs`, and continue the ticket. The `slopgate` check waits in the queue until the runner is online.
-7. Start Phoenix for every ticket. The gate and the live tests send their traces to it.
+6. Start Phoenix for every ticket. The gate and the live tests send their traces to it.
    - Run `curl -s -m 3 -o /dev/null -w "%{http_code}" http://127.0.0.1:6006/`. The answer `200` means that Phoenix runs.
    - If it does not run, start it with a background Bash call: `PHOENIX_HOST=127.0.0.1 uvx arize-phoenix serve`. Poll the `curl` command until it answers `200`.
    - The main checkout `.env` has no `PHOENIX_COLLECTOR_ENDPOINT` line, so a live command does not trace by default. Put `PHOENIX_COLLECTOR_ENDPOINT=http://127.0.0.1:6006` before each live command in steps 3 to 6 (`PHOENIX_COLLECTOR_ENDPOINT=http://127.0.0.1:6006 uv run --env-file <main checkout>/.env ...`). Never set it in a shell profile.
@@ -89,7 +85,7 @@ Argument: `$ARGUMENTS`. If it holds a ticket number, work that ticket. If it is 
 2. Start each commit message with the ticket number, then the conventional commit format: `ticket-<NN>: type(scope): message`, for example `ticket-18: feat(llm): add decide for pydantic tool-call decisions`. Keep each commit to one logical change.
 3. Before the push, run the gate on the ticket's own commits: `uv run --env-file <main checkout>/.env slopgate review --repo . --base origin/main --head HEAD --dry-run`. A dry run on an older range reads the old `.slopgate.toml` and code, so it misses breakage that the PR causes. Read every rejection. An import error or "no tests ran" points to the PR or to a gate defect, not to the generated tests. Fix it before the push.
 4. Open a PR to `main` with `gh pr create`. The PR text says what changed, why, and the measured results.
-5. Read the `slopgate` check and the review that it posts. The check runs on the self-hosted runner on the user's Mac (ticket 27). If it stays queued because the runner is offline, run the gate by hand: `uv run --env-file <main checkout>/.env slopgate review --pr <number>`. If the step shows `cancelled` after about 10 min, the Mac probably slept: the runner log in `~/actions-runner/_diag/` shows `renewjob failed`, and `pmset -g log` shows `Idle Sleep`. That is not a code failure. Keep the Mac awake and on power, and run the job again.
+5. Read the `slopgate` check and the review that it posts. The check runs on `ubuntu-latest`. While the Slopgate workflow is disabled, run the gate by hand: `uv run --env-file <main checkout>/.env slopgate review --pr <number>`.
 6. Bind the PR with the app's PR tools, and read its checks there. Do not use auto-merge: the repo has no branch protection, so auto-merge would merge before the checks finish.
 7. When all checks pass, report the result to the user. Merge only when the user says to merge. Then call `ExitWorktree` with `action: "remove"`.
 8. In the final report, give a worked example and a plain explanation of what changed.
