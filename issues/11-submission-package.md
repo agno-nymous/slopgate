@@ -25,7 +25,7 @@ The README describes how the project uses Nemotron, Token Factory, Sandboxes, an
 - [ ] The README links the benchmark results (ticket 10). If ticket 09 is done, the README also links the classifier comparison.
 - [ ] The feedback section lists the concrete problems and suggestions from the build. It includes the SDK gaps that ticket 02 found.
 - [ ] The video script covers: the problem, a live gate review on the demo repo, the live flag that catches a duplicate, the benchmark numbers, and the use of Token Factory and Nemotron. The video fits in 3 minutes.
-- [ ] The Devpost text names the Coding and Agentic Engineering track. It links the public repo and the demo repo.
+- [ ] The Devpost text names the Coding and Agentic Engineering track. It links the public repo, the demo repo, and the showcase page of ticket 64.
 
 ## Comments
 
