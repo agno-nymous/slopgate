@@ -1,0 +1,22 @@
+{
+ "models": {
+  "tests and rewrites": "nvidia/nemotron-3-super-120b-a12b",
+  "retry and summary": "nvidia/Nemotron-3-Ultra-550b-a55b"
+ },
+ "commit": "1890fa62d2e366e151c89c9d7a660b21e5fbf5fc",
+ "dirty": true,
+ "date": "2026-10-21",
+ "seeds": {},
+ "prompts": {
+  "AGENT_RULES": "e080e3cbd1fb",
+  "AGENT_TASK": "d9ea2a7f8dc2",
+  "HINT_TASK": "17adffe7605d",
+  "REWRITE_PROMPT": "b45bcf6a7d69",
+  "RETRY_PROMPT": "7938a17985ab",
+  "SAME_JOB_PROMPT": "f7ca3b09a446"
+ },
+ "counts": {
+  "instances": 15
+ },
+ "usd": 0.8775
+}
