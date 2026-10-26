@@ -181,6 +181,6 @@ Run it with one command:
 uv run --env-file .env python -m bench.swebench
 ```
 
-The command skips each stage that is already done. To run one stage only, add `select`, `run`, or `report`. `select` writes the ground truth (kind, function, file) before the gate runs.
+The command skips each stage that is already done. To run one stage only, add `select`, `run`, `report`, or `install`. `select` writes the ground truth (kind, function, file) before the gate runs. It also saves the injected commit of each instance as a git bundle in [`bench/results/swebench/heads/`](bench/results/swebench/heads/). On a machine with no local clones, `run` clones each repo from GitHub and gets the injected commit from its bundle. The hidden tests use ConTree checkpoints of the Nebius project that ran `select`. So a rerun from a fresh clone works only with a key of that project. `run` skips each instance that `runs.json` already holds, so delete that file first: `rm bench/results/swebench/runs.json && uv run --env-file .env python -m bench.swebench run`.
 
 The results are in [`bench/results/swebench/swebench.md`](bench/results/swebench/swebench.md) and [`bench/results/swebench/swebench.json`](bench/results/swebench/swebench.json). They give the detection recall, the complexity change, the acceptance rate, the silent-break rate, and the token cost, for each slop kind and in total. [`bench/results/swebench/image-sandbox/`](bench/results/swebench/image-sandbox/swebench.md) holds an earlier run in which the gate also used the SWE-bench image. Ticket 10 explains them.

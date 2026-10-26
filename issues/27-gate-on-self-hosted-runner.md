@@ -9,7 +9,7 @@
 
 **Blocked by:** 26 (done)
 
-**Status:** needs-live-check
+**Status:** wontfix
 
 ## Context
 
@@ -50,3 +50,7 @@ A self-hosted runner gives both: the workflow starts when a pull request opens, 
 - [x] `CLAUDE.md` says to switch back to `ubuntu-latest` before the repo is public.
 
 ## Comments
+
+### 2026-10-25 — wontfix
+
+The `slopgate` repo became public on 2026-10-25. A pull request from a fork can add a workflow that runs on a self-hosted runner. So the user removed the Mac runner, and the Slopgate workflow runs on `ubuntu-latest` now. Step 8 of the public flip in `ROADMAP.md` replaces the live check of this ticket.

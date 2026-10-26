@@ -12,15 +12,15 @@ Slopgate finds slop in Python code that coding agents write. It has two parts:
 - Run `/start-dev` (`.claude/skills/start-dev/SKILL.md`) to work the next ticket end to end. Add a ticket number to work a specific one.
 - The tickets are in `issues/`, one file each. **`issues/ROADMAP.md` gives the next ticket and the order.** `docs/agents/issue-tracker.md` gives the ticket format and the status values.
 - Do one ticket on one branch, and finish it with a pull request to `main`.
-- The Slopgate workflow runs on a self-hosted runner on the user's Mac (ticket 27). It starts when a pull request opens. If the runner is offline, the job waits in the queue. Then run `uv run --env-file .env slopgate review --pr <number>` by hand.
+- The Slopgate workflow runs on `ubuntu-latest` with the repo's own `action.yml` (`uses: ./`). It starts when a pull request opens. `action.yml` runs the review with `continue-on-error: true`, so a failed gate run does not make the check red. Read the job log. The user removed the self-hosted runner on the Mac (ticket 27) on 2026-10-25, when the repo became public. To review a pull request on this machine, run `uv run --env-file .env slopgate review --pr <number>`.
 - **The Slopgate workflow is disabled since 2026-10-08** (`gh workflow disable Slopgate`). The user turned it off until the design of ticket 36 is done, because the gate posted wrong slop kinds on PR #20. Pull requests get no `slopgate` check now: verify a gate change with a local dry run on the PR head. Turn it on again only when the user says so: `gh workflow enable Slopgate`.
 - Ask the user before every commit and every push.
 - Start each commit message with the ticket number: `ticket-<NN>: type(scope): message`, for example `ticket-18: feat(llm): add decide`.
 - When a ticket's code is done, run a code review with the `pstack:thermo-nuclear-code-quality-review` skill before the commit (`/start-dev` step 4).
 - Write tickets, ticket comments, pull request text, and replies in ASD-STE100 Simplified Technical English: one idea per sentence, short sentences, active voice, one term for one concept.
 - When a ticket is done, add a `## Comments` entry with a worked example and the measured results.
-- The CI has no branch protection (the repo is private on a free plan). Do not use auto-merge: it merges before the checks finish. Wait for the checks to pass, then merge.
-- The `slopgate` and `slopgate-demo` repos stay private until the submission. Make both public before 2026-10-30, 10:00 PT. Before `slopgate` is public, set `runs-on: ubuntu-latest` in `.github/workflows/slopgate.yml` and remove the self-hosted runner: on a public repo, a pull request from a fork could run its code on the Mac. Also remove the `PHOENIX_COLLECTOR_ENDPOINT` env line from the workflow with the self-hosted runner.
+- The CI has no branch protection. Do not use auto-merge: it merges before the checks finish. Wait for the checks to pass, then merge.
+- The `slopgate` repo is public since 2026-10-25. Never add a self-hosted runner to it again: a pull request from a fork can add a workflow that runs its code on that machine. The `slopgate-demo` repo stays private until the submission. Make it public before 2026-10-30, 10:00 PT.
 
 ## Commands
 

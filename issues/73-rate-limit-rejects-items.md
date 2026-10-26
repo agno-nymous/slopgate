@@ -9,7 +9,7 @@
 
 **Blocked by:** —
 
-**Status:** needs-live-check
+**Status:** done
 
 **Type:** bug.
 
@@ -26,7 +26,7 @@ The benchmark runs 8 instances at the same time. Each instance runs the test age
 ## Acceptance
 
 - [x] A fake client that raises 429 twice gives a normal reply.
-- [ ] A benchmark rerun has no `RateLimitError` rejection.
+- [x] A benchmark rerun has no `RateLimitError` rejection.
 - [x] `uv run pytest -q` passes.
 
 ## Comments
@@ -53,3 +53,14 @@ The benchmark runs 8 instances at the same time. Each instance runs the test age
 - The waits have no jitter. 8 workers that hit the quota together retry at the same times.
 - A request that is larger than the quota by itself (ticket 67 stage 0: 200,000 tokens) never passes. Each such request now waits 65 s or more before it fails.
 - The give-up call has no span.
+
+### 2026-10-25 — benchmark rerun (ticket 10)
+
+**Measured.** The rerun of ticket 10 ran 15 instances with 8 workers.
+
+| run | items | `RateLimitError` rejections | "time limit" rejections |
+|---|---|---|---|
+| 2026-10-21 (before) | 45 | 5 | 6 |
+| 2026-10-25 (after) | 45 | 0 | 1 |
+
+**Limit.** The traces of the rerun have no `llm.rate_limit` span. So Token Factory sent no 429 in this run, and the retry did not run. The box passes, but the run does not prove the retry against a real 429. The offline test proves the retry logic.

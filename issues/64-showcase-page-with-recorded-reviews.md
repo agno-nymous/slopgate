@@ -54,3 +54,7 @@ The coding track has several entries with a web UI. One example is ARCHON, with 
 ### 2026-10-25
 
 **Design change.** The user decided that the hosted demo must not use the user's API keys, that it shows recorded reports of example repository pull requests, and that a judge brings their own keys to try Slopgate. I rewrote the ticket from "hosted service on a Serverless Endpoint" to "static page with recorded reviews and a local command". The old design needed a container, 2 routes, a cache by head SHA, a size limit, and a cost limit. The new design needs none of them.
+
+### 2026-10-25 — headline wording
+
+Use the headline sentences of ticket 11 (Comments, 2026-10-25) on the page. They give the share of flagged items, the share of proven fixes, and the 0 silent breaks.

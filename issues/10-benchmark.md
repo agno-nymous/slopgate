@@ -9,7 +9,7 @@
 
 **Blocked by:** 02, 03, 04 (done), 37 (stage 1: detection only), 41 (replaces 30 and 35)
 
-**Status:** needs-live-check
+**Status:** done
 
 ## Details
 
@@ -25,10 +25,10 @@ Steps of the benchmark:
    - **silent-break rate:** the share of accepted rewrites that fail the SWE-bench hidden tests. The gate never sees these tests.
 
 - [x] The injection step writes the ground truth for each instance (kind, function, file) before the gate runs.
-- [ ] The run uses the preloaded sandbox image of each instance. It does not use a fresh install. (Changed by the user on 2026-10-18: the hidden tests use the image, and the gate uses its own install. See Comments.)
+- [x] The hidden tests run in the SWE-bench image of each instance. `select` imports the image once. The gate uses its own install. (The user changed this box on 2026-10-18. See Comments.)
 - [x] The report gives all four numbers for the whole run and for each slop kind.
 - [x] The run computes the silent-break rate. It runs the hidden tests on every accepted rewrite.
-- [ ] The run starts as a Nebius Serverless Job. The README contains the job command.
+- [ ] ~~The run starts as a Nebius Serverless Job. The README contains the job command.~~ Wontfix (the user decided on 2026-10-25, see Comments).
 - [x] The report gives the total token spend of the run. A run of 10 instances costs less than $5.
 - [x] The results are saved in a file. The README can link to this file.
 
@@ -111,3 +111,49 @@ Instances: pytest (5), sphinx (3), pylint (2), requests, flask (2), xarray, seab
 - The hidden check runs on each accepted rewrite alone, not on all rewrites together.
 - Results change from run to run. An earlier run with the image, before the parser fix, gave different counts for `swallowed_error`, `dead`, and `duplicate`.
 - The cost counts Token Factory tokens only, not ConTree compute.
+
+### 2026-10-25 — final rerun, portable run stage, and the decisions of the user
+
+**Decisions of the user (2026-10-25).**
+
+- The benchmark keeps 15 instances. The finish condition says 30 to 50. A larger set needs a new `select` (new injections) and takes about one day.
+- The Serverless Job box is wontfix. The hackathon rules do not require it. The rules accept a runtime call to the Token Factory inference API as "runs on Nebius". The gate calls Token Factory on each review. A Serverless Job needs a Nebius AI Cloud tenant. The user has only Token Factory. A new account, its billing, and its secrets take about half a day. The deadline is in 5 days.
+
+**Image box.** The Token Factory Sandboxes docs give no list of ready SWE-bench images. `select` imports the SWE-bench image of each instance (`docker.io/swebench/sweb.eval.x86_64.<id>`) once with `images.oci`, and it stores the checkpoint UUID as `hidden_uuid`. The hidden tests of every run use this checkpoint. All 15 stored UUIDs resolve with `images.use` on 2026-10-25.
+
+**What was built.**
+
+- `run` now works on a machine that has no local clones. `select` writes the injected commit of each instance to `bench/results/swebench/heads/<id>.bundle`. The 15 bundles have 18 KB in total. Before the workers start, `run` calls `restore` for each instance. If the clone does not have the injected commit, `restore` clones the repo at the base commit and fetches the bundle. `job` takes the clone path from `CLONES`. `groundtruth.json` has no `clone` field (a path on the Mac) now.
+- `runs-2026-10-21.json` and `runs-2026-10-21.meta.json` keep the old runs. This file mixes two runs. The run of 2026-10-21 gave all entries except one. The ticket 72 rerun of 2026-10-25 replaced the entry of `psf__requests-3362`. The old report on `main` (42 items, 3 infrastructure errors) comes from the run of 2026-10-21 alone.
+
+**Worked example.** `pytest-dev__pytest-7220`, `pytest_terminal_summary` in `src/_pytest/runner.py`, kind `swallowed_error`. The gate found the kind and wrote 10 characterization tests. The rewrite passed them in the sandbox: "nesting 4 -> 3, complexity 11 -> 11". The hidden tests passed on the rewrite. This is the first accepted `swallowed_error` item in any run. In the run of 2026-10-18, all 5 pytest instances failed the install (ticket 58).
+
+**Measured (rerun of 2026-10-25, 15 instances, 8 workers).**
+
+| kind | items | detected | accepted |
+|---|---|---|---|
+| nesting | 8 | 6 | 3 |
+| redundant_check | 9 | 9 | 0 |
+| swallowed_error | 8 | 8 | 1 |
+| lookup_table | 1 | 1 | 1 |
+| dead | 6 | 6 | 5 |
+| wrapper | 7 | 7 | 1 |
+| duplicate | 6 | 4 | 3 |
+| total | 45 | 41 | 14 |
+
+- Recall 0.911. Acceptance 14 of 41 detected (0.341). Silent breaks 0 of 14.
+- The run has 0 infrastructure errors. The old report had 3, all on `psf__requests-3362`.
+- The run has 0 `RateLimitError` rejections (ticket 73).
+- Cost $1.16 for 15 instances. Mean time 251 s for each instance.
+- The step limit of the test agent causes 10 of the 27 rejections. In 5, the tests miss branches. In 5, the tests fail on the original code.
+- Portability check: `restore` rebuilt `pallets__flask-4992` and `pylint-dev__pylint-7993` in an empty cache folder. `git rev-parse HEAD` equals the head in `groundtruth.json`, and `git show <head>:<path>` reads the injected file.
+
+**Traces** (project `slopgate-bench`). 2,373 spans. No span has the status ERROR. No model call of the 627 returned `finish_reason: length`. 15 `sandbox.prepare` spans.
+
+**Known limits.**
+
+- 15 instances, not 30 to 50 (decision above).
+- `redundant_check` is 0 of 9, and `wrapper` is 1 of 7. Tickets 43 and 45 address these kinds.
+- `restore` clones the repos one after another before the workers start. On a fresh machine, this adds the clone time of 7 repos.
+- The portability check ran `restore` only. Nobody measured a full `run` on a fresh machine.
+- The hidden tests use ConTree checkpoints of the Nebius project that ran `select`. A key of another project probably cannot use them (not measured).
