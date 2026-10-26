@@ -4,12 +4,12 @@
  "groups": {
   "all": {
    "nesting": {
-    "items": 15,
+    "items": 14,
     "tp": 36,
     "fp": 3,
-    "fn": 6,
+    "fn": 3,
     "precision": 0.923,
-    "recall": 0.857
+    "recall": 0.923
    },
    "redundant_check": {
     "items": 8,
@@ -44,12 +44,12 @@
     "recall": 1.0
    },
    "total": {
-    "items": 48,
+    "items": 47,
     "tp": 138,
     "fp": 3,
-    "fn": 15,
+    "fn": 12,
     "precision": 0.979,
-    "recall": 0.902
+    "recall": 0.92
    }
   },
   "transform": {
@@ -104,12 +104,12 @@
   },
   "nemotron": {
    "nesting": {
-    "items": 3,
+    "items": 2,
     "tp": 3,
     "fp": 0,
-    "fn": 6,
+    "fn": 3,
     "precision": 1.0,
-    "recall": 0.333
+    "recall": 0.5
    },
    "redundant_check": {
     "items": 3,
@@ -144,12 +144,12 @@
     "recall": 1.0
    },
    "total": {
-    "items": 14,
+    "items": 13,
     "tp": 30,
     "fp": 0,
-    "fn": 15,
+    "fn": 12,
     "precision": 1.0,
-    "recall": 0.667
+    "recall": 0.714
    }
   },
   "two_kinds": {
@@ -204,6 +204,7 @@
   }
  },
  "invalid_injections": {
+  "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaration.__init__:nemotron:nesting": "Every branch assigns `self.symbol: Symbol = None`, so the nested ifs are a duplicated branch that a reviewer deletes, not nesting that a reviewer flattens. The injection also calls `isinstance(self.declaration, DeclarationType)`, and `DeclarationType` is a Union of string forward references, so `isinstance` raises TypeError and every construction of the object fails. Ticket 66 changed this item from valid to invalid.",
   "matplotlib/matplotlib:lib/matplotlib/projections/polar.py:PolarAxes._init_axis:nemotron:redundant_check": "Super added `if hasattr(self, 'xaxis') and self.xaxis is not None: pass`. No earlier check guarantees it.",
   "pallets/flask:src/flask/sessions.py:SessionInterface.make_null_session:nemotron:redundant_check": "Super added `if hasattr(self, 'null_session_class'): pass`. No earlier check guarantees it.",
   "astropy/astropy:astropy/coordinates/representation.py:PhysicsSphericalRepresentation.phi:nemotron:redundant_check": "Super added `if hasattr(self, '_phi'): pass`. No earlier check guarantees it.",
@@ -235,11 +236,6 @@
    "runs": 3
   },
   {
-   "id": "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaration.__init__:nemotron:nesting",
-   "kind": "nesting",
-   "runs": 3
-  },
-  {
    "id": "sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaratorNameParam.describe_signature:nemotron:redundant_check",
    "kind": "redundant_check",
    "runs": 3
@@ -259,9 +255,9 @@
   "any_kind_rate": 0.05
  },
  "seconds": {
-  "mean": 0.094,
+  "mean": 0.093,
   "median": 0.079,
-  "p95": 0.186,
+  "p95": 0.179,
   "max": 0.595
  },
  "errors": [],
@@ -275,10 +271,10 @@
  "passes": {
   "nesting": {
    "found": {
-    "items": 14,
+    "items": 13,
     "unit": "items",
-    "any": 0.857,
-    "all": 0.857
+    "any": 0.923,
+    "all": 0.923
    },
    "clean_false": {
     "items": 80,
@@ -345,10 +341,10 @@
   },
   "total": {
    "found": {
-    "items": 51,
+    "items": 50,
     "unit": "item-kinds",
-    "any": 0.902,
-    "all": 0.902
+    "any": 0.92,
+    "all": 0.92
    },
    "clean_false": {
     "items": 80,
@@ -363,7 +359,7 @@
    "clean": 80,
    "source": 52,
    "transform": 29,
-   "nemotron": 14
+   "nemotron": 13
   },
   "repo": {
    "django/django": 30,
@@ -372,7 +368,7 @@
    "pallets/flask": 13,
    "astropy/astropy": 28,
    "scikit-learn/scikit-learn": 19,
-   "sphinx-doc/sphinx": 18,
+   "sphinx-doc/sphinx": 17,
    "pytest-dev/pytest": 12,
    "matplotlib/matplotlib": 14,
    "pylint-dev/pylint": 4,
@@ -383,19 +379,19 @@
   "nesting": {
    "precision": {
     "base": {
-     "value": 0.56,
-     "low": 0.35,
-     "high": 0.759
+     "value": 0.522,
+     "low": 0.3,
+     "high": 0.737
     },
     "new": {
-     "value": 0.923,
-     "low": 0.75,
+     "value": 0.917,
+     "low": 0.714,
      "high": 1.0
     },
     "difference": {
-     "value": 0.363,
-     "low": 0.174,
-     "high": 0.556
+     "value": 0.395,
+     "low": 0.194,
+     "high": 0.6
     }
    },
    "recall": {
@@ -405,13 +401,13 @@
      "high": 1.0
     },
     "new": {
-     "value": 0.857,
-     "low": 0.636,
+     "value": 0.917,
+     "low": 0.714,
      "high": 1.0
     },
     "difference": {
-     "value": -0.143,
-     "low": -0.364,
+     "value": -0.083,
+     "low": -0.286,
      "high": 0.0
     }
    },
@@ -656,36 +652,36 @@
   "total": {
    "precision": {
     "base": {
-     "value": 0.746,
-     "low": 0.63,
-     "high": 0.849
+     "value": 0.737,
+     "low": 0.61,
+     "high": 0.845
     },
     "new": {
-     "value": 0.979,
-     "low": 0.925,
+     "value": 0.978,
+     "low": 0.923,
      "high": 1.0
     },
     "difference": {
-     "value": 0.233,
-     "low": 0.138,
-     "high": 0.342
+     "value": 0.241,
+     "low": 0.144,
+     "high": 0.355
     }
    },
    "recall": {
     "base": {
-     "value": 0.882,
-     "low": 0.799,
-     "high": 0.958
+     "value": 0.878,
+     "low": 0.787,
+     "high": 0.956
     },
     "new": {
-     "value": 0.902,
-     "low": 0.789,
-     "high": 0.984
+     "value": 0.918,
+     "low": 0.808,
+     "high": 1.0
     },
     "difference": {
-     "value": 0.02,
-     "low": -0.078,
-     "high": 0.109
+     "value": 0.041,
+     "low": -0.052,
+     "high": 0.126
     }
    },
    "fp_rate": {
@@ -718,24 +714,24 @@
   {
    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
    "use": "second labeller (rule)",
-   "input_tokens": 82714,
-   "output_tokens": 9798,
-   "usd": 0.1121
+   "input_tokens": 85810,
+   "output_tokens": 10150,
+   "usd": 0.1163
   },
   {
    "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
    "use": "second labeller (definition)",
-   "input_tokens": 95020,
-   "output_tokens": 12486,
-   "usd": 0.1325
+   "input_tokens": 98581,
+   "output_tokens": 12952,
+   "usd": 0.1374
   }
  ],
  "agreement": {
   "rule": {
    "nesting": {
     "rows": 18,
-    "agree": 0.833,
-    "kappa": 0.675
+    "agree": 0.778,
+    "kappa": 0.571
    },
    "redundant_check": {
     "rows": 15,
@@ -759,15 +755,15 @@
    },
    "total": {
     "rows": 42,
-    "agree": 0.762,
-    "kappa": 0.54
+    "agree": 0.738,
+    "kappa": 0.503
    }
   },
   "definition": {
    "nesting": {
     "rows": 18,
-    "agree": 0.778,
-    "kappa": 0.556
+    "agree": 0.722,
+    "kappa": 0.444
    },
    "redundant_check": {
     "rows": 15,
@@ -791,17 +787,17 @@
    },
    "total": {
     "rows": 42,
-    "agree": 0.786,
-    "kappa": 0.581
+    "agree": 0.762,
+    "kappa": 0.539
    }
   }
  },
  "metadata": {
   "report": {
    "models": {},
-   "commit": "58d9b5d1f3582dcb11062a1f186083366279d251",
+   "commit": "b57be22c8301d3fd701aea25e46c9119607fe293",
    "dirty": true,
-   "date": "2026-10-17",
+   "date": "2026-10-25",
    "seeds": {
     "split": 39,
     "bootstrap": 39
@@ -812,9 +808,9 @@
     "clean": 80,
     "source": 52,
     "transform": 29,
-    "nemotron": 14
+    "nemotron": 13
    },
-   "usd": 0.2925
+   "usd": 0.3016
   },
   "groundtruth": {
    "models": {
@@ -830,7 +826,10 @@
     "INJECT_PROMPT": "eb6823b10cc5",
     "INJECT": "0a674837b4f3"
    },
-   "source": "backfilled on 2026-10-17 from commit be0d670fedfc4e945490ce9d731b394cc33ae2e6, the last commit that wrote groundtruth.json; the hashes are of INJECT_PROMPT and of INJECT as json with sorted keys in bench/detect.py at that commit (read with git show, parsed with ast.literal_eval); the sample seed is the literal 37 in random.Random(37) in that file"
+   "source": "backfilled on 2026-10-17 from commit be0d670fedfc4e945490ce9d731b394cc33ae2e6, the last commit that wrote groundtruth.json; the hashes are of INJECT_PROMPT and of INJECT as json with sorted keys in bench/detect.py at that commit (read with git show, parsed with ast.literal_eval); the sample seed is the literal 37 in random.Random(37) in that file",
+   "edits": [
+    "2026-10-25, ticket 66: edited the source of 3 Nemotron items by hand (fk5_to_gal: pmats to pmat; index_to_coordinate: trailing raise KeyError(index); pytest_configure: the guard hasattr(config, '_tmp_path_factory') to mp is not None). Each edited item passes accept()."
+   ]
   },
   "runs": {
    "models": {},
@@ -842,7 +841,8 @@
    "prompts": {
     "KINDS": "36d181cd34ef"
    },
-   "source": "backfilled on 2026-10-17 from commit c31b3c580064743a9bd02290f57159a46c099fc7, the last commit that wrote runs-t39.json (the gate of ticket 39); slopgate/kinds.py at that commit does not import llm, so the gate called no model; the hash is of KINDS (json with sorted keys) at that commit (read with git show, parsed with ast.literal_eval)"
+   "source": "backfilled on 2026-10-17 from commit c31b3c580064743a9bd02290f57159a46c099fc7, the last commit that wrote runs-t39.json (the gate of ticket 39); slopgate/kinds.py at that commit does not import llm, so the gate called no model; the hash is of KINDS (json with sorted keys) at that commit (read with git show, parsed with ast.literal_eval)",
+   "recomputed": "2026-10-25, ticket 66: the entry of fk5_to_gal:nemotron:nesting was recomputed with the gate at commit b57be22c8301d3fd701aea25e46c9119607fe293, because the item source changed. The other entries are from the commit above."
   },
   "base_runs": {
    "models": {

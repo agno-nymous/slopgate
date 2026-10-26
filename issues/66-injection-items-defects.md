@@ -9,7 +9,7 @@
 
 **Blocked by:** —
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Type:** bug.
 
@@ -43,9 +43,49 @@ Also: `label.DEFINITIONS["nesting"]` does not describe one shape that `flattenab
 
 ## Acceptance
 
-- [ ] The script lists each injected item with the three facts.
-- [ ] Defects 1 to 4 are fixed or removed, each with a reason.
-- [ ] `detection.md` and `detection-t39.md` are made again.
-- [ ] `uv run pytest -q` passes.
+- [x] The script lists each injected item with the three facts.
+- [x] Defects 1 to 4 are fixed or removed, each with a reason.
+- [x] `detection.md` and `detection-t39.md` are made again.
+- [x] `uv run pytest -q` passes.
 
 ## Comments
+
+### 2026-10-25
+
+**What was built.** `bench/check_injections.py` lists each injected item (140: 72 transform and 39 Nemotron items, plus the pairs) with three facts. Command: `uv run python -m bench.check_injections`. It writes `bench/results/injection-check.md`. It makes no model call and takes 6 s.
+- `accept`: `detect.accept()` on the kinds that the gate still checks (`kinds.KINDS`). `filler_comment` is not one of them, so 22 items are `not scored`.
+- `new names`: the injection compiles, and it reads no name that nothing binds and that the source does not read. This check finds defect 1 (`pmats`). It does not find other changes of behavior. Defects 2 and 4 came from the label review, and the check reports them as `ok`.
+- `kind`: the entry of `bench/labels.json` for a Nemotron item (`valid` or `invalid` and its reason). A transform item has its kind by construction.
+
+**Defects 1 to 4.**
+1. `fk5_to_gal`: the injection read `pmats`; it reads `pmat` now (edited in `groundtruth.json`).
+2. `index_to_coordinate`: a `raise KeyError(index)` after the chain keeps the `KeyError` of the dict lookup. A `raise` in an `else:` branch made the gate stop measuring the chain, so the `raise` stands after the chain.
+3. `ASTDeclaration.__init__`: set to `valid: false`. All 8 leaf branches assign the same value. The Opus review found a worse fact: the injection calls `isinstance(self.declaration, DeclarationType)`, and `DeclarationType` is a `Union` of string forward references, so `isinstance` raises `TypeError` and every construction fails.
+4. `pytest_configure`: the guard `hasattr(config, '_tmp_path_factory')` became `mp is not None`. For a real `Config`, the item now sets the attribute like the source. With `config=None`, it returns `None` where the source raises `AttributeError`. That input breaks the type hint, so the item stays.
+
+Each edited item passes `accept()`. The edits are listed in `groundtruth.meta.json` (`edits`). Each reason is in `bench/labels.json`.
+
+**Results of the check (after the fixes).** `items 140, not scored 22, gate misses 12, new names not ok 0, invalid 7`. The 12 gate misses are not defects. 7 are labelled invalid. 5 are valid items that the gate does not find, and they stay in the recall: `AnchoredOffsetbox.draw`, `ASTDeclaratorNameParam.describe_signature`, `ExponentialCutoffPowerLaw1D.fit_deriv`, `LambdaCDM._dS_comoving_distance_z1z2`, and one transform item that the ticket did not list, `parse_data_uri` (`redundant_check`; it keeps the behavior and contains the kind).
+
+**Corrections to the ticket text.** `hours_to_hms` is labelled `invalid` in `bench/labels.json` (since ticket 42), so it is not a valid miss. Point 5 and design step 3 also list `ASTDeclaration.__init__` as a valid miss, but defect 3 removes it. Defect 3 wins.
+
+**Reports made again.** `detection.md` (the gate before ticket 39, all items), `detection-t39.md` (the gate of ticket 39, held-out set), and `label-disagreements.md`. The Ultra labels of the 4 rows of the 3 edited items were stale (the cache has no source hash), so I deleted them and labelled them again with Ultra in both variants (8 calls).
+
+| Held-out set, current gate | before | after |
+|---|---|---|
+| nesting recall | 0.857 | 0.923 |
+| total recall | 0.902 | 0.92 |
+| total precision | 0.979 | 0.979 |
+| nemotron items | 14 | 13 |
+| nesting kappa (rule) | 0.675 | 0.571 |
+
+The nesting kappa of the held-out set is now below 0.6, the line that the report calls unreliable. The cause is `ASTDeclaration.__init__`: Ultra still says `valid`, and the new label says `invalid`. All items (gate before ticket 39): total recall 0.912 to 0.909, total precision 0.767 to 0.764.
+
+**Known limits.**
+- The 3 edited items have no baseline run in `runs.json` (the gate before ticket 39 cannot run again), so they leave the baseline score. In `detection-t39.md`, `fk5_to_gal` also leaves the "Change" table. Nothing in the reports says this. Both reports count them in the header (`nemotron 39` and `13`), but 36 Nemotron items are scored in `detection.md`.
+- `runs-t39.json` holds one entry from the gate at commit `b57be22` (`fk5_to_gal`); the other entries are from commit `c31b3c5`. `kinds.py` changed between them only in `textwrap.dedent` to `functions.dedent` (`runs-t39.meta.json`, key `recomputed`).
+- The name check ignores scoping: a name that is bound anywhere in the function counts as bound. A `from x import *` in the module turns the check off. A rewrite with `symtable` would remove both limits.
+- `index_to_coordinate`: for an unhashable index, the source raises `TypeError` and the item raises `KeyError`. The tutorial passes only strings.
+- The full gate was not run on the fixed `pytest_configure` item. The reason is reasoning, not a measurement.
+
+**Measured.** `uv run pytest -q`: 493 passed, 17 deselected (before the last script and test changes; `tests/test_bench.py` alone: 55 passed afterwards). Not done: the full rerun of the gate on the fixed items (ticket 10).

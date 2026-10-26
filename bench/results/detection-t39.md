@@ -5,12 +5,12 @@
 | field | report | groundtruth | runs | base runs | labels: rule | labels: definition |
 | --- | --- | --- | --- | --- | --- | --- |
 | models | none | injection: nvidia/nemotron-3-super-120b-a12b | none | check: nvidia/Nemotron-3_5-Lightning | second_labeller: nvidia/Nemotron-3-Ultra-550b-a55b | second_labeller: nvidia/Nemotron-3-Ultra-550b-a55b |
-| commit | 58d9b5d1f3 (tree had changes) | be0d670fed | c31b3c5800 | be0d670fed | 58d9b5d1f3 (tree had changes) | 58d9b5d1f3 (tree had changes) |
-| date | 2026-10-17 | 2026-10-09 | 2026-10-10 | 2026-10-09 | 2026-10-17 | 2026-10-17 |
+| commit | b57be22c83 (tree had changes) | be0d670fed | c31b3c5800 | be0d670fed | 58d9b5d1f3 (tree had changes) | 58d9b5d1f3 (tree had changes) |
+| date | 2026-10-25 | 2026-10-09 | 2026-10-10 | 2026-10-09 | 2026-10-17 | 2026-10-17 |
 | seeds | split 39, bootstrap 39 | sample 37 | none | none | none | none |
 | runs per item | 3 |  | 3 | 3 | 1 | 1 |
-| counts | clean 80, source 52, transform 29, nemotron 14 |  |  |  |  |  |
-| cost (USD) | 0.2925 |  |  |  |  |  |
+| counts | clean 80, source 52, transform 29, nemotron 13 |  |  |  |  |  |
+| cost (USD) | 0.3016 |  |  |  |  |  |
 
 | prompt | stage | hash |
 | --- | --- | --- |
@@ -49,12 +49,12 @@ Each cell is the value and its 95% range from 1000 bootstrap resamples of whole 
 
 | kind | base precision | new precision | difference precision | base recall | new recall | difference recall | base FP rate | new FP rate | difference FP rate |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| nesting | 0.56 [0.35, 0.759] | 0.923 [0.75, 1.0] | 0.363 [0.174, 0.556] | 1.0 [1.0, 1.0] | 0.857 [0.636, 1.0] | -0.143 [-0.364, 0.0] | 0.113 [0.046, 0.186] | 0.013 [0.0, 0.042] | -0.1 [-0.169, -0.039] |
+| nesting | 0.522 [0.3, 0.737] | 0.917 [0.714, 1.0] | 0.395 [0.194, 0.6] | 1.0 [1.0, 1.0] | 0.917 [0.714, 1.0] | -0.083 [-0.286, 0.0] | 0.113 [0.046, 0.186] | 0.013 [0.0, 0.042] | -0.1 [-0.169, -0.039] |
 | redundant_check | 0.316 [0.043, 0.667] | 1.0 [1.0, 1.0] (992 resamples) | 0.684 [0.333, 0.95] (992 resamples) | 0.25 [0.037, 0.5] | 0.625 [0.25, 1.0] | 0.375 [0.0, 0.778] | 0.004 [0.0, 0.014] | 0.0 [0.0, 0.0] | -0.004 [-0.014, 0.0] |
 | swallowed_error | 1.0 [1.0, 1.0] | 1.0 [1.0, 1.0] | 0.0 [0.0, 0.0] | 1.0 [1.0, 1.0] | 1.0 [1.0, 1.0] | 0.0 [0.0, 0.0] | 0.0 [0.0, 0.0] | 0.0 [0.0, 0.0] | 0.0 [0.0, 0.0] |
 | lookup_table | 1.0 [1.0, 1.0] (998 resamples) | 1.0 [1.0, 1.0] (998 resamples) | 0.0 [0.0, 0.0] (998 resamples) | 1.0 [1.0, 1.0] (998 resamples) | 1.0 [1.0, 1.0] (998 resamples) | 0.0 [0.0, 0.0] (998 resamples) | 0.0 [0.0, 0.0] | 0.0 [0.0, 0.0] | 0.0 [0.0, 0.0] |
 | dead | 1.0 [1.0, 1.0] | 1.0 [1.0, 1.0] | 0.0 [0.0, 0.0] | 1.0 [1.0, 1.0] | 1.0 [1.0, 1.0] | 0.0 [0.0, 0.0] | 0.0 [0.0, 0.0] | 0.0 [0.0, 0.0] | 0.0 [0.0, 0.0] |
-| total | 0.746 [0.63, 0.849] | 0.979 [0.925, 1.0] | 0.233 [0.138, 0.342] | 0.882 [0.799, 0.958] | 0.902 [0.789, 0.984] | 0.02 [-0.078, 0.109] | 0.117 [0.048, 0.189] | 0.013 [0.0, 0.042] | -0.104 [-0.174, -0.042] |
+| total | 0.737 [0.61, 0.845] | 0.978 [0.923, 1.0] | 0.241 [0.144, 0.355] | 0.878 [0.787, 0.956] | 0.918 [0.808, 1.0] | 0.041 [-0.052, 0.126] | 0.117 [0.048, 0.189] | 0.013 [0.0, 0.042] | -0.104 [-0.174, -0.042] |
 
 `items` is the number of distinct items with at least one TP, FP, or FN.
 
@@ -62,12 +62,12 @@ Each cell is the value and its 95% range from 1000 bootstrap resamples of whole 
 
 | kind | items | TP | FP | FN | precision | recall |
 | --- | --- | --- | --- | --- | --- | --- |
-| nesting | 15 | 36 | 3 | 6 | 0.923 | 0.857 |
+| nesting | 14 | 36 | 3 | 3 | 0.923 | 0.923 |
 | redundant_check | 8 | 15 | 0 | 9 | 1.0 | 0.625 |
 | swallowed_error | 7 | 21 | 0 | 0 | 1.0 | 1.0 |
 | lookup_table | 10 | 30 | 0 | 0 | 1.0 | 1.0 |
 | dead | 12 | 36 | 0 | 0 | 1.0 | 1.0 |
-| total | 48 | 138 | 3 | 15 | 0.979 | 0.902 |
+| total | 47 | 138 | 3 | 12 | 0.979 | 0.92 |
 
 ## Precision and recall: transform
 
@@ -84,12 +84,12 @@ Each cell is the value and its 95% range from 1000 bootstrap resamples of whole 
 
 | kind | items | TP | FP | FN | precision | recall |
 | --- | --- | --- | --- | --- | --- | --- |
-| nesting | 3 | 3 | 0 | 6 | 1.0 | 0.333 |
+| nesting | 2 | 3 | 0 | 3 | 1.0 | 0.5 |
 | redundant_check | 3 | 0 | 0 | 9 |  | 0.0 |
 | swallowed_error | 2 | 6 | 0 | 0 | 1.0 | 1.0 |
 | lookup_table | 2 | 6 | 0 | 0 | 1.0 | 1.0 |
 | dead | 5 | 15 | 0 | 0 | 1.0 | 1.0 |
-| total | 14 | 30 | 0 | 15 | 1.0 | 0.667 |
+| total | 13 | 30 | 0 | 12 | 1.0 | 0.714 |
 
 ## Precision and recall: two_kinds
 
@@ -123,12 +123,12 @@ A kappa below 0.6 means the labels of that kind are not reliable, and kappa is u
 
 | kind | rows (rule) | agreement (rule) | kappa (rule) | rows (definition) | agreement (definition) | kappa (definition) |
 | --- | --- | --- | --- | --- | --- | --- |
-| nesting | 18 | 0.833 | 0.675 | 18 | 0.778 | 0.556 |
+| nesting | 18 | 0.778 | 0.571 | 18 | 0.722 | 0.444 |
 | redundant_check | 15 | 0.533 | 0.222 | 15 | 0.667 | 0.359 |
 | swallowed_error | 2 | 1.0 |  | 2 | 1.0 |  |
 | lookup_table | 2 | 1.0 |  | 2 | 1.0 |  |
 | dead | 5 | 1.0 |  | 5 | 1.0 |  |
-| total | 42 | 0.762 | 0.54 | 42 | 0.786 | 0.581 |
+| total | 42 | 0.738 | 0.503 | 42 | 0.762 | 0.539 |
 
 ## Found in at least 1 of 3 runs and in all 3 runs
 
@@ -136,18 +136,18 @@ An error run counts as a miss.
 
 | kind | found | found ≥1 of 3 | found 3 of 3 | clean items | false kind ≥1 of 3 | false kind 3 of 3 |
 | --- | --- | --- | --- | --- | --- | --- |
-| nesting | 14 items | 0.857 | 0.857 | 80 | 0.013 | 0.013 |
+| nesting | 13 items | 0.923 | 0.923 | 80 | 0.013 | 0.013 |
 | redundant_check | 8 items | 0.625 | 0.625 | 80 | 0.0 | 0.0 |
 | swallowed_error | 7 items | 1.0 | 1.0 | 80 | 0.0 | 0.0 |
 | lookup_table | 10 items | 1.0 | 1.0 | 80 | 0.0 | 0.0 |
 | dead | 12 items | 1.0 | 1.0 | 80 | 0.0 | 0.0 |
-| total | 51 item-kinds | 0.902 | 0.902 | 80 | 0.013 | 0.013 |
+| total | 50 item-kinds | 0.92 | 0.92 | 80 | 0.013 | 0.013 |
 
 ## Time for each function (seconds)
 
 | mean | median | p95 | max |
 | --- | --- | --- | --- |
-| 0.094 | 0.079 | 0.186 | 0.595 |
+| 0.093 | 0.079 | 0.179 | 0.595 |
 
 8 worker processes; times include queueing.
 
@@ -156,8 +156,8 @@ An error run counts as a miss.
 | model | use | input tokens | output tokens | USD |
 | --- | --- | --- | --- | --- |
 | nvidia/nemotron-3-super-120b-a12b | injection | 43585 | 38719 | 0.0479 |
-| nvidia/Nemotron-3-Ultra-550b-a55b | second labeller (rule) | 82714 | 9798 | 0.1121 |
-| nvidia/Nemotron-3-Ultra-550b-a55b | second labeller (definition) | 95020 | 12486 | 0.1325 |
+| nvidia/Nemotron-3-Ultra-550b-a55b | second labeller (rule) | 85810 | 10150 | 0.1163 |
+| nvidia/Nemotron-3-Ultra-550b-a55b | second labeller (definition) | 98581 | 12952 | 0.1374 |
 
 ## Stability (same kinds in all runs)
 
@@ -176,7 +176,7 @@ An error run counts as a miss.
 | clean | 80 |
 | source | 52 |
 | transform | 29 |
-| nemotron | 14 |
+| nemotron | 13 |
 
 | repo | items |
 | --- | --- |
@@ -186,7 +186,7 @@ An error run counts as a miss.
 | pallets/flask | 13 |
 | astropy/astropy | 28 |
 | scikit-learn/scikit-learn | 19 |
-| sphinx-doc/sphinx | 18 |
+| sphinx-doc/sphinx | 17 |
 | pytest-dev/pytest | 12 |
 | matplotlib/matplotlib | 14 |
 | pylint-dev/pylint | 4 |
@@ -205,7 +205,6 @@ An error run counts as a miss.
 | astropy/astropy:astropy/cosmology/flrw.py:LambdaCDM._dS_comoving_distance_z1z2:nemotron:redundant_check | redundant_check | 3 |
 | matplotlib/matplotlib:lib/matplotlib/offsetbox.py:AnchoredOffsetbox.draw:nemotron:nesting | nesting | 3 |
 | matplotlib/matplotlib:lib/matplotlib/offsetbox.py:AnchoredOffsetbox.draw:nemotron:nesting | redundant_check | 3 |
-| sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaration.__init__:nemotron:nesting | nesting | 3 |
 | sphinx-doc/sphinx:sphinx/domains/c.py:ASTDeclaratorNameParam.describe_signature:nemotron:redundant_check | redundant_check | 3 |
 
 ## Unlabelled kinds
