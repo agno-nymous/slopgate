@@ -27,7 +27,7 @@ The goal is an overall prize. The judges score 4 criteria (1 to 5, equal weight)
 |---|---|
 | 2026-10-25 | Tickets 75 (time-boxed) and 66. |
 | 2026-10-26 | Ticket 10: the Serverless Job and the full rerun. Then `report`. **Decision point:** read the acceptance rate and the silent-break rate. If the gate proves few rewrites, the headline becomes the precision of the gate and the write-time hook: do ticket 65 before ticket 64. |
-| 2026-10-27 | Ticket 64: the hosted demo on a Nebius Serverless Endpoint. This is the largest item. |
+| 2026-10-27 | Ticket 64: the static showcase page. Record 3 or 4 reviews of example pull requests (with the keys of the user, once), build `docs/demo/index.html`, and test the local command in an empty folder. This is the largest item. A hosted bring-your-own-key form is out of scope. |
 | 2026-10-28 | Ticket 08 (live flag at plan time, because the video needs it) and the live-check boxes of ticket 27. Ticket 65 only if tickets 10 and 64 are done. Cut ticket 65 first, then ticket 08, if time runs short. |
 | 2026-10-29 | Ticket 11: README, video, feedback, Devpost text. Public flip (see below). Submit on 2026-10-29. |
 
@@ -42,6 +42,7 @@ Do the workflow edits first. On a public repo, a pull request from a fork can ru
 3. Remove the `PHOENIX_COLLECTOR_ENDPOINT` env line from the workflow.
 4. Turn the Slopgate workflow on again (`gh workflow enable Slopgate`) only when the user says so.
 5. Make both the `slopgate` and the `slopgate-demo` repo public.
+6. Turn on GitHub Pages for the `slopgate` repo (source: the `docs/` folder), and check that the showcase page of ticket 64 loads at its URL. A private repo on the free plan has no Pages, so this step comes after step 5.
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -83,7 +84,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 32 | [68 — The old-commit install fails for every repo that uses setuptools-scm](68-pinned-install-fails-for-setuptools-scm.md) | done | 58 (done) | Found by ticket 58 on 2026-10-18: a date-limited setuptools-scm imports `pkg_resources`, and the newest setuptools does not have it. The fallback then installs the newest dependencies, so the tests of old commits fail. Do it after 59: both change the old-commit install. |
 | 33 | [10 — Benchmark on SWE-bench with injected slop](10-benchmark.md) | needs-live-check | 37, 41 (done) | Moved up on 2026-10-17. Its four numbers are the headline of the submission, and they judge every later ticket. First step: confirm that ConTree can run the SWE-bench images (the SDK has `images.pull` and `images.oci`, but no list of preloaded images). |
 | 34 | [67 — An agent installs the test environment from the repo's own instructions](67-install-agent.md) | done | 58, 59 | Added on 2026-10-18 by the user. With the gate's own install, ticket 10 has a working environment on 6 of 15 instances. The agent reads the README and CI files and installs the rest. |
-| 35 | [64 — Hosted demo: review a public pull request from a web page](64-hosted-demo-on-serverless-endpoint.md) | ready-for-agent | 10 | Added on 2026-10-17. The submission needs a working demo URL, and Design is 1 of 4 criteria. |
+| 35 | [64 — Showcase page: recorded reviews of example repositories, and a local command to try Slopgate](64-showcase-page-with-recorded-reviews.md) | ready-for-agent | 10 | Added on 2026-10-17, rewritten on 2026-10-25. The submission needs a working demo URL, and Design is 1 of 4 criteria. The user decided that no hosted service uses the user's API keys: the page is static, it shows recorded reviews, and a judge brings their own keys to run Slopgate locally. No Serverless Endpoint. |
 | 36 | [65 — Measure the write-time hook on a Nemotron coding agent](65-hook-on-off-experiment.md) | ready-for-agent | 10 | Added on 2026-10-17. After ticket 64, if time is left by 2026-10-26. Moves before 64 if the decision point says so. |
 | 37 | [45 — The test agent cannot characterize large functions](45-characterize-large-functions.md) | ready-for-agent | 41 (done) | After ticket 10. The numbers of each kind decide: fix the kind, or turn it off in the gate. |
 | 38 | [50 — The gate cannot fix `swallowed_error` around a call to other code](50-swallowed-error-external-call.md) | ready-for-agent | — | After ticket 10, for the same reason as ticket 45. |
