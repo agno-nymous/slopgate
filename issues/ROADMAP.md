@@ -4,9 +4,11 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**10 — Benchmark on SWE-bench with injected slop (open boxes).** Start the run as a Nebius Serverless Job (the README holds the job command). Use the preloaded sandbox image of each instance for the hidden tests. Then rerun the benchmark.
+**64 — Showcase page: recorded reviews of example repositories, and a local command to try Slopgate.** The submission needs a working demo URL. Put links to the public `slopgate-demo` pull requests with real gate comments on the page: a judge can see them without a key.
 
-State on 2026-10-25: ticket 72 (done) removed the pytest 2.9 flag for `psf__requests-3362`. Ticket 75 (done) fixed `coverage has no data` for it: coverage 6.2 has no `missing_branches` key in its JSON, so the gate now reads the branches through the coverage API. Ticket 73 (needs-live-check) retries a Token Factory 429 in `slopgate/llm.py`; its last box is the benchmark rerun. Ticket 67 (done) added a collection check, a retry of transient ConTree faults, and the README install guide. In the ticket 10 benchmark of 2026-10-21, the gate accepts 13 of 38 detected items (before: 7 of 26). The install agent does not ship: it proved 0 of 72 attempts.
+State on 2026-10-25, evening: tickets 10 and 73 are done. The rerun of 15 instances accepts 14 of 41 detected items (0.341). It has 0 silent breaks and 0 infrastructure errors. It has 0 `RateLimitError` rejections. It cost $1.16. The user made the Serverless Job box wontfix and kept 15 instances. The `slopgate` repo is public since 2026-10-25. The Mac runner is removed.
+
+Earlier on 2026-10-25: ticket 72 (done) removed the pytest 2.9 flag for `psf__requests-3362`. Ticket 75 (done) fixed `coverage has no data` for it: coverage 6.2 has no `missing_branches` key in its JSON, so the gate now reads the branches through the coverage API. Ticket 73 (needs-live-check) retries a Token Factory 429 in `slopgate/llm.py`; its last box is the benchmark rerun. Ticket 67 (done) added a collection check, a retry of transient ConTree faults, and the README install guide. In the ticket 10 benchmark of 2026-10-21, the gate accepts 13 of 38 detected items (before: 7 of 26). The install agent does not ship: it proved 0 of 72 attempts.
 
 ## Before the full benchmark rerun (set on 2026-10-25)
 
@@ -14,8 +16,8 @@ Do these in this order.
 
 1. **Ticket 75.** Done on 2026-10-25.
 2. **Ticket 66.** Done on 2026-10-25.
-3. **Ticket 10, open boxes.** Start the run as a Nebius Serverless Job (the README holds the job command). Use the preloaded sandbox image of each instance for the hidden tests.
-4. **Rerun the benchmark.** This closes the last box of ticket 73 (no `RateLimitError` rejection). Run `report` after it, because the report files still hold the old numbers for `psf__requests-3362`.
+3. **Ticket 10, open boxes.** Done on 2026-10-25. The Serverless Job box is wontfix (decision of the user).
+4. **Rerun the benchmark.** Done on 2026-10-25. This closes the last box of ticket 73 (no `RateLimitError` rejection). Run `report` after it, because the report files still hold the old numbers for `psf__requests-3362`.
 
 Do not do tickets 70, 74, 45, 50, 43, and 56 before the rerun. They matter only if the per-kind numbers of ticket 10 show that a kind needs a fix.
 
@@ -37,12 +39,14 @@ Fix a slop kind (tickets 45, 50, 43) only if the numbers of ticket 10 show that 
 
 Do the workflow edits first. On a public repo, a pull request from a fork can run its code on the Mac.
 
-1. In `.github/workflows/slopgate.yml`, set `runs-on: ubuntu-latest`.
-2. Remove the self-hosted runner.
-3. Remove the `PHOENIX_COLLECTOR_ENDPOINT` env line from the workflow.
+1. In `.github/workflows/slopgate.yml`, set `runs-on: ubuntu-latest`. Done on 2026-10-25 (ticket 10 branch).
+2. Remove the self-hosted runner. Done on 2026-10-25.
+3. Remove the `PHOENIX_COLLECTOR_ENDPOINT` env line from the workflow. Done on 2026-10-25 (ticket 10 branch).
 4. Turn the Slopgate workflow on again (`gh workflow enable Slopgate`) only when the user says so.
-5. Make both the `slopgate` and the `slopgate-demo` repo public.
-6. Turn on GitHub Pages for the `slopgate` repo (source: the `docs/` folder), and check that the showcase page of ticket 64 loads at its URL. A private repo on the free plan has no Pages, so this step comes after step 5.
+5. Scan the full git history of both repos for secrets, for example with `gitleaks git`. A public repo shows every past commit, not only the last one. If the scan finds a key, revoke the key and remove it from the history before step 6. Done for `slopgate` on 2026-10-25 (`gitleaks`: 158 commits, no leaks). Not done for `slopgate-demo`.
+6. Make both the `slopgate` and the `slopgate-demo` repo public. `slopgate` is public since 2026-10-25.
+7. Turn on GitHub Pages for the `slopgate` repo (source: the `docs/` folder), and check that the showcase page of ticket 64 loads at its URL. A private repo on the free plan has no Pages, so this step comes after step 6.
+8. Open one new pull request on `slopgate-demo`. Its Slopgate workflow runs on `ubuntu-latest` and uses `agno-nymous/slopgate@main`, so this is the first run of the public Action on a hosted runner. Check that the job posts its review to the pull request. The rules require that the project installs and runs consistently, and the ticket 27 check on the Mac runner does not prove this.
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -82,7 +86,7 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 30 | [58 — A repo that takes its version from the git history does not install in the sandbox](58-setuptools-scm-needs-version.md) | done | — | Ticket 10 needs it: all 5 pytest instances fail the install with the gate's own install (2026-10-18). |
 | 31 | [59 — A commit from before 2020 needs an older Python than 3.10](59-commits-before-2020-need-old-python.md) | done | — | Ticket 10 needs it: sphinx-7975, sphinx-8506, sphinx-8627, and requests-3362 install on Python 3.10, but their tests cannot run (2026-10-18). Ticket 67 section 0 proposes the Python of the commit date. |
 | 32 | [68 — The old-commit install fails for every repo that uses setuptools-scm](68-pinned-install-fails-for-setuptools-scm.md) | done | 58 (done) | Found by ticket 58 on 2026-10-18: a date-limited setuptools-scm imports `pkg_resources`, and the newest setuptools does not have it. The fallback then installs the newest dependencies, so the tests of old commits fail. Do it after 59: both change the old-commit install. |
-| 33 | [10 — Benchmark on SWE-bench with injected slop](10-benchmark.md) | needs-live-check | 37, 41 (done) | Moved up on 2026-10-17. Its four numbers are the headline of the submission, and they judge every later ticket. First step: confirm that ConTree can run the SWE-bench images (the SDK has `images.pull` and `images.oci`, but no list of preloaded images). |
+| 33 | [10 — Benchmark on SWE-bench with injected slop](10-benchmark.md) | done | 37, 41 (done) | Moved up on 2026-10-17. Its four numbers are the headline of the submission, and they judge every later ticket. First step: confirm that ConTree can run the SWE-bench images (the SDK has `images.pull` and `images.oci`, but no list of preloaded images). |
 | 34 | [67 — An agent installs the test environment from the repo's own instructions](67-install-agent.md) | done | 58, 59 | Added on 2026-10-18 by the user. With the gate's own install, ticket 10 has a working environment on 6 of 15 instances. The agent reads the README and CI files and installs the rest. |
 | 35 | [64 — Showcase page: recorded reviews of example repositories, and a local command to try Slopgate](64-showcase-page-with-recorded-reviews.md) | ready-for-agent | 10 | Added on 2026-10-17, rewritten on 2026-10-25. The submission needs a working demo URL, and Design is 1 of 4 criteria. The user decided that no hosted service uses the user's API keys: the page is static, it shows recorded reviews, and a judge brings their own keys to run Slopgate locally. No Serverless Endpoint. |
 | 36 | [65 — Measure the write-time hook on a Nemotron coding agent](65-hook-on-off-experiment.md) | ready-for-agent | 10 | Added on 2026-10-17. After ticket 64, if time is left by 2026-10-26. Moves before 64 if the decision point says so. |
@@ -90,9 +94,9 @@ When a ticket is done, mark it done in the table below and move "Next ticket" to
 | 38 | [50 — The gate cannot fix `swallowed_error` around a call to other code](50-swallowed-error-external-call.md) | ready-for-agent | — | After ticket 10, for the same reason as ticket 45. |
 | 39 | [43 — The gate cannot prove a `redundant_check` rewrite](43-dead-branch-of-redundant-check.md) | ready-for-agent | 39 (done) | After ticket 10, for the same reason as ticket 45. |
 | 40 | [56 — The test-file rule misses `tests.py`, and django tests do not run under pytest](56-django-test-layout.md) | ready-for-agent | — | Found by ticket 49 on django#21736: a django test method got an agent run instead of a note. |
-| 41 | [27 — Run the gate automatically on a self-hosted runner](27-gate-on-self-hosted-runner.md) | needs-live-check | 26 (done) | Turn the Slopgate workflow on again only when the user says so. Then do the live check on a real pull request. It also checks ticket 46 on GitHub. |
+| 41 | [27 — Run the gate automatically on a self-hosted runner](27-gate-on-self-hosted-runner.md) | wontfix | 26 (done) | The user removed the Mac runner on 2026-10-25, when the repo became public. Step 8 of the public flip replaces its live check. That step opens a live pull request on `slopgate-demo` with `ubuntu-latest`. |
 | 42 | [08 — Live duplicate flag at plan time](08-live-flag-plan-time.md) | ready-for-agent | 07 (done) | Ticket 11 needs it for the live-flag scene of the video. If time runs short, the user decides whether to cut it. |
-| 43 | [11 — Hackathon submission package](11-submission-package.md) | ready-for-agent | 06, 08, 10 | Last. It describes the finished project. Before the repo is public, set the Slopgate workflow back to `ubuntu-latest` (ticket 27). |
+| 43 | [11 — Hackathon submission package](11-submission-package.md) | ready-for-agent | 06, 08, 10 | Last. It describes the finished project. |
 | 44 | [57 — Building the function index takes more than 80 s on a large repository](57-faster-function-index.md) | ready-for-agent | — | Moved to the end on 2026-10-17. Speed only. |
 | 45 | [40 — Limit the output tokens of `decide`](40-limit-decide-output.md) | ready-for-agent | — | 5 of 1,407 runs took 60 s to 110 s. Speed only. |
 | 46 | [47 — `parse` splits lines on a form feed, so later functions get the wrong source](47-parse-splits-on-form-feed.md) | ready-for-agent | — | Not seen in the 12 SWE-bench Lite repos. |
@@ -115,11 +119,11 @@ Added after the order was set:
 | [70 — A repo `.coveragerc` that does not match a `src/` layout gives "coverage has no data"](70-repo-coveragerc-hides-src-layout.md) | ready-for-agent | Found by ticket 68 on pluggy 1.0.0: `include = pluggy/*`, but the code is in `src/pluggy/`. The test agent sees no missed branches. |
 | [71 — An old commit with a malformed `setup_requires` does not build](71-legacy-specifier-in-setup-requires.md) | ready-for-agent | Found by ticket 68: pytest 6.2.0 has `setuptools>=>=42.0` in `setup.cfg`. All 5 measured setuptools options fail on it. |
 | [72 — The benchmark test command breaks pytest 2.9](72-bench-test-command-flag-breaks-old-pytest.md) | done | Found by ticket 67: all 3 remaining infrastructure errors are `psf__requests-3362`. The benchmark now leaves the flag out for that instance (2026-10-25). |
-| [73 — A model rate limit rejects items of the gate](73-rate-limit-rejects-items.md) | needs-live-check | Found by ticket 67: 5 of 42 benchmark items were rejected with a 429 from Token Factory. Do it before the final benchmark run. |
+| [73 — A model rate limit rejects items of the gate](73-rate-limit-rejects-items.md) | done | Found by ticket 67: 5 of 42 benchmark items were rejected with a 429 from Token Factory. Do it before the final benchmark run. |
 | [75 — The gate gets no coverage data on `psf__requests-3362`](75-requests-3362-coverage-has-no-data.md) | done | Found by ticket 72: the 3 items of the instance now reach the test agent and end at the step limit with `coverage has no data`. The repo has no coverage configuration file. |
 | [74 — The default install fails for compiled repos](74-default-install-fails-for-compiled-repos.md) | ready-for-agent | Found by ticket 67: 10 of 28 instances (scikit-learn, matplotlib, astropy, requests-1963). Research, plus a uv and pip A/B. Not needed for the headline. |
 
-Tickets 01 to 07, 12 to 22, 66, 72, 75, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, 44, 46, 48, 49, 51, 52, 53, 54, 55, 58, 59, 60, 67, and 68 are done. Tickets 23, 24, 29, 30, 31, 35, and 63 are wontfix.
+Tickets 01 to 07, 10, 12 to 22, 66, 72, 73, 75, 25, 26, 28, 32, 33, 34, 36, 37, 38, 39, 41, 44, 46, 48, 49, 51, 52, 53, 54, 55, 58, 59, 60, 67, and 68 are done. Tickets 23, 24, 29, 30, 31, 35, and 63 are wontfix.
 
 ## Rules for the order
 
