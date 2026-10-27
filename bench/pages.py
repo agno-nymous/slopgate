@@ -2,6 +2,7 @@ import re
 from html import escape as esc
 
 from bench import showcase
+from slopgate.github import plural
 
 NAV = [("index.html", "Home"), ("how.html", "How it works"), ("reviews.html", "Reviews"), ("benchmark.html", "Benchmark"), ("try.html", "Try it")]
 STEP_LABEL = {
@@ -84,10 +85,6 @@ def trimmed(rows: list, keep: str) -> list:
 
 def money(usd: float) -> str:
     return f"${usd:.3f}"
-
-
-def plural(n: int, word: str) -> str:
-    return f"{n} {word}" if n == 1 else f"{n} {word}s"
 
 
 def figures(head: dict) -> str:
