@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recorded reviews</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div class="topbar"><a class="brand" href="index.html">Slopgate</a><nav aria-label="Pages"><a href="index.html">Home</a><a href="how.html">How it works</a><a href="reviews.html" aria-current="page">Reviews</a><a href="benchmark.html">Benchmark</a><a href="try.html">Try it</a></nav></div></header>
+<main>
+<h1>Recorded reviews</h1>
+<p>Each review is the unedited output of <code>slopgate review --dry-run</code> on a real repository from SWE-bench. Open one to read the diff and the tests.</p>
+<ul class="list">
+<li><h2><a href="reviews/pylint-7993.html">pylint: 1 proven fix, NamingStyle.get_regex</a></h2>
+<p class="meta"><code>lookup_table</code>. <span class="ok">1 proven</span>. 2 other flagged functions got a note. 531 s, $0.046.</p></li><li><h2><a href="reviews/pytest-7220.html">pytest: 1 proven fix, _get_multicapture</a></h2>
+<p class="meta"><code>dead</code>. <span class="ok">1 proven</span>. 2 other flagged functions got a note. 375 s, $0.045.</p></li><li><h2><a href="reviews/seaborn-3190.html">seaborn: 2 proven fixes, ObjectProperty.get_mapping, Continuous.tick</a></h2>
+<p class="meta"><code>nesting, swallowed_error</code>. <span class="ok">2 proven</span>. 1 other flagged function got a note. 333 s, $0.103.</p></li><li><h2><a href="reviews/flask-4992.html">flask: 2 proven fixes, Flask.auto_find_instance_path, Config.get_namespace</a></h2>
+<p class="meta"><code>dead, nesting</code>. <span class="ok">2 proven</span>. 1 other flagged function got a note. 154 s, $0.080.</p></li>
+</ul>
+<p class="next"><a href="benchmark.html">Next: the benchmark</a></p>
+</main>
+<footer><p>Slopgate reviews pull requests for slop that coding agents write. It runs on Nemotron models on Nebius Token Factory. <a href="https://github.com/agno-nymous/slopgate">Source on GitHub</a>.</p></footer>
+
+</body>
+</html>

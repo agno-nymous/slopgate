@@ -1,0 +1,88 @@
+{
+ "seconds": 375,
+ "usd": 0.0455,
+ "tokens": "131,353 tokens (nemotron-3-super-120b-a12b)",
+ "trace": "596e94c7d54a758da59fdaf953e67253",
+ "steps": [
+  {
+   "name": "gate.index",
+   "count": 1,
+   "seconds": 0.1
+  },
+  {
+   "name": "sandbox.prepare",
+   "count": 1,
+   "seconds": 16.9
+  },
+  {
+   "name": "gate.collect",
+   "count": 1,
+   "seconds": 5.3
+  },
+  {
+   "name": "gate.baseline",
+   "count": 1,
+   "seconds": 126.4
+  },
+  {
+   "name": "gate.characterize",
+   "count": 3,
+   "seconds": 492.4
+  },
+  {
+   "name": "gate.rewrite",
+   "count": 1,
+   "seconds": 4.1
+  },
+  {
+   "name": "gate.proof",
+   "count": 1,
+   "seconds": 2.9
+  },
+  {
+   "name": "gate.repo_suite",
+   "count": 1,
+   "seconds": 114.4
+  }
+ ],
+ "rejected": 2,
+ "items": [
+  {
+   "where": "follow-up pull request",
+   "function": "_get_multicapture",
+   "path": "src/_pytest/capture.py",
+   "kinds": [
+    "dead"
+   ],
+   "summary": "nesting 1 -> 1, complexity 5 -> 5. 8 characterization tests passed in sandbox.",
+   "diff": [
+    [
+     "@",
+     "src/_pytest/capture.py"
+    ],
+    [
+     " ",
+     ""
+    ],
+    [
+     " ",
+     "def _get_multicapture(method: \"_CaptureMethod\") -> MultiCapture:"
+    ],
+    [
+     "-",
+     "    original_method = method"
+    ],
+    [
+     " ",
+     "    if method == \"fd\":"
+    ],
+    [
+     " ",
+     "        return MultiCapture(in_=FDCapture(0), out=FDCapture(1), err=FDCapture(2))"
+    ]
+   ],
+   "tests": "import sys\nfrom _pytest.capture import _get_multicapture, FDCapture, SysCapture, MultiCapture\n\ndef test_get_multicapture_fd():\n    result = _get_multicapture(\"fd\")\n    assert isinstance(result, MultiCapture)\n    assert isinstance(result.in_, FDCapture)\n    assert isinstance(result.out, FDCapture)\n    assert isinstance(result.err, FDCapture)\n    assert result.in_.targetfd == 0\n    assert result.out.targetfd == 1\n    assert result.err.targetfd == 2\n\ndef test_get_multicapture_sys():\n    result = _get_multicapture(\"sys\")\n    assert isinstance(result, MultiCapture)\n    assert isinstance(result.in_, SysCapture)\n    assert isinstance(result.out, SysCapture)\n    assert isinstance(result.err, SysCapture)\n    assert result.in_.name == \"stdin\"\n    assert result.out.name == \"stdout\"\n    assert result.err.name == \"stderr\"\n\ndef test_get_multicapture_no():\n    result = _get_multicapture(\"no\")\n    assert isinstance(result, MultiCapture)\n    assert result.in_ is None\n    assert result.out is None\n    assert result.err is None\n\ndef test_get_multicapture_tee_sys():\n    result = _get_multicapture(\"tee-sys\")\n    assert isinstance(result, MultiCapture)\n    assert result.in_ is None\n    assert isinstance(result.out, SysCapture)\n    assert isinstance(result.err, SysCapture)\n    # just ensure they are SysCapture; tee logic not exposed\n    assert result.out.name == \"stdout\"\n    assert result.err.name == \"stderr\"\n\ndef test_get_multicapture_unknown():\n    try:\n        _get_multicapture(\"unknown\")\n        assert False, \"expected ValueError\"\n    except ValueError as e:\n        assert \"unknown capturing method\" in str(e)\n\n# New tests to detect <= changes\ndef test_get_multicapture_fd_boundary_low():\n    # Input less than \"fd\" should raise ValueError in original\n    try:\n        _get_multicapture(\"fa\")\n        assert False, \"expected ValueError for input 'fa'\"\n    except ValueError as e:\n        assert \"unknown capturing method\" in str(e)\n\ndef test_get_multicapture_no_boundary_low():\n    # Input less than \"no\" should raise ValueError\n    try:\n        _get_multicapture(\"nn\")\n        assert False, \"expected ValueError for input 'nn'\"\n    except ValueError as e:\n        assert \"unknown capturing method\" in str(e)\n\ndef test_get_multicapture_tee_sys_boundary_low():\n    # Input less than \"tee-sys\" should raise ValueError\n    try:\n        _get_multicapture(\"tee-syr\")\n        assert False, \"expected ValueError for input 'tee-syr'\"\n    except ValueError as e:\n        assert \"unknown capturing method\" in str(e)\n",
+   "tests_passed": 8
+  }
+ ]
+}

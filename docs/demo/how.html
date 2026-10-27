@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Slopgate works</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div class="topbar"><a class="brand" href="index.html">Slopgate</a><nav aria-label="Pages"><a href="index.html">Home</a><a href="how.html" aria-current="page">How it works</a><a href="reviews.html">Reviews</a><a href="benchmark.html">Benchmark</a><a href="try.html">Try it</a></nav></div></header>
+<main>
+<h1>How a review works</h1>
+<ol class="flow">
+<li><span class="n">1</span><div><h2>Candidates</h2><p>Find the Python functions that the pull request adds or changes.</p></div></li><li><span class="n">2</span><div><h2>Kinds</h2><p>Ruff, vulture, and AST checks name the slop kind. Only duplicates need a model.</p></div></li>
+</ol>
+<div class="sandbox"><p class="label">Nebius ConTree sandbox: steps 3 to 5</p>
+<ol class="flow" start="3">
+<li><span class="n">3</span><div><h2>Tests</h2><p>Nemotron Super writes tests that pin the behavior of the old code. It runs them on the old code to check them.</p></div></li><li><span class="n">4</span><div><h2>Rewrite</h2><p>Nemotron Super rewrites the function. Nemotron Ultra tries again when a rewrite fails.</p></div></li><li><span class="n">5</span><div><h2>Proof</h2><p>The rewrite must pass the same tests and the tests of the repository. A rewrite that fails gets a review note, not a change.</p></div></li>
+</ol></div>
+<p>The gate posts a proven rewrite as a suggested change on the pull request. When the function is not all inside the diff, it posts a follow-up pull request. Nothing is merged for you.</p>
+<p class="next"><a href="reviews.html">Next: recorded reviews</a></p>
+</main>
+<footer><p>Slopgate reviews pull requests for slop that coding agents write. It runs on Nemotron models on Nebius Token Factory. <a href="https://github.com/agno-nymous/slopgate">Source on GitHub</a>.</p></footer>
+
+</body>
+</html>

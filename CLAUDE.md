@@ -32,6 +32,8 @@ uv run --extra hook --env-file .env pytest -m live -q   # live tests against Tok
 uv run --env-file .env slopgate review --repo <repo> --base <ref> --head <ref> --dry-run --sandbox local
 uv run --env-file .env slopgate review --pr <number>   # review a PR on this machine and post to GitHub
 uv run --extra hook slopgate index --repo <repo> --ref HEAD   # base index, plus the hook's ONNX model and store
+uv run python -m bench.showcase meta <name> <repo> <head>   # showcase page (ticket 64): build docs/demo/recordings/<name>.meta.json from the Phoenix trace of one recorded dry run
+uv run python -m bench.pages                       # write the pages of docs/demo/ from the recordings and swebench.json
 ```
 
 The live tests are marked `live` and are off by default (`addopts` in `pyproject.toml`).

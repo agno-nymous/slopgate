@@ -1,0 +1,181 @@
+{
+ "seconds": 154,
+ "usd": 0.0799,
+ "tokens": "231,564 tokens (nemotron-3-super-120b-a12b)",
+ "trace": "25d9c106c749b4f03abd69fe9e13fc12",
+ "steps": [
+  {
+   "name": "gate.index",
+   "count": 1,
+   "seconds": 0.0
+  },
+  {
+   "name": "sandbox.prepare",
+   "count": 1,
+   "seconds": 11.7
+  },
+  {
+   "name": "gate.collect",
+   "count": 1,
+   "seconds": 2.7
+  },
+  {
+   "name": "gate.baseline",
+   "count": 1,
+   "seconds": 4.2
+  },
+  {
+   "name": "gate.characterize",
+   "count": 3,
+   "seconds": 222.4
+  },
+  {
+   "name": "gate.rewrite",
+   "count": 2,
+   "seconds": 2.3
+  },
+  {
+   "name": "gate.proof",
+   "count": 3,
+   "seconds": 8.1
+  },
+  {
+   "name": "gate.repo_suite",
+   "count": 1,
+   "seconds": 4.2
+  }
+ ],
+ "rejected": 1,
+ "items": [
+  {
+   "where": "follow-up pull request",
+   "function": "Flask.auto_find_instance_path",
+   "path": "src/flask/app.py",
+   "kinds": [
+    "dead"
+   ],
+   "summary": "nesting 1 -> 1, complexity 2 -> 2. 3 characterization tests passed in sandbox.",
+   "diff": [
+    [
+     "@",
+     "src/flask/app.py"
+    ],
+    [
+     " ",
+     "            return os.path.join(package_path, \"instance\")"
+    ],
+    [
+     " ",
+     "        return os.path.join(prefix, \"var\", f\"{self.name}-instance\")"
+    ],
+    [
+     "-",
+     "        return None"
+    ],
+    [
+     " ",
+     ""
+    ],
+    [
+     " ",
+     "    def open_instance_resource(self, resource: str, mode: str = \"rb\") -> t.IO[t.AnyStr]:"
+    ]
+   ],
+   "tests": "import os\nfrom unittest.mock import patch\nfrom flask.app import Flask\n\ndef test_auto_find_instance_path_prefix_none():\n    with patch('flask.app.find_package') as mock_find:\n        mock_find.return_value = (None, '/fake/package')\n        app = Flask(__name__)\n        result = app.auto_find_instance_path()\n        expected = os.path.join('/fake/package', 'instance')\n        assert result == expected\n\ndef test_auto_find_instance_path_prefix_not_none():\n    with patch('flask.app.find_package') as mock_find:\n        mock_find.return_value = ('/fake/prefix', '/fake/package')\n        app = Flask(__name__)\n        app.name = 'myapp'\n        result = app.auto_find_instance_path()\n        expected = os.path.join('/fake/prefix', 'var', 'myapp-instance')\n        assert result == expected\n\n# Ensure unreachable return None is not executed for any case\ndef test_auto_find_instance_path_never_returns_none():\n    with patch('flask.app.find_package') as mock_find:\n        # both branches covered\n        for ret in [(None, '/pkg'), ('/pref', '/pkg')]:\n            mock_find.return_value = ret\n            app = Flask(__name__)\n            app.name = 'test'\n            assert app.auto_find_instance_path() is not None\n",
+   "tests_passed": 3
+  },
+  {
+   "where": "follow-up pull request",
+   "function": "Config.get_namespace",
+   "path": "src/flask/config.py",
+   "kinds": [
+    "nesting"
+   ],
+   "summary": "nesting 3 -> 2, complexity 5 -> 5. 10 characterization tests passed in sandbox.",
+   "diff": [
+    [
+     "@",
+     "src/flask/config.py"
+    ],
+    [
+     " ",
+     "        rv = {}"
+    ],
+    [
+     " ",
+     "        for k, v in self.items():"
+    ],
+    [
+     "-",
+     "            if k.startswith(namespace):"
+    ],
+    [
+     "-",
+     "                if trim_namespace:"
+    ],
+    [
+     "-",
+     "                    key = k[len(namespace) :]"
+    ],
+    [
+     "-",
+     "                else:"
+    ],
+    [
+     "-",
+     "                    key = k"
+    ],
+    [
+     "-",
+     "                if lowercase:"
+    ],
+    [
+     "-",
+     "                    key = key.lower()"
+    ],
+    [
+     "-",
+     "                rv[key] = v"
+    ],
+    [
+     "-",
+     "            else:"
+    ],
+    [
+     "+",
+     "            if not k.startswith(namespace):"
+    ],
+    [
+     " ",
+     "                continue"
+    ],
+    [
+     "+",
+     "            key = k[len(namespace):] if trim_namespace else k"
+    ],
+    [
+     "+",
+     "            if lowercase:"
+    ],
+    [
+     "+",
+     "                key = key.lower()"
+    ],
+    [
+     "+",
+     "            rv[key] = v"
+    ],
+    [
+     " ",
+     "        return rv"
+    ],
+    [
+     " ",
+     ""
+    ]
+   ],
+   "tests": "import pytest\nfrom flask.config import Config\n\ndef make_config(**kwargs):\n    c = Config(None, None)\n    c.update(kwargs)\n    return c\n\n@pytest.mark.parametrize(\"namespace,lowercase,trim_namespace,input_dict,expected\", [\n    # basic case\n    (\"IMAGE_STORE_\", True, True,\n     {\"IMAGE_STORE_TYPE\": \"fs\", \"IMAGE_STORE_PATH\": \"/var/app/images\", \"IMAGE_STORE_BASE_URL\": \"http://img.website.com\"},\n     {\"type\": \"fs\", \"path\": \"/var/app/images\", \"base_url\": \"http://img.website.com\"}),\n    # lowercase=False\n    (\"IMAGE_STORE_\", False, True,\n     {\"IMAGE_STORE_TYPE\": \"fs\", \"IMAGE_STORE_PATH\": \"/var/app/images\"},\n     {\"TYPE\": \"fs\", \"PATH\": \"/var/app/images\"}),\n    # trim_namespace=False, lowercase=True\n    (\"IMAGE_STORE_\", True, False,\n     {\"IMAGE_STORE_TYPE\": \"fs\"},\n     {\"image_store_type\": \"fs\"}),\n    # both false\n    (\"IMAGE_STORE_\", False, False,\n     {\"IMAGE_STORE_TYPE\": \"fs\"},\n     {\"IMAGE_STORE_TYPE\": \"fs\"}),\n    # namespace longer than key? shouldn't happen because startswith ensures len>=len(namespace)\n    (\"PREFIX_\", True, True,\n     {\"PREFIX_A\": 1, \"PREFIX_AB\": 2},\n     {\"a\": 1, \"ab\": 2}),\n    # mixed case keys with lowercase True\n    (\"PREFIX_\", True, True,\n     {\"PREFIX_aBc\": 5, \"PREFIX_XYz\": 6},\n     {\"abc\": 5, \"xyz\": 6}),\n    # no matches\n    (\"PREFIX_\", True, True,\n     {\"OTHER\": 1, \"another\": 2},\n     {}),\n    # empty config\n    (\"PREFIX_\", True, True,\n     {},\n     {}),\n    # namespace empty string matches all keys\n    (\"\", True, True,\n     {\"A\": 1, \"b\": 2},\n     {\"a\": 1, \"b\": 2}),\n    # namespace empty, trim false, lowercase false\n    (\"\", False, False,\n     {\"A\": 1, \"b\": 2},\n     {\"A\": 1, \"b\": 2}),\n])\ndef test_get_namespace(namespace, lowercase, trim_namespace, input_dict, expected):\n    cfg = make_config(**input_dict)\n    result = cfg.get_namespace(namespace, lowercase=lowercase, trim_namespace=trim_namespace)\n    assert result == expected\n\nif __name__ == \"__main__\":\n    pytest.main([__file__, \"-q\"])\n",
+   "tests_passed": 10
+  }
+ ]
+}

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Slopgate</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div class="topbar"><a class="brand" href="index.html">Slopgate</a><nav aria-label="Pages"><a href="index.html" aria-current="page">Home</a><a href="how.html">How it works</a><a href="reviews.html">Reviews</a><a href="benchmark.html">Benchmark</a><a href="try.html">Try it</a></nav></div></header>
+<main>
+<h1>Slopgate rewrites agent slop and proves the rewrite still works.</h1>
+<div class="wide pair">
+<figure><figcaption><span class="tag">before</span> <code>NamingStyle.get_regex</code> in pylint, complexity 12</figcaption><pre class="diff" tabindex="0"><code><span class="l ctx">     @classmethod</span><span class="l ctx">     def get_regex(cls, name_type: str) -&gt; Pattern[str]:</span><span class="l del">-        if name_type == &#x27;module&#x27;:</span><span class="l del">-            return cls.MOD_NAME_RGX</span><span class="l del">-        elif name_type == &#x27;const&#x27;:</span><span class="l del">-            return cls.CONST_NAME_RGX</span><span class="l del">-        elif name_type == &#x27;class&#x27;:</span><span class="l del">-            return cls.CLASS_NAME_RGX</span><span class="l del">-        elif name_type == &#x27;function&#x27;:</span><span class="l del">-            return cls.DEFAULT_NAME_RGX</span><span class="l del">-        elif name_type == &#x27;method&#x27;:</span><span class="l del">-            return cls.DEFAULT_NAME_RGX</span><span class="l del">-        elif name_type == &#x27;attr&#x27;:</span><span class="l del">-            return cls.DEFAULT_NAME_RGX</span><span class="l del">-        elif name_type == &#x27;argument&#x27;:</span><span class="l del">-            return cls.DEFAULT_NAME_RGX</span><span class="l del">-        elif name_type == &#x27;variable&#x27;:</span><span class="l del">-            return cls.DEFAULT_NAME_RGX</span><span class="l del">-        elif name_type == &#x27;class_attribute&#x27;:</span><span class="l del">-            return cls.CLASS_ATTRIBUTE_RGX</span><span class="l del">-        elif name_type == &#x27;class_const&#x27;:</span><span class="l del">-            return cls.CONST_NAME_RGX</span><span class="l del">-        elif name_type == &#x27;inlinevar&#x27;:</span><span class="l del">-            return cls.COMP_VAR_RGX</span><span class="l del">-        raise KeyError(name_type)</span></code></pre></figure>
+<figure><figcaption><span class="tag">after</span> the same function as a lookup table, complexity 2</figcaption><pre class="diff" tabindex="0"><code><span class="l ctx">     @classmethod</span><span class="l ctx">     def get_regex(cls, name_type: str) -&gt; Pattern[str]:</span><span class="l add">+        mapping = {</span><span class="l add">+            &#x27;module&#x27;: cls.MOD_NAME_RGX,</span><span class="l add">+            &#x27;const&#x27;: cls.CONST_NAME_RGX,</span><span class="l add">+            &#x27;class&#x27;: cls.CLASS_NAME_RGX,</span><span class="l add">+            &#x27;function&#x27;: cls.DEFAULT_NAME_RGX,</span><span class="l add">+            &#x27;method&#x27;: cls.DEFAULT_NAME_RGX,</span><span class="l add">+            &#x27;attr&#x27;: cls.DEFAULT_NAME_RGX,</span><span class="l add">+            &#x27;argument&#x27;: cls.DEFAULT_NAME_RGX,</span><span class="l add">+            &#x27;variable&#x27;: cls.DEFAULT_NAME_RGX,</span><span class="l add">+            &#x27;class_attribute&#x27;: cls.CLASS_ATTRIBUTE_RGX,</span><span class="l add">+            &#x27;class_const&#x27;: cls.CONST_NAME_RGX,</span><span class="l add">+            &#x27;inlinevar&#x27;: cls.COMP_VAR_RGX,</span><span class="l add">+        }</span><span class="l add">+        try:</span><span class="l add">+            return mapping[name_type]</span><span class="l add">+        except KeyError:</span><span class="l add">+            raise KeyError(name_type)</span></code></pre></figure>
+</div>
+<p class="wide verdict ok">Proof passed. 15 tests that pin the old behavior pass on the old code and on the rewrite.</p>
+<ul class="wide figures">
+<li><b class="num">91%</b><span>Slopgate flags 91% of injected slop on real SWE-bench repos (41 of 45 items).</span></li>
+<li><b class="num">34%</b><span>of the flagged items get a proven one-click fix (14 of 41). 0 of these fixes broke a hidden test.</span></li>
+<li><b class="num">$1.16</b><span>for the whole run on 15 SWE-bench instances of 7 repositories.</span></li>
+</ul>
+<p class="next"><a href="how.html">Next: how a review works</a></p>
+</main>
+<footer><p>Slopgate reviews pull requests for slop that coding agents write. It runs on Nemotron models on Nebius Token Factory. <a href="https://github.com/agno-nymous/slopgate">Source on GitHub</a>.</p></footer>
+
+</body>
+</html>

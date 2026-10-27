@@ -1,0 +1,305 @@
+{
+ "seconds": 333,
+ "usd": 0.1031,
+ "tokens": "2,929 tokens (Nemotron-3-Ultra-550b-a55b), 308,413 tokens (nemotron-3-super-120b-a12b)",
+ "trace": "d9d8ec279700791cb3cae575976bdd16",
+ "steps": [
+  {
+   "name": "gate.index",
+   "count": 1,
+   "seconds": 0.0
+  },
+  {
+   "name": "sandbox.prepare",
+   "count": 1,
+   "seconds": 16.3
+  },
+  {
+   "name": "gate.collect",
+   "count": 1,
+   "seconds": 7.2
+  },
+  {
+   "name": "gate.baseline",
+   "count": 1,
+   "seconds": 213.1
+  },
+  {
+   "name": "gate.characterize",
+   "count": 3,
+   "seconds": 208.6
+  },
+  {
+   "name": "gate.rewrite",
+   "count": 2,
+   "seconds": 3.7
+  },
+  {
+   "name": "gate.proof",
+   "count": 4,
+   "seconds": 17.1
+  },
+  {
+   "name": "gate.repo_suite",
+   "count": 1,
+   "seconds": 210.8
+  }
+ ],
+ "rejected": 1,
+ "items": [
+  {
+   "where": "follow-up pull request",
+   "function": "ObjectProperty.get_mapping",
+   "path": "seaborn/_core/properties.py",
+   "kinds": [
+    "swallowed_error"
+   ],
+   "summary": "nesting 2 -> 2, complexity 7 -> 7. 5 characterization tests passed in sandbox.",
+   "diff": [
+    [
+     "@",
+     "seaborn/_core/properties.py"
+    ],
+    [
+     " ",
+     ""
+    ],
+    [
+     " ",
+     "            return mapping"
+    ],
+    [
+     "-",
+     "        except Exception:"
+    ],
+    [
+     "+",
+     "        except (TypeError, ValueError):"
+    ],
+    [
+     " ",
+     "            return None"
+    ],
+    [
+     " ",
+     ""
+    ]
+   ],
+   "tests": "import numpy as np\nimport pytest\nfrom pandas import Series\nfrom seaborn._core.properties import ObjectProperty\nfrom seaborn._core.scales import Scale, Nominal\n\nclass DummyObjectProperty(ObjectProperty):\n    variable = \"dummy\"\n    null_value = None\n\n    def _default_values(self, n):\n        return [f\"default_{i}\" for i in range(n)]\n\n    def standardize(self, x):\n        return x\n\ndef test_get_mapping_dict():\n    prop = DummyObjectProperty()\n    scale = Nominal()\n    scale.values = {\"a\": 1, \"b\": 2}\n    data = Series([\"a\", \"b\", \"a\"])\n    mapping = prop.get_mapping(scale, data)\n    assert mapping is not None\n    result = mapping([0, 1, 0])\n    assert result == [1, 2, 1]\n\ndef test_get_mapping_list():\n    prop = DummyObjectProperty()\n    scale = Nominal()\n    scale.values = [10, 20]\n    data = Series([\"x\", \"y\"])\n    mapping = prop.get_mapping(scale, data)\n    assert mapping is not None\n    result = mapping([0, 1])\n    assert result == [10, 20]\n    # test cycling\n    scale2 = Nominal()\n    scale2.values = [5]\n    data2 = Series([\"a\", \"b\"])\n    mapping2 = prop.get_mapping(scale2, data2)\n    assert mapping2 is not None\n    res2 = mapping2([0, 1])\n    assert res2 == [5, 5]\n\ndef test_get_mapping_none():\n    prop = DummyObjectProperty()\n    scale = Nominal()\n    scale.values = None\n    data = Series([\"p\", \"q\"])\n    mapping = prop.get_mapping(scale, data)\n    assert mapping is not None\n    res = mapping([0, 1])\n    assert res == [\"default_0\", \"default_1\"]\n\ndef test_get_mapping_invalid_type():\n    prop = DummyObjectProperty()\n    scale = Nominal()\n    scale.values = 42  # invalid\n    data = Series([\"a\"])\n    mapping = prop.get_mapping(scale, data)\n    assert mapping is None  # exception caught returns None\n\ndef test_get_mapping_exception_in_check():\n    # Force exception in _check_dict_entries by making levels missing key\n    prop = DummyObjectProperty()\n    scale = Nominal()\n    scale.values = {\"a\": 1}\n    data = Series([\"b\"])  # missing key\n    mapping = prop.get_mapping(scale, data)\n    assert mapping is None  # ValueError raised inside try -> returns None\n\nif __name__ == \"__main__\":\n    pytest.main([__file__])\n",
+   "tests_passed": 5
+  },
+  {
+   "where": "follow-up pull request",
+   "function": "Continuous.tick",
+   "path": "seaborn/_core/scales.py",
+   "kinds": [
+    "nesting"
+   ],
+   "summary": "nesting 4 -> 2, complexity 8 -> 8. 7 characterization tests passed in sandbox.",
+   "diff": [
+    [
+     "@",
+     "seaborn/_core/scales.py"
+    ],
+    [
+     " ",
+     "        \"\"\""
+    ],
+    [
+     " ",
+     "        # Input checks"
+    ],
+    [
+     "-",
+     "        if not (locator is not None and not isinstance(locator, Locator)):"
+    ],
+    [
+     "-",
+     "            log_base, symlog_thresh = self._parse_for_log_params(self.trans)"
+    ],
+    [
+     "-",
+     "            if log_base or symlog_thresh:"
+    ],
+    [
+     "-",
+     "                if not (count is not None and between is None):"
+    ],
+    [
+     "-",
+     "                    if every is not None:"
+    ],
+    [
+     "-",
+     "                        raise RuntimeError(\"`every` not supported with log transform.\")"
+    ],
+    [
+     "-",
+     "                else:"
+    ],
+    [
+     "-",
+     "                    raise RuntimeError(\"`count` requires `between` with log transform.\")"
+    ],
+    [
+     "-",
+     ""
+    ],
+    [
+     "-",
+     "            new = copy(self)"
+    ],
+    [
+     "-",
+     "            new._tick_params = {"
+    ],
+    [
+     "-",
+     "                \"locator\": locator,"
+    ],
+    [
+     "-",
+     "                \"at\": at,"
+    ],
+    [
+     "-",
+     "                \"upto\": upto,"
+    ],
+    [
+     "-",
+     "                \"count\": count,"
+    ],
+    [
+     "-",
+     "                \"every\": every,"
+    ],
+    [
+     "-",
+     "                \"between\": between,"
+    ],
+    [
+     "-",
+     "                \"minor\": minor,"
+    ],
+    [
+     "-",
+     "            }"
+    ],
+    [
+     "-",
+     "            return new"
+    ],
+    [
+     "-",
+     "        else:"
+    ],
+    [
+     "+",
+     "        if locator is not None and not isinstance(locator, Locator):"
+    ],
+    [
+     " ",
+     "            raise TypeError("
+    ],
+    [
+     " ",
+     "                f\"Tick locator must be an instance of {Locator!r}, \""
+    ],
+    [
+     " ",
+     "                f\"not {type(locator)!r}.\""
+    ],
+    [
+     " ",
+     "            )"
+    ],
+    [
+     "+",
+     ""
+    ],
+    [
+     "+",
+     "        log_base, symlog_thresh = self._parse_for_log_params(self.trans)"
+    ],
+    [
+     "+",
+     "        if log_base or symlog_thresh:"
+    ],
+    [
+     "+",
+     "            if count is not None and between is None:"
+    ],
+    [
+     "+",
+     "                raise RuntimeError(\"`count` requires `between` with log transform.\")"
+    ],
+    [
+     "+",
+     "            if every is not None:"
+    ],
+    [
+     "+",
+     "                raise RuntimeError(\"`every` not supported with log transform.\")"
+    ],
+    [
+     "+",
+     ""
+    ],
+    [
+     "+",
+     "        new = copy(self)"
+    ],
+    [
+     "+",
+     "        new._tick_params = {"
+    ],
+    [
+     "+",
+     "            \"locator\": locator,"
+    ],
+    [
+     "+",
+     "            \"at\": at,"
+    ],
+    [
+     "+",
+     "            \"upto\": upto,"
+    ],
+    [
+     "+",
+     "            \"count\": count,"
+    ],
+    [
+     "+",
+     "            \"every\": every,"
+    ],
+    [
+     "+",
+     "            \"between\": between,"
+    ],
+    [
+     "+",
+     "            \"minor\": minor,"
+    ],
+    [
+     "+",
+     "        }"
+    ],
+    [
+     "+",
+     "        return new"
+    ],
+    [
+     " ",
+     ""
+    ],
+    [
+     " ",
+     "    def label("
+    ]
+   ],
+   "tests": "import sys\nimport copy\nfrom types import SimpleNamespace\nimport pytest\nfrom seaborn._core.scales import Continuous\nfrom matplotlib.ticker import Locator\n\nclass DummyLocator(Locator):\n    pass\n\ndef make_continuous(log_base=0, symlog_thresh=0):\n    obj = Continuous(SimpleNamespace())\n    obj.trans = SimpleNamespace()\n    obj._parse_for_log_params = lambda trans: (log_base, symlog_thresh)\n    return obj\n\ndef test_locator_not_instance_raises():\n    cont = make_continuous()\n    with pytest.raises(TypeError):\n        cont.tick(locator=object())\n\ndef test_locator_instance_returns_copy():\n    cont = make_continuous()\n    loc = DummyLocator()\n    new = cont.tick(locator=loc)\n    assert new is not cont\n    assert new._tick_params[\"locator\"] is loc\n    assert new._tick_params[\"at\"] is None\n    assert new._tick_params[\"upto\"] is None\n    assert new._tick_params[\"count\"] is None\n    assert new._tick_params[\"every\"] is None\n    assert new._tick_params[\"between\"] is None\n    assert new._tick_params[\"minor\"] is None\n\ndef test_log_transform_every_error():\n    cont = make_continuous(log_base=10)\n    with pytest.raises(RuntimeError, match=\"`every` not supported with log transform\"):\n        cont.tick(count=None, every=2.0)  # count None triggers outer if true\n\ndef test_log_transform_count_requires_between_error():\n    cont = make_continuous(log_base=10)\n    with pytest.raises(RuntimeError, match=\"`count` requires `between` with log transform\"):\n        cont.tick(count=5)  # between None triggers else branch\n\ndef test_log_transform_count_with_between_no_error():\n    cont = make_continuous(log_base=10)\n    new = cont.tick(count=5, between=(0,10))\n    assert new._tick_params[\"count\"] == 5\n    assert new._tick_params[\"between\"] == (0,10)\n\ndef test_non_log_transform_sets_params():\n    cont = make_continuous(log_base=0, symlog_thresh=0)\n    new = cont.tick(at=[1,2,3], upto=5, count=4, every=1.5, between=(0,10), minor=2)\n    assert new._tick_params[\"at\"] == [1,2,3]\n    assert new._tick_params[\"upto\"] == 5\n    assert new._tick_params[\"count\"] == 4\n    assert new._tick_params[\"every\"] == 1.5\n    assert new._tick_params[\"between\"] == (0,10)\n    assert new._tick_params[\"minor\"] == 2\n\ndef test_all_none_params():\n    cont = make_continuous()\n    new = cont.tick()\n    for v in new._tick_params.values():\n        assert v is None\n",
+   "tests_passed": 7
+  }
+ ]
+}
