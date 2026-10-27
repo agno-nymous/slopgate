@@ -46,6 +46,22 @@ Do the workflow edits first. On a public repo, a pull request from a fork can ru
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
+## Not for the submission (set on 2026-10-26)
+
+Do not do these tickets before the submission on 2026-10-29. Each stays `ready-for-agent`. Do one only if the numbers of ticket 10 show that it changes the headline.
+
+| Ticket | Why it waits |
+|---|---|
+| 45, 50, 43 | Each fixes one slop kind. The per-kind numbers of ticket 10 decide: fix the kind, or turn it off in the gate. |
+| 70, 74, 69, 71 | Each fixes the install or coverage of a class of old or compiled repos. The headline does not need them. |
+| 56 | A django test layout. It affects one external pull request. |
+| 57, 40, 62 | Speed only. |
+| 61 | A tracing defect that the gate does not trigger. |
+| 47 | Not seen in the 12 SWE-bench Lite repos. |
+| 09 | The Jev classifier comparison. Lowest priority. |
+
+Tickets 65 and 08 are in the plan, but cut them first if time runs short: ticket 65 first, then ticket 08.
+
 ## Order
 
 | Order | Ticket | Status | Blocked by | Why it is in this position |
