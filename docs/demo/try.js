@@ -74,8 +74,8 @@
   var CSS = [
     ".live{min-width:0}",
     ".live *{box-sizing:border-box}",
-    ".live h2,.live h3{margin:0 0 8px;font:600 1rem/1.3 var(--sans)}",
-    ".live section+section{margin-top:32px;padding-top:24px;border-top:1px solid var(--rule)}",
+    ".live h2{margin:0 0 8px;font:600 1.25rem/1.3 var(--sans)}",
+    ".live h3{margin:0 0 8px;font:600 1rem/1.3 var(--sans)}",
     ".live label{display:block;margin:14px 0 6px;font:600 0.85rem var(--sans)}",
     ".live .note{margin:6px 0 0;font-size:0.85rem;color:var(--muted)}",
     ".live a{color:var(--link)}",
@@ -86,7 +86,6 @@
     ".live button.quiet{background:transparent;color:var(--ink);border:1px solid var(--rule);padding:10px 14px}",
     ".live :focus-visible{outline:3px solid var(--link);outline-offset:2px}",
     ".live .bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}",
-    ".live .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr));gap:0 14px}",
     ".live .steps{list-style:none;margin:18px 0 0;padding:0}",
     ".live .steps li{display:grid;grid-template-columns:5.5rem 1fr;gap:2px 10px;padding:6px 0;border-top:1px solid var(--rule)}",
     ".live .steps .st{font:600 0.78rem/1.6 var(--mono);color:var(--muted)}",
@@ -110,10 +109,6 @@
     ".live .verdict.err{background:var(--note-wash);color:var(--note)}",
     ".live details{margin-top:14px}",
     ".live summary{cursor:pointer;font-weight:600}",
-    ".live .cmd{display:flex;gap:10px;align-items:stretch;margin-top:8px}",
-    ".live .cmd pre{flex:1;min-width:0;margin:0;padding:10px 12px}",
-    ".live .cmd button{flex:none}",
-    ".live .out h3{margin-top:14px;font-size:0.9rem}",
     "@media (prefers-reduced-motion:reduce){.live *{animation:none!important;transition:none!important}}",
   ].join("\n");
 
@@ -289,25 +284,6 @@
     this.message = message;
   }
 
-  var REPO_URL = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/?$/;
-  var SAFE_REF = /^(?![-~])[\w./@:~-]+$/;
-
-  function buildCommands(url, base, head, pr) {
-    if (!REPO_URL.test(url)) return { error: "Enter a GitHub repository URL." };
-    var name = url.replace(/\/$/, "").split("/").pop().replace(/\.git$/, "");
-    if (!SAFE_REF.test(name) || /^\.+$/.test(name)) return { error: "The repository name has characters that are not allowed." };
-    var run = "uvx --from git+https://github.com/agno-nymous/slopgate slopgate review ";
-    var clone = "git clone " + url.replace(/\/$/, "") + " && cd " + name;
-    if (pr) {
-      if (!/^\d+$/.test(pr)) return { error: "Enter a pull request number (digits only)." };
-      return { clone: clone, run: run + "--pr " + pr + " --dry-run", pr: true };
-    }
-    if (!SAFE_REF.test(base) || !SAFE_REF.test(head)) {
-      return { error: "Refs may use only letters, digits, and . _ / @ : ~ - and may not start with -." };
-    }
-    return { clone: clone, run: run + "--repo . --base " + base + " --head " + head + " --dry-run" };
-  }
-
   function mount(el, options) {
     options = options || {};
     var key = "";
@@ -326,7 +302,7 @@
       "<h2>Try the gate on your own function</h2>",
       '<label for="sg-key">Nebius Token Factory key</label>',
       '<input id="sg-key" type="password" autocomplete="off" spellcheck="false">',
-      '<p class="note">Sent only to api.tokenfactory.nebius.com from your browser. Not stored. ',
+      '<p class="note">Sent only to api.tokenfactory.nebius.com, from your browser. Not stored. ',
       '<a href="https://tokenfactory.nebius.com/project/api-keys" target="_blank" rel="noopener noreferrer">Get a key</a></p>',
       '<label for="sg-sample">Sample</label>',
       '<select id="sg-sample">',
@@ -338,17 +314,6 @@
       '<button type="button" class="quiet" id="sg-forget">Forget key</button></div>',
       '<ol class="steps" aria-live="polite" hidden></ol>',
       '<div class="result" role="status"></div>',
-      "</section>",
-      "<section>",
-      "<h2>Review a whole repository on your machine</h2>",
-      '<label for="sg-url">GitHub repository URL</label>',
-      '<input id="sg-url" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://github.com/owner/name">',
-      '<div class="grid">',
-      '<div><label for="sg-base">Base ref</label><input id="sg-base" type="text" autocomplete="off" spellcheck="false" value="HEAD~1"></div>',
-      '<div><label for="sg-head">Head ref</label><input id="sg-head" type="text" autocomplete="off" spellcheck="false" value="HEAD"></div>',
-      '<div><label for="sg-pr">Pull request number (optional)</label><input id="sg-pr" type="text" inputmode="numeric" autocomplete="off" spellcheck="false"></div>',
-      "</div>",
-      '<div class="out"></div>',
       "</section>",
     ].join("");
 
@@ -513,7 +478,7 @@
         }
         setStep(3, "done");
         setStep(4, "done");
-        render(res, "Proven: the rewrite passes " + count + " tests that the old code passes.", "ok");
+        render(res, "Passed: the rewrite passes the same " + count + " tests as the old code.", "ok");
       } catch (e) {
         if (e instanceof Reject) {
           setStep(current, "failed");
@@ -530,70 +495,6 @@
     }
 
     runBtn.addEventListener("click", function () { if (!running) runGate(); });
-
-    var urlIn = $("#sg-url");
-    var baseIn = $("#sg-base");
-    var headIn = $("#sg-head");
-    var prIn = $("#sg-pr");
-    var out = $(".out");
-
-    function commandBlock(title, text) {
-      var wrap = document.createElement("div");
-      var h = document.createElement("h3");
-      h.textContent = title;
-      var row = document.createElement("div");
-      row.className = "cmd";
-      var pre = document.createElement("pre");
-      var c = document.createElement("code");
-      c.textContent = text;
-      pre.appendChild(c);
-      var b = document.createElement("button");
-      b.type = "button";
-      b.className = "quiet";
-      b.textContent = "Copy";
-      b.addEventListener("click", async function () {
-        try {
-          await navigator.clipboard.writeText(text);
-          b.textContent = "Copied";
-          setTimeout(function () { b.textContent = "Copy"; }, 1500);
-        } catch (e) {
-          var r = document.createRange();
-          r.selectNodeContents(c);
-          var s = window.getSelection();
-          s.removeAllRanges();
-          s.addRange(r);
-          b.textContent = "Press Ctrl+C";
-        }
-      });
-      row.appendChild(pre);
-      row.appendChild(b);
-      wrap.appendChild(h);
-      wrap.appendChild(row);
-      return wrap;
-    }
-
-    function update() {
-      var c = buildCommands(urlIn.value.trim(), baseIn.value.trim(), headIn.value.trim(), prIn.value.trim());
-      out.textContent = "";
-      if (c.error) {
-        var p = document.createElement("p");
-        p.className = "note";
-        p.setAttribute("role", "status");
-        p.textContent = c.error;
-        out.appendChild(p);
-        return;
-      }
-      out.appendChild(commandBlock("1. Clone the repository", c.clone));
-      out.appendChild(commandBlock(c.pr ? "2. Review the pull request (dry run, posts nothing)" : "2. Review the change (dry run, posts nothing)", c.run));
-      var n = document.createElement("p");
-      n.className = "note";
-      n.textContent = "Export NEBIUS_API_KEY and NEBIUS_PROJECT_ID in your shell first." +
-        (c.pr ? " This command needs gh auth login to read the pull request. It posts nothing." : "");
-      out.appendChild(n);
-    }
-
-    [urlIn, baseIn, headIn, prIn].forEach(function (i) { i.addEventListener("input", update); });
-    update();
   }
 
   window.SlopgateTry = { mount: mount };

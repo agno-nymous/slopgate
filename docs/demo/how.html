@@ -9,16 +9,19 @@
 <body>
 <header class="top"><div class="topbar"><a class="brand" href="index.html">Slopgate</a><nav aria-label="Pages"><a href="index.html">Home</a><a href="how.html" aria-current="page">How it works</a><a href="reviews.html">Reviews</a><a href="benchmark.html">Benchmark</a><a href="try.html">Try it</a></nav></div></header>
 <main>
+<p class="pos">2 of 5: How it works</p>
 <h1>How a review works</h1>
 <ol class="flow">
-<li><span class="n">1</span><div><h2>Candidates</h2><p>Find the Python functions that the pull request adds or changes.</p></div></li><li><span class="n">2</span><div><h2>Kinds</h2><p>Ruff, vulture, and AST checks name the slop kind. Only duplicates need a model.</p></div></li>
+<li><span class="n">1</span><div><h2>Find changed functions</h2><p>Slopgate lists the Python functions that the pull request adds or changes.</p></div></li><li><span class="n">2</span><div><h2>Name the problem</h2><p>Ruff, vulture, and syntax-tree checks label long if/elif chains, dead code, and deep nesting. To find a copy of an existing function, Slopgate matches its words against the repository, and Nemotron Super judges the close matches.</p></div></li>
 </ol>
-<div class="sandbox"><p class="label">Nebius ConTree sandbox: steps 3 to 5</p>
+<div class="sandbox"><p class="label">Steps 3 to 5 run in a Nebius ConTree sandbox</p>
 <ol class="flow" start="3">
-<li><span class="n">3</span><div><h2>Tests</h2><p>Nemotron Super writes tests that pin the behavior of the old code. It runs them on the old code to check them.</p></div></li><li><span class="n">4</span><div><h2>Rewrite</h2><p>Nemotron Super rewrites the function. Nemotron Ultra tries again when a rewrite fails.</p></div></li><li><span class="n">5</span><div><h2>Proof</h2><p>The rewrite must pass the same tests and the tests of the repository. A rewrite that fails gets a review note, not a change.</p></div></li>
+<li><span class="n">3</span><div><h2>Write tests for the old code</h2><p>Nemotron Super writes tests that record what the old code does. The tests must pass on the old code.</p></div></li><li><span class="n">4</span><div><h2>Rewrite</h2><p>Nemotron Super rewrites the function. If the rewrite fails, Nemotron Ultra tries once more.</p></div></li><li><span class="n">5</span><div><h2>Check</h2><p>The rewrite must pass those tests and the repository&#x27;s own tests. If it fails, the pull request gets a comment and no code change.</p></div></li>
 </ol></div>
-<p>The gate posts a proven rewrite as a suggested change on the pull request. When the function is not all inside the diff, it posts a follow-up pull request. Nothing is merged for you.</p>
-<p class="next"><a href="reviews.html">Next: recorded reviews</a></p>
+<ol class="flow" start="6">
+<li><span class="n">6</span><div><h2>Post</h2><p>A rewrite that passes appears as a suggested change on the pull request. You decide whether to merge it.</p></div></li>
+</ol>
+<p class="next"><a href="reviews.html">Next: see 4 real reviews</a></p>
 </main>
 <footer><p>Slopgate reviews pull requests for slop that coding agents write. It runs on Nemotron models on Nebius Token Factory. <a href="https://github.com/agno-nymous/slopgate">Source on GitHub</a>.</p></footer>
 

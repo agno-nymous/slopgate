@@ -111,8 +111,11 @@ def test_headline_equals_benchmark_report():
     table = (showcase.RESULTS / "swebench" / "swebench.md").read_text()
     row = next(line for line in table.splitlines() if line.startswith("| total |"))
     assert [int(cell) for cell in row.split("|")[2:5]] == [head["items"], head["detected"], head["accepted"]]
-    home = (showcase.DEMO / "index.html").read_text()
-    assert f"{head['detected']} of {head['items']}" in home and f"{head['accepted']} of {head['detected']}" in home
+    for page in ("index.html", "benchmark.html"):
+        text = (showcase.DEMO / page).read_text()
+        assert f'<b class="num">{head["detected"]} of {head["items"]}</b>' in text
+        assert f'<b class="num">{head["accepted"]}</b>' in text
+        assert f"The other {head['detected'] - head['accepted']} found items" in text
 
 
 def test_reviews_show_only_proven_fixes_of_two_kinds():

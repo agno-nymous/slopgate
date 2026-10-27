@@ -15,35 +15,38 @@ RECORDINGS = DEMO / "recordings"
 README = "https://github.com/agno-nymous/slopgate#try-slopgate-on-your-machine"
 PHOENIX_CLI = "@arizeai/phoenix-cli@1.18.9"
 
-STEPS = [{"name": name} for name in ("Candidates", "Kinds", "Tests", "Rewrite", "Proof")]
-
 SPEC = {
     "pylint-7993": {
         "project": "pylint",
+        "headline": "a long if/elif chain becomes a dict lookup",
         "source": {"label": "pylint, SWE-bench pylint-dev__pylint-7993", "url": "https://github.com/pylint-dev/pylint"},
-        "why": "A long if/elif chain in a linter. The rewrite is a dict lookup, and the complexity falls from 12 to 2.",
+        "why": "The benchmark added a 12-branch if/elif chain to a naming helper in pylint. Slopgate turned it back into a dict lookup.",
     },
     "pytest-7220": {
         "project": "pytest",
+        "headline": "an unused variable is removed",
         "source": {"label": "pytest, SWE-bench pytest-dev__pytest-7220", "url": "https://github.com/pytest-dev/pytest"},
-        "why": "Dead code in the capture code of pytest. The tests ran on the old and on the new code in the sandbox.",
+        "why": "The benchmark added an unused variable to the capture code of pytest. The sandbox ran the tests on the old code and on the new code.",
     },
     "seaborn-3190": {
         "project": "seaborn",
+        "headline": "a swallowed error is narrowed and a deep nest is flattened",
         "source": {"label": "seaborn, SWE-bench mwaskom__seaborn-3190", "url": "https://github.com/mwaskom/seaborn"},
-        "why": "A plotting library. One run proves a swallowed error and a deeply nested method.",
+        "why": "The benchmark added two kinds of slop to a plotting library. One run fixed both.",
     },
     "flask-4992": {
         "project": "flask",
+        "headline": "an unreachable line is removed and a nested loop is flattened",
         "source": {"label": "flask, SWE-bench pallets__flask-4992", "url": "https://github.com/pallets/flask"},
-        "why": "A web framework. The review proves fixes of more than one kind in the same run.",
+        "why": "The benchmark added two kinds of slop to a web framework. One run fixed both.",
     },
 }
 
 HOW = [
-    {"text": "Install <a href=\"https://docs.astral.sh/uv/\">uv</a>, and get your keys at <a href=\"https://tokenfactory.nebius.com/project/api-keys\">Nebius Token Factory</a>."},
+    {"text": "Install <a href=\"https://docs.astral.sh/uv/\">uv</a>, and get your keys from <a href=\"https://tokenfactory.nebius.com/project/api-keys\">Nebius Token Factory</a>."},
     {"text": "Set the keys in your shell. Slopgate sends them to Nebius only.", "cmd": "export NEBIUS_API_KEY=... NEBIUS_PROJECT_ID=..."},
-    {"text": "Clone the repository you want to review, and check out the branch to review. Then run a dry run on its last commit. A dry run posts nothing to GitHub.", "cmd": "uvx --from git+https://github.com/agno-nymous/slopgate slopgate review --repo . --base HEAD~1 --head HEAD --dry-run"},
+    {"text": "Clone the repository and check out the branch you want to review. Then review its last commit. A dry run posts nothing to GitHub.", "cmd": "uvx --from git+https://github.com/agno-nymous/slopgate slopgate review --repo . --base HEAD~1 --head HEAD --dry-run"},
+    {"text": "To review one pull request, use <code>--pr &lt;number&gt; --dry-run</code> instead of <code>--base</code> and <code>--head</code>."},
     {"text": f"The <a href=\"{README}\">README</a> has the full steps and the cost of one review."},
 ]
 
@@ -173,13 +176,12 @@ def reviews() -> list:
     out = []
     for name, spec in SPEC.items():
         view = json.loads((RECORDINGS / f"{name}.meta.json").read_text())
-        names = ", ".join(item["function"] for item in view["items"])
-        out.append(spec | view | {"slug": name, "title": f"{spec['project']}: {len(view['items'])} proven {'fix' if len(view['items']) == 1 else 'fixes'}, {names}"})
+        out.append(spec | view | {"slug": name, "title": f"{spec['project']}: {spec['headline']}"})
     return out
 
 
 def data() -> dict:
-    return {"headline": headline(), "steps": STEPS, "reviews": reviews(), "how": HOW}
+    return {"headline": headline(), "reviews": reviews(), "how": HOW}
 
 
 if __name__ == "__main__":

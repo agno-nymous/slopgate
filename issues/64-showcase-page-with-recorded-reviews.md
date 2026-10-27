@@ -62,7 +62,7 @@ Use the headline sentences of ticket 11 (Comments, 2026-10-25) on the site. They
 - `how.html`: the 5 gate steps. Steps 3 to 5 are inside a frame that is labeled "Nebius ConTree sandbox".
 - `reviews.html` and `reviews/<name>.html`: a flat list of 4 reviews. Each review page shows the diff first. The tests and the step times are the only folds.
 - `benchmark.html`: one square for each of the 45 injected functions, and the numbers of `swebench.json`. It names the kinds with no proven fix.
-- `try.html`: the live panel (key, sample or pasted function, repository command builder), the local command, and the cost of one review.
+- `try.html`: the live panel (key, sample or pasted function), the local command, and the cost of one review.
 
 The layout and the type follow a brief from another session: Fira Sans for text, Fira Code for code only, cool gray ground, one blue accent, green and red only in diffs and verdicts, 1 px rules, no cards, no gradients. The one motion is a 150 ms color change on links.
 
@@ -106,9 +106,20 @@ I ran several recordings at the same time, so they shared Token Factory. One rev
 
 I did not fix: the `items_of` branch for inline suggestions has no test (no recording uses it); the CSS that `try.js` injects duplicates `style.css`; `try.js` has no committed test (the headless check lives in the scratchpad); the repair-round path of the panel is untested in a browser.
 
+**Readability rewrite (2026-10-26).** The user said that the pages were hard to read. An Opus subagent gave advice, and I applied it:
+
+- Every sentence is short and has one idea. The pages use plain terms: "AI slop", "tested fix", "review comment". The home page h1 is "Slopgate fixes the AI slop that coding agents write in Python."
+- The home page shows 3 figures first ("41 of 45 AI slop items found", "14 fixes that passed every test", "0 fixes that broke a repository test"), then one before and after pair.
+- Each page except the home page has a position line, for example "2 of 5: How it works", and each page ends with one "Next" link.
+- The how-it-works page has 6 steps that start with a verb. The sandbox steps have a rule on the left.
+- The captions say that the benchmark added the slop. The "before" code was not written by an agent.
+- I removed the repository command builder from the live panel. The panel keeps the key, the sample, and the pasted function.
+- Detector after the rewrite: 0 findings on all 6 page types at 1280 px. The one advisory on `try.html` counts the `--` of the CLI flags, so it is a false positive.
+
 **Known limits.**
 
-- The home page is 1066 px high at 1280 px width. The pylint diff has 23 lines, so the page does not fit one 900 px screen.
+- The "after" code of the home page ends with `try: return mapping[name_type] except KeyError: raise KeyError(name_type)`. That `try` block does nothing. The recording is the real output of the gate, so I did not edit it. The `flask-4992` example (`Config.get_namespace`) is a cleaner choice for the home page. The user decides.
+- The home page is 1308 px high at 1280 px width, so it does not fit one 900 px screen.
 - Nobody ran the live panel in a real browser with a real key. The retry wait (5 s, 15 s, 45 s) and the copy button are untested in a browser.
 - The `/impeccable` commands (shape, critique, typeset, and so on) did not run. The skill installed during this session (`npx impeccable install --project --providers=claude --no-hooks`), and the session does not load a new skill. The install files (`.claude/skills/impeccable/`, `.claude/agents/`) are not committed.
 - GitHub Pages is off for this repository. The user must turn it on (source `docs/`).
