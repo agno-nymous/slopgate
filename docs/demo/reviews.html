@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recorded reviews</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div class="topbar"><a class="brand" href="index.html">Slopgate</a><nav aria-label="Pages"><a href="index.html">Home</a><a href="how.html">How it works</a><a href="reviews.html" aria-current="page">Reviews</a><a href="benchmark.html">Benchmark</a><a href="try.html">Try it</a></nav></div></header>
+<main>
+<p class="pos">3 of 5: Reviews</p>
+<h1>Recorded reviews</h1>
+<p>Each review is the unedited output of <code>slopgate review --dry-run</code>. The benchmark added the slop to code from these repositories. Open a review to read the diff.</p>
+<ul class="list">
+<li><h2><a href="reviews/pylint-7993.html">pylint: a long if/elif chain becomes a dict lookup</a></h2>
+<p class="meta">1 tested fix. 2 more functions got a comment. 531&nbsp;s, $0.046. <code>lookup_table</code></p></li><li><h2><a href="reviews/pytest-7220.html">pytest: an unused variable is removed</a></h2>
+<p class="meta">1 tested fix. 2 more functions got a comment. 375&nbsp;s, $0.045. <code>dead</code></p></li><li><h2><a href="reviews/seaborn-3190.html">seaborn: a swallowed error is narrowed and a deep nest is flattened</a></h2>
+<p class="meta">2 tested fixes. 1 more function got a comment. 333&nbsp;s, $0.103. <code>nesting, swallowed_error</code></p></li><li><h2><a href="reviews/flask-4992.html">flask: an unreachable line is removed and a nested loop is flattened</a></h2>
+<p class="meta">2 tested fixes. 1 more function got a comment. 154&nbsp;s, $0.080. <code>dead, nesting</code></p></li>
+</ul>
+<p class="next"><a href="benchmark.html">Next: the numbers on 45 functions</a></p>
+</main>
+<footer><p>Slopgate reviews pull requests for slop that coding agents write. It runs on Nemotron models on Nebius Token Factory. <a href="https://github.com/agno-nymous/slopgate">Source on GitHub</a>.</p></footer>
+
+</body>
+</html>

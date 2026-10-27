@@ -1,0 +1,244 @@
+{
+ "seconds": 531,
+ "usd": 0.046,
+ "tokens": "140,576 tokens (nemotron-3-super-120b-a12b)",
+ "trace": "0c9c37c7305e80017f41cf5871fefac4",
+ "steps": [
+  {
+   "name": "gate.index",
+   "count": 1,
+   "seconds": 0.1
+  },
+  {
+   "name": "sandbox.prepare",
+   "count": 1,
+   "seconds": 20.3
+  },
+  {
+   "name": "gate.collect",
+   "count": 1,
+   "seconds": 5.6
+  },
+  {
+   "name": "gate.baseline",
+   "count": 1,
+   "seconds": 82.4
+  },
+  {
+   "name": "gate.characterize",
+   "count": 3,
+   "seconds": 704.2
+  },
+  {
+   "name": "gate.rewrite",
+   "count": 1,
+   "seconds": 2.1
+  },
+  {
+   "name": "gate.proof",
+   "count": 1,
+   "seconds": 3.4
+  },
+  {
+   "name": "gate.repo_suite",
+   "count": 1,
+   "seconds": 92.3
+  }
+ ],
+ "rejected": 2,
+ "items": [
+  {
+   "where": "follow-up pull request",
+   "function": "NamingStyle.get_regex",
+   "path": "pylint/checkers/base/name_checker/naming_style.py",
+   "kinds": [
+    "lookup_table"
+   ],
+   "summary": "nesting 1 -> 1, complexity 12 -> 2. 15 characterization tests passed in sandbox.",
+   "diff": [
+    [
+     "@",
+     "pylint/checkers/base/name_checker/naming_style.py"
+    ],
+    [
+     " ",
+     "    @classmethod"
+    ],
+    [
+     " ",
+     "    def get_regex(cls, name_type: str) -> Pattern[str]:"
+    ],
+    [
+     "-",
+     "        if name_type == 'module':"
+    ],
+    [
+     "-",
+     "            return cls.MOD_NAME_RGX"
+    ],
+    [
+     "-",
+     "        elif name_type == 'const':"
+    ],
+    [
+     "-",
+     "            return cls.CONST_NAME_RGX"
+    ],
+    [
+     "-",
+     "        elif name_type == 'class':"
+    ],
+    [
+     "-",
+     "            return cls.CLASS_NAME_RGX"
+    ],
+    [
+     "-",
+     "        elif name_type == 'function':"
+    ],
+    [
+     "-",
+     "            return cls.DEFAULT_NAME_RGX"
+    ],
+    [
+     "-",
+     "        elif name_type == 'method':"
+    ],
+    [
+     "-",
+     "            return cls.DEFAULT_NAME_RGX"
+    ],
+    [
+     "-",
+     "        elif name_type == 'attr':"
+    ],
+    [
+     "-",
+     "            return cls.DEFAULT_NAME_RGX"
+    ],
+    [
+     "-",
+     "        elif name_type == 'argument':"
+    ],
+    [
+     "-",
+     "            return cls.DEFAULT_NAME_RGX"
+    ],
+    [
+     "-",
+     "        elif name_type == 'variable':"
+    ],
+    [
+     "-",
+     "            return cls.DEFAULT_NAME_RGX"
+    ],
+    [
+     "-",
+     "        elif name_type == 'class_attribute':"
+    ],
+    [
+     "-",
+     "            return cls.CLASS_ATTRIBUTE_RGX"
+    ],
+    [
+     "-",
+     "        elif name_type == 'class_const':"
+    ],
+    [
+     "-",
+     "            return cls.CONST_NAME_RGX"
+    ],
+    [
+     "-",
+     "        elif name_type == 'inlinevar':"
+    ],
+    [
+     "-",
+     "            return cls.COMP_VAR_RGX"
+    ],
+    [
+     "-",
+     "        raise KeyError(name_type)"
+    ],
+    [
+     "+",
+     "        mapping = {"
+    ],
+    [
+     "+",
+     "            'module': cls.MOD_NAME_RGX,"
+    ],
+    [
+     "+",
+     "            'const': cls.CONST_NAME_RGX,"
+    ],
+    [
+     "+",
+     "            'class': cls.CLASS_NAME_RGX,"
+    ],
+    [
+     "+",
+     "            'function': cls.DEFAULT_NAME_RGX,"
+    ],
+    [
+     "+",
+     "            'method': cls.DEFAULT_NAME_RGX,"
+    ],
+    [
+     "+",
+     "            'attr': cls.DEFAULT_NAME_RGX,"
+    ],
+    [
+     "+",
+     "            'argument': cls.DEFAULT_NAME_RGX,"
+    ],
+    [
+     "+",
+     "            'variable': cls.DEFAULT_NAME_RGX,"
+    ],
+    [
+     "+",
+     "            'class_attribute': cls.CLASS_ATTRIBUTE_RGX,"
+    ],
+    [
+     "+",
+     "            'class_const': cls.CONST_NAME_RGX,"
+    ],
+    [
+     "+",
+     "            'inlinevar': cls.COMP_VAR_RGX,"
+    ],
+    [
+     "+",
+     "        }"
+    ],
+    [
+     "+",
+     "        try:"
+    ],
+    [
+     "+",
+     "            return mapping[name_type]"
+    ],
+    [
+     "+",
+     "        except KeyError:"
+    ],
+    [
+     "+",
+     "            raise KeyError(name_type)"
+    ],
+    [
+     " ",
+     ""
+    ],
+    [
+     " ",
+     ""
+    ]
+   ],
+   "tests": "import pytest\nfrom pylint.checkers.base.name_checker.naming_style import NamingStyle\n\n@pytest.mark.parametrize(\"name_type, expected_attr\", [\n    (\"module\", \"MOD_NAME_RGX\"),\n    (\"const\", \"CONST_NAME_RGX\"),\n    (\"class\", \"CLASS_NAME_RGX\"),\n    (\"function\", \"DEFAULT_NAME_RGX\"),\n    (\"method\", \"DEFAULT_NAME_RGX\"),\n    (\"attr\", \"DEFAULT_NAME_RGX\"),\n    (\"argument\", \"DEFAULT_NAME_RGX\"),\n    (\"variable\", \"DEFAULT_NAME_RGX\"),\n    (\"class_attribute\", \"CLASS_ATTRIBUTE_RGX\"),\n    (\"class_const\", \"CONST_NAME_RGX\"),\n    (\"inlinevar\", \"COMP_VAR_RGX\"),\n])\ndef test_get_regex_returns_correct_attribute(name_type, expected_attr):\n    # Get the regex from the base class (which uses ANY patterns)\n    regex = NamingStyle.get_regex(name_type)\n    expected = getattr(NamingStyle, expected_attr)\n    assert regex is expected\n\n@pytest.mark.parametrize(\"name_type\", [\n    \"moduled\",   # > 'module'\n    \"methody\",   # > 'method'\n    \"variablez\", # > 'variable'\n])\ndef test_get_regex_boundary_raises_keyerror(name_type):\n    # These inputs should raise KeyError in the original implementation.\n    # If the == comparisons are changed to >=, they would incorrectly\n    # return a regex instead of raising.\n    with pytest.raises(KeyError):\n        NamingStyle.get_regex(name_type)\n\ndef test_get_regex_unknown_raises_keyerror():\n    with pytest.raises(KeyError):\n        NamingStyle.get_regex(\"invalid_type\")\n",
+   "tests_passed": 15
+  }
+ ]
+}

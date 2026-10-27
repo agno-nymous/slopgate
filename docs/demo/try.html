@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Try Slopgate</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div class="topbar"><a class="brand" href="index.html">Slopgate</a><nav aria-label="Pages"><a href="index.html">Home</a><a href="how.html">How it works</a><a href="reviews.html">Reviews</a><a href="benchmark.html">Benchmark</a><a href="try.html" aria-current="page">Try it</a></nav></div></header>
+<main>
+<p class="pos">5 of 5: Try it</p>
+<h1>Try Slopgate</h1>
+<p>Paste a Python function and your Nebius Token Factory key. The page asks Nemotron Super for a rewrite and for tests, then runs both versions in your browser. The key stays in this tab and goes only to Token Factory.</p>
+<div id="live" class="live"></div>
+<h2>Run it on your repository</h2>
+<ol class="steps"><li>Install <a href="https://docs.astral.sh/uv/">uv</a>, and get your keys from <a href="https://tokenfactory.nebius.com/project/api-keys">Nebius Token Factory</a>.</li><li>Set the keys in your shell. Slopgate sends them to Nebius only.<pre class="diff cmd" tabindex="0"><code><span class="l ctx">export NEBIUS_API_KEY=... NEBIUS_PROJECT_ID=...</span></code></pre></li><li>Clone the repository and check out the branch you want to review. Then review its last commit. A dry run posts nothing to GitHub.<pre class="diff cmd" tabindex="0"><code><span class="l ctx">uvx --from git+https://github.com/agno-nymous/slopgate slopgate review --repo . --base HEAD~1 --head HEAD --dry-run</span></code></pre></li><li>To review one pull request, use <code>--pr &lt;number&gt; --dry-run</code> instead of <code>--base</code> and <code>--head</code>.</li><li>The <a href="https://github.com/agno-nymous/slopgate#try-slopgate-on-your-machine">README</a> has the full steps and the cost of one review.</li></ol>
+<p>One review cost $0.045 to $0.103 in Token Factory tokens in the 4 recorded reviews.</p>
+<p class="next"><a href="index.html">Back to the start</a></p>
+</main>
+<footer><p>Slopgate reviews pull requests for slop that coding agents write. It runs on Nemotron models on Nebius Token Factory. <a href="https://github.com/agno-nymous/slopgate">Source on GitHub</a>.</p></footer>
+<script src="try.js"></script>
+<script>if (window.SlopgateTry) SlopgateTry.mount(document.getElementById("live"));</script>
+</body>
+</html>

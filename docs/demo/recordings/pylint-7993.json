@@ -1,0 +1,55 @@
+{
+  "suggestions": [],
+  "followup": [
+    {
+      "function": "NamingStyle.get_regex",
+      "kinds": [
+        "lookup_table"
+      ],
+      "reason": "Slopgate (`lookup_table`) rewrite of `NamingStyle.get_regex`.\nnesting 1 -> 1, complexity 12 -> 2. 15 characterization tests passed in sandbox.",
+      "files": {
+        "pylint/checkers/base/name_checker/naming_style.py": "# Licensed under the GPL: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html\n# For details: https://github.com/PyCQA/pylint/blob/main/LICENSE\n# Copyright (c) https://github.com/PyCQA/pylint/blob/main/CONTRIBUTORS.txt\n\nfrom __future__ import annotations\n\nimport re\nfrom re import Pattern\n\nfrom pylint import constants\nfrom pylint.typing import OptionDict, Options\n\n\nclass NamingStyle:\n    \"\"\"Class to register all accepted forms of a single naming style.\n\n    It may seem counter-intuitive that single naming style has multiple \"accepted\"\n    forms of regular expressions, but we need to special-case stuff like dunder\n    names in method names.\n    \"\"\"\n\n    ANY: Pattern[str] = re.compile(\".*\")\n    CLASS_NAME_RGX: Pattern[str] = ANY\n    MOD_NAME_RGX: Pattern[str] = ANY\n    CONST_NAME_RGX: Pattern[str] = ANY\n    COMP_VAR_RGX: Pattern[str] = ANY\n    DEFAULT_NAME_RGX: Pattern[str] = ANY\n    CLASS_ATTRIBUTE_RGX: Pattern[str] = ANY\n\n    @classmethod\n    def get_regex(cls, name_type: str) -> Pattern[str]:\n        mapping = {\n            'module': cls.MOD_NAME_RGX,\n            'const': cls.CONST_NAME_RGX,\n            'class': cls.CLASS_NAME_RGX,\n            'function': cls.DEFAULT_NAME_RGX,\n            'method': cls.DEFAULT_NAME_RGX,\n            'attr': cls.DEFAULT_NAME_RGX,\n            'argument': cls.DEFAULT_NAME_RGX,\n            'variable': cls.DEFAULT_NAME_RGX,\n            'class_attribute': cls.CLASS_ATTRIBUTE_RGX,\n            'class_const': cls.CONST_NAME_RGX,\n            'inlinevar': cls.COMP_VAR_RGX,\n        }\n        try:\n            return mapping[name_type]\n        except KeyError:\n            raise KeyError(name_type)\n\n\nclass SnakeCaseStyle(NamingStyle):\n    \"\"\"Regex rules for snake_case naming style.\"\"\"\n\n    CLASS_NAME_RGX = re.compile(r\"[^\\W\\dA-Z][^\\WA-Z]+$\")\n    MOD_NAME_RGX = re.compile(r\"[^\\W\\dA-Z][^\\WA-Z]*$\")\n    CONST_NAME_RGX = re.compile(r\"([^\\W\\dA-Z][^\\WA-Z]*|__.*__)$\")\n    COMP_VAR_RGX = CLASS_NAME_RGX\n    DEFAULT_NAME_RGX = re.compile(\n        r\"([^\\W\\dA-Z][^\\WA-Z]{2,}|_[^\\WA-Z]*|__[^\\WA-Z\\d_][^\\WA-Z]+__)$\"\n    )\n    CLASS_ATTRIBUTE_RGX = re.compile(r\"([^\\W\\dA-Z][^\\WA-Z]{2,}|__.*__)$\")\n\n\nclass CamelCaseStyle(NamingStyle):\n    \"\"\"Regex rules for camelCase naming style.\"\"\"\n\n    CLASS_NAME_RGX = re.compile(r\"[^\\W\\dA-Z][^\\W_]+$\")\n    MOD_NAME_RGX = re.compile(r\"[^\\W\\dA-Z][^\\W_]*$\")\n    CONST_NAME_RGX = re.compile(r\"([^\\W\\dA-Z][^\\W_]*|__.*__)$\")\n    COMP_VAR_RGX = MOD_NAME_RGX\n    DEFAULT_NAME_RGX = re.compile(r\"([^\\W\\dA-Z][^\\W_]{2,}|__[^\\W\\dA-Z_]\\w+__)$\")\n    CLASS_ATTRIBUTE_RGX = re.compile(r\"([^\\W\\dA-Z][^\\W_]{2,}|__.*__)$\")\n\n\nclass PascalCaseStyle(NamingStyle):\n    \"\"\"Regex rules for PascalCase naming style.\"\"\"\n\n    CLASS_NAME_RGX = re.compile(r\"[^\\W\\da-z][^\\W_]+$\")\n    MOD_NAME_RGX = CLASS_NAME_RGX\n    CONST_NAME_RGX = re.compile(r\"([^\\W\\da-z][^\\W_]*|__.*__)$\")\n    COMP_VAR_RGX = CLASS_NAME_RGX\n    DEFAULT_NAME_RGX = re.compile(r\"([^\\W\\da-z][^\\W_]{2,}|__[^\\W\\dA-Z_]\\w+__)$\")\n    CLASS_ATTRIBUTE_RGX = re.compile(r\"[^\\W\\da-z][^\\W_]{2,}$\")\n\n\nclass UpperCaseStyle(NamingStyle):\n    \"\"\"Regex rules for UPPER_CASE naming style.\"\"\"\n\n    CLASS_NAME_RGX = re.compile(r\"[^\\W\\da-z][^\\Wa-z]+$\")\n    MOD_NAME_RGX = CLASS_NAME_RGX\n    CONST_NAME_RGX = re.compile(r\"([^\\W\\da-z][^\\Wa-z]*|__.*__)$\")\n    COMP_VAR_RGX = CLASS_NAME_RGX\n    DEFAULT_NAME_RGX = re.compile(r\"([^\\W\\da-z][^\\Wa-z]{2,}|__[^\\W\\dA-Z_]\\w+__)$\")\n    CLASS_ATTRIBUTE_RGX = re.compile(r\"[^\\W\\da-z][^\\Wa-z]{2,}$\")\n\n\nclass AnyStyle(NamingStyle):\n    pass\n\n\nNAMING_STYLES = {\n    \"snake_case\": SnakeCaseStyle,\n    \"camelCase\": CamelCaseStyle,\n    \"PascalCase\": PascalCaseStyle,\n    \"UPPER_CASE\": UpperCaseStyle,\n    \"any\": AnyStyle,\n}\n\n# Name types that have a style option\nKNOWN_NAME_TYPES_WITH_STYLE = {\n    \"module\",\n    \"const\",\n    \"class\",\n    \"function\",\n    \"method\",\n    \"attr\",\n    \"argument\",\n    \"variable\",\n    \"class_attribute\",\n    \"class_const\",\n    \"inlinevar\",\n}\n\n\nDEFAULT_NAMING_STYLES = {\n    \"module\": \"snake_case\",\n    \"const\": \"UPPER_CASE\",\n    \"class\": \"PascalCase\",\n    \"function\": \"snake_case\",\n    \"method\": \"snake_case\",\n    \"attr\": \"snake_case\",\n    \"argument\": \"snake_case\",\n    \"variable\": \"snake_case\",\n    \"class_attribute\": \"any\",\n    \"class_const\": \"UPPER_CASE\",\n    \"inlinevar\": \"any\",\n}\n\n\n# Name types that have a 'rgx' option\nKNOWN_NAME_TYPES = {\n    *KNOWN_NAME_TYPES_WITH_STYLE,\n    \"typevar\",\n}\n\n\ndef _create_naming_options() -> Options:\n    name_options: list[tuple[str, OptionDict]] = []\n    for name_type in sorted(KNOWN_NAME_TYPES):\n        human_readable_name = constants.HUMAN_READABLE_TYPES[name_type]\n        name_type_hyphened = name_type.replace(\"_\", \"-\")\n\n        help_msg = f\"Regular expression matching correct {human_readable_name} names. \"\n        if name_type in KNOWN_NAME_TYPES_WITH_STYLE:\n            help_msg += f\"Overrides {name_type_hyphened}-naming-style. \"\n        help_msg += f\"If left empty, {human_readable_name} names will be checked with the set naming style.\"\n\n        # Add style option for names that support it\n        if name_type in KNOWN_NAME_TYPES_WITH_STYLE:\n            default_style = DEFAULT_NAMING_STYLES[name_type]\n            name_options.append(\n                (\n                    f\"{name_type_hyphened}-naming-style\",\n                    {\n                        \"default\": default_style,\n                        \"type\": \"choice\",\n                        \"choices\": list(NAMING_STYLES.keys()),\n                        \"metavar\": \"<style>\",\n                        \"help\": f\"Naming style matching correct {human_readable_name} names.\",\n                    },\n                )\n            )\n\n        name_options.append(\n            (\n                f\"{name_type_hyphened}-rgx\",\n                {\n                    \"default\": None,\n                    \"type\": \"regexp\",\n                    \"metavar\": \"<regexp>\",\n                    \"help\": help_msg,\n                },\n            )\n        )\n    return tuple(name_options)\n"
+      }
+    }
+  ],
+  "rejected": [
+    {
+      "function": "should_retry_after_invalid_input",
+      "path": "pylint/config/_pylint_config/utils.py",
+      "kinds": [
+        "swallowed_error"
+      ],
+      "reason": "time limit: characterization tests fail on original: ..Killed"
+    },
+    {
+      "function": "MessageIdStore.check_msgid_and_symbol",
+      "path": "pylint/message/message_id_store.py",
+      "kinds": [
+        "nesting",
+        "redundant_check"
+      ],
+      "reason": "step limit: characterization tests miss branches: 1"
+    }
+  ],
+  "notes": [
+    {
+      "path": "pylint/config/_pylint_config/utils.py",
+      "function": "should_retry_after_invalid_input",
+      "kinds": [
+        "swallowed_error"
+      ],
+      "line": 59,
+      "body": "**swallowed_error** (not rewritten): `should_retry_after_invalid_input`: It catches broad exceptions or wraps code that cannot raise in a try block. Narrow each except to the exceptions that the code in its try block raises, and remove try blocks around code that cannot raise. Every input must still give the same result. Slopgate could not prove a rewrite of this function, so it changed nothing."
+    },
+    {
+      "path": "pylint/message/message_id_store.py",
+      "function": "MessageIdStore.check_msgid_and_symbol",
+      "kinds": [
+        "nesting",
+        "redundant_check"
+      ],
+      "line": 99,
+      "body": "**nesting**, **redundant_check** (not rewritten): `MessageIdStore.check_msgid_and_symbol`: It nests blocks deeply. Flatten it with guard clauses or a single boolean expression. It repeats a check that an earlier check already guarantees. Remove the repeated check. Slopgate could not prove a rewrite of this function, so it changed nothing."
+    }
+  ]
+}

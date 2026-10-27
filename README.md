@@ -78,6 +78,36 @@ GitHub does not start workflows for pull requests that the workflow token opens,
 slopgate review --pr 12
 ```
 
+## Try Slopgate on your machine
+
+The [showcase site](docs/demo/index.html) shows recorded reviews, and its try-it page runs the gate on one function in your browser with your own key. To run Slopgate yourself, you need two Nebius keys, `uv`, and `git`. The keys stay on your machine. A dry run posts nothing to GitHub.
+
+1. Get `NEBIUS_API_KEY` and `NEBIUS_PROJECT_ID` from https://tokenfactory.nebius.com/project/api-keys. Install `uv` from https://docs.astral.sh/uv/.
+
+2. Set the keys in your shell:
+
+   ```sh
+   export NEBIUS_API_KEY=...
+   export NEBIUS_PROJECT_ID=...
+   ```
+
+3. Clone a repository that has a pull request or two commits with Python changes. This example is the demo repository of Slopgate:
+
+   ```sh
+   git clone https://github.com/agno-nymous/slopgate-demo
+   cd slopgate-demo
+   ```
+
+4. Review the changes between a base commit and a head commit. `--base` and `--head` take any git ref:
+
+   ```sh
+   uvx --from git+https://github.com/agno-nymous/slopgate slopgate review --repo . --base 0584a3a --head 441d235 --dry-run
+   ```
+
+The command prints the review as JSON: `suggestions`, `followup`, `rejected`, and `notes`. The recordings on the showcase page are this output.
+
+A review of this example took 84 s in one run and 210 s in another. It cost $0.019 in Token Factory tokens (the Phoenix trace of the 210 s run). A larger pull request costs more, because each changed function gets a test agent run in a ConTree sandbox.
+
 ## Flag copies while Claude Code writes
 
 `slopgate hook` checks each Python file that Claude Code writes or edits. When a new module-level function does the same job as an existing function, the hook adds a note to the agent's context. The note names the existing function, its file, and a confidence. The hook never blocks a write and always exits 0.
