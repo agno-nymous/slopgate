@@ -4,7 +4,9 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
-**08 — Live duplicate flag at plan time.** Ticket 11 needs it for the live-flag scene of the video. Ticket 64 is `needs-live-check`: the page and 4 recordings are done, and only the Pages publish (public flip step 7) is open. Cut ticket 65 first, then ticket 08, if time runs short.
+**11 — Hackathon submission package** (README, video, feedback, Devpost text). Tickets 08 and 65 are `wontfix` since 2026-10-27: the plan-time hook found a note on 1 of 5 real plans, and the write-time hook flags 3 of 6 natural prompts (see the Comments of ticket 08). The video leads with the gate. The write-time hook scene is optional.
+
+Before ticket 11: ticket 64 is `needs-live-check`. The page, the 4 recordings, and GitHub Pages are done. The live panel needs one run with a real key, which the user does. Ticket 27 has live-check boxes that are still open.
 
 State on 2026-10-25, evening: tickets 10 and 73 are done. The rerun of 15 instances accepts 14 of 41 detected items (0.341). It has 0 silent breaks and 0 infrastructure errors. It has 0 `RateLimitError` rejections. It cost $1.16. The user made the Serverless Job box wontfix and kept 15 instances. The `slopgate` repo is public since 2026-10-25. The Mac runner is removed.
 
@@ -30,7 +32,7 @@ The goal is an overall prize. The judges score 4 criteria (1 to 5, equal weight)
 | 2026-10-25 | Tickets 75 (time-boxed) and 66. |
 | 2026-10-26 | Ticket 10: the Serverless Job and the full rerun. Then `report`. **Decision point:** read the acceptance rate and the silent-break rate. If the gate proves few rewrites, the headline becomes the precision of the gate and the write-time hook: do ticket 65 before ticket 64. |
 | 2026-10-27 | Ticket 64: the static showcase page. Record 3 or 4 reviews of example pull requests (with the keys of the user, once), build `docs/demo/index.html`, and test the local command in an empty folder. This is the largest item. A hosted bring-your-own-key form is out of scope. |
-| 2026-10-28 | Ticket 08 (live flag at plan time, because the video needs it) and the live-check boxes of ticket 27. Ticket 65 only if tickets 10 and 64 are done. Cut ticket 65 first, then ticket 08, if time runs short. |
+| 2026-10-28 | The live-check boxes of ticket 27 and the live panel run of ticket 64. Start ticket 11. Tickets 08 and 65 are `wontfix` (2026-10-27). |
 | 2026-10-29 | Ticket 11: README, video, feedback, Devpost text. Public flip (see below). Submit on 2026-10-29. |
 
 Fix a slop kind (tickets 45, 50, 43) only if the numbers of ticket 10 show that the fix changes the headline. Otherwise turn that kind off in the gate.
@@ -64,7 +66,7 @@ Do not do these tickets before the submission on 2026-10-29. Each stays `ready-f
 | 47 | Not seen in the 12 SWE-bench Lite repos. |
 | 09 | The Jev classifier comparison. Lowest priority. |
 
-Tickets 65 and 08 are in the plan, but cut them first if time runs short: ticket 65 first, then ticket 08.
+Tickets 65 and 08 are `wontfix` since 2026-10-27 (the user's decision). Reopen them only after the submission.
 
 ## Order
 
@@ -105,14 +107,14 @@ Tickets 65 and 08 are in the plan, but cut them first if time runs short: ticket
 | 33 | [10 — Benchmark on SWE-bench with injected slop](10-benchmark.md) | done | 37, 41 (done) | Moved up on 2026-10-17. Its four numbers are the headline of the submission, and they judge every later ticket. First step: confirm that ConTree can run the SWE-bench images (the SDK has `images.pull` and `images.oci`, but no list of preloaded images). |
 | 34 | [67 — An agent installs the test environment from the repo's own instructions](67-install-agent.md) | done | 58, 59 | Added on 2026-10-18 by the user. With the gate's own install, ticket 10 has a working environment on 6 of 15 instances. The agent reads the README and CI files and installs the rest. |
 | 35 | [64 — Showcase page: recorded reviews of example repositories, and a local command to try Slopgate](64-showcase-page-with-recorded-reviews.md) | needs-live-check | 10 | Added on 2026-10-17, rewritten on 2026-10-25. The submission needs a working demo URL, and Design is 1 of 4 criteria. The user decided that no hosted service uses the user's API keys: the page is static, it shows recorded reviews, and a judge brings their own keys to run Slopgate locally. No Serverless Endpoint. |
-| 36 | [65 — Measure the write-time hook on a Nemotron coding agent](65-hook-on-off-experiment.md) | ready-for-agent | 10 | Added on 2026-10-17. After ticket 64, if time is left by 2026-10-26. Moves before 64 if the decision point says so. |
+| 36 | [65 — Measure the write-time hook on a Nemotron coding agent](65-hook-on-off-experiment.md) | wontfix | 10 | Added on 2026-10-17. Cut by the user on 2026-10-27: the write-time hook flags 3 of 6 natural prompts, so an on/off experiment would not be clean. |
 | 37 | [45 — The test agent cannot characterize large functions](45-characterize-large-functions.md) | ready-for-agent | 41 (done) | After ticket 10. The numbers of each kind decide: fix the kind, or turn it off in the gate. |
 | 38 | [50 — The gate cannot fix `swallowed_error` around a call to other code](50-swallowed-error-external-call.md) | ready-for-agent | — | After ticket 10, for the same reason as ticket 45. |
 | 39 | [43 — The gate cannot prove a `redundant_check` rewrite](43-dead-branch-of-redundant-check.md) | ready-for-agent | 39 (done) | After ticket 10, for the same reason as ticket 45. |
 | 40 | [56 — The test-file rule misses `tests.py`, and django tests do not run under pytest](56-django-test-layout.md) | ready-for-agent | — | Found by ticket 49 on django#21736: a django test method got an agent run instead of a note. |
 | 41 | [27 — Run the gate automatically on a self-hosted runner](27-gate-on-self-hosted-runner.md) | wontfix | 26 (done) | The user removed the Mac runner on 2026-10-25, when the repo became public. Step 8 of the public flip replaces its live check. That step opens a live pull request on `slopgate-demo` with `ubuntu-latest`. |
-| 42 | [08 — Live duplicate flag at plan time](08-live-flag-plan-time.md) | ready-for-agent | 07 (done) | Ticket 11 needs it for the live-flag scene of the video. If time runs short, the user decides whether to cut it. |
-| 43 | [11 — Hackathon submission package](11-submission-package.md) | ready-for-agent | 06, 08, 10 | Last. It describes the finished project. |
+| 42 | [08 — Live duplicate flag at plan time](08-live-flag-plan-time.md) | wontfix | 07 (done) | Cut by the user on 2026-10-27: the plan-time hook gave a note on 1 of 5 real plans. The write-time hook of ticket 07 covers the video scene. |
+| 43 | [11 — Hackathon submission package](11-submission-package.md) | ready-for-agent | 06, 10 | Last. It describes the finished project. Ticket 08 no longer blocks it. |
 | 44 | [57 — Building the function index takes more than 80 s on a large repository](57-faster-function-index.md) | ready-for-agent | — | Moved to the end on 2026-10-17. Speed only. |
 | 45 | [40 — Limit the output tokens of `decide`](40-limit-decide-output.md) | ready-for-agent | — | 5 of 1,407 runs took 60 s to 110 s. Speed only. |
 | 46 | [47 — `parse` splits lines on a form feed, so later functions get the wrong source](47-parse-splits-on-form-feed.md) | ready-for-agent | — | Not seen in the 12 SWE-bench Lite repos. |

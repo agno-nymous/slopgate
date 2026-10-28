@@ -9,7 +9,7 @@
 
 **Blocked by:** 10
 
-**Status:** ready-for-agent
+**Status:** wontfix
 
 **Type:** measurement, then build.
 
@@ -36,3 +36,7 @@ The test agent of ticket 41 already has a tool loop on a ConTree session (`llm.s
 - [ ] `uv run pytest -q` passes.
 
 ## Comments
+
+### 2026-10-27 — wontfix (decided with the user)
+
+The user cut this ticket with ticket 08. The deadline is 2026-10-30, and the submission leads with the gate, which has the benchmark numbers. The write-time hook flags 3 of 6 natural prompts (see the Comments of ticket 08). An on/off experiment on a hook that misses half of the copies would not give a clean result. Reopen this ticket only after the Lightning threshold and the module-constant limit are fixed.
