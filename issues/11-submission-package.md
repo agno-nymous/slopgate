@@ -7,7 +7,7 @@
 - **Evidence:** A fresh clone that follows the README installs and runs the gate and the hook. The README links the benchmark results of ticket 10.
 - **Constraints:** The repo has the MIT license, visible at the top of the repo page. The video is 3 minutes long at most. Keep the total spend under about $50 (see Comments).
 
-**Blocked by:** 06, 08, 10
+**Blocked by:** 06, 10
 
 **Status:** ready-for-agent
 
@@ -24,7 +24,7 @@ The README describes how the project uses Nemotron, Token Factory, Sandboxes, an
 - [ ] The README explains the sandbox checkpoint-and-trial pattern with a diagram.
 - [ ] The README links the benchmark results (ticket 10). If ticket 09 is done, the README also links the classifier comparison.
 - [ ] The feedback section lists the concrete problems and suggestions from the build. It includes the SDK gaps that ticket 02 found.
-- [ ] The video script covers: the problem, a live gate review on the demo repo, the live flag that catches a duplicate, the benchmark numbers, and the use of Token Factory and Nemotron. The video fits in 3 minutes.
+- [ ] The video script covers: the problem, a live gate review on the demo repo, the benchmark numbers, the use of Token Factory and Nemotron, and (optional) the write-time hook that catches a duplicate. Use the `plural` or `jaccard` prompt of ticket 08 for the hook scene: both gave a note on 2026-10-27. Ticket 08 (plan-time flag) is wontfix. Drop the hook scene if the run fails on the day of the recording. The video fits in 3 minutes.
 - [ ] The Devpost text names the Coding and Agentic Engineering track. It links the public repo, the demo repo, and the showcase page of ticket 64.
 
 ## Comments
