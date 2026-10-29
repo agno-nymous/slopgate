@@ -6,6 +6,8 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 **11 — Hackathon submission package** (README, video, feedback, Devpost text). Tickets 08 and 65 are `wontfix` since 2026-10-27: the plan-time hook found a note on 1 of 5 real plans, and the write-time hook flags 3 of 6 natural prompts (see the Comments of ticket 08). The video leads with the gate. The write-time hook scene is optional.
 
+State on 2026-10-28: ticket 11 is `needs-live-check`. The README, the feedback section, the video script, and the Devpost text are done. These steps remain, all before 2026-10-30, 10:00 PT: make `slopgate-demo` public (its `gitleaks` scan found no leaks), record the video, and submit on Devpost. Flip step 8 passed on 2026-10-28.
+
 Before ticket 11: ticket 64 is `needs-live-check`. The page, the 4 recordings, and GitHub Pages are done. The live panel needs one run with a real key, which the user does.
 
 State on 2026-10-25, evening: tickets 10 and 73 are done. The rerun of 15 instances accepts 14 of 41 detected items (0.341). It has 0 silent breaks and 0 infrastructure errors. It has 0 `RateLimitError` rejections. It cost $1.16. The user made the Serverless Job box wontfix and kept 15 instances. The `slopgate` repo is public since 2026-10-25. The Mac runner is removed.
@@ -45,10 +47,10 @@ Do the workflow edits first. On a public repo, a pull request from a fork can ru
 2. Remove the self-hosted runner. Done on 2026-10-25.
 3. Remove the `PHOENIX_COLLECTOR_ENDPOINT` env line from the workflow. Done on 2026-10-25 (ticket 10 branch).
 4. Turn the Slopgate workflow on again (`gh workflow enable Slopgate`) only when the user says so.
-5. Scan the full git history of both repos for secrets, for example with `gitleaks git`. A public repo shows every past commit, not only the last one. If the scan finds a key, revoke the key and remove it from the history before step 6. Done for `slopgate` on 2026-10-25 (`gitleaks`: 158 commits, no leaks). Not done for `slopgate-demo`.
+5. Scan the full git history of both repos for secrets, for example with `gitleaks git`. A public repo shows every past commit, not only the last one. If the scan finds a key, revoke the key and remove it from the history before step 6. Done for `slopgate` on 2026-10-25 (`gitleaks`: 158 commits, no leaks). Done for `slopgate-demo` on 2026-10-28 (6 commits on all branches, no leaks).
 6. Make both the `slopgate` and the `slopgate-demo` repo public. `slopgate` is public since 2026-10-25.
 7. Turn on GitHub Pages for the `slopgate` repo (source: the `docs/` folder), and check that the showcase page of ticket 64 loads at its URL. A private repo on the free plan has no Pages, so this step comes after step 6.
-8. Open one new pull request on `slopgate-demo`. Its Slopgate workflow runs on `ubuntu-latest` and uses `agno-nymous/slopgate@main`, so this is the first run of the public Action on a hosted runner. Check that the job posts its review to the pull request. The rules require that the project installs and runs consistently, and the ticket 27 check on the Mac runner does not prove this.
+8. Open one new pull request on `slopgate-demo`. Its Slopgate workflow runs on `ubuntu-latest` and uses `agno-nymous/slopgate@main`, so this is the first run of the public Action on a hosted runner. Check that the job posts its review to the pull request. The rules require that the project installs and runs consistently, and the ticket 27 check on the Mac runner does not prove this. Done on 2026-10-28: slopgate-demo#3 got its review in 98 s, with 2 suggestions and the follow-up #4.
 
 When a ticket is done, mark it done in the table below and move "Next ticket" to the next open row.
 
@@ -114,7 +116,7 @@ Tickets 65 and 08 are `wontfix` since 2026-10-27 (the user's decision). Reopen t
 | 40 | [56 — The test-file rule misses `tests.py`, and django tests do not run under pytest](56-django-test-layout.md) | ready-for-agent | — | Found by ticket 49 on django#21736: a django test method got an agent run instead of a note. |
 | 41 | [27 — Run the gate automatically on a self-hosted runner](27-gate-on-self-hosted-runner.md) | wontfix | 26 (done) | The user removed the Mac runner on 2026-10-25, when the repo became public. Step 8 of the public flip replaces its live check. That step opens a live pull request on `slopgate-demo` with `ubuntu-latest`. |
 | 42 | [08 — Live duplicate flag at plan time](08-live-flag-plan-time.md) | wontfix | 07 (done) | Cut by the user on 2026-10-27: the plan-time hook gave a note on 1 of 5 real plans. The write-time hook of ticket 07 covers the video scene. |
-| 43 | [11 — Hackathon submission package](11-submission-package.md) | ready-for-agent | 06, 10 | Last. It describes the finished project. Ticket 08 no longer blocks it. |
+| 43 | [11 — Hackathon submission package](11-submission-package.md) | needs-live-check | 06, 10 | Last. It describes the finished project. Ticket 08 no longer blocks it. |
 | 44 | [57 — Building the function index takes more than 80 s on a large repository](57-faster-function-index.md) | ready-for-agent | — | Moved to the end on 2026-10-17. Speed only. |
 | 45 | [40 — Limit the output tokens of `decide`](40-limit-decide-output.md) | ready-for-agent | — | 5 of 1,407 runs took 60 s to 110 s. Speed only. |
 | 46 | [47 — `parse` splits lines on a form feed, so later functions get the wrong source](47-parse-splits-on-form-feed.md) | ready-for-agent | — | Not seen in the 12 SWE-bench Lite repos. |
