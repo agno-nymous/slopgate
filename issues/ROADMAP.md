@@ -6,7 +6,7 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 **11 — Hackathon submission package** (README, video, feedback, Devpost text). Tickets 08 and 65 are `wontfix` since 2026-10-27: the plan-time hook found a note on 1 of 5 real plans, and the write-time hook flags 3 of 6 natural prompts (see the Comments of ticket 08). The video leads with the gate. The write-time hook scene is optional.
 
-Before ticket 11: ticket 64 is `needs-live-check`. The page, the 4 recordings, and GitHub Pages are done. The live panel needs one run with a real key, which the user does. Ticket 27 has live-check boxes that are still open.
+Before ticket 11: ticket 64 is `needs-live-check`. The page, the 4 recordings, and GitHub Pages are done. The live panel needs one run with a real key, which the user does.
 
 State on 2026-10-25, evening: tickets 10 and 73 are done. The rerun of 15 instances accepts 14 of 41 detected items (0.341). It has 0 silent breaks and 0 infrastructure errors. It has 0 `RateLimitError` rejections. It cost $1.16. The user made the Serverless Job box wontfix and kept 15 instances. The `slopgate` repo is public since 2026-10-25. The Mac runner is removed.
 
@@ -32,7 +32,7 @@ The goal is an overall prize. The judges score 4 criteria (1 to 5, equal weight)
 | 2026-10-25 | Tickets 75 (time-boxed) and 66. |
 | 2026-10-26 | Ticket 10: the Serverless Job and the full rerun. Then `report`. **Decision point:** read the acceptance rate and the silent-break rate. If the gate proves few rewrites, the headline becomes the precision of the gate and the write-time hook: do ticket 65 before ticket 64. |
 | 2026-10-27 | Ticket 64: the static showcase page. Record 3 or 4 reviews of example pull requests (with the keys of the user, once), build `docs/demo/index.html`, and test the local command in an empty folder. This is the largest item. A hosted bring-your-own-key form is out of scope. |
-| 2026-10-28 | The live-check boxes of ticket 27 and the live panel run of ticket 64. Start ticket 11. Tickets 08 and 65 are `wontfix` (2026-10-27). |
+| 2026-10-28 | The live panel run of ticket 64. Start ticket 11. Ticket 27 is `wontfix`: flip step 8 replaces its live check. Tickets 08 and 65 are `wontfix` (2026-10-27). |
 | 2026-10-29 | Ticket 11: README, video, feedback, Devpost text. Public flip (see below). Submit on 2026-10-29. |
 
 Fix a slop kind (tickets 45, 50, 43) only if the numbers of ticket 10 show that the fix changes the headline. Otherwise turn that kind off in the gate.
