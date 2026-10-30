@@ -9,7 +9,7 @@
 
 **Blocked by:** 06, 10
 
-**Status:** needs-live-check
+**Status:** done
 
 ## Details
 
@@ -19,14 +19,14 @@ The README describes how the project uses Nemotron, Token Factory, Sandboxes, an
 - A script for the demo video.
 - The Devpost project text.
 
-- [ ] The README covers the install, the Action workflow file, the hook setup, and `slopgate index` (the command that builds the index of the repo). A fresh clone works when the user follows the README.
+- [x] The README covers the install, the Action workflow file, the hook setup, and `slopgate index` (the command that builds the index of the repo). A fresh clone works when the user follows the README.
 - [x] The README has a table that shows which Nemotron model does which job, and why.
 - [x] The README explains the sandbox checkpoint-and-trial pattern with a diagram.
 - [x] The README links the benchmark results (ticket 10). If ticket 09 is done, the README also links the classifier comparison.
 - [x] The feedback section lists the concrete problems and suggestions from the build. It includes the SDK gaps that ticket 02 found.
 - [x] The video script covers: the problem, a live gate review on the demo repo, the benchmark numbers, the use of Token Factory and Nemotron, and (optional) the write-time hook that catches a duplicate. Use the `plural` or `jaccard` prompt of ticket 08 for the hook scene: both gave a note on 2026-10-27. Ticket 08 (plan-time flag) is wontfix. Drop the hook scene if the run fails on the day of the recording. The video fits in 3 minutes.
 - [x] The Devpost text names the Coding and Agentic Engineering track. It links the public repo, the demo repo, and the showcase page of ticket 64.
-- [ ] Public flip of `slopgate-demo`, before 2026-10-30, 10:00 PT (1:00 PM ET). Run `gitleaks git` on its full history. Make the repo public. Open one pull request on it, and check that the public Action posts its review. The `slopgate` repo is already public.
+- [x] Public flip of `slopgate-demo`, before 2026-10-30, 10:00 PT (1:00 PM ET). Run `gitleaks git` on its full history. Make the repo public. Open one pull request on it, and check that the public Action posts its review. The `slopgate` repo is already public.
 
 ## Comments
 
@@ -96,8 +96,19 @@ slopgate: `format_price` (shop/format.py:1) duplicates existing `money` (shop/mo
 
 **Known limits.**
 
-- Box 1 stays open. `slopgate-demo` is private, so a clone without GitHub credentials fails (`could not read Username`). A judge cannot follow the "Try Slopgate" steps until the repo is public. The gate and the hook steps work from a fresh clone with credentials.
+- Box 1 passed on 2026-10-29, when `slopgate-demo` became public. Before, a clone without GitHub credentials failed (`could not read Username`). Now `git ls-remote` without credentials answers with HEAD `0584a3a`.
 - Flip step 8 passed on 2026-10-28 (the user approved the pull request). https://github.com/agno-nymous/slopgate-demo/pull/3 has the same change as pull request 1. The Slopgate job ran `agno-nymous/slopgate@main` on `ubuntu-latest` and passed in 98 s. It posted 1 `COMMENT` review with 2 suggested changes (`can_checkout`, 5 tests; `shipping_label`, 7 tests) and opened the follow-up https://github.com/agno-nymous/slopgate-demo/pull/4 with 2 changes. The summary says "Token cost: $0.0191 (55,126 tokens). Time: 1 min 3 s."
+- Real-repo examples on `slopgate-demo` (the user asked for them on 2026-10-28). For 4 showcase instances, a base branch `swe/<name>-base` holds one snapshot commit of the SWE-bench base tree, the Slopgate workflow, and the benchmark's `.slopgate.toml`. The upstream workflows are removed. The snapshot has the upstream version tag of its base, so setuptools-scm finds a version. The head branch `swe/<name>` adds only the injected source changes, with the original commit dates. The upstream history is not pushed: the benchmark clones are blobless. The public Action reviewed each pull request:
+
+  | Pull request | Instance | Result | Cost | Time |
+  |---|---|---|---|---|
+  | slopgate-demo#5 | pallets__flask-4992 | 2 follow-up changes (#6), 1 note (`wrapper`) | $0.0664 | 1 min 21 s |
+  | slopgate-demo#7 | pytest-dev__pytest-7220 | 1 follow-up change (#8), 2 notes (`redundant_check`, `swallowed_error`) | $0.1099 | 4 min 40 s |
+  | slopgate-demo#9 | pylint-dev__pylint-7993 | 1 follow-up change (#10, `get_regex` complexity 12 to 2), 2 notes | $0.0597 | 8 min 33 s |
+  | slopgate-demo#11 | mwaskom__seaborn-3190 | 1 follow-up change (#12, `Continuous.tick` nesting 4 to 2, 11 tests), 2 notes | $0.1136 | 5 min 18 s |
+
+  All 4 jobs passed on `ubuntu-latest`. No pull request got an inline suggestion: each proven rewrite went to a follow-up pull request. The 4 reviews cost $0.35 in total.
+
 - The uvx run had no trace: the `uvx` install has no `phoenix` package, so tracing was off (`slopgate: tracing off: ModuleNotFoundError`). The cost of this run is not measured. The README keeps the $0.019 of the traced 210 s run.
 - The index step took 2 s, not about 30 s, because this Mac already had the ONNX model in `~/.cache/slopgate/`. The first run on a new machine was not measured again.
 - The "Try it" panel of the showcase page was tested only with a mocked Token Factory (ticket 64, `needs-live-check`). The README and the Devpost text do not say that it was verified with a real key.
