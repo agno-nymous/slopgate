@@ -20,7 +20,7 @@ Slopgate finds slop in Python code that coding agents write. It has two parts:
 - Write tickets, ticket comments, pull request text, and replies in ASD-STE100 Simplified Technical English: one idea per sentence, short sentences, active voice, one term for one concept.
 - When a ticket is done, add a `## Comments` entry with a worked example and the measured results.
 - The CI has no branch protection. Do not use auto-merge: it merges before the checks finish. Wait for the checks to pass, then merge.
-- The `slopgate` repo is public since 2026-10-25. Never add a self-hosted runner to it again: a pull request from a fork can add a workflow that runs its code on that machine. The `slopgate-demo` repo stays private until the submission. Make it public before 2026-10-30, 10:00 PT.
+- The `slopgate` repo is public since 2026-10-25. Never add a self-hosted runner to it again: a pull request from a fork can add a workflow that runs its code on that machine. The `slopgate-demo` repo is public since 2026-10-29. Its `swe/<name>` pull requests run the public Action on real SWE-bench code.
 
 ## Commands
 
