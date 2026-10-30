@@ -1,11 +1,11 @@
 {
  "models": {
-  "tests and rewrites": "nvidia/nemotron-3-super-120b-a12b",
+  "tests and rewrites": "nvidia/Nemotron-3.5-Super-VL",
   "retry and summary": "nvidia/Nemotron-3-Ultra-550b-a55b"
  },
- "commit": "a636e72104b33e5a69b94e891287389d2dc40821",
+ "commit": "865b1713a58f1d52d1790451c11d3a18ec3c678b",
  "dirty": true,
- "date": "2026-10-25",
+ "date": "2026-10-30",
  "seeds": {},
  "prompts": {
   "AGENT_RULES": "e080e3cbd1fb",
@@ -18,5 +18,5 @@
  "counts": {
   "instances": 15
  },
- "usd": 1.1606
+ "usd": 0.8191
 }

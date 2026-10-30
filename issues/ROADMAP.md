@@ -4,6 +4,8 @@ This file gives the order in which to do the open tickets. The deadline is **202
 
 ## Next ticket
 
+**76 — A Token Factory 529 "System is overloaded" rejects items of the gate.** Ticket 77 is done since 2026-10-30: the gate uses `nvidia/Nemotron-3.5-Super-VL` for the Super role, because Super 3 stops on 2026-11-09.
+
 **11 — Hackathon submission package** (README, video, feedback, Devpost text). Tickets 08 and 65 are `wontfix` since 2026-10-27: the plan-time hook found a note on 1 of 5 real plans, and the write-time hook flags 3 of 6 natural prompts (see the Comments of ticket 08). The video leads with the gate. The write-time hook scene is optional.
 
 State on 2026-10-29: ticket 11 is done. `slopgate-demo` is public and has 4 pull requests on real SWE-bench code. These steps remain for the user, before 2026-10-30, 10:00 PT: merge PR #60, record the video, upload it to YouTube as Public, and submit on Devpost. The video script and the Devpost text are in `submission/` of the main checkout, outside git.
@@ -141,6 +143,7 @@ Added after the order was set:
 | [72 — The benchmark test command breaks pytest 2.9](72-bench-test-command-flag-breaks-old-pytest.md) | done | Found by ticket 67: all 3 remaining infrastructure errors are `psf__requests-3362`. The benchmark now leaves the flag out for that instance (2026-10-25). |
 | [73 — A model rate limit rejects items of the gate](73-rate-limit-rejects-items.md) | done | Found by ticket 67: 5 of 42 benchmark items were rejected with a 429 from Token Factory. Do it before the final benchmark run. |
 | [75 — The gate gets no coverage data on `psf__requests-3362`](75-requests-3362-coverage-has-no-data.md) | done | Found by ticket 72: the 3 items of the instance now reach the test agent and end at the step limit with `coverage has no data`. The repo has no coverage configuration file. |
+| [77 — Move the Super role to Nemotron 3.5 Super VL](77-move-super-to-nemotron-3-5.md) | done | Super 3 stops on Token Factory on 2026-11-09. On the same 45 items, Super 3.5 VL accepts 20 of 41 detected items (Super 3: 14 of 41), with 0 silent breaks, for $0.82 (Super 3: $1.16). |
 | [76 — A Token Factory 529 "System is overloaded" rejects items of the gate](76-server-overload-rejects-items.md) | ready-for-agent | Found by ticket 64 on 2026-10-26: 3 of 13 items in 4 parallel reviews got a 529 in the test agent. Small fix in `slopgate/llm.py`, next to the 429 retry of ticket 73. |
 | [74 — The default install fails for compiled repos](74-default-install-fails-for-compiled-repos.md) | ready-for-agent | Found by ticket 67: 10 of 28 instances (scikit-learn, matplotlib, astropy, requests-1963). Research, plus a uv and pip A/B. Not needed for the headline. |
 

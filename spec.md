@@ -136,7 +136,7 @@ The `--dry-run` JSON has three parts: `suggestions` (GitHub review comment paylo
 | Job | Model |
 |---|---|
 | Hook yes/no duplicate check | `nvidia/Nemotron-3_5-Lightning` |
-| Characterization tests, rewrites, duplicate check | `nvidia/nemotron-3-super-120b-a12b` |
+| Characterization tests, rewrites, duplicate check | `nvidia/Nemotron-3.5-Super-VL` |
 | Retry and review summary | `nvidia/Nemotron-3-Ultra-550b-a55b` |
 
 Check these IDs against the Token Factory model list in the first ticket.

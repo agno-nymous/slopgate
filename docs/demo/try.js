@@ -1,6 +1,6 @@
 (function () {
   var API = "https://api.tokenfactory.nebius.com/v1/chat/completions";
-  var MODEL = "nvidia/nemotron-3-super-120b-a12b";
+  var MODEL = "nvidia/Nemotron-3.5-Super-VL";
   var PYODIDE = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
   var RETRY_WAITS = [5000, 15000, 45000];
   var RUN_LIMIT_MS = 20000;

@@ -1,0 +1,1416 @@
+{
+ "pallets__flask-4992": {
+  "instance_id": "pallets__flask-4992",
+  "seconds": 150.5,
+  "gate_seconds": 138.5,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 158724,
+    "output_tokens": 33306
+   }
+  },
+  "usd": 0.0776,
+  "items": [
+   {
+    "id": "pallets__flask-4992:src/flask/app.py:Flask.auto_find_instance_path:dead",
+    "kind": "dead",
+    "detected": true,
+    "gate_kinds": [
+     "dead"
+    ],
+    "outcome": "followup",
+    "reason": "Slopgate (`dead`) rewrite of `Flask.auto_find_instance_path`.\nnesting 1 -> 1, complexity 2 -> 2. 2 characterization tests passed in sandbox.",
+    "accepted": true,
+    "complexity": {
+     "original": 2,
+     "injected": 2
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 1
+    },
+    "after": {
+     "complexity": 2,
+     "nesting": 1
+    },
+    "removed": false,
+    "exact": false,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pallets__flask-4992:src/flask/scaffold.py:_path_is_relative_to_impl:wrapper",
+    "kind": "wrapper",
+    "detected": true,
+    "gate_kinds": [
+     "wrapper"
+    ],
+    "outcome": "rejected",
+    "reason": "no test file: agent stopped (no tool call)",
+    "accepted": false,
+    "complexity": {
+     "original": 2,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 0
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pallets__flask-4992:src/flask/config.py:Config.get_namespace:nesting",
+    "kind": "nesting",
+    "detected": true,
+    "gate_kinds": [
+     "nesting"
+    ],
+    "outcome": "followup",
+    "reason": "Slopgate (`nesting`) rewrite of `Config.get_namespace`.\nnesting 3 -> 2, complexity 5 -> 5. 1 characterization tests passed in sandbox.",
+    "accepted": true,
+    "complexity": {
+     "original": 5,
+     "injected": 5
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 3
+    },
+    "after": {
+     "complexity": 5,
+     "nesting": 2
+    },
+    "removed": false,
+    "exact": false,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pytest-dev__pytest-7432": {
+  "instance_id": "pytest-dev__pytest-7432",
+  "seconds": 172.6,
+  "gate_seconds": 172.5,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 118547,
+    "output_tokens": 7531
+   }
+  },
+  "usd": 0.0423,
+  "items": [
+   {
+    "id": "pytest-dev__pytest-7432:src/_pytest/_code/code.py:TracebackEntry.getsource:dead",
+    "kind": "dead",
+    "detected": true,
+    "gate_kinds": [
+     "dead"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests fail on original: src/_pytest/_code/code.py:199: in frame\n    return Frame(self._rawentry.tb_frame)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <_pytest._code.code.Frame object at 0x7ffff5ce1160>\nframe = <Mock name='mock.tb_frame' id='140737317311104'>\n\n    def __init__(self, frame: FrameType) -> None:\n>       self.lineno = frame.f_lineno - 1\nE       TypeError: unsupported operand type(s) for -: 'Mock' and 'int'\n\nsrc/_pytest/_code/code.py:126: TypeError\n=========================== short test summary info ============================\nFAILED tests/test_slopgate_0.py::test_getsource_returns_none_when_source_is_none\nFAILED tests/test_slopgate_0.py::test_getsource_with_astcache_none_and_key_none\nFAILED tests/test_slopgate_0.py::test_getsource_with_astcache_provided_but_path_none\nFAILED tests/test_slopgate_0.py::test_getsource_with_astcache_and_path_not_none_caches_result\nFAILED tests/test_slopgate_0.py::test_getsource_handles_syntax_error_in_getstatementrange_ast\nFAILED tests/test_slopgate_0.py::test_getsource_normal_case_no_astcache - Typ...\n6 failed in 0.82s",
+    "accepted": false,
+    "complexity": {
+     "original": 7,
+     "injected": 7
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-7432:src/_pytest/compat.py:_iscoroutinefunction_impl:wrapper",
+    "kind": "wrapper",
+    "detected": true,
+    "gate_kinds": [
+     "wrapper"
+    ],
+    "outcome": "rejected",
+    "reason": "rewrite fails characterization tests: >       monkeypatch.setattr(compat, '_iscoroutinefunction_impl', lambda f: False)\nE       AttributeError: <module '_pytest.compat' from '/repo/src/_pytest/compat.py'> has no attribute '_iscoroutinefunction_impl'\n\ntests/test_slopgate_1.py:35: AttributeError\n_________________________ test_is_generator_gen_false __________________________\n\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ffff64206d0>\n\n    def test_is_generator_gen_false(monkeypatch):\n        monkeypatch.setattr(inspect, 'isgeneratorfunction', lambda f: False)\n        import _pytest.compat as compat\n>       monkeypatch.setattr(compat, '_iscoroutinefunction_impl', lambda f: False)\nE       AttributeError: <module '_pytest.compat' from '/repo/src/_pytest/compat.py'> has no attribute '_iscoroutinefunction_impl'\n\ntests/test_slopgate_1.py:41: AttributeError\n=========================== short test summary info ============================\nFAILED tests/test_slopgate_1.py::test_is_generator_both_true - AttributeError...\nFAILED tests/test_slopgate_1.py::test_is_generator_gen_true_coro_false - Attr...\nFAILED tests/test_slopgate_1.py::test_is_generator_gen_false - AttributeError...\n3 failed, 4 passed in 0.04s",
+    "accepted": false,
+    "complexity": {
+     "original": 2,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 0,
+     "injected": 0
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-7432:src/_pytest/main.py:wrap_session_alt:duplicate",
+    "kind": "duplicate",
+    "detected": true,
+    "gate_kinds": [
+     "duplicate"
+    ],
+    "outcome": "rejected",
+    "reason": "rewrite fails repo tests: FAILED testing/logging/test_reporting.py::test_log_cli_ini_level - Failed: no...\nFAILED testing/logging/test_reporting.py::test_log_file_ini - Failed: nomatch...\nFAILED testing/logging/test_reporting.py::test_log_file_ini_level - Failed: n...\nFAILED testing/logging/test_reporting.py::test_log_file_unicode - AssertionEr...\nFAILED testing/logging/test_reporting.py::test_collection_logging_to_file - A...\nFAILED testing/logging/test_reporting.py::test_log_in_hooks - Failed: nomatch...\nFAILED testing/logging/test_reporting.py::test_log_in_runtest_logreport - Fil...\nFAILED testing/logging/test_reporting.py::test_log_set_path - AssertionError:...\nFAILED testing/python/collect.py::test_customized_python_discovery - Failed: ...\nFAILED testing/python/collect.py::test_customized_python_discovery_functions\nFAILED testing/python/collect.py::test_package_ordering - AssertionError: ass...\nFAILED testing/python/fixtures.py::TestFixtureUsages::test_usefixtures_ini - ...\nFAILED testing/python/fixtures.py::TestFixtureMarker::test_module_parametrized_ordering\nFAILED testing/python/fixtures.py::TestFixtureMarker::test_dynamic_parametrized_ordering\nFAILED testing/test_collection.py::test_collect_pyargs_with_testpaths - Faile...\nFAILED testing/test_warnings.py::test_as_errors[ini] - Failed: nomatch: 'E   ...\nFAILED testing/test_warnings.py::TestDeprecationWarningsByDefault::test_hidden_by_ini\nERROR testing/test_junitxml.py\nERROR testing/python/metafunc.py\n92 failed, 2431 passed, 118 skipped, 9 xfailed, 23 warnings, 2 errors in 126.64s (0:02:06)",
+    "accepted": false,
+    "complexity": {
+     "original": 16,
+     "injected": 16
+    },
+    "nesting": {
+     "original": 4,
+     "injected": 4
+    },
+    "after": null,
+    "removed": false,
+    "exact": true,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "sphinx-doc__sphinx-8627": {
+  "instance_id": "sphinx-doc__sphinx-8627",
+  "seconds": 216.9,
+  "gate_seconds": 196.5,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 213086,
+    "output_tokens": 17556
+   }
+  },
+  "usd": 0.0797,
+  "items": [
+   {
+    "id": "sphinx-doc__sphinx-8627:sphinx/util/matching.py:_translate_pattern_impl:wrapper",
+    "kind": "wrapper",
+    "detected": true,
+    "gate_kinds": [
+     "wrapper"
+    ],
+    "outcome": "followup",
+    "reason": "`_translate_pattern_impl` only forwards to `_translate_pattern`; inlined into its single caller `compile_matchers` in sphinx/util/matching.py. 5 characterization tests of the caller passed.",
+    "accepted": true,
+    "complexity": {
+     "original": 16,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 4,
+     "injected": 0
+    },
+    "after": null,
+    "removed": true,
+    "exact": false,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "sphinx-doc__sphinx-8627:sphinx/util/typing.py:_stringify_py37_alt:duplicate",
+    "kind": "duplicate",
+    "detected": false,
+    "gate_kinds": [
+     "nesting"
+    ],
+    "outcome": "missed",
+    "reason": "",
+    "accepted": false,
+    "complexity": {
+     "original": 21,
+     "injected": 21
+    },
+    "nesting": {
+     "original": 4,
+     "injected": 4
+    },
+    "after": null,
+    "removed": false,
+    "exact": true,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "sphinx-doc__sphinx-8627:sphinx/locale/__init__.py:_TranslationProxy.__new__:redundant_check",
+    "kind": "redundant_check",
+    "detected": true,
+    "gate_kinds": [
+     "redundant_check"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests miss branches: 1",
+    "accepted": false,
+    "complexity": {
+     "original": 2,
+     "injected": 3
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 1
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pytest-dev__pytest-5227": {
+  "instance_id": "pytest-dev__pytest-5227",
+  "seconds": 217.5,
+  "gate_seconds": 217.4,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 293544,
+    "output_tokens": 10066
+   },
+   "nvidia/Nemotron-3-Ultra-550b-a55b": {
+    "input_tokens": 931,
+    "output_tokens": 262
+   }
+  },
+  "usd": 0.0988,
+  "items": [
+   {
+    "id": "pytest-dev__pytest-5227:src/_pytest/mark/evaluate.py:MarkEvaluator._istrue:nesting",
+    "kind": "nesting",
+    "detected": true,
+    "gate_kinds": [
+     "nesting"
+    ],
+    "outcome": "rejected",
+    "reason": "rewrite fails repo tests: \n    def runtest(self):\n>       assert False\nE       assert False\n\nconftest.py:9: AssertionError\n=========================== 1 failed in 0.05 seconds ===========================\n=============================== warnings summary ===============================\ntesting/test_warnings.py::test_group_warnings_by_message\n  /repo/testing/test_warnings.py:701: PytestExperimentalApiWarning: testdir.copy_example is an experimental api that may change over time\n    testdir.copy_example(\"warnings/test_group_warnings_by_message.py\")\n\n-- Docs: https://docs.pytest.org/en/latest/warnings.html\n=========================== short test summary info ============================\nFAILED testing/test_cacheprovider.py::TestNewAPI::test_cache_failure_warns\nFAILED testing/test_skipping.py::TestXFail::test_dynamic_xfail_no_run\nFAILED testing/test_skipping.py::TestXFail::test_dynamic_xfail_set_during_funcarg_setup\nFAILED testing/test_skipping.py::test_mark_xfail_item\nFAILED testing/python/metafunc.py\n4 failed, 2133 passed, 123 skipped, 10 xfailed, 1 warnings, 1 error in 104.85 seconds",
+    "accepted": false,
+    "complexity": {
+     "original": 10,
+     "injected": 10
+    },
+    "nesting": {
+     "original": 5,
+     "injected": 6
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-5227:src/_pytest/terminal.py:TerminalReporter._get_progress_information_message:redundant_check",
+    "kind": "redundant_check",
+    "detected": true,
+    "gate_kinds": [
+     "redundant_check"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests miss branches: 1",
+    "accepted": false,
+    "complexity": {
+     "original": 4,
+     "injected": 5
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-5227:src/_pytest/junitxml.py:pytest_unconfigure:swallowed_error",
+    "kind": "swallowed_error",
+    "detected": true,
+    "gate_kinds": [
+     "swallowed_error"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests fail on original:     def test_xml_exists_unregister_raises():\n        class PluginManager:\n            def unregister(self, arg):\n                raise RuntimeError(\"fail\")\n        class Config:\n            _xml = object()\n            pluginmanager = PluginManager()\n        config = Config()\n        result = pytest_unconfigure(config)\n        assert result is None\n        # _xml should still be deleted? In code, del occurs before unregister, so it's deleted.\n>       assert not hasattr(config, '_xml')\nE       AssertionError: assert not True\nE        +  where True = hasattr(<test_slopgate_0.test_xml_exists_unregister_raises.<locals>.Config object at 0x7ffff630a2d0>, '_xml')\n\ntests/test_slopgate_0.py:43: AssertionError\n=========================== short test summary info ============================\nFAILED tests/test_slopgate_0.py::test_xml_exists_successful_unregister\nFAILED tests/test_slopgate_0.py::test_xml_exists_unregister_raises\n2 failed, 2 passed in 0.04 seconds",
+    "accepted": false,
+    "complexity": {
+     "original": 2,
+     "injected": 3
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "sphinx-doc__sphinx-8506": {
+  "instance_id": "sphinx-doc__sphinx-8506",
+  "seconds": 113.6,
+  "gate_seconds": 113.6,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 59884,
+    "output_tokens": 3012
+   },
+   "nvidia/Nemotron-3-Ultra-550b-a55b": {
+    "input_tokens": 719,
+    "output_tokens": 164
+   }
+  },
+  "usd": 0.0219,
+  "items": [
+   {
+    "id": "sphinx-doc__sphinx-8506:sphinx/config.py:eval_config_file_alt:duplicate",
+    "kind": "duplicate",
+    "detected": false,
+    "gate_kinds": [],
+    "outcome": "missed",
+    "reason": "",
+    "accepted": false,
+    "complexity": {
+     "original": 5,
+     "injected": 5
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": true,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "sphinx-doc__sphinx-8506:sphinx/environment/collectors/asset.py:DownloadFileCollector.process_doc:nesting",
+    "kind": "nesting",
+    "detected": false,
+    "gate_kinds": [],
+    "outcome": "missed",
+    "reason": "",
+    "accepted": false,
+    "complexity": {
+     "original": 4,
+     "injected": 4
+    },
+    "nesting": {
+     "original": 3,
+     "injected": 3
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "sphinx-doc__sphinx-8506:sphinx/deprecation.py:_ModuleWrapper.__getattr__:redundant_check",
+    "kind": "redundant_check",
+    "detected": true,
+    "gate_kinds": [
+     "redundant_check"
+    ],
+    "outcome": "rejected",
+    "reason": "rewrite fails characterization tests:         try:\n            wrapper.test\n        except Exception as e:\n            # Expect UnboundLocalError because canonical_name not assigned\n            assert isinstance(e, UnboundLocalError)\n        else:\n>           assert False, \"Expected exception\"\nE           AssertionError: Expected exception\nE           assert False\n\ntests/test_slopgate_0.py:52: AssertionError\n=============================== warnings summary ===============================\ntests/test_slopgate_0.py::test_getattr_broken_contains\n  /usr/local/lib/python3.8/site-packages/_pytest/python.py:184: Warning: testmod.test is deprecated. Check CHANGES for Sphinx API modifications.\n    result = testfunction(**testargs)\n\n-- Docs: https://docs.pytest.org/en/stable/warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_slopgate_0.py::test_getattr_broken_contains - AssertionErro...\n1 failed, 3 passed, 1 warning in 0.04s",
+    "accepted": false,
+    "complexity": {
+     "original": 3,
+     "injected": 4
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 1
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pytest-dev__pytest-7220": {
+  "instance_id": "pytest-dev__pytest-7220",
+  "seconds": 322.5,
+  "gate_seconds": 312.6,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 310386,
+    "output_tokens": 16891
+   },
+   "nvidia/Nemotron-3-Ultra-550b-a55b": {
+    "input_tokens": 974,
+    "output_tokens": 282
+   }
+  },
+  "usd": 0.1101,
+  "items": [
+   {
+    "id": "pytest-dev__pytest-7220:src/_pytest/config/__init__.py:PytestPluginManager._getconftestmodules:redundant_check",
+    "kind": "redundant_check",
+    "detected": true,
+    "gate_kinds": [
+     "redundant_check"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests miss branches: 1",
+    "accepted": false,
+    "complexity": {
+     "original": 7,
+     "injected": 8
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-7220:src/_pytest/runner.py:pytest_terminal_summary:swallowed_error",
+    "kind": "swallowed_error",
+    "detected": true,
+    "gate_kinds": [
+     "swallowed_error"
+    ],
+    "outcome": "followup",
+    "reason": "Slopgate (`swallowed_error`) rewrite of `pytest_terminal_summary`.\nnesting 4 -> 3, complexity 11 -> 11. 10 characterization tests passed in sandbox.",
+    "accepted": true,
+    "complexity": {
+     "original": 10,
+     "injected": 11
+    },
+    "nesting": {
+     "original": 3,
+     "injected": 4
+    },
+    "after": {
+     "complexity": 11,
+     "nesting": 3
+    },
+    "removed": false,
+    "exact": false,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-7220:src/_pytest/capture.py:_get_multicapture:dead",
+    "kind": "dead",
+    "detected": true,
+    "gate_kinds": [
+     "dead"
+    ],
+    "outcome": "followup",
+    "reason": "Slopgate (`dead`) rewrite of `_get_multicapture`.\nnesting 1 -> 1, complexity 5 -> 5. 7 characterization tests passed in sandbox.",
+    "accepted": true,
+    "complexity": {
+     "original": 5,
+     "injected": 5
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 1
+    },
+    "after": {
+     "complexity": 5,
+     "nesting": 1
+    },
+    "removed": false,
+    "exact": false,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pytest-dev__pytest-8365": {
+  "instance_id": "pytest-dev__pytest-8365",
+  "seconds": 330.2,
+  "gate_seconds": 322.9,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 217531,
+    "output_tokens": 10565
+   },
+   "nvidia/Nemotron-3-Ultra-550b-a55b": {
+    "input_tokens": 867,
+    "output_tokens": 187
+   }
+  },
+  "usd": 0.0762,
+  "items": [
+   {
+    "id": "pytest-dev__pytest-8365:src/_pytest/main.py:pytest_runtestloop:swallowed_error",
+    "kind": "swallowed_error",
+    "detected": true,
+    "gate_kinds": [
+     "swallowed_error"
+    ],
+    "outcome": "rejected",
+    "reason": "rewrite leaves the slop: swallowed_error",
+    "accepted": false,
+    "complexity": {
+     "original": 9,
+     "injected": 10
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 3
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-8365:src/_pytest/assertion/rewrite.py:rewrite_asserts:dead",
+    "kind": "dead",
+    "detected": true,
+    "gate_kinds": [
+     "dead"
+    ],
+    "outcome": "followup",
+    "reason": "Slopgate (`dead`) rewrite of `rewrite_asserts`.\nnesting 0 -> 0, complexity 1 -> 1. 2 characterization tests passed in sandbox.",
+    "accepted": true,
+    "complexity": {
+     "original": 1,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 0,
+     "injected": 0
+    },
+    "after": {
+     "complexity": 1,
+     "nesting": 0
+    },
+    "removed": false,
+    "exact": false,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-8365:src/_pytest/compat.py:_get_real_func_impl:wrapper",
+    "kind": "wrapper",
+    "detected": true,
+    "gate_kinds": [
+     "wrapper"
+    ],
+    "outcome": "rejected",
+    "reason": "rewrite fails characterization tests: ..F..                                                                    [100%]\n=================================== FAILURES ===================================\n_____________________________ test_exception_path ______________________________\n\n    def test_exception_path():\n        import _pytest.compat as compat\n>       original = compat._get_real_func_impl\nE       AttributeError: module '_pytest.compat' has no attribute '_get_real_func_impl'\n\ntests/test_slopgate_1.py:20: AttributeError\n=========================== short test summary info ============================\nFAILED tests/test_slopgate_1.py::test_exception_path - AttributeError: module...\n1 failed, 4 passed in 0.03s",
+    "accepted": false,
+    "complexity": {
+     "original": 6,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 0
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "psf__requests-3362": {
+  "instance_id": "psf__requests-3362",
+  "seconds": 116.5,
+  "gate_seconds": 116.4,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 202090,
+    "output_tokens": 14956
+   }
+  },
+  "usd": 0.0741,
+  "items": [
+   {
+    "id": "psf__requests-3362:requests/adapters.py:HTTPAdapter.cert_verify:nesting",
+    "kind": "nesting",
+    "detected": true,
+    "gate_kinds": [
+     "nesting"
+    ],
+    "outcome": "rejected",
+    "reason": "rule: signature changed",
+    "accepted": false,
+    "complexity": {
+     "original": 9,
+     "injected": 9
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 3
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "psf__requests-3362:requests/cookies.py:merge_cookies:redundant_check",
+    "kind": "redundant_check",
+    "detected": true,
+    "gate_kinds": [
+     "redundant_check"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests fail on original: tests/test_slopgate_1.py:59: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\n_mock_self = <Mock name='mock.update' id='140737317345376'>\nargs = (<Mock spec='CookieJar' id='140737317344760'>,), kwargs = {}\nself = <Mock name='mock.update' id='140737317345376'>\nmsg = \"Expected 'update' to be called once. Called 0 times.\"\n\n    def assert_called_once_with(_mock_self, *args, **kwargs):\n        \"\"\"assert that the mock was called exactly once and that that call was\n            with the specified arguments.\"\"\"\n        self = _mock_self\n        if not self.call_count == 1:\n            msg = (\"Expected '%s' to be called once. Called %s times.\" %\n                   (self._mock_name or 'mock', self.call_count))\n>           raise AssertionError(msg)\nE           AssertionError: Expected 'update' to be called once. Called 0 times.\n\n/usr/local/lib/python3.6/unittest/mock.py:824: AssertionError\n3 failed, 3 passed in 0.08 seconds",
+    "accepted": false,
+    "complexity": {
+     "original": 6,
+     "injected": 7
+    },
+    "nesting": {
+     "original": 3,
+     "injected": 4
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "psf__requests-3362:requests/models.py:PreparedRequest.prepare_cookies:swallowed_error",
+    "kind": "swallowed_error",
+    "detected": true,
+    "gate_kinds": [
+     "swallowed_error"
+    ],
+    "outcome": "rejected",
+    "reason": "rule: signature changed",
+    "accepted": false,
+    "complexity": {
+     "original": 3,
+     "injected": 4
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pallets__flask-5063": {
+  "instance_id": "pallets__flask-5063",
+  "seconds": 125.2,
+  "gate_seconds": 114.3,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 163750,
+    "output_tokens": 5332
+   }
+  },
+  "usd": 0.0539,
+  "items": [
+   {
+    "id": "pallets__flask-5063:src/flask/cli.py:_find_best_app_impl:wrapper",
+    "kind": "wrapper",
+    "detected": true,
+    "gate_kinds": [
+     "wrapper"
+    ],
+    "outcome": "rejected",
+    "reason": "rewrite fails characterization tests:         try:\n            original = target.__dict__[name]\n        except (AttributeError, KeyError):\n            original = getattr(target, name, DEFAULT)\n        else:\n            local = True\n    \n        if name in _builtins and isinstance(target, ModuleType):\n            self.create = True\n    \n        if not self.create and original is DEFAULT:\n>           raise AttributeError(\n                \"%s does not have the attribute %r\" % (target, name)\n            )\nE           AttributeError: <module 'flask.cli' from '/repo/src/flask/cli.py'> does not have the attribute '_find_best_app_impl'\n\n/usr/local/lib/python3.11/unittest/mock.py:1419: AttributeError\n=========================== short test summary info ============================\nFAILED tests/test_slopgate_0.py::test_locate_app_success_with_app_name_none\n1 failed, 5 passed in 0.12s",
+    "accepted": false,
+    "complexity": {
+     "original": 12,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 4,
+     "injected": 0
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pallets__flask-5063:src/flask/scaffold.py:_path_is_relative_to_alt:duplicate",
+    "kind": "duplicate",
+    "detected": true,
+    "gate_kinds": [
+     "duplicate"
+    ],
+    "outcome": "followup",
+    "reason": "`_path_is_relative_to_alt` does the same job as `_path_is_relative_to` in src/flask/scaffold.py (exact structural copy).",
+    "accepted": true,
+    "complexity": {
+     "original": 2,
+     "injected": 2
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 1
+    },
+    "after": null,
+    "removed": true,
+    "exact": true,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pallets__flask-5063:src/flask/ctx.py:AppContext.pop:nesting",
+    "kind": "nesting",
+    "detected": false,
+    "gate_kinds": [],
+    "outcome": "missed",
+    "reason": "",
+    "accepted": false,
+    "complexity": {
+     "original": 4,
+     "injected": 4
+    },
+    "nesting": {
+     "original": 3,
+     "injected": 3
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pylint-dev__pylint-5859": {
+  "instance_id": "pylint-dev__pylint-5859",
+  "seconds": 230.1,
+  "gate_seconds": 220.8,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 180327,
+    "output_tokens": 8470
+   },
+   "nvidia/Nemotron-3-Ultra-550b-a55b": {
+    "input_tokens": 685,
+    "output_tokens": 147
+   }
+  },
+  "usd": 0.0628,
+  "items": [
+   {
+    "id": "pylint-dev__pylint-5859:pylint/reporters/reports_handler_mix_in.py:ReportsHandlerMixIn.register_report:swallowed_error",
+    "kind": "swallowed_error",
+    "detected": true,
+    "gate_kinds": [
+     "swallowed_error"
+    ],
+    "outcome": "rejected",
+    "reason": "rewrite leaves the slop: swallowed_error",
+    "accepted": false,
+    "complexity": {
+     "original": 1,
+     "injected": 2
+    },
+    "nesting": {
+     "original": 0,
+     "injected": 1
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pylint-dev__pylint-5859:pylint/message/message_definition_store.py:MessageDefinitionStore.register_message:dead",
+    "kind": "dead",
+    "detected": true,
+    "gate_kinds": [
+     "dead"
+    ],
+    "outcome": "followup",
+    "reason": "Slopgate (`dead`) rewrite of `MessageDefinitionStore.register_message`.\nnesting 0 -> 0, complexity 1 -> 1. 2 characterization tests passed in sandbox.",
+    "accepted": true,
+    "complexity": {
+     "original": 1,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 0,
+     "injected": 0
+    },
+    "after": {
+     "complexity": 1,
+     "nesting": 0
+    },
+    "removed": false,
+    "exact": false,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pylint-dev__pylint-5859:pylint/config/find_default_config_files.py:_find_default_config_files_impl:wrapper",
+    "kind": "wrapper",
+    "detected": true,
+    "gate_kinds": [
+     "wrapper"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests fail on original:         except (AttributeError, KeyError):\n            original = getattr(target, name, DEFAULT)\n        else:\n            local = True\n    \n        if name in _builtins and isinstance(target, ModuleType):\n            self.create = True\n    \n        if not self.create and original is DEFAULT:\n>           raise AttributeError(\n                \"%s does not have the attribute %r\" % (target, name)\n            )\nE           AttributeError: <function find_default_config_files at 0x7ffff46cdab0> does not have the attribute '_find_default_config_files_impl'\n\n/usr/local/lib/python3.10/unittest/mock.py:1420: AttributeError\n=========================== short test summary info ============================\nFAILED tests/test_slopgate_0.py::test_find_pylintrc_returns_first_match - Att...\nFAILED tests/test_slopgate_0.py::test_find_pylintrc_returns_none_when_no_match\nFAILED tests/test_slopgate_0.py::test_find_pylintrc_handles_empty_iterator - ...\n3 failed in 0.40s",
+    "accepted": false,
+    "complexity": {
+     "original": 18,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 4,
+     "injected": 0
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pytest-dev__pytest-5692": {
+  "instance_id": "pytest-dev__pytest-5692",
+  "seconds": 436.8,
+  "gate_seconds": 418.6,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 315305,
+    "output_tokens": 10482
+   }
+  },
+  "usd": 0.104,
+  "items": [
+   {
+    "id": "pytest-dev__pytest-5692:src/_pytest/terminal.py:MoreQuietAction.__init__:dead",
+    "kind": "dead",
+    "detected": true,
+    "gate_kinds": [
+     "dead"
+    ],
+    "outcome": "followup",
+    "reason": "Slopgate (`dead`) rewrite of `MoreQuietAction.__init__`.\nnesting 0 -> 0, complexity 1 -> 1. 5 characterization tests passed in sandbox.",
+    "accepted": true,
+    "complexity": {
+     "original": 1,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 0,
+     "injected": 0
+    },
+    "after": {
+     "complexity": 1,
+     "nesting": 0
+    },
+    "removed": false,
+    "exact": false,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-5692:src/_pytest/skipping.py:_check_xfail_no_run_impl:wrapper",
+    "kind": "wrapper",
+    "detected": true,
+    "gate_kinds": [
+     "wrapper"
+    ],
+    "outcome": "rejected",
+    "reason": "rewrite fails characterization tests:         try:\n            original = target.__dict__[name]\n        except (AttributeError, KeyError):\n            original = getattr(target, name, DEFAULT)\n        else:\n            local = True\n    \n        if name in _builtins and isinstance(target, ModuleType):\n            self.create = True\n    \n        if not self.create and original is DEFAULT:\n            raise AttributeError(\n>               \"%s does not have the attribute %r\" % (target, name)\n            )\nE           AttributeError: <module '_pytest.skipping' from '/repo/src/_pytest/skipping.py'> does not have the attribute '_check_xfail_no_run_impl'\n\n/usr/local/lib/python3.7/unittest/mock.py:1281: AttributeError\n=========================== short test summary info ============================\nFAILED tests/test_slopgate_1.py::test_xfail_evaluator_set - AttributeError: <...\n1 failed, 6 passed in 0.12 seconds",
+    "accepted": false,
+    "complexity": {
+     "original": 4,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 3,
+     "injected": 0
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pytest-dev__pytest-5692:src/_pytest/pathlib.py:register_cleanup_lock_removal_alt:duplicate",
+    "kind": "duplicate",
+    "detected": true,
+    "gate_kinds": [
+     "duplicate"
+    ],
+    "outcome": "followup",
+    "reason": "`register_cleanup_lock_removal_alt` does the same job as `register_cleanup_lock_removal` in src/_pytest/pathlib.py (score 0.59). Difference: The new function uses closure over pid without passing it as a default arg, while the helper passes both lock_path and original_pid via defaults. Behaviorally equivalent because both check current pid matches captured pid before unlinking. Differential tests that fail on the helper: test_register_cleanup_lock_removal_alt_returns_register_result.",
+    "accepted": true,
+    "complexity": {
+     "original": 1,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 2
+    },
+    "after": null,
+    "removed": true,
+    "exact": false,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "sphinx-doc__sphinx-7975": {
+  "instance_id": "sphinx-doc__sphinx-7975",
+  "seconds": 467.7,
+  "gate_seconds": 457.4,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 252684,
+    "output_tokens": 18442
+   }
+  },
+  "usd": 0.0924,
+  "items": [
+   {
+    "id": "sphinx-doc__sphinx-7975:sphinx/registry.py:SphinxComponentRegistry.load_extension:nesting",
+    "kind": "nesting",
+    "detected": true,
+    "gate_kinds": [
+     "nesting"
+    ],
+    "outcome": "followup",
+    "reason": "Slopgate (`nesting`) rewrite of `SphinxComponentRegistry.load_extension`.\nnesting 5 -> 3, complexity 8 -> 8. 10 characterization tests passed in sandbox.",
+    "accepted": true,
+    "complexity": {
+     "original": 8,
+     "injected": 8
+    },
+    "nesting": {
+     "original": 3,
+     "injected": 5
+    },
+    "after": {
+     "complexity": 8,
+     "nesting": 3
+    },
+    "removed": false,
+    "exact": false,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "sphinx-doc__sphinx-7975:sphinx/util/nodes.py:apply_source_workaround:redundant_check",
+    "kind": "redundant_check",
+    "detected": true,
+    "gate_kinds": [
+     "redundant_check"
+    ],
+    "outcome": "rejected",
+    "reason": "time limit: characterization tests fail on original:     def __call__(self, /, *args, **kwargs):\n        # can't use self in-case a function / method we are mocking uses self\n        # in the signature\n>       self._mock_check_sig(*args, **kwargs)\nE       RecursionError: maximum recursion depth exceeded\n\n/usr/local/lib/python3.8/unittest/mock.py:1079: RecursionError\n=========================== short test summary info ============================\nFAILED tests/test_slopgate_2.py::test_classifier_no_rawsource - AttributeErro...\nFAILED tests/test_slopgate_2.py::test_classifier_no_source - RecursionError: ...\nFAILED tests/test_slopgate_2.py::test_image_no_source - RecursionError: maxim...\nFAILED tests/test_slopgate_2.py::test_title_no_source - RecursionError: maxim...\nFAILED tests/test_slopgate_2.py::test_term_with_classifiers - RecursionError:...\nFAILED tests/test_slopgate_2.py::test_literal_block_no_source - RecursionErro...\nFAILED tests/test_slopgate_2.py::test_rubric_no_source_rawsource - RecursionE...\nFAILED tests/test_slopgate_2.py::test_line_node_no_source_rawsource - Recursi...\nFAILED tests/test_slopgate_2.py::test_image_substitution_no_source_rawsource\nFAILED tests/test_slopgate_2.py::test_field_name_no_source_rawsource - Recurs...\nFAILED tests/test_slopgate_2.py::test_other_node_no_workaround_needed - Recur...\n11 failed, 2 passed in 120.91s (0:02:00)",
+    "accepted": false,
+    "complexity": {
+     "original": 17,
+     "injected": 19
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "sphinx-doc__sphinx-7975:sphinx/transforms/__init__.py:SphinxSmartQuotes.apply:swallowed_error",
+    "kind": "swallowed_error",
+    "detected": true,
+    "gate_kinds": [
+     "swallowed_error"
+    ],
+    "outcome": "rejected",
+    "reason": "token limit: characterization tests fail on original: \nself = <test_slopgate_1.DummySmartQuotes object at 0x7ffff4fdeb20>\n\n    def __init__(self):\n        # avoid parent __init__\n        self.document = MagicMock()\n>       self.config = MagicMock()\nE       AttributeError: can't set attribute\n\ntests/test_slopgate_1.py:10: AttributeError\n=========================== short test summary info ============================\nFAILED tests/test_slopgate_1.py::test_is_available_false_docutils_setting - A...\nFAILED tests/test_slopgate_1.py::test_is_available_false_config - AttributeEr...\nFAILED tests/test_slopgate_1.py::test_is_available_false_builder - AttributeE...\nFAILED tests/test_slopgate_1.py::test_is_available_false_language - Attribute...\nFAILED tests/test_slopgate_1.py::test_is_available_true - AttributeError: can...\nFAILED tests/test_slopgate_1.py::test_apply_not_available - AttributeError: c...\nFAILED tests/test_slopgate_1.py::test_apply_available_no_exception - Attribut...\nFAILED tests/test_slopgate_1.py::test_apply_exception - AttributeError: can't...\n8 failed in 0.19s",
+    "accepted": false,
+    "complexity": {
+     "original": 2,
+     "injected": 3
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pydata__xarray-4248": {
+  "instance_id": "pydata__xarray-4248",
+  "seconds": 182.9,
+  "gate_seconds": 146.9,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 191723,
+    "output_tokens": 8693
+   }
+  },
+  "usd": 0.0653,
+  "items": [
+   {
+    "id": "pydata__xarray-4248:xarray/core/ops.py:inject_binary_ops_alt:duplicate",
+    "kind": "duplicate",
+    "detected": true,
+    "gate_kinds": [
+     "duplicate"
+    ],
+    "outcome": "followup",
+    "reason": "`inject_binary_ops_alt` does the same job as `inject_binary_ops` in xarray/core/ops.py (exact structural copy).",
+    "accepted": true,
+    "complexity": {
+     "original": 5,
+     "injected": 5
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 2
+    },
+    "after": null,
+    "removed": true,
+    "exact": true,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pydata__xarray-4248:xarray/core/variable.py:Variable._inplace_binary_op:nesting",
+    "kind": "nesting",
+    "detected": true,
+    "gate_kinds": [
+     "nesting"
+    ],
+    "outcome": "rejected",
+    "reason": "rule: does not parse",
+    "accepted": false,
+    "complexity": {
+     "original": 1,
+     "injected": 1
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 3
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pydata__xarray-4248:xarray/core/merge.py:_get_priority_vars_and_indexes:redundant_check",
+    "kind": "redundant_check",
+    "detected": true,
+    "gate_kinds": [
+     "redundant_check"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests miss branches: 1",
+    "accepted": false,
+    "complexity": {
+     "original": 3,
+     "injected": 4
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 1
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "pylint-dev__pylint-7993": {
+  "instance_id": "pylint-dev__pylint-7993",
+  "seconds": 299.9,
+  "gate_seconds": 289.7,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 227378,
+    "output_tokens": 15244
+   }
+  },
+  "usd": 0.0819,
+  "items": [
+   {
+    "id": "pylint-dev__pylint-7993:pylint/message/message_id_store.py:MessageIdStore.check_msgid_and_symbol:redundant_check",
+    "kind": "redundant_check",
+    "detected": true,
+    "gate_kinds": [
+     "nesting",
+     "redundant_check"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests fail on original: pylint/message/message_id_store.py:102: in check_msgid_and_symbol\n    self._raise_duplicate_symbol(msgid, symbol, existing_symbol)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nmsgid = 'W0060', symbol = 'other', other_symbol = 'some'\n\n    @staticmethod\n    def _raise_duplicate_symbol(msgid: str, symbol: str, other_symbol: str) -> NoReturn:\n        \"\"\"Raise an error when a symbol is duplicated.\"\"\"\n        symbols = [symbol, other_symbol]\n        symbols.sort()\n        error_message = f\"Message id '{msgid}' cannot have both \"\n        error_message += f\"'{symbols[0]}' and '{symbols[1]}' as symbolic name.\"\n>       raise InvalidMessageError(error_message)\nE       pylint.exceptions.InvalidMessageError: Message id 'W0060' cannot have both 'other' and 'some' as symbolic name.\n\npylint/message/message_id_store.py:111: InvalidMessageError\n=========================== short test summary info ============================\nFAILED tests/test_slopgate_2.py::test_existing_msgid_only_no_symbol - pylint....\n1 failed, 8 passed in 0.13s",
+    "accepted": false,
+    "complexity": {
+     "original": 7,
+     "injected": 9
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 3
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pylint-dev__pylint-7993:pylint/config/_pylint_config/utils.py:should_retry_after_invalid_input:swallowed_error",
+    "kind": "swallowed_error",
+    "detected": true,
+    "gate_kinds": [
+     "swallowed_error"
+    ],
+    "outcome": "rejected",
+    "reason": "rule: adds a class",
+    "accepted": false,
+    "complexity": {
+     "original": 1,
+     "injected": 2
+    },
+    "nesting": {
+     "original": 3,
+     "injected": 4
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "pylint-dev__pylint-7993:pylint/checkers/base/name_checker/naming_style.py:NamingStyle.get_regex:lookup_table",
+    "kind": "lookup_table",
+    "detected": true,
+    "gate_kinds": [
+     "lookup_table"
+    ],
+    "outcome": "followup",
+    "reason": "Slopgate (`lookup_table`) rewrite of `NamingStyle.get_regex`.\nnesting 1 -> 1, complexity 12 -> 2. 1 characterization tests passed in sandbox.",
+    "accepted": true,
+    "complexity": {
+     "original": 1,
+     "injected": 12
+    },
+    "nesting": {
+     "original": 0,
+     "injected": 1
+    },
+    "after": {
+     "complexity": 2,
+     "nesting": 1
+    },
+    "removed": false,
+    "exact": false,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ },
+ "mwaskom__seaborn-3190": {
+  "instance_id": "mwaskom__seaborn-3190",
+  "seconds": 380.8,
+  "gate_seconds": 367.3,
+  "error": null,
+  "gate_errors": [],
+  "tokens": {
+   "nvidia/nemotron-3-super-120b-a12b": {
+    "input_tokens": 339156,
+    "output_tokens": 17003
+   },
+   "nvidia/Nemotron-3-Ultra-550b-a55b": {
+    "input_tokens": 1141,
+    "output_tokens": 481
+   }
+  },
+  "usd": 0.1196,
+  "items": [
+   {
+    "id": "mwaskom__seaborn-3190:seaborn/_core/scales.py:Continuous.tick:nesting",
+    "kind": "nesting",
+    "detected": true,
+    "gate_kinds": [
+     "nesting"
+    ],
+    "outcome": "followup",
+    "reason": "Slopgate (`nesting`) rewrite of `Continuous.tick`.\nnesting 4 -> 2, complexity 8 -> 8. 18 characterization tests passed in sandbox.",
+    "accepted": true,
+    "complexity": {
+     "original": 8,
+     "injected": 8
+    },
+    "nesting": {
+     "original": 2,
+     "injected": 4
+    },
+    "after": {
+     "complexity": 8,
+     "nesting": 2
+    },
+    "removed": false,
+    "exact": false,
+    "hidden": "ok",
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "mwaskom__seaborn-3190:seaborn/palettes.py:_parse_cubehelix_args:redundant_check",
+    "kind": "redundant_check",
+    "detected": true,
+    "gate_kinds": [
+     "redundant_check"
+    ],
+    "outcome": "rejected",
+    "reason": "step limit: characterization tests miss branches: 1",
+    "accepted": false,
+    "complexity": {
+     "original": 11,
+     "injected": 12
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 1
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   },
+   {
+    "id": "mwaskom__seaborn-3190:seaborn/_core/properties.py:ObjectProperty.get_mapping:swallowed_error",
+    "kind": "swallowed_error",
+    "detected": true,
+    "gate_kinds": [
+     "swallowed_error"
+    ],
+    "outcome": "rejected",
+    "reason": "token limit: characterization tests fail on original: self = <tests.test_slopgate_0.TestObjectPropertyGetMapping object at 0x7fffe7018f70>\n\n    def test_get_mapping_with_invalid_values_type(self):\n        \"\"\"Test branch where scale.values is neither dict, list, nor None.\"\"\"\n        scale = Nominal(\"invalid_string\")  # String is not dict/list/None\n    \n>       with pytest.raises(TypeError, match=\"Scale values for a variable variable must be provided in a dict or list\"):\nE       Failed: DID NOT RAISE <class 'TypeError'>\n\ntests/test_slopgate_0.py:108: Failed\n=============================== warnings summary ===============================\ntests/test_slopgate_0.py::TestObjectPropertyGetMapping::test_get_mapping_with_empty_data\n  /repo/seaborn/_core/rules.py:150: FutureWarning: The default dtype for empty Series will be 'object' instead of 'float64' in a future version. Specify a dtype explicitly to silence this warning.\n    if variable_type(pd.Series(order)) == \"numeric\":\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_slopgate_0.py::TestObjectPropertyGetMapping::test_get_mapping_with_dict_missing_key\nFAILED tests/test_slopgate_0.py::TestObjectPropertyGetMapping::test_get_mapping_with_invalid_values_type\n2 failed, 9 passed, 1 warning in 1.57s",
+    "accepted": false,
+    "complexity": {
+     "original": 6,
+     "injected": 7
+    },
+    "nesting": {
+     "original": 1,
+     "injected": 2
+    },
+    "after": null,
+    "removed": false,
+    "exact": false,
+    "hidden": null,
+    "broken": [],
+    "flaky": []
+   }
+  ]
+ }
+}
