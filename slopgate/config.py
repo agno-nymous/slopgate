@@ -8,7 +8,7 @@ HOOK_K = 2
 WORKERS = 8
 
 LIGHTNING = "nvidia/Nemotron-3_5-Lightning"
-SUPER = "nvidia/nemotron-3-super-120b-a12b"
+SUPER = "nvidia/Nemotron-3.5-Super-VL"
 ULTRA = "nvidia/Nemotron-3-Ultra-550b-a55b"
 
 # The server default is 8,192 output tokens; a full test file for a large function can pass it.

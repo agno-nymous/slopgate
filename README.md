@@ -8,16 +8,16 @@ Slopgate reviews each Python pull request for slop: deep nesting, repeated check
 
 ## Results
 
-The gate benchmark ran on 15 SWE-bench Lite instances from 7 repositories, with 45 injected slop items (2026-10-25). The hidden SWE-bench tests of each instance judge each accepted rewrite. The gate never sees the hidden tests.
+The gate benchmark ran on 15 SWE-bench Lite instances from 7 repositories, with 45 injected slop items. The gate used Nemotron 3.5 Super VL (2026-10-30, ticket 77). The hidden SWE-bench tests of each instance judge each accepted rewrite. The gate never sees the hidden tests.
 
 - Slopgate flags 91% of injected slop on real SWE-bench repos (41 of 45 items).
-- 34% of the flagged items get a proven one-click fix (14 of 41). 0 of these fixes broke a hidden test.
-- The other flagged items get a review note that names the slop and the fix (27 of 41).
-- The run costs $1.16 for 15 SWE-bench instances from 7 repositories.
+- 49% of the flagged items get a proven one-click fix (20 of 41). 0 of these fixes broke a hidden test.
+- The other flagged items get a review note that names the slop and the fix (21 of 41).
+- The run costs $0.82 for 15 SWE-bench instances from 7 repositories.
 
-Some kinds are hard to prove. `redundant_check` has 0 of 9 items accepted, and `wrapper` has 1 of 7. `dead` has 5 of 6 items accepted, and `duplicate` has 3 of its 4 detected items accepted. The full table is in [`bench/results/swebench/swebench.md`](bench/results/swebench/swebench.md). Ticket 10 explains the method.
+Some kinds are hard to prove. `redundant_check` has 0 of 9 items accepted, and `wrapper` has 3 of 7. `dead` has 5 of 6 items accepted, and `duplicate` has 3 of its 4 detected items accepted. The full table is in [`bench/results/swebench/swebench.md`](bench/results/swebench/swebench.md). Ticket 10 explains the method. The same items with Nemotron 3 Super (2026-10-25) gave 14 of 41 proven fixes for $1.16 ([`swebench-super-3.md`](bench/results/swebench/swebench-super-3.md)).
 
-Nemotron 3 Super resolves about 60% of SWE-bench Verified (model card). Slopgate adds a proof, so the fixes it posts broke 0 hidden tests. The two numbers measure different tasks: SWE-bench measures whether a model fixes an issue, and this benchmark measures whether the gate removes slop and keeps the behavior.
+Slopgate adds a proof, so the fixes it posts broke 0 hidden tests. This benchmark measures whether the gate removes slop and keeps the behavior. It does not measure whether a model fixes an issue, as SWE-bench does.
 
 ## How Slopgate uses Nebius and NVIDIA
 
@@ -26,9 +26,9 @@ Each review calls the Token Factory inference API and runs every test in a Token
 | Job | Model | Why this model |
 |---|---|---|
 | Find the slop kinds | none | Ruff, vulture, and AST checks find all kinds except `duplicate`. A static check costs nothing and gives the same answer every time. |
-| Decide if a new function copies an existing one (`duplicate`) | Nemotron 3 Super | A forced tool call with a pydantic schema gives a reason and a verdict. A keyword search picks the candidates first, so most functions get no model call. |
-| Write the characterization tests (an agent with one `execute` tool in a sandbox session) | Nemotron 3 Super | Super proved 22 of 24 runs on 8 functions. Ultra proved 4 of 24: it probed with `python -c` until the step limit and wrote no test file. |
-| Rewrite the function | Nemotron 3 Super | Ultra costs 3.3 times as much per output token. Super writes the first rewrite of each candidate. |
+| Decide if a new function copies an existing one (`duplicate`) | Nemotron 3.5 Super VL | A forced tool call with a pydantic schema gives a reason and a verdict. A keyword search picks the candidates first, so most functions get no model call. |
+| Write the characterization tests (an agent with one `execute` tool in a sandbox session) | Nemotron 3.5 Super VL | Nemotron 3 Super proved 22 of 24 runs on 8 functions. Ultra proved 4 of 24: it probed with `python -c` until the step limit and wrote no test file. |
+| Rewrite the function | Nemotron 3.5 Super VL | Ultra costs 3.3 times as much per output token. Super writes the first rewrite of each candidate. |
 | Retry a rewrite that failed the proof | Nemotron 3 Ultra | The retry happens at most once per candidate and gets the failure output, so the larger model costs little here. This is a design choice. We did not measure Super against Ultra for the retry. |
 | Write the pull request summary | Nemotron 3 Ultra | One short call for each review. |
 | Ask the write-time hook "is this a copy?" | Nemotron 3.5 Lightning | One token with logprobs gives a confidence. A hook run with one candidate took 1,652 ms (median of 5), and Lightning costs $0.06 per 1M input tokens. |

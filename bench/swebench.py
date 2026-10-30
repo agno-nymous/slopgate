@@ -706,7 +706,9 @@ def report() -> None:
     rows = [item for r in runs.values() for item in r["items"]]
     ran = [truth["instances"][i] for i in runs]
     rejected = sum((Counter(i["rejected"]) for i in ran), Counter())
-    tokens = [{"model": SUPER, "use": "injection"} | {k: truth["super_usage"].get(k, 0) for k in ("input_tokens", "output_tokens")}]
+    injector = stored_meta(GROUNDTRUTH)["models"]["injection"]
+    tokens = [{"model": injector, "use": "injection"} | {k: truth["super_usage"].get(k, 0) for k in ("input_tokens", "output_tokens")}]
+    # shortcut: prices the injection at the current SUPER price, equal for Super 3 and 3.5; use PRICES[injector] if they differ
     tokens[0]["usd"] = cost(SUPER, tokens[0])
     total = Counter()
     for r in runs.values():
