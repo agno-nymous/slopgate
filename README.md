@@ -3,7 +3,7 @@
 Slopgate reviews each Python pull request for slop: deep nesting, repeated checks, swallowed errors, one-use wrappers, long if/elif chains, dead code, and new functions that copy an existing helper. It rewrites each finding with NVIDIA Nemotron models on Nebius Token Factory. It keeps a rewrite only if characterization tests of the original code and the repo's own tests pass on it in a Nebius Token Factory Sandbox.
 
 - **Showcase:** https://agno-nymous.github.io/slopgate/ (recorded reviews of 4 pull requests, the benchmark, and how the gate works)
-- **Demo repository:** https://github.com/agno-nymous/slopgate-demo (the GitHub Action on real pull requests)
+- **Demo repository:** https://github.com/agno-nymous/slopgate-demo (the GitHub Action on real pull requests). Four pull requests add the benchmark's slop to real SWE-bench code, and the Action reviews each one: [flask](https://github.com/agno-nymous/slopgate-demo/pull/5), [pytest](https://github.com/agno-nymous/slopgate-demo/pull/7), [pylint](https://github.com/agno-nymous/slopgate-demo/pull/9), and [seaborn](https://github.com/agno-nymous/slopgate-demo/pull/11).
 - **License:** MIT
 
 ## Results

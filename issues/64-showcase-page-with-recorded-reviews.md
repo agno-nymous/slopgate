@@ -9,7 +9,7 @@
 
 **Blocked by:** 10 (the site shows the benchmark headline, and the best examples come from the rerun)
 
-**Status:** needs-live-check
+**Status:** done
 
 **Type:** build.
 
@@ -35,14 +35,14 @@ The judging days are 2026-12-01 to 2026-12-15. Static files have no cold start a
 
 - [x] The Comments list the chosen examples and the reason for each.
 - [x] `docs/demo/recordings/` holds at least 3 unedited dry-run outputs of real pull requests, with at least 1 proven rewrite in each of 2 kinds. (The user dropped the rejection requirement on 2026-10-26.)
-- [ ] The pages open from a local file and from the published URL, and the browser network log shows no request to an API or a model before the judge runs the panel.
+- [x] The pages open from a local file and from the published URL, and the browser network log shows no request to an API or a model before the judge runs the panel.
 - [x] The benchmark page shows the headline of ticket 10, and the numbers equal `swebench.md`.
 - [x] The how-it-works page shows the 5 gate steps. Each review page shows the diff, the tests, the proof result, the time, and the cost.
 - [x] The pages are readable at 375 px, 768 px, and 1280 px, in light and dark mode, with no horizontal scroll.
 - [x] The README has the local command. A run in an empty folder with the user's own key gives a review (the Comments record the time and the cost).
 - [x] The offline test finds no key in `docs/demo/`, finds no broken local link, and checks that each page makes no request. `uv run pytest -q` passes.
-- [ ] A run of the live panel in a real browser with a real key gives a verdict. (Not done: the agent must not type the key.)
-- [ ] The site is published at a URL. The README and the Devpost text link it.
+- [x] A run of the live panel in a real browser with a real key gives a verdict. (The user ran it on 2026-10-29.)
+- [x] The site is published at a URL. The README and the Devpost text link it.
 
 ## Comments
 
@@ -123,3 +123,15 @@ I did not fix: the `items_of` branch for inline suggestions has no test (no reco
 - Nobody ran the live panel in a real browser with a real key. The retry wait (5 s, 15 s, 45 s) and the copy button are untested in a browser.
 - The `/impeccable` commands (shape, critique, typeset, and so on) did not run. The skill installed during this session (`npx impeccable install --project --providers=claude --no-hooks`), and the session does not load a new skill. The install files (`.claude/skills/impeccable/`, `.claude/agents/`) are not committed.
 - GitHub Pages is off for this repository. The user must turn it on (source `docs/`).
+
+### 2026-10-29 — close-out
+
+**Live panel.** The user ran the live panel on the published `try.html` with a real key. The panel ran and gave a result. The agent did not type the key.
+
+**Network check of the published site.** Each of the 9 pages at https://agno-nymous.github.io/slopgate/demo/ loaded in a hidden frame. The browser resource log has 5 entries for each page (6 for `try.html`), and all of them are on `agno-nymous.github.io`: the style sheet, the fonts, and `try.js`. No page sent a request to an API or a model.
+
+**Local files.** The `src` and `href` values in `docs/demo/` point to no external resource. The 15 external URLs are plain links (`<a href>`): the repo, the upstream repositories, the uv docs, and the Token Factory key page. `uv run pytest -q tests/test_showcase.py`: 11 passed.
+
+**Published URL.** GitHub Pages serves `docs/` at https://agno-nymous.github.io/slopgate/, which redirects to `demo/`. The README links it (ticket 11, PR #60). The Devpost text links it too.
+
+**Limits.** The panel retries a 429 or a 5xx reply after 5 s, 15 s, and 45 s. The gate retries only a 429: ticket 76 (the 529 retry) is open.
